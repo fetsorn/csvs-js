@@ -322,29 +322,29 @@ describe('queryMetadir', () => {
 describe('editEvent', () => {
 
   let filesMockNew
-  let fs
+  let pfs
 
   beforeEach(() => {
     filesMockNew = { ...filesMock }
     async function writeFileMock(path, contents, encoding) {
       filesMockNew[path] = contents
     }
-    fs = { "promises": { "writeFile": jest.fn(writeFileMock) }}
+    pfs = { "writeFile": jest.fn(writeFileMock) }
   })
   test('does nothing on no change', () => {
-    return editEvent(event1, fs, dir)
+    return editEvent(event1, pfs, dir)
       .then(() => {
         expect(filesMockNew).toStrictEqual(filesMock)
       })
   })
   test('edits event', () => {
-    return editEvent(event3new, fs, dir)
+    return editEvent(event3new, pfs, dir)
       .then(() => {
         expect(filesMockNew).toStrictEqual(filesMock3)
       })
   })
   test('adds event', () => {
-    return editEvent(event4edit, fs, dir)
+    return editEvent(event4edit, pfs, dir)
       .then(() => {
         expect(filesMockNew).toStrictEqual(filesMock4)
       })
@@ -354,18 +354,18 @@ describe('editEvent', () => {
 describe('deleteEvent', () => {
 
   let filesMockNew
-  let fs
+  let pfs
 
   beforeEach(() => {
     filesMockNew = { ...filesMock }
     async function writeFileMock(path, contents, encoding) {
       filesMockNew[path] = contents
     }
-    fs = { "promises": { "writeFile": jest.fn(writeFileMock) }}
+    pfs = { "writeFile": jest.fn(writeFileMock) }
   })
 
   test('deletes event', () => {
-    return deleteEvent(event3.UUID, fs, dir)
+    return deleteEvent(event3.UUID, pfs, dir)
       .then(() => {
         expect(filesMockNew).toStrictEqual(filesMockNo3)
       })
