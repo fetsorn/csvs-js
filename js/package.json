@@ -1,0 +1,25 @@
+{
+  "name": "csvs-js",
+  "description": "csvs: comma-separated value store, js bindings",
+  "version": "0.1.0",
+  "author": "Anton Davydov <git@fetsorn.website>",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "@fetsorn/wasm-grep": "0.1.5",
+    "@isomorphic-git/lightning-fs": "^4.4.1",
+    "isomorphic-git": "^1.10.4"
+  },
+  "devDependencies": {
+    "jest": "^27.5.1",
+    "yarn": "^1.22.17"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "jest": {
+    "moduleNameMapper": {
+      "^fetsorn(.*)$": "<rootDir>/mocks$1"
+    }
+  }
+}

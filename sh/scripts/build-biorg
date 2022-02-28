@@ -1,0 +1,278 @@
+#!/bin/bash
+
+# TODO replace jq with jawk
+
+usage () {
+  printf 1>&2 "%s\n" "Usage: $0 [-c CONFIG] [-d METADIR] [-p PROPS]
+
+  Reads a stream of datum_uuid,datum pairs from stdin
+  looks up PROPS in METADIR (all properties in  by default)
+  outputs biorg
+
+  OPTIONS:
+  -c json file which contains the schema of properties and relations between them
+     defaults to \$PWD/metadir.json
+  -d folder which contains the index of properties and relations between them
+     defaults to \$PWD/metadir
+  -p list of all property names as a space-separated string
+     defaults to all property names in the CONFIG
+
+  EXAMPLE:
+    cat metadir/props/datum/index.csv | cut -c 1-64 | $0 -d metadir -c config.json -p \"hostdate hostname\" > ../ops/index.bi.org"
+}
+
+OPTIND=1
+while getopts 'd:c:p:' opt; do
+  case $opt in
+    d) metadir="$OPTARG" ;;
+    c) config="$OPTARG" ;;
+    p) config_props="$OPTARG" ;;
+    *) usage
+       exit 1
+  esac
+done
+shift "$(( OPTIND - 1 ))"
+
+# get the path to the folder which contains
+# the index of properties and relations between them
+if [ ! "$metadir" ]; then
+    metadir="$PWD/metadir"
+fi
+
+# check if metadir exists
+if [[ ! -d "$metadir" ]]; then
+  printf 1>&2 "No metadir at %s\n" "$metadir"
+  exit 3
+fi
+
+# get the path to the json file which contains
+# the schema of properties and relations between them
+if [ ! "$config" ]; then
+    config="$PWD/metadir.json"
+fi
+
+# check if config exists
+if [[ ! -f "$config" ]]; then
+  printf 1>&2 "No config at %s\n" "$config"
+  exit 3
+fi
+
+# get the list of all property names as a space-separated string
+if [ ! "$config_props" ]; then
+    config_props=$(jq -r 'keys | join(" ")' "$config")
+fi
+
+# parse parent, type and dir from json config for each prop here once
+read -r -a props <<< "$config_props"
+declare -Ag _
+for prop in "${props[@]}"; do
+    _[$prop,"parent"]=$(jq -r ".$prop.parent" "$config")
+    _[$prop,"label"]=$(jq -r ".$prop.label" "$config")
+    _[$prop,"type"]=$(jq -r ".$prop.type" "$config")
+    _[$prop,"dir"]=$(jq -r ".$prop.dir" "$config")
+done
+unset props
+
+# locate other scripts
+SCRIPTS="${BASH_SOURCE%/*}"
+if [[ ! -d "$SCRIPTS" ]]; then SCRIPTS="$PWD"; fi
+
+# TODO support several roots
+# find a property that doesn't have a parent, treat as root
+# if there are several matching properties, pick the first in alphabetical order
+root=$(jq -r 'map_values(select(has("parent") | not)) | keys[0]' "$config")
+# if there are no matching properties, exit with an error
+if [ ! "$root" ]; then
+  printf 1>&2 "No root property in the config %s\n" "$config"
+  exit 3
+fi
+
+# build_prop PARENT PARENT_UUID PROP
+# build_prop "datum" "12401595" "hostname"
+# set two variables, ${PROP} and ${PROP}_uuid
+# print an org-mode property or section
+build_prop () {
+    local prop="$1"
+    local parent="$2"
+    local parent_uuid="$3"
+
+    local prop_uuid
+
+    # when property is root
+    # $root_uuid is passed instead of $parent_uuid
+    if [ "$prop" == "$root" ]; then
+        prop_uuid="$parent_uuid"
+    else
+        # lookup $prop_uuid associated with $parent_uuid
+        local pair="$metadir/pairs/$parent-$prop.csv"
+        if [ -f "$pair" ]; then
+            prop_uuid=$(bash "$SCRIPTS/lookup" "$pair" "$parent_uuid")
+        fi
+    fi
+
+    # continue only if $prop_uuid was found
+    if [ "$prop_uuid" ]; then
+
+        # set uuid as a global variable
+        # that can be accessed after this function returns
+        # TODO handle global scope
+        # if no $prop_uuid was found,
+        # assign an empty string to reset it
+        # so the values don't become mixed up
+        # between calls to build_prop
+        declare -n UUID="${prop}_uuid"
+        UUID="$prop_uuid"
+
+        local prop_value
+
+        local prop_type=${_[$prop,"type"]}
+        if [ "$prop_type" == "hash" ]; then
+            prop_value="$prop_uuid"
+        else
+            # query config for the name of the folder
+            # that has the index file of the property
+            local prop_dir=${_[$prop,"dir"]}
+            if [ ! "$prop_dir" ] || [ "$prop_dir" == "null" ]; then
+                # by default the name of the folder
+                # is the same as the property name
+                prop_dir="$prop"
+            fi
+
+            # lookup the value associated with $prop_uuid
+            prop_value=$(bash "$SCRIPTS/lookup" "$metadir/props/$prop_dir/index.csv" "$prop_uuid")
+
+            # if property value is an escaped string, unescape it
+            if [ "$prop_type" == "string" ]; then
+                prop_value=$(printf "%s" "$prop_value" | bash "$SCRIPTS/unescape")
+            fi
+        fi
+
+        # query config for the label
+        # to use in the org-mode property
+        local prop_label=${_[$prop,"label"]}
+        if [ ! "$prop_label" ]; then
+            # by default the label
+            # is the same as the property name
+            prop_label="$prop"
+        fi
+
+        if [ "$prop" == "$root" ]; then
+            # if property is root, print as plain text
+            printf "%s\n" "$prop_value"
+        elif [ "$prop_type" == "date" ]; then
+            # if property value is a date, wrap it in brackets
+            # and print as an org-mode property
+            printf ":%s: <%s>\n" "$prop_label" "$prop_value"
+        else
+            # otherwise print as a literal org-mode property
+            printf ":%s: %s\n" "$prop_label" "$prop_value"
+        fi
+
+    fi
+}
+export -f build_prop
+
+# build_node STDIN_UUID COUNTER
+# build_node "12401595" 1
+# print all metadata properties that are
+# associated with the root uuid STDIN_UUID
+# as a first level org-mode heading
+# with a property block and a section
+# log counter to stderr
+build_node () {
+    local stdin_uuid="$1"
+    local counter="$2"
+
+    # log counter to stderr
+    # with a carriage return to stay on one line
+    printf 1>&2 "                build: %-6s parts\r" "$counter"
+
+    # continue only if the requested uuid is in metadir
+    local root_uuid
+    root_uuid=$(grep -o "$stdin_uuid" "$metadir/props/$root/index.csv")
+    if [ ! "$root_uuid" ]; then
+        return
+    fi
+
+    printf "* .\n"
+    printf ":PROPERTIES:\n"
+
+    printf ":UUID: %s\n" "$root_uuid"
+
+    # initialize queue of properties
+    read -r -a props <<< "$config_props"
+
+    # associative array
+    # to record which properties have been processed
+    local -A processed
+
+    # set uuid of root property
+    # and set as processed
+    local "${root}_uuid"="$root_uuid"
+    processed["$root"]=1
+
+    # TODO process queue from the start
+    #      to avoid reverse order in output
+    # while queue if full
+    while (( ${#props[@]} != 0 )); do
+        # get the last element of queue
+        local prop=${props[-1]}
+        # get its parent property
+        local parent=${_[$prop,"parent"]}
+        if [ ${processed[$prop]} ] || [ ! "$parent" ]; then
+            # if processed or has no parent
+            # do nothing
+            :
+        elif [ ${processed[$parent]} ]; then
+            # if parent has been processed
+            # build property and set as processed
+            local parent_uuid="${parent}_uuid"
+
+            build_prop "$prop" "$parent" "${!parent_uuid}"
+            processed["$prop"]=1
+        else
+            # if parent has not been processed
+            # add itself and parent to queue
+            props=( "$prop" "$parent" "${props[@]}" )
+        fi
+        # remove from queue
+        unset -v 'props[-1]'
+    done
+    unset props
+
+    printf ":END:\n"
+
+    # print root prop
+    build_prop "$root" "" "$root_uuid"
+
+    # unset all ${}_uuid global variables
+    # so they don't bleed to the next loop
+    read -r -a props <<< "$config_props"
+    for prop in "${props[@]}"; do
+        unset "${prop}_uuid"
+    done
+    unset props
+}
+
+export -f build_node
+
+counter=0;
+
+if [[ ! -t 0 ]]; then
+    # build nodes for all root uuids from stdin
+    while read -r line; do
+        build_node "$line" "$counter";
+        counter=$((counter + 1));
+    done
+else
+    # otherwise build nodes for all root uuids in metadir
+    while read -r line; do
+        build_node "$line" "$counter";
+        counter=$((counter + 1));
+    done <<< "$(cat "$metadir/props/$root/index.csv" | cut -c 1-64)"
+fi
+
+# output a newline to stderr
+# to preserve the last line
+# with a counter and a carriage return
+printf 1>&2 "\n"
