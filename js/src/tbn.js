@@ -399,7 +399,7 @@ async function commit(fs, dir, token, ref) {
         username: token
       })
     })
-    console.log(pushResult)
+    // console.log(pushResult)
 }
 
 module.exports = {

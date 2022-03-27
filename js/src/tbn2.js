@@ -17,7 +17,7 @@ async function fetchDataMetadir(path, pfs, dir) {
       for (var i=0; i < path_elements.length; i++) {
         let path_element = path_elements[i]
         var files = await pfs.readdir(root);
-        console.log(files)
+        // console.log(files)
         if (files.includes(path_element)) {
           root += '/' + path_element
           // console.log(`${root} has ${path_element}`)
@@ -27,7 +27,7 @@ async function fetchDataMetadir(path, pfs, dir) {
         }
       }
       restext = new TextDecoder().decode(await pfs.readFile(dir + '/' + path));
-      console.log("fetch file:", path, restext)
+      // console.log("fetch file:", path, restext)
     }
 
   } catch (e) {
