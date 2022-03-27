@@ -32,17 +32,23 @@
         csvs-sh = pkgs.stdenv.mkDerivation {
           name = "csvs-sh";
           src = ./sh/scripts;
-          propagatedBuildInputs = [
-            pkgs.coreutils
-            pkgs.file
-            pkgs.gawk
-            pkgs.jq
-            pkgs.moreutils
-            pkgs.parallel
-            pkgs.ripgrep
-          ];
           buildPhase = ''
             true
+          '';
+          postPatch = ''
+            substituteInPlace merge --replace "jq" "${pkgs.jq}/bin/jq"
+            substituteInPlace unescape --replace "jq" "${pkgs.jq}/bin/jq"
+            substituteInPlace break-biorg.awk --replace "jq" "${pkgs.jq}/bin/jq"
+            substituteInPlace build-biorg --replace "jq" "${pkgs.jq}/bin/jq"
+            substituteInPlace build-biorg --replace "bash" "${pkgs.bash}/bin/bash"
+            substituteInPlace mdirsync --replace "bash" "${pkgs.bash}/bin/bash"
+            substituteInPlace mdirsync --replace "awk" "${pkgs.gawk}/bin/awk"
+            substituteInPlace gc --replace "jq" "${pkgs.jq}/bin/jq"
+            substituteInPlace gc --replace "sponge" "${pkgs.moreutils}/bin/sponge"
+            substituteInPlace lookup --replace "grep" "${pkgs.gnugrep}/bin/grep"
+            substituteInPlace build-biorg --replace "grep" "${pkgs.gnugrep}/bin/grep"
+            substituteInPlace merge --replace "grep" "${pkgs.gnugrep}/bin/grep"
+            substituteInPlace break-biorg.awk --replace "grep" "${pkgs.gnugrep}/bin/grep"
           '';
           installPhase = ''
             mkdir -p $out/bin/
