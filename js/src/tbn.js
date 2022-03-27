@@ -327,6 +327,10 @@ async function editEvent(event, pfs, dir, config_name = "metadir.json") {
     }
   }
 
+  if (!event.UUID) {
+    event.UUID = await digestRandom()
+  }
+
   var uuids = {}
   for (var i in event_props) {
     let prop = event_props[i]
@@ -338,12 +342,7 @@ async function editEvent(event, pfs, dir, config_name = "metadir.json") {
     if (prop != root) {
       prop_uuid = await digestMessage(prop_value)
     } else {
-      if (event.UUID) {
-        prop_uuid = event.UUID
-      } else {
-        prop_uuid = await digestRandom()
-        event.UUID = prop_uuid
-      }
+      prop_uuid = event.UUID
     }
     uuids[prop] = prop_uuid
 
