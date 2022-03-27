@@ -1,7 +1,3 @@
-const http = require('isomorphic-git/http/web')
-const LightningFS = require('@isomorphic-git/lightning-fs')
-const git = require('isomorphic-git')
-
 async function fetchDataMetadir(path, pfs, dir) {
 
   var restext = undefined

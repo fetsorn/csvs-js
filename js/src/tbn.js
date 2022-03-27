@@ -342,6 +342,7 @@ async function editEvent(event, pfs, dir, config_name = "metadir.json") {
         prop_uuid = event.UUID
       } else {
         prop_uuid = await digestRandom()
+        event.UUID = prop_uuid
       }
     }
     uuids[prop] = prop_uuid
@@ -361,7 +362,6 @@ async function editEvent(event, pfs, dir, config_name = "metadir.json") {
       }
     }
     if (prop != root) {
-      // append to datum-guestdate
       let parent = config[prop].parent
       let parent_uuid = uuids[parent]
       let pair_path = `metadir/pairs/${parent}-${prop}.csv`
@@ -374,6 +374,9 @@ async function editEvent(event, pfs, dir, config_name = "metadir.json") {
       }
     }
   }
+
+  return event
+
 }
 
 async function commit(fs, dir, token, ref) {
