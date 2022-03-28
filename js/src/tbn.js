@@ -1,8 +1,13 @@
-const http = require('isomorphic-git/http/web')
-const LightningFS = require('@isomorphic-git/lightning-fs')
-const git = require('isomorphic-git')
-const { grep } = require('@fetsorn/wasm-grep')
-const { fetchDataMetadir, digestMessage, digestRandom } = require('./tbn2')
+import http from 'isomorphic-git/http/web'
+import LightningFS from '@isomorphic-git/lightning-fs'
+import git from 'isomorphic-git'
+import { grep } from '@fetsorn/wasm-grep'
+import { fetchDataMetadir, digestMessage, digestRandom } from './tbn2'
+
+async function test() {
+  console.log("da")
+  console.log(await grep("a\nb\nc\n", "a\n"))
+}
 
 function lookup(lines, uuid) {
   let line = lines.find(line => (new RegExp(uuid)).test(line))
@@ -402,7 +407,8 @@ async function commit(fs, dir, token, ref) {
     // console.log(pushResult)
 }
 
-module.exports = {
+export {
+  test,
   lookup,
   queryMetadir,
   resolveAssetPath,

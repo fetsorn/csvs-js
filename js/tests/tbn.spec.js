@@ -1,8 +1,6 @@
-const LightningFS = require('@isomorphic-git/lightning-fs')
-const http = require('isomorphic-git/http/web')
-const { queryMetadir, editEvent, deleteEvent } = require('../src/tbn')
-const { TextEncoder, TextDecoder } = require('util')
-const crypto = require('crypto')
+import { queryMetadir, editEvent, deleteEvent } from '../src/tbn'
+import { TextEncoder, TextDecoder } from 'util'
+import crypto from 'crypto'
 
 global.TextEncoder = TextEncoder
 global.TextDecoder = TextDecoder

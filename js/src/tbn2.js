@@ -50,7 +50,7 @@ async function digestRandom() {
   return await digestMessage(crypto.randomUUID())
 }
 
-module.exports = {
+export {
   fetchDataMetadir,
   digestMessage,
   digestRandom
