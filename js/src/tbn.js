@@ -411,6 +411,7 @@ export {
   test,
   lookup,
   queryMetadir,
+  fetchDataMetadir
   resolveAssetPath,
   editEvent,
   deleteEvent,
