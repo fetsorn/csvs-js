@@ -102,7 +102,8 @@ async function queryMetadir(searchParams, pfs, dir, config_name = "metadir.json"
         continue
       }
       let moddate = lookup(csv['date_index'],moddate_uuid)
-      let filepath = lookup(csv['filepath_index'],filepath_uuid)
+      let filepath_escaped = lookup(csv['filepath_index'],filepath_uuid)
+      let filepath = JSON.parse(filepath_escaped)
       event.FILE_PATH = filepath
       event.GUEST_DATE = moddate
       event.HOST_DATE = moddate
