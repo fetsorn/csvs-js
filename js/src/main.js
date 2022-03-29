@@ -2,7 +2,7 @@ import http from 'isomorphic-git/http/web'
 import LightningFS from '@isomorphic-git/lightning-fs'
 import git from 'isomorphic-git'
 import { grep } from '@fetsorn/wasm-grep'
-import { fetchDataMetadir, digestMessage, digestRandom } from './tbn2'
+import { fetchDataMetadir, digestMessage, digestRandom } from './util'
 
 async function test() {
   console.log("da")
@@ -102,6 +102,8 @@ async function queryMetadir(searchParams, pfs, dir, config_name = "metadir.json"
         continue
       }
       let moddate = lookup(csv['date_index'],moddate_uuid)
+      let filepath = lookup(csv['filepath_index_file'],filepath_uuid)
+      event.FILE_PATH = filepath
       event.GUEST_DATE = moddate
       event.HOST_DATE = moddate
       event.GUEST_NAME = "fetsorn"

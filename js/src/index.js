@@ -1,4 +1,3 @@
-export { fetchDataMetadir, digestMessage, digestRandom } from './tbn2'
 export {
   test,
   lookup,
@@ -7,4 +6,5 @@ export {
   editEvent,
   deleteEvent,
   commit
-} from './tbn'
+} from './main'
+export { fetchDataMetadir, digestMessage, digestRandom } from './util'

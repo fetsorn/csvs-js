@@ -1,4 +1,4 @@
-import { queryMetadir, editEvent, deleteEvent } from '../src/tbn'
+import { queryMetadir, editEvent, deleteEvent } from '../src/main'
 import { TextEncoder, TextDecoder } from 'util'
 import crypto from 'crypto'
 
@@ -272,8 +272,8 @@ filesMockNo3["metadir/props/datum/index.csv"] = `8260502525153a8775ecb052f41e4e9
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,"value2"
 `
 
-jest.mock(('../src/tbn2'), () => {
-  const originalModule = jest.requireActual('../src/tbn2');
+jest.mock(('../src/util'), () => {
+  const originalModule = jest.requireActual('../src/util');
 
   return {
     __esModule: true,
