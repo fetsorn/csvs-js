@@ -1,6 +1,6 @@
 #!/bin/bash
 
-script="../scripts/break-biorg.awk"
+script="../scripts/break-biorg"
 config="./config.json"
 
 setup() {

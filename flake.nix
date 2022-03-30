@@ -38,7 +38,7 @@
           postPatch = ''
             substituteInPlace merge --replace "jq" "${pkgs.jq}/bin/jq"
             substituteInPlace unescape --replace "jq" "${pkgs.jq}/bin/jq"
-            substituteInPlace "break-biorg.awk" --replace "jq" "${pkgs.jq}/bin/jq"
+            substituteInPlace break-biorg --replace "jq" "${pkgs.jq}/bin/jq"
             substituteInPlace build-biorg --replace "jq" "${pkgs.jq}/bin/jq"
             substituteInPlace build-biorg --replace "bash" "${pkgs.bash}/bin/bash"
             substituteInPlace mdirsync --replace "bash" "${pkgs.bash}/bin/bash"
@@ -48,7 +48,7 @@
             substituteInPlace lookup --replace "grep" "${pkgs.gnugrep}/bin/grep"
             substituteInPlace build-biorg --replace "grep" "${pkgs.gnugrep}/bin/grep"
             substituteInPlace merge --replace "grep" "${pkgs.gnugrep}/bin/grep"
-            substituteInPlace "break-biorg.awk" --replace "grep" "${pkgs.gnugrep}/bin/grep"
+            substituteInPlace break-biorg --replace "grep" "${pkgs.gnugrep}/bin/grep"
           '';
           installPhase = ''
             mkdir -p $out/bin/
