@@ -149,123 +149,6 @@ async function queryMetadir(searchParams, callback, config_name = "metadir.json"
   return cache
 }
 
-const SPEC_URL = 'https://git-lfs.github.com/spec/v1';
-const LFS_POINTER_PREAMBLE = `version ${SPEC_URL}\n`;
-function pointsToLFS(content) {
-  return (
-    content[0] === 118) // 'v'
-    // && content.subarray(0, 100).indexOf(LFS_POINTER_PREAMBLE) === 0);
-    // tries to find preamble at the start of the pointer, fails for some reason
-}
-
-async function bodyToBuffer(body) {
-  const buffers = [];
-  let offset = 0;
-  let size = 0;
-  for await (const chunk of body) {
-    buffers.push(chunk);
-    size += chunk.byteLength;
-  }
-
-  const result = new Uint8Array(size);
-  for (const buffer of buffers) {
-    result.set(buffer, offset);
-    offset += buffer.byteLength;
-  }
-  return Buffer.from(result.buffer);
-}
-
-async function resolveLFS(path, callback, url, token) {
-
-  var restext = await callback.fetch(path);
-  var lines = restext.split('\n')
-  var oid = lines[1].slice(11)
-  var size = parseInt(lines[2].slice(5))
-
-  const lfsInfoRequestData = {
-    operation: 'download',
-    objects: [{oid, size}],
-    transfers: ['basic'],
-    ref: { name: "refs/heads/main" },
-  }
-
-  var lfsInfoBody
-  if (token != "") {
-    const { body } = await http.request({
-      url: `${url}/info/lfs/objects/batch`,
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${Buffer.from(`${token}:`).toString('base64')}`,
-        'Accept': 'application/vnd.git-lfs+json',
-        'Content-Type': 'application/vnd.git-lfs+json',
-      },
-      body: [Buffer.from(JSON.stringify(lfsInfoRequestData))],
-    });
-    lfsInfoBody = body
-  } else {
-    const { body } = await http.request({
-      url: `${url}/info/lfs/objects/batch`,
-      method: 'POST',
-      headers: {
-        'Accept': 'application/vnd.git-lfs+json',
-        'Content-Type': 'application/vnd.git-lfs+json',
-      },
-      body: [Buffer.from(JSON.stringify(lfsInfoRequestData))],
-    });
-    lfsInfoBody = body
-  }
-
-  var lfsInfoResponseRaw = (await bodyToBuffer(lfsInfoBody)).toString()
-  var lfsInfoResponse = JSON.parse(lfsInfoResponseRaw)
-  var downloadAction = lfsInfoResponse.objects[0].actions.download
-  const lfsObjectDownloadURL = downloadAction.href;
-  const lfsObjectDownloadHeaders = downloadAction.header ?? {};
-
-  const { body: lfsObjectBody } = await http.request({
-    url: lfsObjectDownloadURL,
-    method: 'GET',
-    headers: lfsObjectDownloadHeaders,
-  });
-
-  var lfsObjectBuffer = await bodyToBuffer(lfsObjectBody)
-  const blob = new Blob([lfsObjectBuffer]);
-
-  return URL.createObjectURL(blob)
-
-}
-
-// check if a filepath exists on local,
-// try to fetch lfs on remote,
-// otherwise return empty string.
-// if filepath is "path/to",
-// return either "/api/assets/path/to"
-// or /api/lfs/path/to" for local,
-// "/lfs/blob/uri" for remote,
-// or an empty string.
-async function resolveAssetPath(filepath, callback, url, token) {
-
-  if (filepath === "") {
-    return ""
-  }
-  const { REACT_APP_BUILD_MODE } = process.env;
-
-  if (REACT_APP_BUILD_MODE === "local") {
-    let localpath = "/api/local/" + filepath
-    if ((await fetch(localpath)).ok) {
-      return localpath
-    }
-    let lfspath = "/api/lfs/" + filepath
-    if ((await fetch(lfspath)).ok) {
-      return lfspath
-    }
-    return ""
-  } else {
-    let lfspath_local = "lfs/" + filepath
-    let lfspath_remote = await resolveLFS(lfspath_local, callback, url, token)
-    return lfspath_remote
-  }
-}
-
 function includes(file, line) {
   return file.includes(line)
 }
@@ -370,7 +253,6 @@ export {
   test,
   lookup,
   queryMetadir,
-  resolveAssetPath,
   editEvent,
   deleteEvent
 }

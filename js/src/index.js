@@ -2,7 +2,6 @@ export {
   test,
   lookup,
   queryMetadir,
-  resolveAssetPath,
   editEvent,
   deleteEvent
 } from './main'
