@@ -1,8 +1,5 @@
-import http from 'isomorphic-git/http/web'
-import LightningFS from '@isomorphic-git/lightning-fs'
-import git from 'isomorphic-git'
 import { grep } from '@fetsorn/wasm-grep'
-import { fetchDataMetadir, digestMessage, digestRandom } from './util'
+import { digestMessage, digestRandom } from './util'
 
 async function test() {
   console.log("da")
@@ -19,26 +16,26 @@ function lookup(lines, uuid) {
   }
 }
 
-async function queryMetadir(searchParams, pfs, dir, config_name = "metadir.json") {
+async function queryMetadir(searchParams, callback, config_name = "metadir.json") {
 
-  let config = JSON.parse(await fetchDataMetadir(config_name, pfs, dir))
+  let config = JSON.parse(await callback.fetch(config_name))
 
   let config_props = Object.keys(config)
   let root = config_props.find(prop => !config[prop].hasOwnProperty("parent"))
 
   var csv = {}
-  csv[`${root}_index`] = (await fetchDataMetadir(`metadir/props/${root}/index.csv`, pfs, dir)).split('\n')
+  csv[`${root}_index`] = (await callback.fetch(`metadir/props/${root}/index.csv`)).split('\n')
   for (var i in config_props) {
     let prop = config_props[i]
      if (prop != root) {
        let parent = config[prop]['parent']
-       let pair_file = await fetchDataMetadir(`metadir/pairs/${parent}-${prop}.csv`, pfs, dir)
+       let pair_file = await callback.fetch(`metadir/pairs/${parent}-${prop}.csv`)
        if (pair_file) {
          csv[`${parent}_${prop}_pair_file`] = pair_file
          csv[`${parent}_${prop}_pair`] = csv[`${parent}_${prop}_pair_file`].split('\n')
        }
        let prop_dir = config[prop]['dir'] ?? prop
-       let index_file = await fetchDataMetadir(`metadir/props/${prop_dir}/index.csv`, pfs, dir)
+       let index_file = await callback.fetch(`metadir/props/${prop_dir}/index.csv`)
        if (index_file) {
          csv[`${prop_dir}_index_file`] = index_file
          csv[`${prop_dir}_index`] = csv[`${prop_dir}_index_file`].split('\n')
@@ -50,7 +47,7 @@ async function queryMetadir(searchParams, pfs, dir, config_name = "metadir.json"
 
   if (searchParams.has('rulename')) {
     var rulename = searchParams.get('rulename')
-    let rulefile = await fetchDataMetadir(`metadir/props/pathrule/rules/${rulename}.rule`, pfs, dir)
+    let rulefile = await callback.fetch(`metadir/props/pathrule/rules/${rulename}.rule`)
     let filepath_grep = await grep(csv['filepath_index_file'], rulefile)
     let filepath_lines = filepath_grep.replace(/\n*$/, "").split("\n").filter(line => line != "")
     let filepath_uuids = filepath_lines.map(line => line.slice(0,64))
@@ -178,22 +175,9 @@ async function bodyToBuffer(body) {
   return Buffer.from(result.buffer);
 }
 
-async function resolveLFS(path, pfs, dir, url, token) {
+async function resolveLFS(path, callback, url, token) {
 
-  var path_elements = path.split('/')
-
-  var root = dir
-  for (var i=0; i < path_elements.length; i++) {
-    let path_element = path_elements[i]
-    var files = await pfs.readdir(root);
-    if (files.includes(path_element)) {
-      root += '/' + path_element
-    } else {
-      console.error(`Cannot load file. Ensure there is a file called ${path_element} in ${root}.`);
-      return ""
-    }
-  }
-  var restext = new TextDecoder().decode(await pfs.readFile(dir + "/" + path));
+  var restext = await callback.fetch(path);
   var lines = restext.split('\n')
   var oid = lines[1].slice(11)
   var size = parseInt(lines[2].slice(5))
@@ -258,7 +242,7 @@ async function resolveLFS(path, pfs, dir, url, token) {
 // or /api/lfs/path/to" for local,
 // "/lfs/blob/uri" for remote,
 // or an empty string.
-async function resolveAssetPath(filepath, pfs, dir, url, token) {
+async function resolveAssetPath(filepath, callback, url, token) {
 
   if (filepath === "") {
     return ""
@@ -277,7 +261,7 @@ async function resolveAssetPath(filepath, pfs, dir, url, token) {
     return ""
   } else {
     let lfspath_local = "lfs/" + filepath
-    let lfspath_remote = await resolveLFS(lfspath_local, pfs, dir, url, token)
+    let lfspath_remote = await resolveLFS(lfspath_local, callback, url, token)
     return lfspath_remote
   }
 }
@@ -289,37 +273,37 @@ function prune(file, regex) {
   return file.split('\n').filter(line => !(new RegExp(regex)).test(line)).join('\n')
 }
 
-async function deleteEvent(root_uuid, pfs, dir, config_name = "metadir.json") {
+async function deleteEvent(root_uuid, callback, config_name = "metadir.json") {
 
-  let config = JSON.parse(await fetchDataMetadir(config_name, pfs, dir))
+  let config = JSON.parse(await callback.fetch(config_name))
 
   let config_props = Object.keys(config)
   let root = config_props.find(prop => !config[prop].hasOwnProperty("parent"))
   let props = config_props.filter(prop => config[prop].parent == root)
 
   let index_path = `metadir/props/${root}/index.csv`
-  let index_file = await fetchDataMetadir(index_path, pfs, dir)
+  let index_file = await callback.fetch(index_path)
   if (index_file) {
-      await pfs.writeFile(dir + index_path,
-                                  prune(index_file, root_uuid),
-                                  'utf8')
+    await callback.write(index_path,
+                         prune(index_file, root_uuid),
+                         'utf8')
   }
 
   for (var i in props) {
     let prop = props[i]
     let pair_path = `metadir/pairs/${root}-${prop}.csv`
-    let pair_file = await fetchDataMetadir(pair_path, pfs, dir)
+    let pair_file = await callback.fetch(pair_path)
     if (pair_file) {
-      await pfs.writeFile(dir + pair_path,
-                                  prune(pair_file, root_uuid),
-                                  'utf8')
+      await callback.write(pair_path,
+                           prune(pair_file, root_uuid),
+                           'utf8')
     }
   }
 }
 
-async function editEvent(event, pfs, dir, config_name = "metadir.json") {
+async function editEvent(event, callback, config_name = "metadir.json") {
 
-  let config = JSON.parse(await fetchDataMetadir(config_name, pfs, dir))
+  let config = JSON.parse(await callback.fetch(config_name))
 
   let config_props = Object.keys(config)
   let root = config_props.find(prop => !config[prop].hasOwnProperty("parent"))
@@ -357,27 +341,27 @@ async function editEvent(event, pfs, dir, config_name = "metadir.json") {
     if (prop_type != "hash") {
       let prop_dir = config[prop]['dir'] ?? prop
       let index_path = `metadir/props/${prop_dir}/index.csv`
-      let index_file = await fetchDataMetadir(index_path, pfs, dir)
+      let index_file = await callback.fetch(index_path)
       if (prop_type == "string") {
         prop_value = JSON.stringify(prop_value)
       }
       let index_line = `${prop_uuid},${prop_value}\n`
       if (!includes(index_file, index_line)) {
-        await pfs.writeFile(dir + index_path,
-                                    prune(index_file, prop_uuid) + index_line,
-                                    'utf8')
+        await callback.write(index_path,
+                             prune(index_file, prop_uuid) + index_line,
+                             'utf8')
       }
     }
     if (prop != root) {
       let parent = config[prop].parent
       let parent_uuid = uuids[parent]
       let pair_path = `metadir/pairs/${parent}-${prop}.csv`
-      let pair_file = await fetchDataMetadir(pair_path, pfs, dir)
+      let pair_file = await callback.fetch(pair_path)
       let pair_line = `${parent_uuid},${prop_uuid}\n`
       if (!includes(pair_file, pair_line)) {
-        await pfs.writeFile(dir + pair_path,
-                                    prune(pair_file, parent_uuid) + pair_line,
-                                    'utf8')
+        await callback.write(pair_path,
+                             prune(pair_file, parent_uuid) + pair_line,
+                             'utf8')
       }
     }
   }
@@ -386,36 +370,11 @@ async function editEvent(event, pfs, dir, config_name = "metadir.json") {
 
 }
 
-async function commit(fs, dir, token, ref) {
-    await git.add({fs, dir, filepath: "."})
-    let sha = await git.commit({
-      fs,
-      dir,
-      message: 'antea edit',
-      author: {
-        name: 'name',
-        email: 'name@mail.com'
-      }
-    })
-    let pushResult = await git.push({
-      fs,
-      http,
-      dir,
-      remote: 'origin',
-      ref,
-      onAuth: () => ({
-        username: token
-      })
-    })
-    // console.log(pushResult)
-}
-
 export {
   test,
   lookup,
   queryMetadir,
   resolveAssetPath,
   editEvent,
-  deleteEvent,
-  commit
+  deleteEvent
 }

@@ -13,10 +13,5 @@ module.exports = {
   mode: "production",
   experiments: {
     asyncWebAssembly: true,
-  },
-  resolve: {
-    fallback: {
-      "buffer": require.resolve("buffer/")
-    },
-  },
+  }
 };

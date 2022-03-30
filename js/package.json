@@ -6,10 +6,7 @@
   "license": "MIT",
   "main": "dist/csvs.js",
   "dependencies": {
-    "@fetsorn/wasm-grep": "0.1.6",
-    "@isomorphic-git/lightning-fs": "^4.4.1",
-    "buffer": "^6.0.3",
-    "isomorphic-git": "^1.10.4"
+    "@fetsorn/wasm-grep": "0.1.6"
   },
   "devDependencies": {
     "@babel/core": "^7.17.8",

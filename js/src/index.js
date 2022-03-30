@@ -4,7 +4,6 @@ export {
   queryMetadir,
   resolveAssetPath,
   editEvent,
-  deleteEvent,
-  commit
+  deleteEvent
 } from './main'
-export { fetchDataMetadir, digestMessage, digestRandom } from './util'
+export { digestMessage, digestRandom } from './util'

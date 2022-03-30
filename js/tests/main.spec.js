@@ -278,7 +278,6 @@ jest.mock(('../src/util'), () => {
   return {
     __esModule: true,
     ...originalModule,
-    fetchDataMetadir: jest.fn((path) => filesMock[path]),
     digestRandom: jest.fn(() => "c55581aff06024b65866642ed14f73a6f0e555821f3366fd8f10d74570fac920")
   }
 })
@@ -293,25 +292,29 @@ function sortObject(a) {
   )
 }
 
+var callback = {
+  fetch: (path) => filesMock[path],
+}
+
 describe('queryMetadir', () => {
   test('queries name1', () => {
     var searchParams = new URLSearchParams()
     searchParams.set('hostname', 'name1')
-    return queryMetadir(searchParams, {}).then(data => {
+    return queryMetadir(searchParams, callback).then(data => {
       expect(data).toStrictEqual([sortObject(event1)])
     })
   })
   test('queries name2', () => {
     var searchParams = new URLSearchParams()
     searchParams.set('hostname', 'name2')
-    return queryMetadir(searchParams, {}).then(data => {
+    return queryMetadir(searchParams, callback).then(data => {
       expect(data).toStrictEqual([sortObject(event2)])
     })
   })
   test('queries name3', () => {
     var searchParams = new URLSearchParams()
     searchParams.set('hostname', 'name3')
-    return queryMetadir(searchParams, {}).then(data => {
+    return queryMetadir(searchParams, callback).then(data => {
       expect(data).toStrictEqual([sortObject(event3)])
     })
   })
@@ -320,29 +323,28 @@ describe('queryMetadir', () => {
 describe('editEvent', () => {
 
   let filesMockNew
-  let pfs
 
   beforeEach(() => {
     filesMockNew = { ...filesMock }
     async function writeFileMock(path, contents, encoding) {
       filesMockNew[path] = contents
     }
-    pfs = { "writeFile": jest.fn(writeFileMock) }
+    callback.write = writeFileMock
   })
   test('does nothing on no change', () => {
-    return editEvent(event1, pfs, dir)
+    return editEvent(event1, callback)
       .then(() => {
         expect(filesMockNew).toStrictEqual(filesMock)
       })
   })
   test('edits event', () => {
-    return editEvent(event3new, pfs, dir)
+    return editEvent(event3new, callback)
       .then(() => {
         expect(filesMockNew).toStrictEqual(filesMock3)
       })
   })
   test('adds event', () => {
-    return editEvent(event4edit, pfs, dir)
+    return editEvent(event4edit, callback)
       .then(() => {
         expect(filesMockNew).toStrictEqual(filesMock4)
       })
@@ -352,18 +354,17 @@ describe('editEvent', () => {
 describe('deleteEvent', () => {
 
   let filesMockNew
-  let pfs
 
   beforeEach(() => {
     filesMockNew = { ...filesMock }
     async function writeFileMock(path, contents, encoding) {
       filesMockNew[path] = contents
     }
-    pfs = { "writeFile": jest.fn(writeFileMock) }
+    callback.write = writeFileMock
   })
 
   test('deletes event', () => {
-    return deleteEvent(event3.UUID, pfs, dir)
+    return deleteEvent(event3.UUID, callback)
       .then(() => {
         expect(filesMockNew).toStrictEqual(filesMockNo3)
       })
