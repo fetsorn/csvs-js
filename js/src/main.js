@@ -285,8 +285,7 @@ async function deleteEvent(root_uuid, callback, config_name = "metadir.json") {
   let index_file = await callback.fetch(index_path)
   if (index_file) {
     await callback.write(index_path,
-                         prune(index_file, root_uuid),
-                         'utf8')
+                         prune(index_file, root_uuid))
   }
 
   for (var i in props) {
@@ -295,8 +294,7 @@ async function deleteEvent(root_uuid, callback, config_name = "metadir.json") {
     let pair_file = await callback.fetch(pair_path)
     if (pair_file) {
       await callback.write(pair_path,
-                           prune(pair_file, root_uuid),
-                           'utf8')
+                           prune(pair_file, root_uuid))
     }
   }
 }
@@ -348,8 +346,7 @@ async function editEvent(event, callback, config_name = "metadir.json") {
       let index_line = `${prop_uuid},${prop_value}\n`
       if (!includes(index_file, index_line)) {
         await callback.write(index_path,
-                             prune(index_file, prop_uuid) + index_line,
-                             'utf8')
+                             prune(index_file, prop_uuid) + index_line)
       }
     }
     if (prop != root) {
@@ -360,8 +357,7 @@ async function editEvent(event, callback, config_name = "metadir.json") {
       let pair_line = `${parent_uuid},${prop_uuid}\n`
       if (!includes(pair_file, pair_line)) {
         await callback.write(pair_path,
-                             prune(pair_file, parent_uuid) + pair_line,
-                             'utf8')
+                             prune(pair_file, parent_uuid) + pair_line)
       }
     }
   }
