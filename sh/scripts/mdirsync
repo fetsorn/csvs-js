@@ -62,7 +62,7 @@ SCRIPTS="${BASH_SOURCE%/*}"
 if [[ ! -d "$SCRIPTS" ]]; then SCRIPTS="$PWD"; fi
 
 # break biorg
-new=$(cat "$inbox" | awk -f $SCRIPTS/break-biorg.awk -v CONFIG="$config")
+new=$(cat "$inbox" | awk -f $SCRIPTS/break-biorg -v CONFIG="$config")
 printf 2>&1 "%s\n" "$new"
 # merge metadir
 bash $SCRIPTS/merge -c "$config" "$new" "$metadir"
