@@ -36,7 +36,7 @@ async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
   let schema_props = Object.keys(schema)
   let root = schema_props.find(prop => !schema[prop].hasOwnProperty("parent"))
 
-  var root_uuids
+  var root_uuids = []
   if (searchParams.has('pathrule')) {
     var pathrule = searchParams.get('pathrule')
     let rulefile = await fetch(`metadir/props/pathrule/rules/${pathrule}.rule`)
@@ -55,26 +55,18 @@ async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
       if (prop == "groupBy") { continue }
       let entry_value = entry[1]
       let prop_dir = schema[prop]['dir']
-      let prop_grep = await grep(csv[`${prop_dir}_index_file`], `${entry_value}\n`)
+      let prop_grep = await grep(csv[`${prop_dir}_index_file`], `,${entry_value}$\n`)
       let prop_lines = prop_grep.replace(/\n*$/, "").split("\n").filter(line => line != "")
       let prop_uuids = prop_lines.map(line => line.slice(0,64))
       let prop_uuids_list = prop_uuids.join("\n") + "\n"
-      if (!root_uuids) {
-        // find all pairs with one of the prop uuids
-        let prop_pair_grep = await grep(csv[`${root}_${prop}_pair_file`], prop_uuids_list)
-        // find root uuids of all found pairs
-        let prop_pair_lines = prop_pair_grep.replace(/\n*$/, "").split("\n").filter(line => line != "")
-        root_uuids = prop_pair_lines.map(line => line.slice(0,64))
-      } else {
-        // find all pairs with one of previously found root uuids
-        let root_uuids_list = root_uuids.join("\n" + "\n")
-        let oldroot_pair_grep = await grep(csv[`${root}_${prop}_pair_file`], root_uuids_list)
-        // find all pairs with one of the prop uuids
-        let prop_pair_grep = await grep(oldroot_pair_grep, prop_uuids_list)
-        // get root uuids of all found pairs
-        let prop_pair_lines = prop_pair_grep.replace(/\n*$/, "").split("\n").filter(line => line != "")
-        root_uuids = prop_pair_lines.map(line => line.slice(0,64))
-      }
+      // find all pairs with one of previously found root uuids
+      let root_uuids_list = root_uuids.join("\n" + "\n")
+      let oldroot_pair_grep = await grep(csv[`${root}_${prop}_pair_file`], root_uuids_list)
+      // find all pairs with one of the prop uuids
+      let prop_pair_grep = await grep(oldroot_pair_grep, prop_uuids_list)
+      // get root uuids of all found pairs
+      let prop_pair_lines = prop_pair_grep.replace(/\n*$/, "").split("\n").filter(line => line != "")
+      root_uuids = prop_pair_lines.map(line => line.slice(0,64))
     }
   }
 
