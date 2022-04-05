@@ -42,10 +42,18 @@ async function testQueryMetadir3(csvs, mocks) {
   expect(data.map(sortObject), [sortObject(mocks.event3)])
 }
 
-async function testQueryMetadir4(csvs, mocks) {
-  console.log('queries name')
+async function testQueryMetadirFalse(csvs, mocks) {
+  console.log('queries false')
   var searchParams = new URLSearchParams()
-  searchParams.set('hostname', 'name')
+  searchParams.set('hostname', 'false')
+  let data = await csvs.queryMetadir(searchParams, callback(mocks), true)
+  expect(data.map(sortObject),[])
+}
+
+async function testQueryMetadirWildcard(csvs, mocks) {
+  console.log('queries regexp')
+  var searchParams = new URLSearchParams()
+  searchParams.set('hostname', 'name.*')
   let data = await csvs.queryMetadir(searchParams, callback(mocks), true)
   expect(data.map(sortObject),[
     sortObject(mocks.event1),
@@ -54,21 +62,14 @@ async function testQueryMetadir4(csvs, mocks) {
   ])
 }
 
-async function testQueryMetadir4(csvs, mocks) {
-  console.log('queries false')
-  var searchParams = new URLSearchParams()
-  searchParams.set('hostname', 'false')
-  let data = await csvs.queryMetadir(searchParams, callback(mocks), true)
-  expect(data.map(sortObject),[])
-}
-
 async function testQueryMetadir(csvs, mocks) {
   console.log('queryMetadir')
 
   await testQueryMetadir1(csvs, mocks)
   await testQueryMetadir2(csvs, mocks)
   await testQueryMetadir3(csvs, mocks)
-  await testQueryMetadir4(csvs, mocks)
+  await testQueryMetadirFalse(csvs, mocks)
+  await testQueryMetadirWildcard(csvs, mocks)
 }
 
 async function test(csvs, mocks) {
