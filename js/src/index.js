@@ -1,6 +1,4 @@
 export {
-  test,
-  lookup,
   queryMetadir,
   editEvent,
   deleteEvent

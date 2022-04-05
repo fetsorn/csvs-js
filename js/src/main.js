@@ -60,7 +60,7 @@ async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
       let prop_uuids = prop_lines.map(line => line.slice(0,64))
       let prop_uuids_list = prop_uuids.join("\n") + "\n"
       // find all pairs with one of previously found root uuids
-      let root_uuids_list = root_uuids.join("\n" + "\n")
+      let root_uuids_list = root_uuids.join("\n") + "\n"
       let oldroot_pair_grep = await grep(csv[`${root}_${prop}_pair_file`], root_uuids_list)
       // find all pairs with one of the prop uuids
       let prop_pair_grep = await grep(oldroot_pair_grep, prop_uuids_list)
