@@ -1,12 +1,12 @@
 {
   "name": "@fetsorn/csvs-js",
   "description": "csvs: comma-separated value store, js bindings",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "author": "Anton Davydov <git@fetsorn.website>",
   "license": "MIT",
   "main": "dist/csvs.js",
   "dependencies": {
-    "@fetsorn/wasm-grep": "0.1.6"
+    "@fetsorn/wasm-grep": "0.1.7"
   },
   "devDependencies": {
     "@babel/core": "^7.17.8",

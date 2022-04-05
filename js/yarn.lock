@@ -1006,10 +1006,10 @@
   resolved "https://registry.yarnpkg.com/@discoveryjs/json-ext/-/json-ext-0.5.7.tgz#1d572bfbbe14b7704e0ba0f39b74815b84870d70"
   integrity sha512-dBVuXR082gk3jsFp7Rd/JI4kytwGHecnCoTtXFb7DB6CNHp4rg5k1bhg0nWdLGLnOV71lmDzGQaLMy8iPLY0pw==
 
-"@fetsorn/wasm-grep@0.1.6":
-  version "0.1.6"
-  resolved "https://registry.yarnpkg.com/@fetsorn/wasm-grep/-/wasm-grep-0.1.6.tgz#543c975326697905320b3d6987f50523de355394"
-  integrity sha512-oM3XZTkrqM5f8XXNo1wwLT1SW4y+rS5TaYHk3Y50N1kP0ZUVyB18KGY0pBrZx42jKhrj4z2ixiuyqcl4bHsz+w==
+"@fetsorn/wasm-grep@0.1.7":
+  version "0.1.7"
+  resolved "https://registry.yarnpkg.com/@fetsorn/wasm-grep/-/wasm-grep-0.1.7.tgz#ad4b60576ee27ab0817f1e17cb3f8bbf303efc93"
+  integrity sha512-3OvD5/pOsN/CCPidYHV8QSdrdckkvh37NaFNjHtH2TS5IFvxGHkumFO7J88qmMBRhxVPbz5boyiQyaZ4SEltIQ==
 
 "@istanbuljs/load-nyc-config@^1.0.0":
   version "1.1.0"

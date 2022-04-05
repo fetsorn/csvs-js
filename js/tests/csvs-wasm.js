@@ -54,6 +54,14 @@ async function testQueryMetadir4(csvs, mocks) {
   ])
 }
 
+async function testQueryMetadir4(csvs, mocks) {
+  console.log('queries false')
+  var searchParams = new URLSearchParams()
+  searchParams.set('hostname', 'false')
+  let data = await csvs.queryMetadir(searchParams, callback(mocks), true)
+  expect(data.map(sortObject),[])
+}
+
 async function testQueryMetadir(csvs, mocks) {
   console.log('queryMetadir')
 
