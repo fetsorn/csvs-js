@@ -7,12 +7,10 @@
   </head>
   <body>
     <script src="dist/csvs.js"></script>
+    <script src="tests/mockCSV.js"></script>
+    <script src="tests/csvs-wasm.js"></script>
     <script>
-     (async() => {
-         const init = await csvs
-         console.log(init)
-         await init.test()
-     })();
+     (async() => {await test(await csvs, mocks)})();
     </script>
   </body>
 </html>
