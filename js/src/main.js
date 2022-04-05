@@ -56,16 +56,18 @@ async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
       let entry_value = entry[1]
       let prop_dir = schema[prop]['dir']
       let prop_grep = await grep(csv[`${prop_dir}_index_file`], `,${entry_value}$\n`)
+      let prop_lines = prop_grep.replace(/\n*$/, "").split("\n").filter(line => line != "")
+      let prop_uuids = prop_lines.map(line => line.slice(0,64)).join("\n")
       let prop_pair_grep
       if (!root_uuids) {
         // find all pairs with one of the prop uuids
-        prop_pair_grep = await grep(csv[`${root}_${prop}_pair_file`], prop_grep)
+        prop_pair_grep = await grep(csv[`${root}_${prop}_pair_file`], prop_uuids)
       } else {
         // find all pairs with one of previously found root uuids
         let root_uuids_list = root_uuids.join("\n") + "\n"
         let oldroot_pair_grep = await grep(csv[`${root}_${prop}_pair_file`], root_uuids_list)
         // find all pairs with one of the prop uuids
-        prop_pair_grep = await grep(oldroot_pair_grep, prop_grep)
+        prop_pair_grep = await grep(oldroot_pair_grep, prop_uuids)
       }
       // get root uuids of all found pairs
       let prop_pair_lines = prop_pair_grep.replace(/\n*$/, "").split("\n").filter(line => line != "")
