@@ -49,7 +49,7 @@ async function recurseParents(schema, csv, prop, prop_uuids) {
   if (parent != root) {
     return await recurseParents(schema, csv, parent, parent_uuids)
   } else {
-    console.log("root reached", parent_uuids)
+    // console.log("root reached", parent_uuids)
     return parent_uuids
   }
 }
@@ -65,7 +65,7 @@ async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
     let pathrule = searchParams.get('pathrule')
     let rulefile = await fetch(`metadir/props/pathrule/rules/${pathrule}.rule`)
     let filepath_lines = await grep(csv['filepath_index_file'], rulefile)
-    let filepath_uuids = cutUUIDs(filepath_grep)
+    let filepath_uuids = cutUUIDs(filepath_lines)
     let datum_grep = await grep(csv['datum_filepath_pair_file'], filepath_uuids.join("\n"))
     root_uuids = cutUUIDs(datum_grep)
   } else {
@@ -80,7 +80,7 @@ async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
       let prop_lines = await grep(csv[`${prop_dir}_index_file`], `,${entry_value}$\n`)
       let prop_uuids = cutUUIDs(prop_lines)
       let root_uuids_new = await recurseParents(schema, csv, prop, prop_uuids)
-      console.log("new root found", root_uuids_new)
+      // console.log("new root found", root_uuids_new)
       if (!root_uuids) {
         root_uuids = root_uuids_new
       } else {
@@ -98,7 +98,7 @@ async function queryRootUuids(schema, csv, searchParams, fetch) {
   var root_uuids
   for (var entry of searchParams.entries()) {
     let prop = entry[0]
-    if (prop == "groupBy") { continue }
+    if (prop == "groupBy" || prop == "pathrule") { continue }
     let entry_value = entry[1]
     let entry_value_regexp = new RegExp("," + entry_value + "$")
     let prop_dir = schema[prop]['dir']
