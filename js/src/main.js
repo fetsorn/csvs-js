@@ -18,11 +18,13 @@ async function fetchCSV(schema, fetch) {
          csv[`${parent}_${prop}_pair_file`] = pair_file
          csv[`${parent}_${prop}_pair`] = csv[`${parent}_${prop}_pair_file`].split('\n')
        }
-       let prop_dir = schema[prop]['dir'] ?? prop
-       let index_file = await fetch(`metadir/props/${prop_dir}/index.csv`)
-       if (index_file) {
-         csv[`${prop_dir}_index_file`] = index_file
-         csv[`${prop_dir}_index`] = csv[`${prop_dir}_index_file`].split('\n')
+       if (schema[prop]['type'] != "hash") {
+         let prop_dir = schema[prop]['dir'] ?? prop
+         let index_file = await fetch(`metadir/props/${prop_dir}/index.csv`)
+         if (index_file) {
+           csv[`${prop_dir}_index_file`] = index_file
+           csv[`${prop_dir}_index`] = csv[`${prop_dir}_index_file`].split('\n')
+         }
        }
      }
   }

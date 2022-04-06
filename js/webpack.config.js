@@ -10,7 +10,7 @@ module.exports = {
       type: "umd",
     },
   },
-  mode: "production",
+  mode: "development",
   experiments: {
     asyncWebAssembly: true,
   }
