@@ -32,6 +32,28 @@ async function fetchCSV(schema, fetch) {
   return csv
 }
 
+// get a string of metadir lines, return array of uuids
+function cutUUIDs(grep) {
+  let lines = grep.replace(/\n*$/, "").split("\n").filter(line => line != "")
+  let uuids = lines.map(line => line.slice(0,64))
+  return uuids
+}
+
+// find parent uuids until root
+async function recurseParents(schema, csv, prop, prop_uuids) {
+  let root = Object.keys(schema).find(prop => !schema[prop].hasOwnProperty("parent"))
+  let parent = schema[prop]['parent']
+  // find all pairs with one of the prop uuids
+  let parent_lines = await grep(csv[`${parent}_${prop}_pair_file`], prop_uuids.join("\n"))
+  let parent_uuids = cutUUIDs(parent_lines)
+  if (parent != root) {
+    return await recurseParents(schema, csv, parent, parent_uuids)
+  } else {
+    console.log("root reached", parent_uuids)
+    return parent_uuids
+  }
+}
+
 // return root uuids that satisfy search params
 async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
 
@@ -40,14 +62,12 @@ async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
 
   var root_uuids
   if (searchParams.has('pathrule')) {
-    var pathrule = searchParams.get('pathrule')
+    let pathrule = searchParams.get('pathrule')
     let rulefile = await fetch(`metadir/props/pathrule/rules/${pathrule}.rule`)
-    let filepath_grep = await grep(csv['filepath_index_file'], rulefile)
-    let filepath_lines = filepath_grep.replace(/\n*$/, "").split("\n").filter(line => line != "")
-    let filepath_uuids = filepath_lines.map(line => line.slice(0,64))
-    let filepath_uuids_list = filepath_uuids.join("\n") + "\n"
-    let datum_grep = await grep(csv['datum_filepath_pair_file'], filepath_uuids_list)
-    root_uuids = datum_grep.replace(/\n*$/, "").split("\n").map(line => line.slice(0,64))
+    let filepath_lines = await grep(csv['filepath_index_file'], rulefile)
+    let filepath_uuids = cutUUIDs(filepath_grep)
+    let datum_grep = await grep(csv['datum_filepath_pair_file'], filepath_uuids.join("\n"))
+    root_uuids = cutUUIDs(datum_grep)
   } else {
     for (var entry of searchParams.entries()) {
       // if query is not found in the metadir
@@ -57,23 +77,15 @@ async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
       if (prop == "groupBy") { continue }
       let entry_value = entry[1]
       let prop_dir = schema[prop]['dir']
-      let prop_grep = await grep(csv[`${prop_dir}_index_file`], `,${entry_value}$\n`)
-      let prop_lines = prop_grep.replace(/\n*$/, "").split("\n").filter(line => line != "")
-      let prop_uuids = prop_lines.map(line => line.slice(0,64)).join("\n")
-      let prop_pair_grep
+      let prop_lines = await grep(csv[`${prop_dir}_index_file`], `,${entry_value}$\n`)
+      let prop_uuids = cutUUIDs(prop_lines)
+      let root_uuids_new = await recurseParents(schema, csv, prop, prop_uuids)
+      console.log("new root found", root_uuids_new)
       if (!root_uuids) {
-        // find all pairs with one of the prop uuids
-        prop_pair_grep = await grep(csv[`${root}_${prop}_pair_file`], prop_uuids)
+        root_uuids = root_uuids_new
       } else {
-        // find all pairs with one of previously found root uuids
-        let root_uuids_list = root_uuids.join("\n") + "\n"
-        let oldroot_pair_grep = await grep(csv[`${root}_${prop}_pair_file`], root_uuids_list)
-        // find all pairs with one of the prop uuids
-        prop_pair_grep = await grep(oldroot_pair_grep, prop_uuids)
+        root_uuids = await grep(root_uuids_new, root_uuids)
       }
-      // get root uuids of all found pairs
-      let prop_pair_lines = prop_pair_grep.replace(/\n*$/, "").split("\n").filter(line => line != "")
-      root_uuids = prop_pair_lines.map(line => line.slice(0,64))
     }
   }
 
