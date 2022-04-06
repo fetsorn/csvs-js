@@ -1,7 +1,7 @@
 {
   "name": "@fetsorn/csvs-js",
   "description": "csvs: comma-separated value store, js bindings",
-  "version": "0.2.8",
+  "version": "0.2.10",
   "author": "Anton Davydov <git@fetsorn.website>",
   "license": "MIT",
   "main": "dist/csvs.js",
