@@ -3,6 +3,7 @@ import { digestMessage, digestRandom } from './util'
 
 // cache all metadir csv files as a hashmap
 async function fetchCSV(schema, fetch) {
+  console.log("fetchCSV")
 
   let schema_props = Object.keys(schema)
   let root = schema_props.find(prop => !schema[prop].hasOwnProperty("parent"))
@@ -56,6 +57,7 @@ async function recurseParents(schema, csv, prop, prop_uuids) {
 
 // return root uuids that satisfy search params
 async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
+  console.log("queryRootUuidsWasm")
 
   let schema_props = Object.keys(schema)
   let root = schema_props.find(prop => !schema[prop].hasOwnProperty("parent"))
@@ -70,13 +72,11 @@ async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
     root_uuids = cutUUIDs(datum_grep)
   } else {
     for (var entry of searchParams.entries()) {
-      // if query is not found in the metadir
-      // fallback to an impossible regexp
-      // so that the filter ouputs empty list
       let prop = entry[0]
       if (prop == "groupBy") { continue }
       let entry_value = entry[1]
       let prop_dir = schema[prop]['dir']
+      console.log("grep", prop, `${prop_dir}_index_file`, `,${entry_value}$\n`)
       let prop_lines = await grep(csv[`${prop_dir}_index_file`], `,${entry_value}$\n`)
       let prop_uuids = cutUUIDs(prop_lines)
       let root_uuids_new = await recurseParents(schema, csv, prop, prop_uuids)
@@ -84,7 +84,7 @@ async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
       if (!root_uuids) {
         root_uuids = root_uuids_new
       } else {
-        root_uuids = await grep(root_uuids_new, root_uuids)
+        root_uuids = await grep(root_uuids_new.join("\n"), root_uuids)
       }
     }
   }
@@ -125,6 +125,7 @@ async function queryRootUuids(schema, csv, searchParams, fetch) {
 
 }
 
+// get a string of metadir lines, return value that corresponds to uuid
 function lookup(lines, uuid) {
   let line = lines.find(line => (new RegExp(uuid)).test(line))
   if (line) {
@@ -137,6 +138,7 @@ function lookup(lines, uuid) {
 
 // build an event for every root uuid
 async function buildEvents(schema, csv, searchParams, root_uuids) {
+  console.log("buildEvents")
 
   let schema_props = Object.keys(schema)
   let root = schema_props.find(prop => !schema[prop].hasOwnProperty("parent"))
@@ -194,6 +196,7 @@ async function buildEvents(schema, csv, searchParams, root_uuids) {
           let prop_dir = schema[prop]['dir'] ?? prop
           let index = csv[`${prop_dir}_index`] ?? []
           let prop_value = lookup(index, prop_uuid)
+          console.log(prop, parent, parent_uuid, prop_uuid, prop_value)
           // console.log("get", prop, prop_uuid, parent, parent_uuid, prop_value)
           if ( prop_value != undefined ) {
             let prop_type = schema[prop]['type']

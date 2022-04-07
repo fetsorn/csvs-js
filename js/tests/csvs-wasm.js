@@ -63,12 +63,23 @@ async function testQueryMetadirWildcard(csvs, mocks) {
 }
 
 async function testQueryMetadirRecurse(csvs, mocks) {
-  console.log('queries regexp')
+  console.log('queries moddate')
   var searchParams = new URLSearchParams()
   searchParams.set('moddate', '2001-01-01')
   let data = await csvs.queryMetadir(searchParams, callback(mocks), true)
   expect(data.map(sortObject),[
     sortObject(mocks.event1)
+  ])
+}
+
+async function testQueryMetadirRecurseWildcard(csvs, mocks) {
+  console.log('queries moddate wildcard')
+  var searchParams = new URLSearchParams()
+  searchParams.set('moddate', '.*-01-01')
+  let data = await csvs.queryMetadir(searchParams, callback(mocks), true)
+  expect(data.map(sortObject),[
+    sortObject(mocks.event1),
+    sortObject(mocks.event2)
   ])
 }
 
@@ -81,6 +92,7 @@ async function testQueryMetadir(csvs, mocks) {
   await testQueryMetadirFalse(csvs, mocks)
   await testQueryMetadirWildcard(csvs, mocks)
   await testQueryMetadirRecurse(csvs, mocks)
+  await testQueryMetadirRecurseWildcard(csvs, mocks)
 }
 
 async function test(csvs, mocks) {
