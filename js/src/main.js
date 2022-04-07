@@ -3,7 +3,7 @@ import { digestMessage, digestRandom } from './util'
 
 // cache all metadir csv files as a hashmap
 async function fetchCSV(schema, fetch) {
-  console.log("fetchCSV")
+  // console.log("fetchCSV")
 
   let schema_props = Object.keys(schema)
   let root = schema_props.find(prop => !schema[prop].hasOwnProperty("parent"))
@@ -35,34 +35,34 @@ async function fetchCSV(schema, fetch) {
 
 // get a string of metadir lines, return array of uuids
 function cutUUIDs(grep) {
-  console.log("cutUUIDs")
+  // console.log("cutUUIDs")
   let lines = grep.replace(/\n*$/, "").split("\n").filter(line => line != "")
   let uuids = lines.map(line => line.slice(0,64))
-  console.log(lines, uuids)
+  // console.log(lines, uuids)
   return uuids
 }
 
 // find parent uuids until root
 async function recurseParents(schema, csv, prop, prop_uuids) {
-  console.log("recurseParents")
+  // console.log("recurseParents")
   let root = Object.keys(schema).find(prop => !schema[prop].hasOwnProperty("parent"))
   let parent = schema[prop]['parent']
-  console.log("recurse", prop, parent, prop_uuids)
+  console.log(`search ${csv[`${parent}_${prop}_pair_file`].split("\n").length} parent ${parent} uuids against ${prop_uuids.length} ${prop} uuids`, prop_uuids)
   // find all pairs with one of the prop uuids
   let parent_lines = await grep(csv[`${parent}_${prop}_pair_file`], prop_uuids.join("\n"))
   let parent_uuids = cutUUIDs(parent_lines)
   if (parent != root) {
-    console.log(`${prop}'s parent ${parent} is not root ${root}`)
+    // console.log(`${prop}'s parent ${parent} is not root ${root}`)
     return await recurseParents(schema, csv, parent, parent_uuids)
   } else {
-    console.log("root reached", parent_uuids)
+    // console.log("root reached", parent_uuids)
     return parent_uuids
   }
 }
 
 // return root uuids that satisfy search params
 async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
-  console.log("queryRootUuidsWasm")
+  // console.log("queryRootUuidsWasm")
 
   let schema_props = Object.keys(schema)
   let root = schema_props.find(prop => !schema[prop].hasOwnProperty("parent"))
@@ -81,12 +81,12 @@ async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
       if (prop == "groupBy") { continue }
       let entry_value = entry[1]
       let prop_dir = schema[prop]['dir']
-      console.log("grep", prop, `${prop_dir}_index_file`, `,${entry_value}$\n`)
+      console.log(`grep ${prop} in ${prop_dir}_index_file for ,${entry_value}$\n`)
       let prop_lines = await grep(csv[`${prop_dir}_index_file`], `,${entry_value}$\n`)
       let prop_uuids = cutUUIDs(prop_lines)
       let root_uuids_new = await recurseParents(schema, csv, prop, prop_uuids)
       // console.log("new root found", root_uuids_new)
-      console.log(!root_uuids, root_uuids_new, root_uuids)
+      // console.log(!root_uuids, root_uuids_new, root_uuids)
       if (!root_uuids) {
         root_uuids = root_uuids_new
       } else {
@@ -144,7 +144,7 @@ function lookup(lines, uuid) {
 
 // build an event for every root uuid
 async function buildEvents(schema, csv, searchParams, root_uuids) {
-  console.log("buildEvents")
+  // console.log("buildEvents")
 
   let schema_props = Object.keys(schema)
   let root = schema_props.find(prop => !schema[prop].hasOwnProperty("parent"))
@@ -202,7 +202,7 @@ async function buildEvents(schema, csv, searchParams, root_uuids) {
           let prop_dir = schema[prop]['dir'] ?? prop
           let index = csv[`${prop_dir}_index`] ?? []
           let prop_value = lookup(index, prop_uuid)
-          console.log(prop, parent, parent_uuid, prop_uuid, prop_value)
+          // console.log(prop, parent, parent_uuid, prop_uuid, prop_value)
           // console.log("get", prop, prop_uuid, parent, parent_uuid, prop_value)
           if ( prop_value != undefined ) {
             let prop_type = schema[prop]['type']
