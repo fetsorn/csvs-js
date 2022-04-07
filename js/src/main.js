@@ -67,7 +67,10 @@ async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
   let schema_props = Object.keys(schema)
   let root = schema_props.find(prop => !schema[prop].hasOwnProperty("parent"))
 
+  // TODO instead of recursing to root on each search param and resolving grep
+  // resolve each non-root parent prop first
   var root_uuids
+  // TODO merge with the rest, substitute prop for parent's on exit
   if (searchParams.has('pathrule')) {
     let pathrule = searchParams.get('pathrule')
     let rulefile = await fetch(`metadir/props/pathrule/rules/${pathrule}.rule`)
@@ -144,7 +147,7 @@ function lookup(lines, uuid) {
 
 // build an event for every root uuid
 async function buildEvents(schema, csv, searchParams, root_uuids) {
-  // console.log("buildEvents")
+  console.log(`build ${root_uuids.length} events`)
 
   let schema_props = Object.keys(schema)
   let root = schema_props.find(prop => !schema[prop].hasOwnProperty("parent"))
