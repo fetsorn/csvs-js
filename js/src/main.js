@@ -35,8 +35,10 @@ async function fetchCSV(schema, fetch) {
 
 // get a string of metadir lines, return array of uuids
 function cutUUIDs(grep) {
+  console.log("cutUUIDs")
   let lines = grep.replace(/\n*$/, "").split("\n").filter(line => line != "")
   let uuids = lines.map(line => line.slice(0,64))
+  console.log(lines, uuids)
   return uuids
 }
 
@@ -45,14 +47,15 @@ async function recurseParents(schema, csv, prop, prop_uuids) {
   console.log("recurseParents")
   let root = Object.keys(schema).find(prop => !schema[prop].hasOwnProperty("parent"))
   let parent = schema[prop]['parent']
+  console.log("recurse", prop, parent, prop_uuids)
   // find all pairs with one of the prop uuids
   let parent_lines = await grep(csv[`${parent}_${prop}_pair_file`], prop_uuids.join("\n"))
   let parent_uuids = cutUUIDs(parent_lines)
   if (parent != root) {
-    console.log(prop, parent, root)
+    console.log(`${prop}'s parent ${parent} is not root ${root}`)
     return await recurseParents(schema, csv, parent, parent_uuids)
   } else {
-    // console.log("root reached", parent_uuids)
+    console.log("root reached", parent_uuids)
     return parent_uuids
   }
 }
