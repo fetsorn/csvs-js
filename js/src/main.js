@@ -42,12 +42,14 @@ function cutUUIDs(grep) {
 
 // find parent uuids until root
 async function recurseParents(schema, csv, prop, prop_uuids) {
+  console.log("recurseParents")
   let root = Object.keys(schema).find(prop => !schema[prop].hasOwnProperty("parent"))
   let parent = schema[prop]['parent']
   // find all pairs with one of the prop uuids
   let parent_lines = await grep(csv[`${parent}_${prop}_pair_file`], prop_uuids.join("\n"))
   let parent_uuids = cutUUIDs(parent_lines)
   if (parent != root) {
+    console.log(prop, parent, root)
     return await recurseParents(schema, csv, parent, parent_uuids)
   } else {
     // console.log("root reached", parent_uuids)
@@ -81,6 +83,7 @@ async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
       let prop_uuids = cutUUIDs(prop_lines)
       let root_uuids_new = await recurseParents(schema, csv, prop, prop_uuids)
       // console.log("new root found", root_uuids_new)
+      console.log(!root_uuids, root_uuids_new, root_uuids)
       if (!root_uuids) {
         root_uuids = root_uuids_new
       } else {
