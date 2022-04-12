@@ -74,17 +74,19 @@ async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
     let prop = entry[0]
     if (prop == "groupBy") { continue }
     let prop_dir = schema[prop]['dir'] ?? prop
-    let entry_value = entry[1]
+    let prop_value = entry[1]
     var root_uuids_new
     if (schema[prop]['type'] == "rule") {
-      let rulefile = await fetch(`metadir/props/${prop_dir}/rules/${entry_value}.rule`)
+      let rulefile = await fetch(`metadir/props/${prop_dir}/rules/${prop_value}.rule`)
       let parent = schema[prop]['parent']
-      let parent_lines = await grep(csv[`${parent}_index_file`], rulefile)
+      let parent_dir = schema[prop]['parent'] ?? parent
+      console.log(`grep ${parent} in ${parent_dir}_index_file for ${prop_value}.rule`)
+      let parent_lines = await grep(csv[`${parent_dir}_index_file`], rulefile)
       let parent_uuids = cutUUIDs(parent_lines)
       root_uuids_new = await recurseParents(schema, csv, parent, parent_uuids)
     } else {
-      console.log(`grep ${prop} in ${prop_dir}_index_file for ,${entry_value}$\n`)
-      let prop_lines = await grep(csv[`${prop_dir}_index_file`], `,${entry_value}$\n`)
+      console.log(`grep ${prop} in ${prop_dir}_index_file for ,${prop_value}$\n`)
+      let prop_lines = await grep(csv[`${prop_dir}_index_file`], `,${prop_value}$\n`)
       let prop_uuids = cutUUIDs(prop_lines)
       root_uuids_new = await recurseParents(schema, csv, prop, prop_uuids)
     }
@@ -277,10 +279,6 @@ async function editEvent(event, callback, schema_name = "metadir.json") {
   }
 
   if (!event.UUID) {
-    // allow to mock digestRandom for testing
-    // if (!callback.digestRandom) {
-      // callback.digestRandom = digestRandom
-    // }
     event.UUID = await digestRandom()
   }
 
