@@ -178,7 +178,8 @@ async function buildEvents(schema, csv, searchParams, root_uuids) {
     // TODO add queue to support the second level of props out of config order
     for (var i in schema_props) {
       let prop = schema_props[i]
-      if (prop != root) {
+      let prop_type = schema[prop]['type']
+      if (prop != root && prop_type != 'rule') {
         let parent = schema[prop]['parent']
         let pair = csv[`${parent}_${prop}_pair`] ?? ['']
         let parent_uuid = uuids[parent]
@@ -190,7 +191,6 @@ async function buildEvents(schema, csv, searchParams, root_uuids) {
         // console.log(prop, parent, parent_uuid, prop_uuid, prop_value)
         // console.log("get", prop, prop_uuid, parent, parent_uuid, prop_value)
         if ( prop_value != undefined ) {
-          let prop_type = schema[prop]['type']
           if (prop_type == "string") {
             // console.log("try to parse", prop, prop_value)
             prop_value = JSON.parse(prop_value)
