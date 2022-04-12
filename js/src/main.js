@@ -12,22 +12,23 @@ async function fetchCSV(schema, fetch) {
   csv[`${root}_index`] = (await fetch(`metadir/props/${root}/index.csv`)).split('\n')
   for (var i in schema_props) {
     let prop = schema_props[i]
-     if (prop != root) {
-       let parent = schema[prop]['parent']
-       let pair_file = await fetch(`metadir/pairs/${parent}-${prop}.csv`)
-       if (pair_file) {
-         csv[`${parent}_${prop}_pair_file`] = pair_file
-         csv[`${parent}_${prop}_pair`] = csv[`${parent}_${prop}_pair_file`].split('\n')
-       }
-       if (schema[prop]['type'] != "hash") {
-         let prop_dir = schema[prop]['dir'] ?? prop
-         let index_file = await fetch(`metadir/props/${prop_dir}/index.csv`)
-         if (index_file) {
-           csv[`${prop_dir}_index_file`] = index_file
-           csv[`${prop_dir}_index`] = csv[`${prop_dir}_index_file`].split('\n')
-         }
-       }
-     }
+    let prop_type = schema[prop]['type']
+    if (prop != root && prop_type != "rule") {
+      let parent = schema[prop]['parent']
+      let pair_file = await fetch(`metadir/pairs/${parent}-${prop}.csv`)
+      if (pair_file) {
+        csv[`${parent}_${prop}_pair_file`] = pair_file
+        csv[`${parent}_${prop}_pair`] = csv[`${parent}_${prop}_pair_file`].split('\n')
+      }
+      if (prop_type != "hash") {
+        let prop_dir = schema[prop]['dir'] ?? prop
+        let index_file = await fetch(`metadir/props/${prop_dir}/index.csv`)
+        if (index_file) {
+          csv[`${prop_dir}_index_file`] = index_file
+          csv[`${prop_dir}_index`] = csv[`${prop_dir}_index_file`].split('\n')
+        }
+      }
+    }
   }
 
   return csv
