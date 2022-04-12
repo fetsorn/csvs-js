@@ -68,33 +68,30 @@ async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
   let root = schema_props.find(prop => !schema[prop].hasOwnProperty("parent"))
 
   // TODO instead of recursing to root on each search param and resolving grep
-  // resolve each non-root parent prop first
+  // resolve each non-root parent prop first to save time
   var root_uuids
-  // TODO merge with the rest, substitute prop for parent's on exit
-  if (searchParams.has('pathrule')) {
-    let pathrule = searchParams.get('pathrule')
-    let rulefile = await fetch(`metadir/props/pathrule/rules/${pathrule}.rule`)
-    let filepath_lines = await grep(csv['filepath_index_file'], rulefile)
-    let filepath_uuids = cutUUIDs(filepath_lines)
-    let datum_grep = await grep(csv['datum_filepath_pair_file'], filepath_uuids.join("\n"))
-    root_uuids = cutUUIDs(datum_grep)
-  } else {
-    for (var entry of searchParams.entries()) {
-      let prop = entry[0]
-      if (prop == "groupBy") { continue }
-      let entry_value = entry[1]
-      let prop_dir = schema[prop]['dir']
+  for (var entry of searchParams.entries()) {
+    let prop = entry[0]
+    if (prop == "groupBy") { continue }
+    let prop_dir = schema[prop]['dir'] ?? prop
+    let entry_value = entry[1]
+    var root_uuids_new
+    if (schema[prop]['type'] == "rule") {
+      let rulefile = await fetch(`metadir/props/${prop_dir}/rules/${entry_value}.rule`)
+      let parent = schema[prop]['parent']
+      let parent_lines = await grep(csv[`${parent}_index_file`], rulefile)
+      let parent_uuids = cutUUIDs(parent_lines)
+      root_uuids_new = await recurseParents(schema, csv, parent, parent_uuids)
+    } else {
       console.log(`grep ${prop} in ${prop_dir}_index_file for ,${entry_value}$\n`)
       let prop_lines = await grep(csv[`${prop_dir}_index_file`], `,${entry_value}$\n`)
       let prop_uuids = cutUUIDs(prop_lines)
-      let root_uuids_new = await recurseParents(schema, csv, prop, prop_uuids)
-      // console.log("new root found", root_uuids_new)
-      // console.log(!root_uuids, root_uuids_new, root_uuids)
-      if (!root_uuids) {
-        root_uuids = root_uuids_new
-      } else {
-        root_uuids = await grep(root_uuids_new.join("\n"), root_uuids)
-      }
+      root_uuids_new = await recurseParents(schema, csv, prop, prop_uuids)
+    }
+    if (!root_uuids) {
+      root_uuids = root_uuids_new
+    } else {
+      root_uuids = await grep(root_uuids_new.join("\n"), root_uuids)
     }
   }
 
@@ -107,7 +104,7 @@ async function queryRootUuids(schema, csv, searchParams, fetch) {
   var root_uuids
   for (var entry of searchParams.entries()) {
     let prop = entry[0]
-    if (prop == "groupBy" || prop == "pathrule") { continue }
+    if (prop == "groupBy" || schema[prop]['type'] == "rule") { continue }
     let entry_value = entry[1]
     let entry_value_regexp = new RegExp("," + entry_value + "$")
     let prop_dir = schema[prop]['dir']
@@ -168,55 +165,36 @@ async function buildEvents(schema, csv, searchParams, root_uuids) {
       event[root_label] = root_value
     }
 
-    // TODO can this not be hardcoded?
-    if (searchParams.has('pathrule')) {
-      let filepath_uuid = lookup(csv['datum_filepath_pair'],root_uuid)
-      let moddate_uuid = lookup(csv['filepath_moddate_pair'],filepath_uuid)
-      // if datum doesn't have a date to group by, skip it
-      if (moddate_uuid === "") {
-        continue
-      }
-      let moddate = lookup(csv['date_index'],moddate_uuid)
-      let filepath_escaped = lookup(csv['filepath_index'],filepath_uuid)
-      let filepath = JSON.parse(filepath_escaped)
-      event.FILE_PATH = filepath
-      event.GUEST_DATE = moddate
-      event.HOST_DATE = moddate
-      event.GUEST_NAME = "fetsorn"
-      event.HOST_NAME = "fetsorn"
-    } else {
+    let uuids = {}
+    uuids[root] = root_uuid
 
-      let uuids = {}
-      uuids[root] = root_uuid
-
-      // if query is not found in the metadir
-      // fallback to an impossible regexp
-      // so that next search on uuid fails
-      let falseRegex = "\\b\\B"
-      // TODO add queue to support the second level of props
-      for (var i in schema_props) {
-        let prop = schema_props[i]
-        if (prop != root) {
-          let parent = schema[prop]['parent']
-          let pair = csv[`${parent}_${prop}_pair`] ?? ['']
-          let parent_uuid = uuids[parent]
-          let prop_uuid = lookup(pair, parent_uuid) ?? falseRegex
-          uuids[prop] = prop_uuid
-          let prop_dir = schema[prop]['dir'] ?? prop
-          let index = csv[`${prop_dir}_index`] ?? []
-          let prop_value = lookup(index, prop_uuid)
-          // console.log(prop, parent, parent_uuid, prop_uuid, prop_value)
-          // console.log("get", prop, prop_uuid, parent, parent_uuid, prop_value)
-          if ( prop_value != undefined ) {
-            let prop_type = schema[prop]['type']
-            if (prop_type == "string") {
-              // console.log("try to parse", prop, prop_value)
-              prop_value = JSON.parse(prop_value)
-            }
-            let label = schema[prop]['label'] ?? prop
-            // console.log("set", prop, prop_uuid, parent, parent_uuid, prop_value)
-            event[label] = prop_value
+    // if query is not found in the metadir
+    // fallback to an impossible regexp
+    // so that next search on uuid fails
+    let falseRegex = "\\b\\B"
+    // TODO add queue to support the second level of props out of config order
+    for (var i in schema_props) {
+      let prop = schema_props[i]
+      if (prop != root) {
+        let parent = schema[prop]['parent']
+        let pair = csv[`${parent}_${prop}_pair`] ?? ['']
+        let parent_uuid = uuids[parent]
+        let prop_uuid = lookup(pair, parent_uuid) ?? falseRegex
+        uuids[prop] = prop_uuid
+        let prop_dir = schema[prop]['dir'] ?? prop
+        let index = csv[`${prop_dir}_index`] ?? []
+        let prop_value = lookup(index, prop_uuid)
+        // console.log(prop, parent, parent_uuid, prop_uuid, prop_value)
+        // console.log("get", prop, prop_uuid, parent, parent_uuid, prop_value)
+        if ( prop_value != undefined ) {
+          let prop_type = schema[prop]['type']
+          if (prop_type == "string") {
+            // console.log("try to parse", prop, prop_value)
+            prop_value = JSON.parse(prop_value)
           }
+          let label = schema[prop]['label'] ?? prop
+          // console.log("set", prop, prop_uuid, parent, parent_uuid, prop_value)
+          event[label] = prop_value
         }
       }
     }
