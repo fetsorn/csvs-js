@@ -94,7 +94,8 @@ async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
     if (!root_uuids) {
       root_uuids = root_uuids_new
     } else {
-      root_uuids = await grep(root_uuids_new.join("\n"), root_uuids)
+      let root_lines = await grep(root_uuids_new.join("\n"), root_uuids.join("\n"))
+      root_uuids = cutUUIDs(root_lines)
     }
   }
 
