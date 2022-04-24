@@ -8,10 +8,12 @@ const {
   event3new,
   event4edit,
   event4new,
+  filesEmpty,
   filesMock,
   filesMock3,
   filesMock4,
-  filesMockNo3
+  filesMockNo3,
+  filesMock5,
 } = require('./mockCSV')
 
 global.TextEncoder = TextEncoder
@@ -75,7 +77,7 @@ describe('editEvent', () => {
 
   beforeEach(() => {
     filesMockNew = { ...filesMock }
-    async function writeFileMock(path, contents, encoding) {
+    async function writeFileMock(path, contents) {
       filesMockNew[path] = contents
     }
     callback.write = writeFileMock
@@ -98,6 +100,14 @@ describe('editEvent', () => {
         expect(filesMockNew).toStrictEqual(filesMock4)
       })
   })
+  test('adds event when metadir files are empty', () => {
+    let _filesMockNew = { ...filesEmpty }
+    return editEvent(event4edit, {fetch: (path) => _filesMockNew[path],
+                                  write: (path, contents) => {_filesMockNew[path] = contents}})
+      .then(() => {
+        expect(_filesMockNew).toStrictEqual(filesMock5)
+      })
+  })
 })
 
 describe('deleteEvent', () => {
@@ -106,7 +116,7 @@ describe('deleteEvent', () => {
 
   beforeEach(() => {
     filesMockNew = { ...filesMock }
-    async function writeFileMock(path, contents, encoding) {
+    async function writeFileMock(path, contents) {
       filesMockNew[path] = contents
     }
     callback.write = writeFileMock

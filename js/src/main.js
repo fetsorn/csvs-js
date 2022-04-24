@@ -228,10 +228,18 @@ async function queryMetadir(searchParams, callback, useWasm = false, schema_name
 }
 
 function includes(file, line) {
-  return file.includes(line)
+  if (file) {
+    return file.includes(line)
+  } else {
+    return false
+  }
 }
 function prune(file, regex) {
-  return file.split('\n').filter(line => !(new RegExp(regex)).test(line)).join('\n')
+  if (file) {
+    return file.split('\n').filter(line => !(new RegExp(regex)).test(line)).join('\n')
+  } else {
+    return ""
+  }
 }
 
 // remove event with root_uuid from metadir

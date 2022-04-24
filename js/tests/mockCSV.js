@@ -56,9 +56,9 @@ const event4new = {
   "UUID": "1234",
 }
 
-var filesMock = {}
+var filesEmpty = {}
 
-filesMock["metadir.json"] = `{
+filesEmpty["metadir.json"] = `{
   "datum": {
     "type": "string",
     "label": "DATUM"
@@ -120,6 +120,9 @@ filesMock["metadir.json"] = `{
   }
 }
 `
+
+var filesMock = { ...filesEmpty }
+
 filesMock["metadir/pairs/datum-guestname.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,069587dcb8f8b63329ae53051ba79ba34ba0deb41c7a1e044280d7b6bb15e4f0
 f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,b218ca013905fc528204bdadf9e104acd87d646a2d90ef834526fbf85b17e690
@@ -265,6 +268,28 @@ filesMockNo3["metadir/props/datum/index.csv"] = `8260502525153a8775ecb052f41e4e9
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,"value2"
 `
 
+var filesMock5 = { ...filesEmpty }
+
+filesMock5["metadir/props/datum/index.csv"] = `c55581aff06024b65866642ed14f73a6f0e555821f3366fd8f10d74570fac920,"value4"
+`
+
+filesMock5["metadir/props/date/index.csv"] = `d21966fdfaca51c457dddf8b6f8089b41190551166eede4e377edcb762f6bcc8,2004-01-01
+`
+
+filesMock5["metadir/pairs/datum-guestdate.csv"] = `c55581aff06024b65866642ed14f73a6f0e555821f3366fd8f10d74570fac920,d21966fdfaca51c457dddf8b6f8089b41190551166eede4e377edcb762f6bcc8
+`
+
+filesMock5["metadir/pairs/datum-hostdate.csv"] = `c55581aff06024b65866642ed14f73a6f0e555821f3366fd8f10d74570fac920,d21966fdfaca51c457dddf8b6f8089b41190551166eede4e377edcb762f6bcc8
+`
+
+filesMock5["metadir/props/name/index.csv"] = `8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5,name4
+`
+
+filesMock5["metadir/pairs/datum-guestname.csv"] = `c55581aff06024b65866642ed14f73a6f0e555821f3366fd8f10d74570fac920,8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5
+`
+
+filesMock5["metadir/pairs/datum-hostname.csv"] = `c55581aff06024b65866642ed14f73a6f0e555821f3366fd8f10d74570fac920,8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5
+`
 var mocks = {
   event1,
   event2,
@@ -279,8 +304,10 @@ module.exports = {
   event3new,
   event4edit,
   event4new,
+  filesEmpty,
   filesMock,
   filesMock3,
   filesMock4,
-  filesMockNo3
+  filesMockNo3,
+  filesMock5,
 }
