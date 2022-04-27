@@ -212,7 +212,7 @@ async function buildEvents(schema, csv, searchParams, root_uuids) {
 }
 
 // return an array of events from metadir that satisfy search params
-async function queryMetadir(searchParams, callback, useWasm = false, schema_name = "metadir.json") {
+async function queryMetadir(searchParams, callback, useWasm = true, schema_name = "metadir.json") {
 
   let schema = JSON.parse(await callback.fetch(schema_name))
 
