@@ -29,62 +29,26 @@
     in eachSystem defaultSystems (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        csvs-sh = pkgs.stdenv.mkDerivation {
-          name = "csvs-sh";
-          src = ./sh/scripts;
-          buildPhase = ''
-            true
-          '';
-          postPatch = ''
-            substituteInPlace merge --replace "jq" "${pkgs.jq}/bin/jq"
-            substituteInPlace unescape --replace "jq" "${pkgs.jq}/bin/jq"
-            substituteInPlace break-biorg --replace "jq" "${pkgs.jq}/bin/jq"
-            substituteInPlace build-biorg --replace "jq" "${pkgs.jq}/bin/jq"
-            substituteInPlace build-biorg --replace "bash" "${pkgs.bash}/bin/bash"
-            substituteInPlace mdirsync --replace "bash" "${pkgs.bash}/bin/bash"
-            substituteInPlace mdirsync --replace "awk" "${pkgs.gawk}/bin/awk"
-            substituteInPlace gc --replace "jq" "${pkgs.jq}/bin/jq"
-            substituteInPlace gc --replace "sponge" "${pkgs.moreutils}/bin/sponge"
-            substituteInPlace lookup --replace "grep" "${pkgs.gnugrep}/bin/grep"
-            substituteInPlace build-biorg --replace "grep" "${pkgs.gnugrep}/bin/grep"
-            substituteInPlace merge --replace "grep" "${pkgs.gnugrep}/bin/grep"
-            substituteInPlace break-biorg --replace "grep" "${pkgs.gnugrep}/bin/grep"
-          '';
-          installPhase = ''
-            mkdir -p $out/bin/
-            cp * $out/bin/
-            chmod +x $out/bin/*
-          '';
-        };
         csvs-js = pkgs.mkYarnPackage rec {
           name = "csvs-js";
-          src = ./js;
+          src = ./.;
           configurePhase = ''
-            true
+            cp -r $node_modules node_modules
+            chmod -R 755 node_modules
           '';
           buildPhase = ''
-            true
+            yarn run build
+            cp -r dist $out
           '';
           dontInstall = true;
-          doDist = false;
+          distPhase = ''
+            true
+          '';
         };
       in rec {
-        devShell = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            bash_unit
-            coreutils
-            file
-            gawk
-            jq
-            moreutils
-            parallel
-            ripgrep
-            nodejs-16_x
-            nodePackages.np
-            yarn
-          ];
-        };
-        packages = { inherit csvs-sh csvs-js; };
-        defaultPackage = csvs-sh;
+        devShell =
+          pkgs.mkShell { buildInputs = with pkgs; [ nodejs-16_x yarn ]; };
+        packages = { inherit csvs-js; };
+        defaultPackage = csvs-js;
       });
 }

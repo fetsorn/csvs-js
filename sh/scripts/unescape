@@ -1,9 +1,0 @@
-#!/bin/bash
-# unescape.awk breaks on "path\\new", interprets "\n"
-# cat <&0 | awk -f scripts/unescape.awk
-# python breaks and bloats
-# cat <&0 | python3 -c 'import json,sys; print(json.loads(sys.stdin.read()))'
-# jq corrupts cyrillic characters when locale is not set right
-cat <&0 | jq -r
-# gojq doesn't make a difference
-# cat <&0 | gojq -r
