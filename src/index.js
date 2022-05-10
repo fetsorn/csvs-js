@@ -1,5 +1,6 @@
 export {
   queryMetadir,
+  queryOptions,
   editEvent,
   deleteEvent
 } from './main'
