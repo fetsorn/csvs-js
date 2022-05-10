@@ -243,13 +243,15 @@ async function queryOptions(prop, callback, schema_name = "metadir.json") {
     index_file = await callback.fetch(`metadir/pairs/${parent}-${prop}.csv`)
   }
 
-  let values = index_file.split('\n').filter(line => (line != "")).map(line => {
-    let v_escaped = line.slice(65)
-    if (prop_type == "string") {
-      return JSON.parse(v_escaped)
-    } else {
-      return v_escaped
-    }
+  let values = index_file.split('\n')
+                         .filter(line => (line != ""))
+                         .map(line => {
+                           let v_escaped = line.slice(65)
+                           if (prop_type == "string") {
+                             return JSON.parse(v_escaped)
+                           } else {
+                             return v_escaped
+                           }
   })
 
   let values_unique = [...new Set(values)]
