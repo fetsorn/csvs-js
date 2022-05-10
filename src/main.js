@@ -227,6 +227,36 @@ async function queryMetadir(searchParams, callback, useWasm = true, schema_name 
   return events
 }
 
+// return an array of unique values of a prop
+async function queryOptions(prop, callback, schema_name = "metadir.json") {
+
+  let schema = JSON.parse(await callback.fetch(schema_name))
+
+  let prop_type = schema[prop]['type']
+
+  var index_file
+  if (prop_type != "hash") {
+    let prop_dir = schema[prop]['dir'] ?? prop
+    index_file = await callback.fetch(`metadir/props/${prop_dir}/index.csv`)
+  } else {
+    let parent = schema[prop]['parent']
+    index_file = await callback.fetch(`metadir/pairs/${parent}-${prop}.csv`)
+  }
+
+  let values = index_file.split('\n').filter(line => (line != "")).map(line => {
+    let v_escaped = line.slice(65)
+    if (prop_type == "string") {
+      return JSON.parse(v_escaped)
+    } else {
+      return v_escaped
+    }
+  })
+
+  let values_unique = [...new Set(values)]
+
+  return values_unique
+}
+
 function includes(file, line) {
   if (file) {
     return file.includes(line)
@@ -339,6 +369,7 @@ async function editEvent(event, callback, schema_name = "metadir.json") {
 
 export {
   queryMetadir,
+  queryOptions,
   editEvent,
   deleteEvent
 }

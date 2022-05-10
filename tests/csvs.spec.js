@@ -1,4 +1,4 @@
-import { queryMetadir, editEvent, deleteEvent } from '../src/main'
+import { queryMetadir, queryOptions, editEvent, deleteEvent } from '../src/main'
 import { TextEncoder, TextDecoder } from 'util'
 import crypto from 'crypto'
 const {
@@ -14,6 +14,8 @@ const {
   filesMock4,
   filesMockNo3,
   filesMock5,
+  filesMockNameUnique,
+  filesMockDateUnique,
 } = require('./mockCSV')
 
 global.TextEncoder = TextEncoder
@@ -51,22 +53,35 @@ describe('queryMetadir', () => {
   test('queries name1', () => {
     var searchParams = new URLSearchParams()
     searchParams.set('hostname', 'name1')
-    return queryMetadir(searchParams, callback).then(data => {
+    return queryMetadir(searchParams, callback, false).then(data => {
       expect(data).toStrictEqual([sortObject(event1)])
     })
   })
   test('queries name2', () => {
     var searchParams = new URLSearchParams()
     searchParams.set('hostname', 'name2')
-    return queryMetadir(searchParams, callback).then(data => {
+    return queryMetadir(searchParams, callback, false).then(data => {
       expect(data).toStrictEqual([sortObject(event2)])
     })
   })
   test('queries name3', () => {
     var searchParams = new URLSearchParams()
     searchParams.set('hostname', 'name3')
-    return queryMetadir(searchParams, callback).then(data => {
+    return queryMetadir(searchParams, callback, false).then(data => {
       expect(data).toStrictEqual([sortObject(event3)])
+    })
+  })
+})
+
+describe('queryOptions', () => {
+  test('queries hostname', () => {
+    return queryOptions("hostname", callback).then(data => {
+      expect(data).toStrictEqual(filesMockNameUnique)
+    })
+  })
+  test('queries hostdate', () => {
+    return queryOptions("hostdate", callback).then(data => {
+      expect(data).toStrictEqual(filesMockDateUnique)
     })
   })
 })

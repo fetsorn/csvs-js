@@ -290,6 +290,10 @@ filesMock5["metadir/pairs/datum-guestname.csv"] = `c55581aff06024b65866642ed14f7
 
 filesMock5["metadir/pairs/datum-hostname.csv"] = `c55581aff06024b65866642ed14f73a6f0e555821f3366fd8f10d74570fac920,8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5
 `
+
+const filesMockNameUnique = [ "name1", "name2", "name3" ]
+const filesMockDateUnique = [ "2001-01-01", "2002-01-01", "2003-01-01" ]
+
 var mocks = {
   event1,
   event2,
@@ -310,4 +314,6 @@ module.exports = {
   filesMock4,
   filesMockNo3,
   filesMock5,
+  filesMockNameUnique,
+  filesMockDateUnique,
 }
