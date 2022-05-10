@@ -15,7 +15,7 @@ npx http-server
 
 # publish
 yarn build
-yarn publish
+npm publish
 #+end_src
 
 * Getting started
