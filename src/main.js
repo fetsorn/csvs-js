@@ -76,7 +76,7 @@ async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
 
   // TODO instead of recursing to root on each search param and resolving grep
   // resolve each non-root parent prop first to save time
-  var root_uuids = []
+  var root_uuids
   for (var entry of searchParams.entries()) {
     let prop = entry[0]
     if (prop == "groupBy") { continue }
