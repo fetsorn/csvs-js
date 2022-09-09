@@ -1,5 +1,34 @@
-import { grep } from '@fetsorn/wasm-grep'
+import { grep as wasmGrep } from '@fetsorn/wasm-grep'
 import { digestMessage, digestRandom } from './util'
+
+const isNode = Object.prototype.toString.call(typeof process !== 'undefined' ? process : 0) === '[object process]';
+
+async function nodeGrep(mainfile, patternfile) {
+  const util = require('util');
+  const exec = util.promisify(require('child_process').exec);
+  const { stdout, stderr } = await exec(
+    // `export PATH=$PATH:~/.nix-profile/bin/; rg -f <(printf "%s" $patternfile) <(printf "%s" $mainfile)`, {
+    'export PATH=$PATH:~/.nix-profile/bin/; ' +
+      'printf "$patternfile" > /tmp/pattern; ' +
+      'printf "$mainfile" | rg -f /tmp/pattern; ', {
+    env: {
+      mainfile,
+      patternfile,
+    }
+  });
+  if (stderr) {
+    console.log(stderr)
+    return ""
+  } else {
+    return stdout
+  }
+}
+
+async function grep(file, query) {
+  return isNode
+    ? await nodeGrep(file, query)
+    : await wasmGrep(file, query)
+}
 
 // cache all metadir csv files as a hashmap
 async function fetchCSV(schema, fetch) {
@@ -41,9 +70,9 @@ async function fetchCSV(schema, fetch) {
 }
 
 // get a string of metadir lines, return array of uuids
-function cutUUIDs(grep) {
-  // console.log("cutUUIDs")
-  let lines = grep.replace(/\n*$/, "").split("\n").filter(line => line != "")
+function cutUUIDs(str) {
+  // console.log("cutUUIDs", str)
+  let lines = str.replace(/\n*$/, "").split("\n").filter(line => line != "")
   let uuids = lines.map(line => line.slice(0,64))
   // console.log(lines, uuids)
   return uuids
@@ -54,7 +83,7 @@ async function recurseParents(schema, csv, prop, prop_uuids) {
   // console.log("recurseParents")
   let root = Object.keys(schema).find(prop => !schema[prop].hasOwnProperty("parent"))
   let parent = schema[prop]['parent']
-  console.log(`search ${csv[`${parent}_${prop}_pair_file`].split("\n").length} parent ${parent} uuids against ${prop_uuids.length} ${prop} uuids`, prop_uuids)
+  console.log(`grep ${csv[`${parent}_${prop}_pair_file`].split("\n").length} parent ${parent} uuids against ${prop_uuids.length} ${prop} uuids`, prop_uuids)
   // find all pairs with one of the prop uuids
   let parent_lines = await grep(csv[`${parent}_${prop}_pair_file`], prop_uuids.join("\n"))
   let parent_uuids = cutUUIDs(parent_lines)
@@ -100,6 +129,7 @@ async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
     if (!root_uuids) {
       root_uuids = root_uuids_new
     } else {
+      console.log(`grep ${root_uuids_new.length} new uuids ${root_uuids.length} uuids\n`)
       let root_lines = await grep(root_uuids_new.join("\n"), root_uuids.join("\n"))
       root_uuids = cutUUIDs(root_lines)
     }
@@ -154,7 +184,7 @@ function lookup(lines, uuid) {
 
 // build an event for every root uuid
 async function buildEvents(schema, csv, searchParams, root_uuids) {
-  console.log(`build ${root_uuids.length} events`)
+  // console.log(`build ${root_uuids.length} events`)
 
   let schema_props = Object.keys(schema)
   let root = schema_props.find(prop => !schema[prop].hasOwnProperty("parent"))
@@ -215,6 +245,22 @@ async function buildEvents(schema, csv, searchParams, root_uuids) {
   }
 
   return events
+}
+
+async function queryRootUuidsNode(schema, csv, searchParams, fetch) {
+
+  console.log("queryRootUuidsNode")
+  const { exec } = require('child_process');
+  exec('cat *.js bad_file | wc -l', (err, stdout, stderr) => {
+    if (err) {
+      // node couldn't execute the command
+      return;
+    }
+
+    // the *entire* stdout and stderr (buffered)
+    console.log(`stdout: ${stdout}`);
+    console.log(`stderr: ${stderr}`);
+  });
 }
 
 // return an array of events from metadir that satisfy search params

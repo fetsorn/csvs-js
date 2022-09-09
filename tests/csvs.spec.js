@@ -49,7 +49,7 @@ var callback = {
   fetch: (path) => filesMock[path],
 }
 
-describe('queryMetadir', () => {
+describe('queryMetadir no ripgrep', () => {
   test('queries name1', () => {
     var searchParams = new URLSearchParams()
     searchParams.set('hostname', 'name1')
@@ -68,6 +68,30 @@ describe('queryMetadir', () => {
     var searchParams = new URLSearchParams()
     searchParams.set('hostname', 'name3')
     return queryMetadir(searchParams, callback, false).then(data => {
+      expect(data).toStrictEqual([sortObject(event3)])
+    })
+  })
+})
+
+describe('queryMetadir ripgrep', () => {
+  test('queries name1', () => {
+    var searchParams = new URLSearchParams()
+    searchParams.set('hostname', 'name1')
+    return queryMetadir(searchParams, callback).then(data => {
+      expect(data).toStrictEqual([sortObject(event1)])
+    })
+  })
+  test('queries name2', () => {
+    var searchParams = new URLSearchParams()
+    searchParams.set('hostname', 'name2')
+    return queryMetadir(searchParams, callback).then(data => {
+      expect(data).toStrictEqual([sortObject(event2)])
+    })
+  })
+  test('queries name3', () => {
+    var searchParams = new URLSearchParams()
+    searchParams.set('hostname', 'name3')
+    return queryMetadir(searchParams, callback).then(data => {
       expect(data).toStrictEqual([sortObject(event3)])
     })
   })

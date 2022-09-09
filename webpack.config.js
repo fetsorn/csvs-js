@@ -10,6 +10,7 @@ module.exports = {
       type: "umd",
     },
   },
+  resolve: { fallback: { "util": false, "child_process": false } },
   mode: "development",
   experiments: {
     asyncWebAssembly: true,
