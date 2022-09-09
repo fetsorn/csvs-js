@@ -1,25 +1,26 @@
 {
   "name": "@fetsorn/csvs-js",
   "description": "csvs: comma-separated value store, js bindings",
-  "version": "0.4.8",
+  "version": "0.5.0",
   "author": "Anton Davydov <git@fetsorn.website>",
   "license": "MIT",
   "main": "dist/csvs.js",
-  "dependencies": {
-    "@fetsorn/wasm-grep": "0.1.9"
+  "scripts": {
+    "build": "webpack",
+    "test": "yarn test:node && yarn test:wasm",
+    "test:node": "jest",
+    "test:wasm": "webpack --mode development && webpack -c webpack.wasm.js && serve"
   },
   "devDependencies": {
     "@babel/core": "^7.17.8",
     "@babel/preset-env": "^7.16.11",
+    "@fetsorn/wasm-grep": "0.1.9",
     "babel-jest": "^27.5.1",
     "jest": "^27.5.1",
+    "serve": "^14.0.1",
     "webpack": "^5.70.0",
     "webpack-cli": "^4.9.2",
     "yarn": "^1.22.17"
-  },
-  "scripts": {
-    "build": "webpack",
-    "test": "jest"
   },
   "jest": {
     "moduleNameMapper": {

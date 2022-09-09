@@ -1,4 +1,4 @@
-import { queryMetadir, queryOptions, editEvent, deleteEvent } from '../src/main'
+import { queryMetadir, queryOptions, editEvent, deleteEvent, grep as grepWASM } from '../src/main'
 import { TextEncoder, TextDecoder } from 'util'
 import crypto from 'crypto'
 const {
@@ -50,30 +50,59 @@ var callback = {
 }
 
 describe('queryMetadir no ripgrep', () => {
+
+  beforeEach(() => {
+    callback.grep = grepWASM
+  })
+
   test('queries name1', () => {
     var searchParams = new URLSearchParams()
     searchParams.set('hostname', 'name1')
-    return queryMetadir(searchParams, callback, false).then(data => {
+    return queryMetadir(searchParams, callback).then(data => {
       expect(data).toStrictEqual([sortObject(event1)])
     })
   })
   test('queries name2', () => {
     var searchParams = new URLSearchParams()
     searchParams.set('hostname', 'name2')
-    return queryMetadir(searchParams, callback, false).then(data => {
+    return queryMetadir(searchParams, callback).then(data => {
       expect(data).toStrictEqual([sortObject(event2)])
     })
   })
   test('queries name3', () => {
     var searchParams = new URLSearchParams()
     searchParams.set('hostname', 'name3')
-    return queryMetadir(searchParams, callback, false).then(data => {
+    return queryMetadir(searchParams, callback).then(data => {
       expect(data).toStrictEqual([sortObject(event3)])
     })
   })
 })
 
 describe('queryMetadir ripgrep', () => {
+
+  beforeEach(() => {
+    async function grepCLI(contentfile, patternfile) {
+      const util = require('util');
+      const exec = util.promisify(require('child_process').exec);
+      const { stdout, stderr } = await exec(
+        'export PATH=$PATH:~/.nix-profile/bin/; ' +
+          'printf "$patternfile" > /tmp/pattern; ' +
+          'printf "$contentfile" | rg -f /tmp/pattern; ', {
+            env: {
+              contentfile,
+              patternfile,
+            }
+          });
+      if (stderr) {
+        console.log(stderr)
+        return ""
+      } else {
+        return stdout
+      }
+    }
+    callback.grep = grepCLI
+  })
+
   test('queries name1', () => {
     var searchParams = new URLSearchParams()
     searchParams.set('hostname', 'name1')

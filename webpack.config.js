@@ -9,10 +9,7 @@ module.exports = {
       name: "csvs",
       type: "umd",
     },
+    globalObject: 'this',
   },
-  resolve: { fallback: { "util": false, "child_process": false } },
-  mode: "development",
-  experiments: {
-    asyncWebAssembly: true,
-  }
+  mode: "production"
 };

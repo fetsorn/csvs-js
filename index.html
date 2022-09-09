@@ -6,11 +6,9 @@
     <title>Demo</title>
   </head>
   <body>
-    <script src="dist/csvs.js"></script>
-    <script src="tests/mockCSV.js"></script>
-    <script src="tests/csvs-wasm.js"></script>
-    <script>
-     (async() => {await test(await csvs, mocks)})();
+    <script type="module">
+     import * as test from "./test/index.js";
+     (async() => {await (await window.csvs).test()})();
     </script>
   </body>
 </html>

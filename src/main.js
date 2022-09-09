@@ -1,34 +1,4 @@
-import { grep as wasmGrep } from '@fetsorn/wasm-grep'
 import { digestMessage, digestRandom } from './util'
-
-const isNode = Object.prototype.toString.call(typeof process !== 'undefined' ? process : 0) === '[object process]';
-
-async function nodeGrep(mainfile, patternfile) {
-  const util = require('util');
-  const exec = util.promisify(require('child_process').exec);
-  const { stdout, stderr } = await exec(
-    // `export PATH=$PATH:~/.nix-profile/bin/; rg -f <(printf "%s" $patternfile) <(printf "%s" $mainfile)`, {
-    'export PATH=$PATH:~/.nix-profile/bin/; ' +
-      'printf "$patternfile" > /tmp/pattern; ' +
-      'printf "$mainfile" | rg -f /tmp/pattern; ', {
-    env: {
-      mainfile,
-      patternfile,
-    }
-  });
-  if (stderr) {
-    console.log(stderr)
-    return ""
-  } else {
-    return stdout
-  }
-}
-
-async function grep(file, query) {
-  return isNode
-    ? await nodeGrep(file, query)
-    : await wasmGrep(file, query)
-}
 
 // cache all metadir csv files as a hashmap
 async function fetchCSV(schema, fetch) {
@@ -78,18 +48,26 @@ function cutUUIDs(str) {
   return uuids
 }
 
+function grep(contentFile, patternFile) {
+  const contentLines = contentFile.split('\n').filter(line => line != "")
+  const patternLines = patternFile.split('\n').filter(line => line != "")
+  const searchLines = patternLines.map(pattern => contentLines.filter(line => (new RegExp(pattern)).test(line)))
+  const matches = [...new Set(searchLines.flat())].join('\n')
+  return matches
+}
+
 // find parent uuids until root
-async function recurseParents(schema, csv, prop, prop_uuids) {
+async function recurseParents(schema, csv, prop, prop_uuids, callback) {
   // console.log("recurseParents")
   let root = Object.keys(schema).find(prop => !schema[prop].hasOwnProperty("parent"))
   let parent = schema[prop]['parent']
-  console.log(`grep ${csv[`${parent}_${prop}_pair_file`].split("\n").length} parent ${parent} uuids against ${prop_uuids.length} ${prop} uuids`, prop_uuids)
+  // console.log(`grep ${csv[`${parent}_${prop}_pair_file`].split("\n").length} parent ${parent} uuids against ${prop_uuids.length} ${prop} uuids`, prop_uuids)
   // find all pairs with one of the prop uuids
-  let parent_lines = await grep(csv[`${parent}_${prop}_pair_file`], prop_uuids.join("\n"))
+  let parent_lines = await callback.grep(csv[`${parent}_${prop}_pair_file`], prop_uuids.join("\n"))
   let parent_uuids = cutUUIDs(parent_lines)
   if (parent != root) {
     // console.log(`${prop}'s parent ${parent} is not root ${root}`)
-    return await recurseParents(schema, csv, parent, parent_uuids)
+    return await recurseParents(schema, csv, parent, parent_uuids, callback)
   } else {
     // console.log("root reached", parent_uuids)
     return parent_uuids
@@ -97,7 +75,7 @@ async function recurseParents(schema, csv, prop, prop_uuids) {
 }
 
 // return root uuids that satisfy search params
-async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
+async function queryRootUuids(schema, csv, searchParams, callback) {
   // console.log("queryRootUuidsWasm")
 
   let schema_props = Object.keys(schema)
@@ -113,62 +91,29 @@ async function queryRootUuidsWasm(schema, csv, searchParams, fetch) {
     let prop_value = entry[1]
     var root_uuids_new
     if (schema[prop]['type'] == "rule") {
-      let rulefile = await fetch(`metadir/props/${prop_dir}/rules/${prop_value}.rule`)
+      let rulefile = await callback.fetch(`metadir/props/${prop_dir}/rules/${prop_value}.rule`)
       let parent = schema[prop]['parent']
       let parent_dir = schema[prop]['parent'] ?? parent
-      console.log(`grep ${parent} in ${parent_dir}_index_file for ${prop_value}.rule`)
-      let parent_lines = await grep(csv[`${parent_dir}_index_file`], rulefile)
+      // console.log(`grep ${parent} in ${parent_dir}_index_file for ${prop_value}.rule`)
+      let parent_lines = await callback.grep(csv[`${parent_dir}_index_file`], rulefile)
       let parent_uuids = cutUUIDs(parent_lines)
-      root_uuids_new = await recurseParents(schema, csv, parent, parent_uuids)
+      root_uuids_new = await recurseParents(schema, csv, parent, parent_uuids, callback)
     } else {
-      console.log(`grep ${prop} in ${prop_dir}_index_file for ,${prop_value}$\n`)
-      let prop_lines = await grep(csv[`${prop_dir}_index_file`], `,${prop_value}$\n`)
+      // console.log(`grep ${prop} in ${prop_dir}_index_file for ,${prop_value}$\n`)
+      let prop_lines = await callback.grep(csv[`${prop_dir}_index_file`], `,${prop_value}$\n`)
       let prop_uuids = cutUUIDs(prop_lines)
-      root_uuids_new = await recurseParents(schema, csv, prop, prop_uuids)
+      root_uuids_new = await recurseParents(schema, csv, prop, prop_uuids, callback)
     }
     if (!root_uuids) {
       root_uuids = root_uuids_new
     } else {
-      console.log(`grep ${root_uuids_new.length} new uuids ${root_uuids.length} uuids\n`)
-      let root_lines = await grep(root_uuids_new.join("\n"), root_uuids.join("\n"))
+      // console.log(`grep ${root_uuids_new.length} new uuids ${root_uuids.length} uuids\n`)
+      let root_lines = await callback.grep(root_uuids_new.join("\n"), root_uuids.join("\n"))
       root_uuids = cutUUIDs(root_lines)
     }
   }
 
   return root_uuids
-}
-
-// return root uuids that satisfy search params
-async function queryRootUuids(schema, csv, searchParams, fetch) {
-
-  var root_uuids
-  for (var entry of searchParams.entries()) {
-    let prop = entry[0]
-    if (prop == "groupBy" || schema[prop]['type'] == "rule") { continue }
-    let entry_value = entry[1]
-    let entry_value_regexp = new RegExp("," + entry_value + "$")
-    let prop_dir = schema[prop]['dir']
-    let prop_line = csv[`${prop_dir}_index`].find(line => entry_value_regexp.test(line))
-    let prop_uuid = prop_line.slice(0,64)
-    let parent = schema[prop]['parent']
-    if (!root_uuids) {
-      root_uuids = csv[`${parent}_${prop}_pair`]
-        .filter(line => (new RegExp(prop_uuid)).test(line))
-        .map(line => line.slice(0,64))
-    } else {
-      // find all pairs with one of previously found root uuids
-      oldroot_pairs = csv[`${parent}_${prop}_pair`]
-        .filter(line => root_uuids.includes(line.slice(0,64)))
-      // find all pairs with one of the prop uuids
-      prop_pairs = oldroot_pairs
-        .filter(line => (new RegExp(prop_uuid)).test(line))
-      // get root uuids of all found pairs
-      root_uuids = prop_pairs.map(line => line.slice(0,64))
-    }
-  }
-
-  return root_uuids
-
 }
 
 // get a string of metadir lines, return value that corresponds to uuid
@@ -247,32 +192,14 @@ async function buildEvents(schema, csv, searchParams, root_uuids) {
   return events
 }
 
-async function queryRootUuidsNode(schema, csv, searchParams, fetch) {
-
-  console.log("queryRootUuidsNode")
-  const { exec } = require('child_process');
-  exec('cat *.js bad_file | wc -l', (err, stdout, stderr) => {
-    if (err) {
-      // node couldn't execute the command
-      return;
-    }
-
-    // the *entire* stdout and stderr (buffered)
-    console.log(`stdout: ${stdout}`);
-    console.log(`stderr: ${stderr}`);
-  });
-}
-
 // return an array of events from metadir that satisfy search params
-async function queryMetadir(searchParams, callback, useWasm = true, schema_name = "metadir.json") {
+async function queryMetadir(searchParams, callback, schema_name = "metadir.json") {
 
   let schema = JSON.parse(await callback.fetch(schema_name))
 
   var csv = await fetchCSV(schema, callback.fetch)
 
-  var root_uuids = useWasm
-      ? await queryRootUuidsWasm(schema, csv, searchParams, callback.fetch)
-      : await queryRootUuids(schema, csv, searchParams, callback.fetch)
+  var root_uuids = await queryRootUuids(schema, csv, searchParams, callback)
 
   var events = await buildEvents(schema, csv, searchParams, root_uuids)
 
@@ -318,6 +245,7 @@ function includes(file, line) {
     return false
   }
 }
+
 function prune(file, regex) {
   if (file) {
     return file.split('\n').filter(line => !(new RegExp(regex)).test(line)).join('\n')
@@ -418,12 +346,12 @@ async function editEvent(event, callback, schema_name = "metadir.json") {
   }
 
   return event
-
 }
 
 export {
   queryMetadir,
   queryOptions,
+  grep,
   editEvent,
   deleteEvent
 }
