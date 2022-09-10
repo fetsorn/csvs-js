@@ -1,64 +1,64 @@
 const event1 = {
-  "DATUM": "value1",
-  "FILE_PATH": "path/to/1",
-  "GUEST_DATE": "2001-01-01",
-  "GUEST_NAME": "name1",
-  "HOST_DATE": "2001-01-01",
-  "HOST_NAME": "name1",
-  "MOD_DATE": "2001-01-01",
-  "UUID": "8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704",
-}
+  'DATUM': 'value1',
+  'FILE_PATH': 'path/to/1',
+  'GUEST_DATE': '2001-01-01',
+  'GUEST_NAME': 'name1',
+  'HOST_DATE': '2001-01-01',
+  'HOST_NAME': 'name1',
+  'MOD_DATE': '2001-01-01',
+  'UUID': '8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704',
+};
 
 const event2 = {
-  "DATUM": "value2",
-  "FILE_PATH": "path/to/2",
-  "GUEST_DATE": "2002-01-01",
-  "GUEST_NAME": "name2",
-  "HOST_DATE": "2002-01-01",
-  "HOST_NAME": "name2",
-  "MOD_DATE": "2002-01-01",
-  "UUID": "b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e",
-}
+  'DATUM': 'value2',
+  'FILE_PATH': 'path/to/2',
+  'GUEST_DATE': '2002-01-01',
+  'GUEST_NAME': 'name2',
+  'HOST_DATE': '2002-01-01',
+  'HOST_NAME': 'name2',
+  'MOD_DATE': '2002-01-01',
+  'UUID': 'b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e',
+};
 
 const event3 = {
-  "DATUM": "",
-  "GUEST_DATE": "2003-01-01",
-  "GUEST_NAME": "name3",
-  "HOST_DATE": "2003-01-01",
-  "HOST_NAME": "name3",
-  "UUID": "f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265",
-}
+  'DATUM': '',
+  'GUEST_DATE': '2003-01-01',
+  'GUEST_NAME': 'name3',
+  'HOST_DATE': '2003-01-01',
+  'HOST_NAME': 'name3',
+  'UUID': 'f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265',
+};
 
 const event3new = {
-  "DATUM": "value3",
-  "FILE_PATH": "path/to/3",
-  "GUEST_DATE": "2003-03-01",
-  "GUEST_NAME": "name3",
-  "HOST_DATE": "2003-01-01",
-  "HOST_NAME": "name3",
-  "UUID": "f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265",
-}
+  'DATUM': 'value3',
+  'FILE_PATH': 'path/to/3',
+  'GUEST_DATE': '2003-03-01',
+  'GUEST_NAME': 'name3',
+  'HOST_DATE': '2003-01-01',
+  'HOST_NAME': 'name3',
+  'UUID': 'f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265',
+};
 
 const event4edit = {
-  "DATUM": "value4",
-  "GUEST_DATE": "2004-01-01",
-  "GUEST_NAME": "name4",
-  "HOST_DATE": "2004-01-01",
-  "HOST_NAME": "name4",
-}
+  'DATUM': 'value4',
+  'GUEST_DATE': '2004-01-01',
+  'GUEST_NAME': 'name4',
+  'HOST_DATE': '2004-01-01',
+  'HOST_NAME': 'name4',
+};
 
 const event4new = {
-  "DATUM": "value4",
-  "GUEST_DATE": "2004-01-01",
-  "GUEST_NAME": "name4",
-  "HOST_DATE": "2004-01-01",
-  "HOST_NAME": "name4",
-  "UUID": "1234",
-}
+  'DATUM': 'value4',
+  'GUEST_DATE': '2004-01-01',
+  'GUEST_NAME': 'name4',
+  'HOST_DATE': '2004-01-01',
+  'HOST_NAME': 'name4',
+  'UUID': '1234',
+};
 
-var filesEmpty = {}
+var filesEmpty = {};
 
-filesEmpty["metadir.json"] = `{
+filesEmpty['metadir.json'] = `{
   "datum": {
     "type": "string",
     "label": "DATUM"
@@ -119,189 +119,189 @@ filesEmpty["metadir.json"] = `{
     "type": "regex"
   }
 }
-`
+`;
 
-var filesMock = { ...filesEmpty }
+var filesMock = { ...filesEmpty };
 
-filesMock["metadir/pairs/datum-guestname.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1
+filesMock['metadir/pairs/datum-guestname.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,069587dcb8f8b63329ae53051ba79ba34ba0deb41c7a1e044280d7b6bb15e4f0
 f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,b218ca013905fc528204bdadf9e104acd87d646a2d90ef834526fbf85b17e690
-`
+`;
 
-filesMock["metadir/pairs/datum-hostname.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1
+filesMock['metadir/pairs/datum-hostname.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,069587dcb8f8b63329ae53051ba79ba34ba0deb41c7a1e044280d7b6bb15e4f0
 f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,b218ca013905fc528204bdadf9e104acd87d646a2d90ef834526fbf85b17e690
-`
+`;
 
-filesMock["metadir/pairs/datum-guestdate.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d
+filesMock['metadir/pairs/datum-guestdate.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,161c6b3d37ba3341b7775b10730b2ded837c3d84d77fb1a046fa198e9db8cbbc
 f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,28a15dd418a2eed8bc7c2133b21bf942182cc58160dfea0c9dd98f155d80ea10
-`
+`;
 
-filesMock["metadir/pairs/datum-hostdate.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d
+filesMock['metadir/pairs/datum-hostdate.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,161c6b3d37ba3341b7775b10730b2ded837c3d84d77fb1a046fa198e9db8cbbc
 f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,28a15dd418a2eed8bc7c2133b21bf942182cc58160dfea0c9dd98f155d80ea10
-`
+`;
 
-filesMock["metadir/pairs/datum-filepath.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,01f8dafeb2559c983006156763f9c3b951b64688b3b41a9e5ad7cb695110e8ee
+filesMock['metadir/pairs/datum-filepath.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,01f8dafeb2559c983006156763f9c3b951b64688b3b41a9e5ad7cb695110e8ee
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,424bd3271c0c940304ec6e9f4412a422735caeeb9638038bf509e36ae5d4f865
-`
+`;
 
-filesMock["metadir/pairs/filepath-moddate.csv"] = `01f8dafeb2559c983006156763f9c3b951b64688b3b41a9e5ad7cb695110e8ee,4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d
+filesMock['metadir/pairs/filepath-moddate.csv'] = `01f8dafeb2559c983006156763f9c3b951b64688b3b41a9e5ad7cb695110e8ee,4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d
 424bd3271c0c940304ec6e9f4412a422735caeeb9638038bf509e36ae5d4f865,161c6b3d37ba3341b7775b10730b2ded837c3d84d77fb1a046fa198e9db8cbbc
-`
+`;
 
-filesMock["metadir/props/name/index.csv"] = `9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1,name1
+filesMock['metadir/props/name/index.csv'] = `9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1,name1
 069587dcb8f8b63329ae53051ba79ba34ba0deb41c7a1e044280d7b6bb15e4f0,name2
 b218ca013905fc528204bdadf9e104acd87d646a2d90ef834526fbf85b17e690,name3
-`
+`;
 
-filesMock["metadir/props/date/index.csv"] = `4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d,2001-01-01
+filesMock['metadir/props/date/index.csv'] = `4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d,2001-01-01
 161c6b3d37ba3341b7775b10730b2ded837c3d84d77fb1a046fa198e9db8cbbc,2002-01-01
 28a15dd418a2eed8bc7c2133b21bf942182cc58160dfea0c9dd98f155d80ea10,2003-01-01
-`
+`;
 
-filesMock["metadir/props/filepath/index.csv"] = `01f8dafeb2559c983006156763f9c3b951b64688b3b41a9e5ad7cb695110e8ee,"path/to/1"
+filesMock['metadir/props/filepath/index.csv'] = `01f8dafeb2559c983006156763f9c3b951b64688b3b41a9e5ad7cb695110e8ee,"path/to/1"
 424bd3271c0c940304ec6e9f4412a422735caeeb9638038bf509e36ae5d4f865,"path/to/2"
-`
+`;
 
-filesMock["metadir/props/datum/index.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,"value1"
+filesMock['metadir/props/datum/index.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,"value1"
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,"value2"
 f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,""
-`
+`;
 
-var filesMock3 = { ...filesMock }
+var filesMock3 = { ...filesMock };
 
-filesMock3["metadir/props/datum/index.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,"value1"
+filesMock3['metadir/props/datum/index.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,"value1"
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,"value2"
 f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,"value3"
-`
+`;
 
-filesMock3["metadir/props/filepath/index.csv"] = `01f8dafeb2559c983006156763f9c3b951b64688b3b41a9e5ad7cb695110e8ee,"path/to/1"
+filesMock3['metadir/props/filepath/index.csv'] = `01f8dafeb2559c983006156763f9c3b951b64688b3b41a9e5ad7cb695110e8ee,"path/to/1"
 424bd3271c0c940304ec6e9f4412a422735caeeb9638038bf509e36ae5d4f865,"path/to/2"
 1e8251d0c0cfed1944735156e09c934976ece0bf6b89f75e0ba16f372ec9aa05,"path/to/3"
-`
+`;
 
-filesMock3["metadir/pairs/datum-filepath.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,01f8dafeb2559c983006156763f9c3b951b64688b3b41a9e5ad7cb695110e8ee
+filesMock3['metadir/pairs/datum-filepath.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,01f8dafeb2559c983006156763f9c3b951b64688b3b41a9e5ad7cb695110e8ee
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,424bd3271c0c940304ec6e9f4412a422735caeeb9638038bf509e36ae5d4f865
 f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,1e8251d0c0cfed1944735156e09c934976ece0bf6b89f75e0ba16f372ec9aa05
-`
+`;
 
-filesMock3["metadir/props/date/index.csv"] = `4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d,2001-01-01
+filesMock3['metadir/props/date/index.csv'] = `4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d,2001-01-01
 161c6b3d37ba3341b7775b10730b2ded837c3d84d77fb1a046fa198e9db8cbbc,2002-01-01
 28a15dd418a2eed8bc7c2133b21bf942182cc58160dfea0c9dd98f155d80ea10,2003-01-01
 e11f6f7cedcf5fd13d31ba71df973a1d28f48c847331fa852c17f1d4f5fdc746,2003-03-01
-`
+`;
 
-filesMock3["metadir/pairs/datum-guestdate.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d
+filesMock3['metadir/pairs/datum-guestdate.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,161c6b3d37ba3341b7775b10730b2ded837c3d84d77fb1a046fa198e9db8cbbc
 f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,e11f6f7cedcf5fd13d31ba71df973a1d28f48c847331fa852c17f1d4f5fdc746
-`
+`;
 
-var filesMock4 = { ...filesMock }
+var filesMock4 = { ...filesMock };
 
-filesMock4["metadir/props/datum/index.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,"value1"
+filesMock4['metadir/props/datum/index.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,"value1"
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,"value2"
 f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,""
-c55581aff06024b65866642ed14f73a6f0e555821f3366fd8f10d74570fac920,"value4"
-`
+20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,"value4"
+`;
 
-filesMock4["metadir/props/date/index.csv"] = `4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d,2001-01-01
+filesMock4['metadir/props/date/index.csv'] = `4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d,2001-01-01
 161c6b3d37ba3341b7775b10730b2ded837c3d84d77fb1a046fa198e9db8cbbc,2002-01-01
 28a15dd418a2eed8bc7c2133b21bf942182cc58160dfea0c9dd98f155d80ea10,2003-01-01
 d21966fdfaca51c457dddf8b6f8089b41190551166eede4e377edcb762f6bcc8,2004-01-01
-`
+`;
 
-filesMock4["metadir/pairs/datum-guestdate.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d
+filesMock4['metadir/pairs/datum-guestdate.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,161c6b3d37ba3341b7775b10730b2ded837c3d84d77fb1a046fa198e9db8cbbc
 f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,28a15dd418a2eed8bc7c2133b21bf942182cc58160dfea0c9dd98f155d80ea10
-c55581aff06024b65866642ed14f73a6f0e555821f3366fd8f10d74570fac920,d21966fdfaca51c457dddf8b6f8089b41190551166eede4e377edcb762f6bcc8
-`
+20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,d21966fdfaca51c457dddf8b6f8089b41190551166eede4e377edcb762f6bcc8
+`;
 
-filesMock4["metadir/pairs/datum-hostdate.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d
+filesMock4['metadir/pairs/datum-hostdate.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,161c6b3d37ba3341b7775b10730b2ded837c3d84d77fb1a046fa198e9db8cbbc
 f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,28a15dd418a2eed8bc7c2133b21bf942182cc58160dfea0c9dd98f155d80ea10
-c55581aff06024b65866642ed14f73a6f0e555821f3366fd8f10d74570fac920,d21966fdfaca51c457dddf8b6f8089b41190551166eede4e377edcb762f6bcc8
-`
+20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,d21966fdfaca51c457dddf8b6f8089b41190551166eede4e377edcb762f6bcc8
+`;
 
-filesMock4["metadir/props/name/index.csv"] = `9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1,name1
+filesMock4['metadir/props/name/index.csv'] = `9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1,name1
 069587dcb8f8b63329ae53051ba79ba34ba0deb41c7a1e044280d7b6bb15e4f0,name2
 b218ca013905fc528204bdadf9e104acd87d646a2d90ef834526fbf85b17e690,name3
 8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5,name4
-`
+`;
 
-filesMock4["metadir/pairs/datum-guestname.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1
+filesMock4['metadir/pairs/datum-guestname.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,069587dcb8f8b63329ae53051ba79ba34ba0deb41c7a1e044280d7b6bb15e4f0
 f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,b218ca013905fc528204bdadf9e104acd87d646a2d90ef834526fbf85b17e690
-c55581aff06024b65866642ed14f73a6f0e555821f3366fd8f10d74570fac920,8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5
-`
+20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5
+`;
 
-filesMock4["metadir/pairs/datum-hostname.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1
+filesMock4['metadir/pairs/datum-hostname.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,069587dcb8f8b63329ae53051ba79ba34ba0deb41c7a1e044280d7b6bb15e4f0
 f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,b218ca013905fc528204bdadf9e104acd87d646a2d90ef834526fbf85b17e690
-c55581aff06024b65866642ed14f73a6f0e555821f3366fd8f10d74570fac920,8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5
-`
+20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5
+`;
 
-var filesMockNo3 = { ...filesMock }
+var filesMockNo3 = { ...filesMock };
 
-filesMockNo3["metadir/pairs/datum-guestname.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1
+filesMockNo3['metadir/pairs/datum-guestname.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,069587dcb8f8b63329ae53051ba79ba34ba0deb41c7a1e044280d7b6bb15e4f0
-`
+`;
 
-filesMockNo3["metadir/pairs/datum-hostname.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1
+filesMockNo3['metadir/pairs/datum-hostname.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,069587dcb8f8b63329ae53051ba79ba34ba0deb41c7a1e044280d7b6bb15e4f0
-`
+`;
 
-filesMockNo3["metadir/pairs/datum-guestdate.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d
+filesMockNo3['metadir/pairs/datum-guestdate.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,161c6b3d37ba3341b7775b10730b2ded837c3d84d77fb1a046fa198e9db8cbbc
-`
+`;
 
-filesMockNo3["metadir/pairs/datum-hostdate.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d
+filesMockNo3['metadir/pairs/datum-hostdate.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,161c6b3d37ba3341b7775b10730b2ded837c3d84d77fb1a046fa198e9db8cbbc
-`
+`;
 
-filesMockNo3["metadir/pairs/datum-filepath.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,01f8dafeb2559c983006156763f9c3b951b64688b3b41a9e5ad7cb695110e8ee
+filesMockNo3['metadir/pairs/datum-filepath.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,01f8dafeb2559c983006156763f9c3b951b64688b3b41a9e5ad7cb695110e8ee
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,424bd3271c0c940304ec6e9f4412a422735caeeb9638038bf509e36ae5d4f865
-`
+`;
 
-filesMockNo3["metadir/props/datum/index.csv"] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,"value1"
+filesMockNo3['metadir/props/datum/index.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,"value1"
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,"value2"
-`
+`;
 
-var filesMock5 = { ...filesEmpty }
+var filesMock5 = { ...filesEmpty };
 
-filesMock5["metadir/props/datum/index.csv"] = `c55581aff06024b65866642ed14f73a6f0e555821f3366fd8f10d74570fac920,"value4"
-`
+filesMock5['metadir/props/datum/index.csv'] = `20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,"value4"
+`;
 
-filesMock5["metadir/props/date/index.csv"] = `d21966fdfaca51c457dddf8b6f8089b41190551166eede4e377edcb762f6bcc8,2004-01-01
-`
+filesMock5['metadir/props/date/index.csv'] = `d21966fdfaca51c457dddf8b6f8089b41190551166eede4e377edcb762f6bcc8,2004-01-01
+`;
 
-filesMock5["metadir/pairs/datum-guestdate.csv"] = `c55581aff06024b65866642ed14f73a6f0e555821f3366fd8f10d74570fac920,d21966fdfaca51c457dddf8b6f8089b41190551166eede4e377edcb762f6bcc8
-`
+filesMock5['metadir/pairs/datum-guestdate.csv'] = `20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,d21966fdfaca51c457dddf8b6f8089b41190551166eede4e377edcb762f6bcc8
+`;
 
-filesMock5["metadir/pairs/datum-hostdate.csv"] = `c55581aff06024b65866642ed14f73a6f0e555821f3366fd8f10d74570fac920,d21966fdfaca51c457dddf8b6f8089b41190551166eede4e377edcb762f6bcc8
-`
+filesMock5['metadir/pairs/datum-hostdate.csv'] = `20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,d21966fdfaca51c457dddf8b6f8089b41190551166eede4e377edcb762f6bcc8
+`;
 
-filesMock5["metadir/props/name/index.csv"] = `8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5,name4
-`
+filesMock5['metadir/props/name/index.csv'] = `8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5,name4
+`;
 
-filesMock5["metadir/pairs/datum-guestname.csv"] = `c55581aff06024b65866642ed14f73a6f0e555821f3366fd8f10d74570fac920,8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5
-`
+filesMock5['metadir/pairs/datum-guestname.csv'] = `20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5
+`;
 
-filesMock5["metadir/pairs/datum-hostname.csv"] = `c55581aff06024b65866642ed14f73a6f0e555821f3366fd8f10d74570fac920,8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5
-`
+filesMock5['metadir/pairs/datum-hostname.csv'] = `20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5
+`;
 
-const filesMockNameUnique = [ "name1", "name2", "name3" ]
-const filesMockDateUnique = [ "2001-01-01", "2002-01-01", "2003-01-01" ]
+const filesMockNameUnique = [ 'name1', 'name2', 'name3' ];
+const filesMockDateUnique = [ '2001-01-01', '2002-01-01', '2003-01-01' ];
 
-var mocks = {
-  event1,
-  event2,
-  event3,
-  filesMock
-}
+// var mocks = {
+//     event1,
+//     event2,
+//     event3,
+//     filesMock
+// };
 
-module.exports = {
+export default {
   event1,
   event2,
   event3,
@@ -316,4 +316,4 @@ module.exports = {
   filesMock5,
   filesMockNameUnique,
   filesMockDateUnique,
-}
+};

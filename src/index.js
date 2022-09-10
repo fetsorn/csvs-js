@@ -1,8 +1,10 @@
 export {
   queryMetadir,
   queryOptions,
-  grep,
+  grep
+} from './query.js';
+
+export {
   editEvent,
   deleteEvent
-} from './main'
-export { digestMessage, digestRandom } from './util'
+} from './edit.js';
