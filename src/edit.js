@@ -71,7 +71,8 @@ export async function editEvent(_event, callback, schema_name = 'metadir.json') 
   }
 
   if (!event.UUID) {
-    event.UUID = await digestMessage(callback.random());
+    const random = callback.random ?? crypto.randomUUID;
+    event.UUID = await digestMessage(random());
   }
 
   let uuids = {};

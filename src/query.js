@@ -2,38 +2,38 @@
 async function fetchCSV(schema, callback) {
   // console.log("fetchCSV")
 
-  let schema_props = Object.keys(schema);
-  let root = schema_props.find(prop => !Object.prototype.hasOwnProperty.call(schema[prop], 'parent'));
+  let schemaProps = Object.keys(schema);
+  let root = schemaProps.find(prop => !Object.prototype.hasOwnProperty.call(schema[prop], 'parent'));
 
   let csv = {};
-  csv[`${root}_index_file`] = await callback.fetch(`metadir/props/${root}/index.csv`);
-  csv[`${root}_index`] = csv[`${root}_index_file`].split('\n');
-  for (const i in schema_props) {
-    let prop = schema_props[i];
-    let prop_type = schema[prop]['type'];
-    if (prop != root && prop_type != 'rule') {
+  const rootIndexPath = `metadir/props/${root}/index.csv`;
+  csv[rootIndexPath] = await callback.fetch(rootIndexPath);
+  for (const i in schemaProps) {
+    let prop = schemaProps[i];
+    let propType = schema[prop]['type'];
+    if (prop != root && propType != 'rule') {
       let branch = schema[prop]['parent'];
-      let pair_file;
+      let pairFile;
+      const pairPath = `metadir/pairs/${branch}-${prop}.csv`;
       try {
-        pair_file = await callback.fetch(`metadir/pairs/${branch}-${prop}.csv`);
+        pairFile = await callback.fetch(pairPath);
       } catch {
         console.log(`couldn't fetch ${branch}-${prop} pair`);
       }
-      if (pair_file) {
-        csv[`${branch}_${prop}_pair_file`] = pair_file;
-        csv[`${branch}_${prop}_pair`] = csv[`${branch}_${prop}_pair_file`].split('\n');
+      if (pairFile) {
+        csv[pairPath] = pairFile;
       }
-      if (prop_type != 'hash') {
-        let prop_dir = schema[prop]['dir'] ?? prop;
-        let index_file;
+      if (propType != 'hash') {
+        let propDir = schema[prop]['dir'] ?? prop;
+        let indexFile;
+        const indexPath = `metadir/props/${propDir}/index.csv`;
         try {
-          index_file = await callback.fetch(`metadir/props/${prop_dir}/index.csv`);
+          indexFile = await callback.fetch(indexPath);
         } catch {
-          console.log(`couldn't fetch ${prop_dir} index`);
+          console.log(`couldn't fetch ${propDir} index`);
         }
-        if (index_file) {
-          csv[`${prop_dir}_index_file`] = index_file;
-          csv[`${prop_dir}_index`] = csv[`${prop_dir}_index_file`].split('\n');
+        if (indexFile) {
+          csv[indexPath] = indexFile;
         }
       }
     }
@@ -42,125 +42,96 @@ async function fetchCSV(schema, callback) {
   return csv;
 }
 
-// TODO: replace all `.split('\n').filter(line => line != '')`
 function split(str) {
-  return str.split('\n').filter(line => line != '')
-  // const lines = str.split('\n')
-  // if (lines[-1] === '') {
-  //   lines.pop()
-  // }
-  // return lines
+  return str.split('\n').filter(line => line != '');
 }
 
-function killUUID(line) {
+function takeUUID(line) {
   return line.slice(0,64);
 }
 
-function killValue(line) {
+function takeValue(line) {
   return line.slice(65);
 }
 
 // get a string of metadir lines, return array of uuids
-function cutUUIDs(str) {
-  // console.log("cutUUIDs", str)
-  let lines = str.replace(/\n*$/, '').split('\n').filter(line => line != '');
-  let uuids = lines.map(line => line.slice(0,64));
-  // console.log(lines, uuids)
-  return uuids;
-}
-
-// get a string of metadir lines, return array of values
-function cutValues(str) {
-  // console.log("cutUUIDs", str)
-  let lines = str.replace(/\n*$/, '').split('\n').filter(line => line != '');
-  let uuids = lines.map(line => line.slice(65));
-  // console.log(lines, uuids)
+function takeUUIDs(str) {
+  let lines = split(str.replace(/\n*$/, ''));
+  let uuids = lines.map(line => takeUUID(line));
   return uuids;
 }
 
 export function grep(contentFile, patternFile) {
-  const contentLines = contentFile.split('\n').filter(line => line != '');
-  const patternLines = patternFile.split('\n').filter(line => line != '');
+  const contentLines = split(contentFile);
+  const patternLines = split(patternFile);
   const searchLines = patternLines.map(pattern => contentLines.filter(line => (new RegExp(pattern)).test(line)));
   const matches = [...new Set(searchLines.flat())].join('\n');
   return matches;
 }
 
 // find branch uuids until root
-async function recurseBranches(schema, csv, prop, prop_uuids, callback) {
+async function recurseBranches(schema, prop, propUUIDs, callback) {
   // console.log("recurseBranches")
   let root = Object.keys(schema).find(prop => !Object.prototype.hasOwnProperty.call(schema[prop], 'parent'));
   let branch = schema[prop]['parent'];
-  // console.log(`grep ${csv[`${branch}_${prop}_pair_file`].split("\n").length} branch ${branch} uuids against ${prop_uuids.length} ${prop} uuids`, prop_uuids)
   // find all pairs with one of the prop uuids
-  let branch_lines = await callback.grep(csv[`${branch}_${prop}_pair_file`], prop_uuids.join('\n'));
-  let branch_uuids = cutUUIDs(branch_lines);
+  const pairFile = await callback.fetch(`metadir/pairs/${branch}-${prop}.csv`);
+  // console.log(`grep ${pairFile.split("\n").length} branch ${branch} uuids against ${propUUIDs.length} ${prop} uuids`, propUUIDs)
+  let branchLines = await callback.grep(pairFile, propUUIDs.join('\n'));
+  let branchUUIDs = takeUUIDs(branchLines);
   if (branch != root) {
     // console.log(`${prop}'s branch ${branch} is not root ${root}`)
-    return await recurseBranches(schema, csv, branch, branch_uuids, callback);
+    return await recurseBranches(schema, branch, branchUUIDs, callback);
   } else {
-    // console.log("root reached", branch_uuids)
-    return branch_uuids;
+    // console.log("root reached", branchUUIDs)
+    return branchUUIDs;
   }
 }
 
 // return root uuids that satisfy search params
-async function queryRootUuids(schema, csv, searchParams, callback) {
+async function queryRootUuids(schema, searchParams, callback) {
   // console.log("queryRootUuidsWasm")
 
-  // let schema_props = Object.keys(schema);
-  // let root = schema_props.find(prop => !Object.prototype.hasOwnProperty.call(schema[prop], 'parent'));
-
-  // TODO instead of recursing to root on each search param and resolving grep
-  // resolve each non-root branch prop first to save time
-  let root_uuids;
+  // for each searchParam, take prop uuids, then take corresponding root uuids
+  let rootUUIDs;
   for (const entry of searchParams.entries()) {
     let prop = entry[0];
     if (prop == 'groupBy') { continue; }
-    let prop_dir = schema[prop]['dir'] ?? prop;
-    let prop_value = entry[1];
-    let root_uuids_new;
+    let propDir = schema[prop]['dir'] ?? prop;
+    let propValue = entry[1];
+    let rootUUIDsNew;
     if (schema[prop]['type'] == 'rule') {
-      let rulefile = await callback.fetch(`metadir/props/${prop_dir}/rules/${prop_value}.rule`);
+      let rulefile = await callback.fetch(`metadir/props/${propDir}/rules/${propValue}.rule`);
       let branch = schema[prop]['parent'];
-      let branch_dir = schema[prop]['parent'] ?? branch;
-      // console.log(`grep ${branch} in ${branch_dir}_index_file for ${prop_value}.rule`)
-      let branch_lines = await callback.grep(csv[`${branch_dir}_index_file`], rulefile);
-      let branch_uuids = cutUUIDs(branch_lines);
-      root_uuids_new = await recurseBranches(schema, csv, branch, branch_uuids, callback);
+      let branchDir = schema[prop]['parent'] ?? branch;
+      // console.log(`grep ${branch} in ${branchDir} index for ${propValue}.rule`)
+      const indexFile = await callback.fetch(`metadir/props/${branchDir}/index.csv`);
+      let branchLines = await callback.grep(indexFile, rulefile);
+      let branchUUIDs = takeUUIDs(branchLines);
+      rootUUIDsNew = await recurseBranches(schema, branch, branchUUIDs, callback);
     } else {
-      // console.log(`grep ${prop} in ${prop_dir}_index_file for ,${prop_value}$\n`)
-      let prop_lines = await callback.grep(csv[`${prop_dir}_index_file`], `,${prop_value}$\n`);
-      let prop_uuids = cutUUIDs(prop_lines);
-      root_uuids_new = await recurseBranches(schema, csv, prop, prop_uuids, callback);
+      // console.log(`grep ${prop} in ${propDir} index for ,${propValue}$\n`)
+      const indexFile = await callback.fetch(`metadir/props/${propDir}/index.csv`);
+      let propLines = await callback.grep(indexFile, `,${propValue}$\n`);
+      let propUUIDs = takeUUIDs(propLines);
+      rootUUIDsNew = await recurseBranches(schema, prop, propUUIDs, callback);
     }
-    if (!root_uuids) {
-      root_uuids = root_uuids_new;
+    if (!rootUUIDs) {
+      rootUUIDs = rootUUIDsNew;
     } else {
-      // console.log(`grep ${root_uuids_new.length} new uuids ${root_uuids.length} uuids\n`)
-      let root_lines = await callback.grep(root_uuids_new.join('\n'), root_uuids.join('\n'));
-      root_uuids = cutUUIDs(root_lines);
+      // console.log(`grep ${rootUUIDsNew.length} new uuids ${rootUUIDs.length} uuids\n`)
+      let rootLines = await callback.grep(rootUUIDsNew.join('\n'), rootUUIDs.join('\n'));
+      rootUUIDs = takeUUIDs(rootLines);
     }
   }
 
-  return root_uuids;
+  return rootUUIDs;
 }
 
-// get a string of metadir lines, return value that corresponds to uuid
-function lookup(lines, uuid) {
-  let line = lines.find(line => (new RegExp(uuid)).test(line));
-  if (line) {
-    let value = line.slice(65);
-    return value;
-  } else {
-    return undefined;
-  }
-}
+async function buildEvents(schema, searchParams, rootUUIDs, callback) {
 
-async function buildEvents_(schema, csv, searchParams, root_uuids, callback) {
-
-  let schema_props = Object.keys(schema);
-  let root = schema_props.find(
+  let schemaProps = Object.keys(schema);
+  let root = schemaProps.find(
     prop => !Object.prototype.hasOwnProperty.call(schema[prop], 'parent')
   );
 
@@ -168,7 +139,7 @@ async function buildEvents_(schema, csv, searchParams, root_uuids, callback) {
   // type UUID = string
   // uuids: Map<Prop, [UUID]>
   const uuids = new Map();
-  uuids.set(root, root_uuids);
+  uuids.set(root, rootUUIDs);
 
   // type UUID = string
   // type Branch = UUID
@@ -177,35 +148,46 @@ async function buildEvents_(schema, csv, searchParams, root_uuids, callback) {
   // pairs: Map<Prop, BranchLinks>
   const pairs = new Map();
 
-  // TODO add queue for out-of-order schema
-  for (const prop of schema_props) {
-    // console.log(`pair for ${prop}`);
-    const prop_type = schema[prop]['type'];
-    // skip root and rule props
-    if (prop != root && prop_type != 'rule') {
-      let branch = schema[prop]['parent'];
-      let pair = csv[`${branch}_${prop}_pair_file`];
-      // console.log(`${branch}-${prop} pair is ${pair}`);
-      if (pair) {
-        let branch_uuids = uuids.get(branch);
-        if (branch_uuids && branch_uuids != '') {
-          let prop_uuid_grep = await callback.grep(pair, branch_uuids.join('\n'));
-          // console.log(`grepped for ${branch_uuids} and found ${prop_uuid_grep}`);
-          if (prop_uuid_grep) {
-            let prop_uuid_lines = split(prop_uuid_grep);
+  // enqueue props whose branches aren't processed yet
+  let queue = [...schemaProps];
+  // type Prup = string
+  // processed: Map<Prop, Boolean>
+  let processed = new Map();
+  processed.set(root, true);
 
-            // cache branch_uuid of each leaf_uuid to find root_uuid later
-            pairs.set(prop, new Map());
-            for (const line of prop_uuid_lines) {
-              const branch_uuid = killUUID(line);
-              const leaf_uuid = killValue(line);
-              // console.log(`caching ${leaf_uuid}-${branch_uuid} link`);
-              pairs.get(prop).set(branch_uuid, leaf_uuid);
+  for (const prop of queue) {
+    // console.log(`pair for ${prop}`);
+    const propType = schema[prop]['type'];
+    // skip root and rule props
+    if (prop != root && propType != 'rule') {
+      let branch = schema[prop]['parent'];
+      // if prop's branch is not processed, process this prop later
+      if (!processed.get(branch)) {
+        queue.push(prop);
+      } else {
+        processed.set(prop, true);
+        let pairFile = await callback.fetch(`metadir/pairs/${branch}-${prop}.csv`);
+        if (pairFile) {
+          let branchUUIDs = uuids.get(branch);
+          if (branchUUIDs && branchUUIDs != '') {
+            let propUUIDStr = await callback.grep(pairFile, branchUUIDs.join('\n'));
+            // console.log(`grepped for ${branchUUIDs} and found ${propUUIDStr}`);
+            if (propUUIDStr) {
+              let propUUIDLines = split(propUUIDStr);
+
+              // cache branchUUID of each leafUUID to find rootUUID later
+              pairs.set(prop, new Map());
+              for (const line of propUUIDLines) {
+                const branchUUID = takeUUID(line);
+                const leafUUID = takeValue(line);
+                // console.log(`caching ${leafUUID}-${branchUUID} link`);
+                pairs.get(prop).set(branchUUID, leafUUID);
+              }
+              let propUUIDs = propUUIDLines.map((line) => takeValue(line));
+              // console.log(`caching ${propUUIDs}`);
+              // cache list of leafUUIDs to grep for values later
+              uuids.set(prop, [...new Set(propUUIDs)]);
             }
-            let prop_uuids = prop_uuid_lines.map((line) => killValue(line));
-            // console.log(`caching ${prop_uuids}`);
-            // cache list of leaf_uuids to grep for values later
-            uuids.set(prop, [...new Set(prop_uuids)]);
           }
         }
       }
@@ -219,25 +201,25 @@ async function buildEvents_(schema, csv, searchParams, root_uuids, callback) {
   // fields: Map<Prop, RootLinks>
   let fields = new Map();
 
-  for (const prop of schema_props) {
+  for (const prop of schemaProps) {
     const branchLinks = pairs.get(prop);
     if (branchLinks) {
       fields.set(prop, new Map());
-      for (const root_uuid of root_uuids) {
-        let _branch = schema[prop]['parent'];
-        let _leaf_uuid;
+      for (const rootUUID of rootUUIDs) {
+        let branch = schema[prop]['parent'];
+        let leafUUID;
         let path = [];
-        while (_branch != root) {
-          path.push(_branch);
-          _branch = schema[_branch]['parent'];
+        while (branch != root) {
+          path.push(branch);
+          branch = schema[branch]['parent'];
         }
-        let _branch_uuid = root_uuid;
+        let branchUUID = rootUUID;
         for (const element of path) {
-          _leaf_uuid = pairs.get(element).get(_branch_uuid);
-          _branch_uuid = _leaf_uuid;
+          leafUUID = pairs.get(element).get(branchUUID);
+          branchUUID = leafUUID;
         }
-        const prop_uuid = pairs.get(prop).get(_branch_uuid);
-        fields.get(prop).set(root_uuid, prop_uuid);
+        const propUUID = pairs.get(prop).get(branchUUID);
+        fields.get(prop).set(rootUUID, propUUID);
       }
     }
   }
@@ -247,28 +229,28 @@ async function buildEvents_(schema, csv, searchParams, root_uuids, callback) {
   // values: Map<UUID, Value>
   let values = new Map();
 
-  for (const prop of schema_props) {
+  for (const prop of schemaProps) {
     // console.log(`index for ${prop}`);
-    const prop_type = schema[prop]['type'];
-    if (prop_type != 'rule') {
-      const prop_dir = schema[prop]['dir'] ?? prop;
-      const index = csv[`${prop_dir}_index_file`];
+    const propType = schema[prop]['type'];
+    if (propType != 'rule' && propType != 'hash') {
+      const propDir = schema[prop]['dir'] ?? prop;
+      const indexFile = await callback.fetch(`metadir/props/${propDir}/index.csv`);
       // console.log(`${prop} index is ${index}`);
-      if (index) {
-        const prop_uuids = uuids.get(prop);
-        if (prop_uuids) {
-          const prop_values_grep = await callback.grep(index, prop_uuids.join('\n'));
-          // console.log(`grepped for ${prop_uuids} and found ${prop_values_grep}`);
-          const prop_values_lines = split(prop_values_grep);
+      if (indexFile) {
+        const propUUIDs = uuids.get(prop);
+        if (propUUIDs) {
+          const propValuesStr = await callback.grep(indexFile, propUUIDs.join('\n'));
+          // console.log(`grepped for ${propUUIDs} and found ${propValuesStr}`);
+          const propValuesLines = split(propValuesStr);
 
-          // set value of prop_uuid of this event
-          for (const line of prop_values_lines) {
-            const prop_uuid = killUUID(line);
-            let prop_value = killValue(line);
-            if (prop_type == 'string') {
-              prop_value = JSON.parse(prop_value);
+          // set value of propUUID of this event
+          for (const line of propValuesLines) {
+            const propUUID = takeUUID(line);
+            let propValue = takeValue(line);
+            if (propType == 'string') {
+              propValue = JSON.parse(propValue);
             }
-            values.set(prop_uuid, prop_value);
+            values.set(propUUID, propValue);
           }
         }
       }
@@ -279,23 +261,23 @@ async function buildEvents_(schema, csv, searchParams, root_uuids, callback) {
   // events: Map<string, [Event]>
   let events = new Map();
 
-  for (const prop of schema_props) {
-    const prop_label = schema[prop]['label'] ?? prop;
-    for (const root_uuid of root_uuids) {
-      const event = events.get(root_uuid);
+  for (const prop of schemaProps) {
+    const propLabel = schema[prop]['label'] ?? prop;
+    for (const rootUUID of rootUUIDs) {
+      const event = events.get(rootUUID);
       if (!event) {
-        events.set(root_uuid, {});
+        events.set(rootUUID, {});
       }
 
       if (prop == root) {
-        events.get(root_uuid)['UUID'] = root_uuid;
-        events.get(root_uuid)[prop_label] = values.get(root_uuid);
+        events.get(rootUUID)['UUID'] = rootUUID;
+        events.get(rootUUID)[propLabel] = values.get(rootUUID);
       } else {
         const rootLinks = fields.get(prop);
         if (rootLinks) {
-          const prop_uuid = rootLinks.get(root_uuid);
-          const prop_value = values.get(prop_uuid);
-          events.get(root_uuid)[prop_label] = prop_value;
+          const propUUID = rootLinks.get(rootUUID);
+          const propValue = values.get(propUUID);
+          events.get(rootUUID)[propLabel] = propValue;
         }
       }
     }
@@ -307,47 +289,57 @@ async function buildEvents_(schema, csv, searchParams, root_uuids, callback) {
 }
 
 // return an array of events from metadir that satisfy search params
-export async function queryMetadir(searchParams, callback, schema_name = 'metadir.json') {
+export async function queryMetadir(searchParams, callback, prefetch = true, schemaPath = 'metadir.json') {
 
-  let schema = JSON.parse(await callback.fetch(schema_name));
+  let schema = JSON.parse(await callback.fetch(schemaPath));
 
-  const csv = await fetchCSV(schema, callback);
+  if (prefetch == true) {
+    const csv = await fetchCSV(schema, callback);
+    const _fetch = callback.fetch;
+    callback.fetch = async (path) => {
+      const cache = csv[path];
+      if (cache) {
+        return cache;
+      } else {
+        return await _fetch(path);
+      }
+    };
+  }
 
-  const root_uuids = await queryRootUuids(schema, csv, searchParams, callback);
+  const rootUUIDs = await queryRootUuids(schema, searchParams, callback);
 
-  const events = buildEvents_(schema, csv, searchParams, root_uuids, callback);
+  const events = buildEvents(schema, searchParams, rootUUIDs, callback);
 
   return events;
 }
 
 // return an array of unique values of a prop
-export async function queryOptions(prop, callback, schema_name = 'metadir.json') {
+export async function queryOptions(prop, callback, schemaPath = 'metadir.json') {
 
-  let schema = JSON.parse(await callback.fetch(schema_name));
+  let schema = JSON.parse(await callback.fetch(schemaPath));
 
-  let prop_type = schema[prop]['type'];
+  let propType = schema[prop]['type'];
 
-  let index_file;
-  if (prop_type != 'hash') {
-    let prop_dir = schema[prop]['dir'] ?? prop;
-    index_file = await callback.fetch(`metadir/props/${prop_dir}/index.csv`);
+  let indexFile;
+  if (propType != 'hash') {
+    let propDir = schema[prop]['dir'] ?? prop;
+    indexFile = await callback.fetch(`metadir/props/${propDir}/index.csv`);
   } else {
     let branch = schema[prop]['parent'];
-    index_file = await callback.fetch(`metadir/pairs/${branch}-${prop}.csv`);
+    indexFile = await callback.fetch(`metadir/pairs/${branch}-${prop}.csv`);
   }
 
-  let values = index_file.split('\n')
-    .filter(line => (line != ''))
+  let values = split(indexFile)
     .map(line => {
-      let v_escaped = line.slice(65);
-      if (prop_type == 'string') {
-        return JSON.parse(v_escaped);
+      let vEscaped = takeValue(line);
+      if (propType == 'string') {
+        return JSON.parse(vEscaped);
       } else {
-        return v_escaped;
+        return vEscaped;
       }
     });
 
-  let values_unique = [...new Set(values)];
+  let valuesUnique = [...new Set(values)];
 
-  return values_unique;
+  return valuesUnique;
 }

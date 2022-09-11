@@ -56,9 +56,7 @@ const event4new = {
   'UUID': '1234',
 };
 
-var filesEmpty = {};
-
-filesEmpty['metadir.json'] = `{
+const schema = `{
   "datum": {
     "type": "string",
     "label": "DATUM"
@@ -120,6 +118,73 @@ filesEmpty['metadir.json'] = `{
   }
 }
 `;
+
+const schemaUnordered = `{
+  "moddate": {
+    "parent": "filepath",
+    "dir": "date",
+    "type": "date",
+    "label": "MOD_DATE"
+  },
+  "filetype": {
+    "parent": "filepath",
+    "label": "FILE_TYPE",
+    "type": "string"
+  },
+  "filesize": {
+    "parent": "filepath",
+    "label": "FILE_SIZE"
+  },
+  "filehash": {
+    "parent": "filepath",
+    "label": "FILE_HASH",
+    "type": "hash"
+  },
+  "hostdate": {
+    "parent": "datum",
+    "dir": "date",
+    "type": "date",
+    "label": "HOST_DATE"
+  },
+  "tag": {
+    "parent": "datum",
+    "label": "TAG"
+  },
+  "filepath": {
+    "parent": "datum",
+    "label": "FILE_PATH",
+    "type": "string"
+  },
+  "hostname": {
+    "parent": "datum",
+    "dir": "name",
+    "label": "HOST_NAME"
+  },
+  "datum": {
+    "type": "string",
+    "label": "DATUM"
+  },
+  "guestdate": {
+    "parent": "datum",
+    "dir": "date",
+    "type": "date",
+    "label": "GUEST_DATE"
+  },
+  "guestname": {
+    "parent": "datum",
+    "dir": "name",
+    "label": "GUEST_NAME"
+  },
+  "pathrule": {
+    "parent": "filepath",
+    "type": "regex"
+  }
+}
+`;
+
+var filesEmpty = {};
+
+filesEmpty['metadir.json'] = schema;
 
 var filesMock = { ...filesEmpty };
 
@@ -294,12 +359,8 @@ filesMock5['metadir/pairs/datum-hostname.csv'] = `20b08f6b4c89ed92fa865b00b4ab8b
 const filesMockNameUnique = [ 'name1', 'name2', 'name3' ];
 const filesMockDateUnique = [ '2001-01-01', '2002-01-01', '2003-01-01' ];
 
-// var mocks = {
-//     event1,
-//     event2,
-//     event3,
-//     filesMock
-// };
+const filesMockUnordered = { ...filesMock };
+filesMockUnordered['metadir.json'] = schemaUnordered;
 
 export default {
   event1,
@@ -316,4 +377,5 @@ export default {
   filesMock5,
   filesMockNameUnique,
   filesMockDateUnique,
+  filesMockUnordered
 };

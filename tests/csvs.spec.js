@@ -5,29 +5,14 @@ import fs from 'fs';
 import crypto from 'crypto';
 import { exec } from 'child_process';
 import mocks from './mockCSV';
-const {
-  event1,
-  event2,
-  event3,
-  event3new,
-  event4edit,
-  // event4new,
-  filesEmpty,
-  filesMock,
-  filesMock3,
-  filesMock4,
-  filesMockNo3,
-  filesMock5,
-  filesMockNameUnique,
-  filesMockDateUnique,
-} = mocks;
 
 // node polyfills for browser APIs
 // used in csvs_js.digestMessage for hashes
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 global.crypto = {
-  'subtle': crypto.webcrypto.subtle
+  'subtle': crypto.webcrypto.subtle,
+  'randomUUID': crypto.randomUUID
 };
 
 function sortObject(a) {
@@ -42,14 +27,14 @@ function sortObject(a) {
 
 let callback;
 const _callback = {
-  fetch: (path) => filesMock[path],
+  fetch: (path) => mocks.filesMock[path],
   random: () => '5ff1e403-da6e-430d-891f-89aa46b968bf'
 };
 
 describe('queryMetadir no ripgrep', () => {
 
   beforeEach(() => {
-    callback = { ..._callback};
+    callback = { ..._callback };
     callback.grep = grepJS;
   });
 
@@ -57,21 +42,29 @@ describe('queryMetadir no ripgrep', () => {
     var searchParams = new URLSearchParams();
     searchParams.set('hostname', 'name1');
     return queryMetadir(searchParams, callback).then(data => {
-      expect(data).toStrictEqual([sortObject(event1)]);
+      expect(data).toStrictEqual([sortObject(mocks.event1)]);
     });
   });
   test('queries name2', () => {
     var searchParams = new URLSearchParams();
     searchParams.set('hostname', 'name2');
     return queryMetadir(searchParams, callback).then(data => {
-      expect(data).toStrictEqual([sortObject(event2)]);
+      expect(data).toStrictEqual([sortObject(mocks.event2)]);
     });
   });
   test('queries name3', () => {
     var searchParams = new URLSearchParams();
     searchParams.set('hostname', 'name3');
     return queryMetadir(searchParams, callback).then(data => {
-      expect(data).toStrictEqual([sortObject(event3)]);
+      expect(data).toStrictEqual([sortObject(mocks.event3)]);
+    });
+  });
+  test('queries name2 with out-of-order schema', () => {
+    var searchParams = new URLSearchParams();
+    searchParams.set('hostname', 'name2');
+    callback.fetch = (path) => mocks.filesMockUnordered[path];
+    return queryMetadir(searchParams, callback).then(data => {
+      expect(data).toStrictEqual([sortObject(mocks.event2)]);
     });
   });
 });
@@ -79,7 +72,7 @@ describe('queryMetadir no ripgrep', () => {
 describe('queryMetadir ripgrep', () => {
 
   beforeEach(() => {
-    callback = { ..._callback};
+    callback = { ..._callback };
     async function grepCLI(contentFile, patternFile) {
       const contentFilePath = '/tmp/content';
       const patternFilePath = '/tmp/pattern';
@@ -99,7 +92,7 @@ describe('queryMetadir ripgrep', () => {
           output = stdout;
         }
       } catch {
-        console.log('grep cli failed');
+        // console.log('grep returned empty');
       }
 
       await fs.promises.unlink(contentFilePath);
@@ -114,21 +107,21 @@ describe('queryMetadir ripgrep', () => {
     var searchParams = new URLSearchParams();
     searchParams.set('hostname', 'name1');
     return queryMetadir(searchParams, callback).then(data => {
-      expect(data).toStrictEqual([sortObject(event1)]);
+      expect(data).toStrictEqual([sortObject(mocks.event1)]);
     });
   });
   test('queries name2', () => {
     var searchParams = new URLSearchParams();
     searchParams.set('hostname', 'name2');
     return queryMetadir(searchParams, callback).then(data => {
-      expect(data).toStrictEqual([sortObject(event2)]);
+      expect(data).toStrictEqual([sortObject(mocks.event2)]);
     });
   });
   test('queries name3', () => {
     var searchParams = new URLSearchParams();
     searchParams.set('hostname', 'name3');
     return queryMetadir(searchParams, callback).then(data => {
-      expect(data).toStrictEqual([sortObject(event3)]);
+      expect(data).toStrictEqual([sortObject(mocks.event3)]);
     });
   });
 });
@@ -136,82 +129,89 @@ describe('queryMetadir ripgrep', () => {
 describe('queryOptions', () => {
   test('queries hostname', () => {
     return queryOptions('hostname', callback).then(data => {
-      expect(data).toStrictEqual(filesMockNameUnique);
+      expect(data).toStrictEqual(mocks.filesMockNameUnique);
     });
   });
   test('queries hostdate', () => {
     return queryOptions('hostdate', callback).then(data => {
-      expect(data).toStrictEqual(filesMockDateUnique);
+      expect(data).toStrictEqual(mocks.filesMockDateUnique);
     });
   });
 });
 
 describe('editEvent', () => {
 
-  let filesMockNew;
+  let editedFiles;
 
   beforeEach(() => {
-    callback = { ..._callback};
-    filesMockNew = { ...filesMock };
+    callback = { ..._callback };
+    editedFiles = { ...mocks.filesMock };
     async function writeFileMock(path, contents) {
-      filesMockNew[path] = contents;
+      editedFiles[path] = contents;
     }
     callback.write = writeFileMock;
   });
 
   test('does nothing on no change', () => {
-    return editEvent(event1, callback)
+    return editEvent(mocks.event1, callback)
       .then(() => {
-        expect(filesMockNew).toStrictEqual(filesMock);
+        expect(editedFiles).toStrictEqual(mocks.filesMock);
       });
   });
   test('edits event', () => {
-    return editEvent(event3new, callback)
+    return editEvent(mocks.event3new, callback)
       .then(() => {
-        expect(filesMockNew).toStrictEqual(filesMock3);
+        expect(editedFiles).toStrictEqual(mocks.filesMock3);
       });
   });
   test('adds event', () => {
-    return editEvent(event4edit, callback)
+    return editEvent(mocks.event4edit, callback)
       .then(() => {
-        expect(filesMockNew).toStrictEqual(filesMock4);
+        expect(editedFiles).toStrictEqual(mocks.filesMock4);
       });
   });
   test('adds event when metadir files are empty', () => {
-    let _filesMockNew = { ...filesEmpty };
-    callback.fetch = (path) => _filesMockNew[path];
-    callback.write = (path, contents) => {_filesMockNew[path] = contents;};
-    return editEvent(event4edit, callback)
+    let _editedFiles = { ...mocks.filesEmpty };
+    callback.fetch = (path) => _editedFiles[path];
+    callback.write = (path, contents) => {_editedFiles[path] = contents;};
+    return editEvent(mocks.event4edit, callback)
       .then(() => {
-        expect(_filesMockNew).toStrictEqual(filesMock5);
+        expect(_editedFiles).toStrictEqual(mocks.filesMock5);
       });
   });
   test('adds event with random uuid', () => {
     callback.random = crypto.randomUUID;
-    return editEvent(event4edit, callback)
+    return editEvent(mocks.event4edit, callback)
       .then(() => {
-        expect(filesMockNew).not.toStrictEqual(filesMock4);
+        expect(editedFiles).not.toStrictEqual(mocks.filesMock4);
+      });
+  });
+  test('falls back to random UUID if callback is not specified', () => {
+    delete callback.random;
+    return editEvent(mocks.event4edit, callback)
+      .then(() => {
+        expect(editedFiles).not.toStrictEqual(mocks.filesMock4);
       });
   });
 });
 
 describe('deleteEvent', () => {
 
-  let filesMockNew;
+  let editedFiles;
 
   beforeEach(() => {
-    callback = { ..._callback};
-    filesMockNew = { ...filesMock };
+    callback = { ..._callback };
+    editedFiles = { ...mocks.filesMock };
     async function writeFileMock(path, contents) {
-      filesMockNew[path] = contents;
+      editedFiles[path] = contents;
     }
     callback.write = writeFileMock;
   });
 
   test('deletes event', () => {
-    return deleteEvent(event3.UUID, callback)
+    return deleteEvent(mocks.event3.UUID, callback)
       .then(() => {
-        expect(filesMockNew).toStrictEqual(filesMockNo3);
+        expect(editedFiles).toStrictEqual(mocks.filesMockNo3);
       });
   });
 });
