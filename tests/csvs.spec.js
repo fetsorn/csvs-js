@@ -1,6 +1,7 @@
 import { describe, beforeEach, expect, test } from '@jest/globals';
 import { queryMetadir, queryOptions, editEvent, deleteEvent, grep as grepJS } from '../src/index';
 import { TextEncoder, TextDecoder, promisify } from 'util';
+import fs from 'fs';
 import crypto from 'crypto';
 import { exec } from 'child_process';
 import mocks from './mockCSV';
@@ -79,22 +80,32 @@ describe('queryMetadir ripgrep', () => {
 
   beforeEach(() => {
     callback = { ..._callback};
-    async function grepCLI(contentfile, patternfile) {
-      const { stdout, stderr } = await promisify(exec)(
-        'export PATH=$PATH:~/.nix-profile/bin/; ' +
-          'printf "$patternfile" > /tmp/pattern; ' +
-          'printf "$contentfile" | rg -f /tmp/pattern; ', {
-          env: {
-            contentfile,
-            patternfile,
-          }
-        });
-      if (stderr) {
-        console.log(stderr);
-        return '';
-      } else {
-        return stdout;
+    async function grepCLI(contentFile, patternFile) {
+      const contentFilePath = '/tmp/content';
+      const patternFilePath = '/tmp/pattern';
+
+      await fs.promises.writeFile(contentFilePath, contentFile);
+      await fs.promises.writeFile(patternFilePath, patternFile);
+
+      let output = '';
+      try {
+        const { stdout, stderr } = await promisify(exec)(
+          'export PATH=$PATH:~/.nix-profile/bin/; ' +
+            `rg -f ${patternFilePath} ${contentFilePath}`);
+
+        if (stderr) {
+          console.log('grep cli failed');
+        } else {
+          output = stdout;
+        }
+      } catch {
+        console.log('grep cli failed');
       }
+
+      await fs.promises.unlink(contentFilePath);
+      await fs.promises.unlink(patternFilePath);
+
+      return output;
     }
     callback.grep = grepCLI;
   });

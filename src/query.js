@@ -173,8 +173,8 @@ async function buildEvents_(schema, csv, searchParams, root_uuids, callback) {
   // type UUID = string
   // type Branch = UUID
   // type Leaf = UUID
-  // Links = Map<Leaf, Branch>
-  // pairs: Map<Prop, Links>
+  // LeafLinks = Map<Leaf, Branch>
+  // pairs: Map<Prop, LeafLinks>
   const pairs = new Map();
 
   // TODO add queue for out-of-order schema
@@ -188,7 +188,7 @@ async function buildEvents_(schema, csv, searchParams, root_uuids, callback) {
       // console.log(`${branch}-${prop} pair is ${pair}`);
       if (pair) {
         let branch_uuids = uuids.get(branch);
-        if (branch_uuids) {
+        if (branch_uuids && branch_uuids != '') {
           let prop_uuid_grep = await callback.grep(pair, branch_uuids.join('\n'));
           // console.log(`grepped for ${branch_uuids} and found ${prop_uuid_grep}`);
           if (prop_uuid_grep) {
@@ -212,9 +212,44 @@ async function buildEvents_(schema, csv, searchParams, root_uuids, callback) {
     }
   }
 
-  // type Event = { [string]: Value }
-  // events: Map<string, [Event]>
-  let events = new Map();
+  console.log(uuids);
+  console.log(pairs);
+
+  // type UUID = string
+  // type Root = UUID
+  // type Leaf = UUID
+  // RootLinks: Map<Root, Leaf>
+  // fields: Map<Prop, RootLinks>
+  let fields = new Map();
+
+  for (const prop of schema_props) {
+    const leafLinks = pairs.get(prop);
+    if (leafLinks) {
+      fields.set(prop, new Map());
+      for (const prop_uuid of leafLinks.keys()) {
+        let _leaf = prop;
+        let _leaf_uuid = prop_uuid;
+        let _branch = schema[prop]['parent'];
+        let _branch_uuid;
+        while (_branch != root) {
+          _branch_uuid = pairs.get(_leaf).get(_leaf_uuid);
+          // console.log(`branch ${branch} is not root: ${branch_uuid}`);
+          _leaf = _branch;
+          _leaf_uuid = _branch_uuid;
+          _branch = schema[_branch]['parent'];
+        }
+
+        const root_uuid = pairs.get(_leaf).get(_leaf_uuid);
+
+        fields.get(prop).set(root_uuid, prop_uuid);
+      }
+    }
+  }
+
+  // type UUID = string
+  // type Value = string
+  // values: Map<UUID, Value>
+  let values = new Map();
 
   for (const prop of schema_props) {
     // console.log(`index for ${prop}`);
@@ -231,48 +266,40 @@ async function buildEvents_(schema, csv, searchParams, root_uuids, callback) {
           const prop_values_lines = split(prop_values_grep);
 
           // set value of prop_uuid of this event
-          const prop_label = schema[prop]['label'] ?? prop;
           for (const line of prop_values_lines) {
             const prop_uuid = killUUID(line);
             let prop_value = killValue(line);
             if (prop_type == 'string') {
               prop_value = JSON.parse(prop_value);
             }
-            // console.log(`processing ${prop_uuid}-${prop_value} link`);
-
-            //
-            let root_uuid;
-            if (prop == root) {
-              // console.log(`prop ${prop} is root: ${root_uuid}`);
-              root_uuid = prop_uuid;
-            } else {
-              let leaf = prop;
-              let leaf_uuid = prop_uuid;
-              let branch = schema[prop]['parent'];
-              let branch_uuid;
-              while (branch != root) {
-                branch_uuid = pairs.get(leaf).get(leaf_uuid);
-                // console.log(`branch ${branch} is not root: ${branch_uuid}`);
-                leaf = branch;
-                leaf_uuid = branch_uuid;
-                branch = schema[branch]['parent'];
-              }
-              root_uuid = pairs.get(leaf).get(leaf_uuid);
-              // console.log(`prop ${branch} is root: ${root_uuid}`);
-            }
-
-            const event = events.get(root_uuid);
-            if (!event) {
-              events.set(root_uuid, {});
-            }
-
-            if (prop == root) {
-              events.get(root_uuid)['UUID'] = root_uuid;
-            }
-
-            // console.log(`caching event field ${prop_label}: ${prop_value}`);
-            events.get(root_uuid)[prop_label] = prop_value;
+            values.set(prop_uuid, prop_value);
           }
+        }
+      }
+    }
+  }
+
+  // type Event = { [string]: Value }
+  // events: Map<string, [Event]>
+  let events = new Map();
+
+  for (const prop of schema_props) {
+    const prop_label = schema[prop]['label'] ?? prop;
+    for (const root_uuid of root_uuids) {
+      const event = events.get(root_uuid);
+      if (!event) {
+        events.set(root_uuid, {});
+      }
+
+      if (prop == root) {
+        events.get(root_uuid)['UUID'] = root_uuid;
+        events.get(root_uuid)[prop_label] = values.get(root_uuid);
+      } else {
+        const rootLinks = fields.get(prop);
+        if (rootLinks) {
+          const prop_uuid = rootLinks.get(root_uuid);
+          const prop_value = values.get(prop_uuid);
+          events.get(root_uuid)[prop_label] = prop_value;
         }
       }
     }
