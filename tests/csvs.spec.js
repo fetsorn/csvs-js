@@ -1,4 +1,5 @@
-import { queryMetadir, queryOptions, editEvent, deleteEvent, grep as grepWASM } from '../src/index';
+import { describe, beforeEach, expect, test } from '@jest/globals';
+import { queryMetadir, queryOptions, editEvent, deleteEvent, grep as grepJS } from '../src/index';
 import { TextEncoder, TextDecoder, promisify } from 'util';
 import crypto from 'crypto';
 import { exec } from 'child_process';
@@ -48,7 +49,7 @@ describe('queryMetadir no ripgrep', () => {
 
   beforeEach(() => {
     callback = { ..._callback};
-    callback.grep = grepWASM;
+    callback.grep = grepJS;
   });
 
   test('queries name1', () => {
