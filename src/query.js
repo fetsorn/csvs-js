@@ -173,8 +173,8 @@ async function buildEvents_(schema, csv, searchParams, root_uuids, callback) {
   // type UUID = string
   // type Branch = UUID
   // type Leaf = UUID
-  // LeafLinks = Map<Leaf, Branch>
-  // pairs: Map<Prop, LeafLinks>
+  // BranchLinks = Map<Branch, Leaf>
+  // pairs: Map<Prop, BranchLinks>
   const pairs = new Map();
 
   // TODO add queue for out-of-order schema
@@ -200,20 +200,17 @@ async function buildEvents_(schema, csv, searchParams, root_uuids, callback) {
               const branch_uuid = killUUID(line);
               const leaf_uuid = killValue(line);
               // console.log(`caching ${leaf_uuid}-${branch_uuid} link`);
-              pairs.get(prop).set(leaf_uuid, branch_uuid);
+              pairs.get(prop).set(branch_uuid, leaf_uuid);
             }
-            let prop_uuids = prop_uuid_lines.map((line) => killValue(line)) ;
+            let prop_uuids = prop_uuid_lines.map((line) => killValue(line));
             // console.log(`caching ${prop_uuids}`);
             // cache list of leaf_uuids to grep for values later
-            uuids.set(prop, prop_uuids);
+            uuids.set(prop, [...new Set(prop_uuids)]);
           }
         }
       }
     }
   }
-
-  console.log(uuids);
-  console.log(pairs);
 
   // type UUID = string
   // type Root = UUID
@@ -223,24 +220,23 @@ async function buildEvents_(schema, csv, searchParams, root_uuids, callback) {
   let fields = new Map();
 
   for (const prop of schema_props) {
-    const leafLinks = pairs.get(prop);
-    if (leafLinks) {
+    const branchLinks = pairs.get(prop);
+    if (branchLinks) {
       fields.set(prop, new Map());
-      for (const prop_uuid of leafLinks.keys()) {
-        let _leaf = prop;
-        let _leaf_uuid = prop_uuid;
+      for (const root_uuid of root_uuids) {
         let _branch = schema[prop]['parent'];
-        let _branch_uuid;
+        let _leaf_uuid;
+        let path = [];
         while (_branch != root) {
-          _branch_uuid = pairs.get(_leaf).get(_leaf_uuid);
-          // console.log(`branch ${branch} is not root: ${branch_uuid}`);
-          _leaf = _branch;
-          _leaf_uuid = _branch_uuid;
+          path.push(_branch);
           _branch = schema[_branch]['parent'];
         }
-
-        const root_uuid = pairs.get(_leaf).get(_leaf_uuid);
-
+        let _branch_uuid = root_uuid;
+        for (const element of path) {
+          _leaf_uuid = pairs.get(element).get(_branch_uuid);
+          _branch_uuid = _leaf_uuid;
+        }
+        const prop_uuid = pairs.get(prop).get(_branch_uuid);
         fields.get(prop).set(root_uuid, prop_uuid);
       }
     }
@@ -308,71 +304,6 @@ async function buildEvents_(schema, csv, searchParams, root_uuids, callback) {
   const arr = Array.from(events.values());
 
   return arr;
-}
-
-// build an event for every root uuid
-function buildEvents(schema, csv, searchParams, root_uuids) {
-  // console.log(`build ${root_uuids.length} events`)
-
-  let schema_props = Object.keys(schema);
-  let root = schema_props.find(prop => !Object.prototype.hasOwnProperty.call(schema[prop], 'parent'));
-
-  let events = [];
-  // for every datum_uuid build an event
-  for (const i in root_uuids) {
-
-    let root_uuid = root_uuids[i];
-
-    let event = {};
-
-    event.UUID = root_uuid;
-    let root_value = lookup(csv[`${root}_index`],root_uuid);
-    let root_label = schema[root]['label'];
-    if (root_value != '') {
-      root_value = JSON.parse(root_value);
-      event[root_label] = root_value;
-    }
-
-    let uuids = {};
-    uuids[root] = root_uuid;
-
-    // if query is not found in the metadir
-    // fallback to an impossible regexp
-    // so that next search on uuid fails
-    let falseRegex = '\\b\\B';
-    // TODO add queue to support the second level of props out of config order
-    for (const i in schema_props) {
-      let prop = schema_props[i];
-      let prop_type = schema[prop]['type'];
-      if (prop != root && prop_type != 'rule') {
-        let branch = schema[prop]['parent'];
-        let pair = csv[`${branch}_${prop}_pair`] ?? [''];
-        let branch_uuid = uuids[branch];
-        let prop_uuid = lookup(pair, branch_uuid) ?? falseRegex;
-        uuids[prop] = prop_uuid;
-        let prop_dir = schema[prop]['dir'] ?? prop;
-        let index = csv[`${prop_dir}_index`] ?? [];
-        let prop_value = lookup(index, prop_uuid);
-        // console.log(prop, branch, branch_uuid, prop_uuid, prop_value)
-        // console.log("get", prop, prop_uuid, branch, branch_uuid, prop_value)
-        if ( prop_value != undefined ) {
-          if (prop_type == 'string') {
-            // console.log("try to parse", prop, prop_value)
-            prop_value = JSON.parse(prop_value);
-          }
-          let label = schema[prop]['label'] ?? prop;
-          // console.log("set", prop, prop_uuid, branch, branch_uuid, prop_value)
-          event[label] = prop_value;
-        }
-      }
-    }
-
-    // console.log(event)
-    // {"UUID": "", "HOST_DATE": "", "HOST_NAME": "", "DATUM": ""}
-    events.push(event);
-  }
-
-  return events;
 }
 
 // return an array of events from metadir that satisfy search params
