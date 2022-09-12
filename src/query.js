@@ -1,9 +1,13 @@
+function findRoot(schema) {
+  return Object.keys(schema).find(prop => !Object.prototype.hasOwnProperty.call(schema[prop], 'parent'));
+}
+
 // cache all metadir csv files as a hashmap
 async function fetchCSV(schema, callback) {
   // console.log("fetchCSV")
 
   const schemaProps = Object.keys(schema);
-  const root = schemaProps.find(prop => !Object.prototype.hasOwnProperty.call(schema[prop], 'parent'));
+  const root = findRoot(schema);
 
   const csv = {};
   const rootIndexPath = `metadir/props/${root}/index.csv`;
@@ -72,7 +76,7 @@ export function grep(contentFile, patternFile) {
 // find branch uuids until root
 async function recurseBranches(schema, prop, propUUIDs, callback) {
   // console.log("recurseBranches")
-  const root = Object.keys(schema).find(prop => !Object.prototype.hasOwnProperty.call(schema[prop], 'parent'));
+  const root = findRoot(schema);
   const branch = schema[prop]['parent'];
   // find all pairs with one of the prop uuids
   const pairFile = await callback.fetch(`metadir/pairs/${branch}-${prop}.csv`);
@@ -106,43 +110,49 @@ export async function queryMetadir(searchParams, callback, prefetch = true, sche
     };
   }
 
+  const root = findRoot(schema);
+
   // for each searchParam, take prop uuids, then take corresponding root uuids
   let rootUUIDs;
-  for (const entry of searchParams.entries()) {
-    const prop = entry[0];
-    if (prop == 'groupBy') { continue; }
-    const propDir = schema[prop]['dir'] ?? prop;
-    const propValue = entry[1];
-    let rootUUIDsNew;
-    if (schema[prop]['type'] == 'rule') {
-      const rulefile = await callback.fetch(`metadir/props/${propDir}/rules/${propValue}.rule`);
-      const branch = schema[prop]['parent'];
-      const branchDir = schema[prop]['parent'] ?? branch;
-      // console.log(`grep ${branch} in ${branchDir} index for ${propValue}.rule`)
-      const indexFile = await callback.fetch(`metadir/props/${branchDir}/index.csv`);
-      const branchLines = await callback.grep(indexFile, rulefile);
-      const branchUUIDs = takeUUIDs(branchLines);
-      rootUUIDsNew = await recurseBranches(schema, branch, branchUUIDs, callback);
-    } else {
-      // console.log(`grep ${prop} in ${propDir} index for ,${propValue}$\n`)
-      const indexFile = await callback.fetch(`metadir/props/${propDir}/index.csv`);
-      const propLines = await callback.grep(indexFile, `,${propValue}$\n`);
-      const propUUIDs = takeUUIDs(propLines);
-      rootUUIDsNew = await recurseBranches(schema, prop, propUUIDs, callback);
-    }
-    if (!rootUUIDs) {
-      rootUUIDs = rootUUIDsNew;
-    } else {
-      // console.log(`grep ${rootUUIDsNew.length} new uuids ${rootUUIDs.length} uuids\n`)
-      const rootLines = await callback.grep(rootUUIDsNew.join('\n'), rootUUIDs.join('\n'));
-      rootUUIDs = takeUUIDs(rootLines);
+
+  // if no search params, return all root uuids
+  if (!searchParams.entries().length) {
+    console.log('empty search');
+    const rootDir = schema[root]['dir'] ?? root;
+    const rootLines = await callback.fetch(`metadir/props/${rootDir}/index.csv`);
+    rootUUIDs = takeUUIDs(rootLines);
+  } else {
+    for (const entry of searchParams.entries()) {
+      const prop = entry[0];
+      if (prop == 'groupBy') { continue; }
+      const propDir = schema[prop]['dir'] ?? prop;
+      const propValue = entry[1];
+      let rootUUIDsNew;
+      if (schema[prop]['type'] == 'rule') {
+        const rulefile = await callback.fetch(`metadir/props/${propDir}/rules/${propValue}.rule`);
+        const branch = schema[prop]['parent'];
+        const branchDir = schema[prop]['dir'] ?? branch;
+        // console.log(`grep ${branch} in ${branchDir} index for ${propValue}.rule`)
+        const indexFile = await callback.fetch(`metadir/props/${branchDir}/index.csv`);
+        const branchLines = await callback.grep(indexFile, rulefile);
+        const branchUUIDs = takeUUIDs(branchLines);
+        rootUUIDsNew = await recurseBranches(schema, branch, branchUUIDs, callback);
+      } else {
+        // console.log(`grep ${prop} in ${propDir} index for ,${propValue}$\n`)
+        const indexFile = await callback.fetch(`metadir/props/${propDir}/index.csv`);
+        const propLines = await callback.grep(indexFile, `,${propValue}$\n`);
+        const propUUIDs = takeUUIDs(propLines);
+        rootUUIDsNew = await recurseBranches(schema, prop, propUUIDs, callback);
+      }
+      if (!rootUUIDs) {
+        rootUUIDs = rootUUIDsNew;
+      } else {
+        // console.log(`grep ${rootUUIDsNew.length} new uuids ${rootUUIDs.length} uuids\n`)
+        const rootLines = await callback.grep(rootUUIDsNew.join('\n'), rootUUIDs.join('\n'));
+        rootUUIDs = takeUUIDs(rootLines);
+      }
     }
   }
-
-  const schemaProps = Object.keys(schema);
-  const root = schemaProps.find(
-    prop => !Object.prototype.hasOwnProperty.call(schema[prop], 'parent')
-  );
 
   // type Prop = string
   // type UUID = string
@@ -156,6 +166,8 @@ export async function queryMetadir(searchParams, callback, prefetch = true, sche
   // BranchLinks = Map<Branch, Leaf>
   // pairs: Map<Prop, BranchLinks>
   const pairs = new Map();
+
+  const schemaProps = Object.keys(schema);
 
   // enqueue props whose branches aren't processed yet
   const queue = [...schemaProps];
