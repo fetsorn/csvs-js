@@ -88,9 +88,23 @@ async function recurseBranches(schema, prop, propUUIDs, callback) {
   }
 }
 
-// return root uuids that satisfy search params
-async function queryRootUuids(schema, searchParams, callback) {
-  // console.log("queryRootUuidsWasm")
+// return an array of events from metadir that satisfy search params
+export async function queryMetadir(searchParams, callback, prefetch = true, schemaPath = 'metadir.json') {
+
+  let schema = JSON.parse(await callback.fetch(schemaPath));
+
+  if (prefetch == true) {
+    const csv = await fetchCSV(schema, callback);
+    const _fetch = callback.fetch;
+    callback.fetch = async (path) => {
+      const cache = csv[path];
+      if (cache) {
+        return cache;
+      } else {
+        return await _fetch(path);
+      }
+    };
+  }
 
   // for each searchParam, take prop uuids, then take corresponding root uuids
   let rootUUIDs;
@@ -124,11 +138,6 @@ async function queryRootUuids(schema, searchParams, callback) {
       rootUUIDs = takeUUIDs(rootLines);
     }
   }
-
-  return rootUUIDs;
-}
-
-async function buildEvents(schema, searchParams, rootUUIDs, callback) {
 
   let schemaProps = Object.keys(schema);
   let root = schemaProps.find(
@@ -286,31 +295,6 @@ async function buildEvents(schema, searchParams, rootUUIDs, callback) {
   const arr = Array.from(events.values());
 
   return arr;
-}
-
-// return an array of events from metadir that satisfy search params
-export async function queryMetadir(searchParams, callback, prefetch = true, schemaPath = 'metadir.json') {
-
-  let schema = JSON.parse(await callback.fetch(schemaPath));
-
-  if (prefetch == true) {
-    const csv = await fetchCSV(schema, callback);
-    const _fetch = callback.fetch;
-    callback.fetch = async (path) => {
-      const cache = csv[path];
-      if (cache) {
-        return cache;
-      } else {
-        return await _fetch(path);
-      }
-    };
-  }
-
-  const rootUUIDs = await queryRootUuids(schema, searchParams, callback);
-
-  const events = buildEvents(schema, searchParams, rootUUIDs, callback);
-
-  return events;
 }
 
 // return an array of unique values of a prop
