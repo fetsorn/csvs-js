@@ -6,5 +6,6 @@ export {
 
 export {
   editEvent,
-  deleteEvent
+  deleteEvent,
+  digestMessage
 } from './edit.js';
