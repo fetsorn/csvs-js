@@ -3,13 +3,16 @@ function findRoot(schema) {
 }
 
 // cache all metadir csv files as a hashmap
-async function fetchCSV(schema, callback) {
-  // console.log("fetchCSV")
+async function fetchCSV(schemaPath, callback) {
+  // console.log('fetchCSV');
+  const csv = {};
 
+  const schemaFile = await callback.fetch(schemaPath);
+  csv[schemaPath] = schemaFile;
+  const schema = JSON.parse(schemaFile);
   const schemaProps = Object.keys(schema);
   const root = findRoot(schema);
 
-  const csv = {};
   const rootIndexPath = `metadir/props/${root}/index.csv`;
   csv[rootIndexPath] = await callback.fetch(rootIndexPath);
   for (const i in schemaProps) {
@@ -21,11 +24,14 @@ async function fetchCSV(schema, callback) {
       const pairPath = `metadir/pairs/${branch}-${prop}.csv`;
       try {
         pairFile = await callback.fetch(pairPath);
+        if (pairFile) {
+          csv[pairPath] = pairFile;
+        } else {
+          throw('file is undefined');
+        }
       } catch {
-        console.log(`couldn't fetch ${branch}-${prop} pair`);
-      }
-      if (pairFile) {
-        csv[pairPath] = pairFile;
+        csv[pairPath] = '\n';
+        // console.log(`couldn't fetch ${branch}-${prop} pair`);
       }
       if (propType != 'hash') {
         const propDir = schema[prop]['dir'] ?? prop;
@@ -33,11 +39,14 @@ async function fetchCSV(schema, callback) {
         const indexPath = `metadir/props/${propDir}/index.csv`;
         try {
           indexFile = await callback.fetch(indexPath);
+          if (indexFile) {
+            csv[indexPath] = indexFile;
+          } else {
+            throw('file is undefined');
+          }
         } catch {
-          console.log(`couldn't fetch ${propDir} index`);
-        }
-        if (indexFile) {
-          csv[indexPath] = indexFile;
+          csv[indexPath] = '\n';
+          // console.log(`couldn't fetch ${propDir} index`);
         }
       }
     }
@@ -95,20 +104,22 @@ async function recurseBranches(schema, prop, propUUIDs, callback) {
 // return an array of events from metadir that satisfy search params
 export async function queryMetadir(searchParams, callback, prefetch = true, schemaPath = 'metadir.json') {
 
-  const schema = JSON.parse(await callback.fetch(schemaPath));
-
-  if (prefetch == true) {
-    const csv = await fetchCSV(schema, callback);
+  if (prefetch === true) {
+    const csv = await fetchCSV(schemaPath, callback);
     const _fetch = callback.fetch;
     callback.fetch = async (path) => {
       const cache = csv[path];
       if (cache) {
         return cache;
       } else {
+        console.log('actual fetch', path);
         return await _fetch(path);
       }
     };
   }
+
+  const schemaFile = await callback.fetch(schemaPath);
+  const schema = JSON.parse(schemaFile);
 
   const root = findRoot(schema);
 
@@ -116,8 +127,7 @@ export async function queryMetadir(searchParams, callback, prefetch = true, sche
   let rootUUIDs;
 
   // if no search params, return all root uuids
-  if (!searchParams.entries().length) {
-    console.log('empty search');
+  if (Array.from(searchParams.entries()).length === 0) {
     const rootDir = schema[root]['dir'] ?? root;
     const rootLines = await callback.fetch(`metadir/props/${rootDir}/index.csv`);
     rootUUIDs = takeUUIDs(rootLines);
