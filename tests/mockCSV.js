@@ -29,7 +29,7 @@ const event3 = {
   'UUID': 'f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265',
 };
 
-const event3new = {
+const event3edit = {
   'DATUM': 'value3',
   'FILE_PATH': 'path/to/3',
   'GUEST_DATE': '2003-03-01',
@@ -39,21 +39,12 @@ const event3new = {
   'UUID': 'f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265',
 };
 
-const event4edit = {
+const event4 = {
   'DATUM': 'value4',
   'GUEST_DATE': '2004-01-01',
   'GUEST_NAME': 'name4',
-  'HOST_DATE': '2004-01-01',
-  'HOST_NAME': 'name4',
-};
-
-const event4new = {
-  'DATUM': 'value4',
-  'GUEST_DATE': '2004-01-01',
-  'GUEST_NAME': 'name4',
-  'HOST_DATE': '2004-01-01',
-  'HOST_NAME': 'name4',
-  'UUID': '1234',
+  'HOST_DATE': '2005-01-01',
+  'HOST_NAME': 'name5',
 };
 
 const schema = `{
@@ -275,6 +266,7 @@ filesMock4['metadir/props/date/index.csv'] = `4935b73812dd87780ee8deae03d0bbcb12
 161c6b3d37ba3341b7775b10730b2ded837c3d84d77fb1a046fa198e9db8cbbc,2002-01-01
 28a15dd418a2eed8bc7c2133b21bf942182cc58160dfea0c9dd98f155d80ea10,2003-01-01
 d21966fdfaca51c457dddf8b6f8089b41190551166eede4e377edcb762f6bcc8,2004-01-01
+0c54836dcb1d1b88790774a67704dac761613d3af3fa942cb339d355328c5bb7,2005-01-01
 `;
 
 filesMock4['metadir/pairs/datum-guestdate.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d
@@ -286,13 +278,14 @@ f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,28a15dd418a2eed
 filesMock4['metadir/pairs/datum-hostdate.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,161c6b3d37ba3341b7775b10730b2ded837c3d84d77fb1a046fa198e9db8cbbc
 f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,28a15dd418a2eed8bc7c2133b21bf942182cc58160dfea0c9dd98f155d80ea10
-20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,d21966fdfaca51c457dddf8b6f8089b41190551166eede4e377edcb762f6bcc8
+20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,0c54836dcb1d1b88790774a67704dac761613d3af3fa942cb339d355328c5bb7
 `;
 
 filesMock4['metadir/props/name/index.csv'] = `9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1,name1
 069587dcb8f8b63329ae53051ba79ba34ba0deb41c7a1e044280d7b6bb15e4f0,name2
 b218ca013905fc528204bdadf9e104acd87d646a2d90ef834526fbf85b17e690,name3
 8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5,name4
+7b54eeb6e51f461d9d87a7f7718116ee79dfd90440775ce51f1f1963488d23f0,name5
 `;
 
 filesMock4['metadir/pairs/datum-guestname.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1
@@ -304,7 +297,7 @@ f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,b218ca013905fc5
 filesMock4['metadir/pairs/datum-hostname.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,069587dcb8f8b63329ae53051ba79ba34ba0deb41c7a1e044280d7b6bb15e4f0
 f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,b218ca013905fc528204bdadf9e104acd87d646a2d90ef834526fbf85b17e690
-20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5
+20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,7b54eeb6e51f461d9d87a7f7718116ee79dfd90440775ce51f1f1963488d23f0
 `;
 
 var filesMockNo3 = { ...filesMock };
@@ -339,25 +332,31 @@ filesMock5['metadir/props/datum/index.csv'] = `20b08f6b4c89ed92fa865b00b4ab8b8d4
 `;
 
 filesMock5['metadir/props/date/index.csv'] = `d21966fdfaca51c457dddf8b6f8089b41190551166eede4e377edcb762f6bcc8,2004-01-01
+0c54836dcb1d1b88790774a67704dac761613d3af3fa942cb339d355328c5bb7,2005-01-01
 `;
 
 filesMock5['metadir/pairs/datum-guestdate.csv'] = `20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,d21966fdfaca51c457dddf8b6f8089b41190551166eede4e377edcb762f6bcc8
 `;
 
-filesMock5['metadir/pairs/datum-hostdate.csv'] = `20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,d21966fdfaca51c457dddf8b6f8089b41190551166eede4e377edcb762f6bcc8
+filesMock5['metadir/pairs/datum-hostdate.csv'] = `20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,0c54836dcb1d1b88790774a67704dac761613d3af3fa942cb339d355328c5bb7
 `;
 
 filesMock5['metadir/props/name/index.csv'] = `8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5,name4
+7b54eeb6e51f461d9d87a7f7718116ee79dfd90440775ce51f1f1963488d23f0,name5
 `;
 
 filesMock5['metadir/pairs/datum-guestname.csv'] = `20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5
 `;
 
-filesMock5['metadir/pairs/datum-hostname.csv'] = `20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5
+filesMock5['metadir/pairs/datum-hostname.csv'] = `20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,7b54eeb6e51f461d9d87a7f7718116ee79dfd90440775ce51f1f1963488d23f0
 `;
 
-const filesMockNameUnique = [ 'name1', 'name2', 'name3' ];
-const filesMockDateUnique = [ '2001-01-01', '2002-01-01', '2003-01-01' ];
+const optionsHostname = [ 'name1', 'name2', 'name3', 'name4', 'name5' ];
+const optionsHostdate = [ '2001-01-01', '2002-01-01', '2003-01-01', '2004-01-01', '2005-01-01' ];
+const optionsHostnameGrep = [ 'name1', 'name2', 'name3', 'name5' ];
+const optionsHostdateGrep = [ '2001-01-01', '2002-01-01', '2003-01-01', '2005-01-01' ];
+const optionsGuestnameGrep = [ 'name1', 'name2', 'name3', 'name4' ];
+const optionsGuestdateGrep = [ '2001-01-01', '2002-01-01', '2003-01-01', '2004-01-01' ];
 
 const filesMockUnordered = { ...filesMock };
 filesMockUnordered['metadir.json'] = schemaUnordered;
@@ -366,16 +365,19 @@ export default {
   event1,
   event2,
   event3,
-  event3new,
-  event4edit,
-  event4new,
+  event3edit,
+  event4,
   filesEmpty,
   filesMock,
   filesMock3,
   filesMock4,
   filesMockNo3,
   filesMock5,
-  filesMockNameUnique,
-  filesMockDateUnique,
+  optionsHostname,
+  optionsHostdate,
+  optionsHostnameGrep,
+  optionsHostdateGrep,
+  optionsGuestnameGrep,
+  optionsGuestdateGrep,
   filesMockUnordered
 };

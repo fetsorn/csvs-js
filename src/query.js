@@ -74,6 +74,13 @@ function takeUUIDs(str) {
   return uuids;
 }
 
+// get a string of metadir lines, return array of uuids
+function takeValues(str) {
+  const lines = split(str.replace(/\n*$/, ''));
+  const uuids = lines.map(line => takeValue(line));
+  return uuids;
+}
+
 export function grep(contentFile, patternFile) {
   const contentLines = split(contentFile);
   const patternLines = split(patternFile);
@@ -83,7 +90,7 @@ export function grep(contentFile, patternFile) {
 }
 
 // find branch uuids until root
-async function recurseBranches(schema, prop, propUUIDs, callback) {
+async function findRootUUIDs(schema, prop, propUUIDs, callback) {
   // console.log("recurseBranches")
   const root = findRoot(schema);
   const branch = schema[prop]['parent'];
@@ -92,13 +99,15 @@ async function recurseBranches(schema, prop, propUUIDs, callback) {
   // console.log(`grep ${pairFile.split("\n").length} branch ${branch} uuids against ${propUUIDs.length} ${prop} uuids`, propUUIDs)
   const branchLines = await callback.grep(pairFile, propUUIDs.join('\n'));
   const branchUUIDs = takeUUIDs(branchLines);
-  if (branch != root) {
-    // console.log(`${prop}'s branch ${branch} is not root ${root}`)
-    return await recurseBranches(schema, branch, branchUUIDs, callback);
-  } else {
+  let rootUUIDs;
+  if (branch == root) {
     // console.log("root reached", branchUUIDs)
-    return branchUUIDs;
+    rootUUIDs = branchUUIDs;
+  } else {
+    // console.log(`${prop}'s branch ${branch} is not root ${root}`)
+    rootUUIDs = await findRootUUIDs(schema, branch, branchUUIDs, callback);
   }
+  return rootUUIDs;
 }
 
 // return an array of events from metadir that satisfy search params
@@ -146,13 +155,13 @@ export async function queryMetadir(searchParams, callback, prefetch = true, sche
         const indexFile = await callback.fetch(`metadir/props/${branchDir}/index.csv`);
         const branchLines = await callback.grep(indexFile, rulefile);
         const branchUUIDs = takeUUIDs(branchLines);
-        rootUUIDsNew = await recurseBranches(schema, branch, branchUUIDs, callback);
+        rootUUIDsNew = await findRootUUIDs(schema, branch, branchUUIDs, callback);
       } else {
         // console.log(`grep ${prop} in ${propDir} index for ,${propValue}$\n`)
         const indexFile = await callback.fetch(`metadir/props/${propDir}/index.csv`);
         const propLines = await callback.grep(indexFile, `,${propValue}$\n`);
         const propUUIDs = takeUUIDs(propLines);
-        rootUUIDsNew = await recurseBranches(schema, prop, propUUIDs, callback);
+        rootUUIDsNew = await findRootUUIDs(schema, prop, propUUIDs, callback);
       }
       if (!rootUUIDs) {
         rootUUIDs = rootUUIDsNew;
@@ -318,28 +327,35 @@ export async function queryMetadir(searchParams, callback, prefetch = true, sche
 }
 
 // return an array of unique values of a prop
-export async function queryOptions(prop, callback, schemaPath = 'metadir.json') {
+export async function queryOptions(prop, callback, doGrep = false, schemaPath = 'metadir.json') {
 
   const schema = JSON.parse(await callback.fetch(schemaPath));
 
   const propType = schema[prop]['type'];
 
-  let indexFile;
-  if (propType != 'hash') {
-    const propDir = schema[prop]['dir'] ?? prop;
-    indexFile = await callback.fetch(`metadir/props/${propDir}/index.csv`);
+  let lines;
+
+  const branch = schema[prop]['parent'];
+  const pairFile = await callback.fetch(`metadir/pairs/${branch}-${prop}.csv`);
+  if (propType === 'hash') {
+    lines = pairFile;
   } else {
-    const branch = schema[prop]['parent'];
-    indexFile = await callback.fetch(`metadir/pairs/${branch}-${prop}.csv`);
+    const propDir = schema[prop]['dir'] ?? prop;
+    lines = await callback.fetch(`metadir/props/${propDir}/index.csv`);
+    if (doGrep) {
+      const propUUIDs = takeValues(pairFile);
+      lines = await callback.grep(lines, propUUIDs.join('\n'));
+    }
   }
 
-  const values = split(indexFile)
+  const values = split(lines)
     .map(line => {
-      const vEscaped = takeValue(line);
+      const valueRaw = takeValue(line);
       if (propType == 'string') {
-        return JSON.parse(vEscaped);
+        const valueUnescaped = JSON.parse(valueRaw);
+        return valueUnescaped;
       } else {
-        return vEscaped;
+        return valueRaw;
       }
     });
 

@@ -127,14 +127,37 @@ describe('queryMetadir ripgrep', () => {
 });
 
 describe('queryOptions', () => {
-  test('queries hostname', () => {
+  beforeEach(() => {
+    callback.fetch = async (path) => mocks.filesMock4[path];
+  });
+  test('queries name', () => {
     return queryOptions('hostname', callback).then(data => {
-      expect(data).toStrictEqual(mocks.filesMockNameUnique);
+      expect(data).toStrictEqual(mocks.optionsHostname);
     });
   });
-  test('queries hostdate', () => {
+  test('queries date', () => {
     return queryOptions('hostdate', callback).then(data => {
-      expect(data).toStrictEqual(mocks.filesMockDateUnique);
+      expect(data).toStrictEqual(mocks.optionsHostdate);
+    });
+  });
+  test('queries hostname with grep', () => {
+    return queryOptions('hostname', callback, true).then(data => {
+      expect(data).toStrictEqual(mocks.optionsHostnameGrep);
+    });
+  });
+  test('queries hostdate with grep', () => {
+    return queryOptions('hostdate', callback, true).then(data => {
+      expect(data).toStrictEqual(mocks.optionsHostdateGrep);
+    });
+  });
+  test('queries guestname with grep', () => {
+    return queryOptions('guestname', callback, true).then(data => {
+      expect(data).toStrictEqual(mocks.optionsGuestnameGrep);
+    });
+  });
+  test('queries guestdate with grep', () => {
+    return queryOptions('guestdate', callback, true).then(data => {
+      expect(data).toStrictEqual(mocks.optionsGuestdateGrep);
     });
   });
 });
@@ -150,6 +173,7 @@ describe('editEvent', () => {
       editedFiles[path] = contents;
     }
     callback.write = writeFileMock;
+    callback.fetch = async (path) => editedFiles[path];
   });
 
   test('does nothing on no change', () => {
@@ -159,13 +183,13 @@ describe('editEvent', () => {
       });
   });
   test('edits event', () => {
-    return editEvent(mocks.event3new, callback)
+    return editEvent(mocks.event3edit, callback)
       .then(() => {
         expect(editedFiles).toStrictEqual(mocks.filesMock3);
       });
   });
   test('adds event', () => {
-    return editEvent(mocks.event4edit, callback)
+    return editEvent(mocks.event4, callback)
       .then(() => {
         expect(editedFiles).toStrictEqual(mocks.filesMock4);
       });
@@ -174,21 +198,21 @@ describe('editEvent', () => {
     let _editedFiles = { ...mocks.filesEmpty };
     callback.fetch = (path) => _editedFiles[path];
     callback.write = (path, contents) => {_editedFiles[path] = contents;};
-    return editEvent(mocks.event4edit, callback)
+    return editEvent(mocks.event4, callback)
       .then(() => {
         expect(_editedFiles).toStrictEqual(mocks.filesMock5);
       });
   });
   test('adds event with random uuid', () => {
     callback.random = crypto.randomUUID;
-    return editEvent(mocks.event4edit, callback)
+    return editEvent(mocks.event4, callback)
       .then(() => {
         expect(editedFiles).not.toStrictEqual(mocks.filesMock4);
       });
   });
   test('falls back to random UUID if callback is not specified', () => {
     delete callback.random;
-    return editEvent(mocks.event4edit, callback)
+    return editEvent(mocks.event4, callback)
       .then(() => {
         expect(editedFiles).not.toStrictEqual(mocks.filesMock4);
       });
