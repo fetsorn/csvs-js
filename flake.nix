@@ -32,18 +32,6 @@
         csvs-js = pkgs.mkYarnPackage rec {
           name = "csvs-js";
           src = ./.;
-          configurePhase = ''
-            cp -r $node_modules node_modules
-            chmod -R 755 node_modules
-          '';
-          buildPhase = ''
-            yarn run build
-            cp -r dist $out
-          '';
-          dontInstall = true;
-          distPhase = ''
-            true
-          '';
         };
       in rec {
         devShell =
