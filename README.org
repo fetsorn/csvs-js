@@ -99,7 +99,7 @@ console.log(query4)
 * More csvs projects
 [[https://github.com/fetsorn/csvs-spec][csvs-spec]] - format description
 
-[[https://github.com/fetsorn/csvs-ui][csvs-ui]] - Web UI
+[[https://github.com/fetsorn/qualia][qualia]] - Web UI and desktop app
 
 [[https://github.com/fetsorn/csvs-sh][csvs-sh]] - command-line interface
 
