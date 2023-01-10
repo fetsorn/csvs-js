@@ -3,7 +3,7 @@
 // eslint-disable-next-line import/no-relative-packages
 import init, { grep } from '../node_modules/@fetsorn/wasm-grep/pkg/web/index.js';
 import * as csvs from '../src/index.js';
-import mocks from './mockCSV.js';
+import mocks from './mocks/index.js';
 
 function sortObject(a) {
   return Object.keys(a).sort().reduce(
