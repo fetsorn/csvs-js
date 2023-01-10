@@ -40,28 +40,28 @@ describe('queryMetadir no ripgrep', () => {
 
   test('queries name1', () => {
     var searchParams = new URLSearchParams();
-    searchParams.set('hostname', 'name1');
+    searchParams.set('actname', 'name1');
     return queryMetadir(searchParams, callback).then(data => {
       expect(data).toStrictEqual([sortObject(mocks.event1)]);
     });
   });
   test('queries name2', () => {
     var searchParams = new URLSearchParams();
-    searchParams.set('hostname', 'name2');
+    searchParams.set('actname', 'name2');
     return queryMetadir(searchParams, callback).then(data => {
       expect(data).toStrictEqual([sortObject(mocks.event2)]);
     });
   });
   test('queries name3', () => {
     var searchParams = new URLSearchParams();
-    searchParams.set('hostname', 'name3');
+    searchParams.set('actname', 'name3');
     return queryMetadir(searchParams, callback).then(data => {
       expect(data).toStrictEqual([sortObject(mocks.event3)]);
     });
   });
   test('queries name2 with out-of-order schema', () => {
     var searchParams = new URLSearchParams();
-    searchParams.set('hostname', 'name2');
+    searchParams.set('actname', 'name2');
     callback.fetch = (path) => mocks.filesMockUnordered[path];
     return queryMetadir(searchParams, callback).then(data => {
       expect(data).toStrictEqual([sortObject(mocks.event2)]);
@@ -105,21 +105,21 @@ describe('queryMetadir ripgrep', () => {
 
   test('queries name1', () => {
     var searchParams = new URLSearchParams();
-    searchParams.set('hostname', 'name1');
+    searchParams.set('actname', 'name1');
     return queryMetadir(searchParams, callback).then(data => {
       expect(data).toStrictEqual([sortObject(mocks.event1)]);
     });
   });
   test('queries name2', () => {
     var searchParams = new URLSearchParams();
-    searchParams.set('hostname', 'name2');
+    searchParams.set('actname', 'name2');
     return queryMetadir(searchParams, callback).then(data => {
       expect(data).toStrictEqual([sortObject(mocks.event2)]);
     });
   });
   test('queries name3', () => {
     var searchParams = new URLSearchParams();
-    searchParams.set('hostname', 'name3');
+    searchParams.set('actname', 'name3');
     return queryMetadir(searchParams, callback).then(data => {
       expect(data).toStrictEqual([sortObject(mocks.event3)]);
     });
@@ -131,33 +131,33 @@ describe('queryOptions', () => {
     callback.fetch = async (path) => mocks.filesMock4[path];
   });
   test('queries name', () => {
-    return queryOptions('hostname', callback).then(data => {
-      expect(data).toStrictEqual(mocks.optionsHostname);
+    return queryOptions('actname', callback).then(data => {
+      expect(data).toStrictEqual(mocks.optionsActname);
     });
   });
   test('queries date', () => {
-    return queryOptions('hostdate', callback).then(data => {
-      expect(data).toStrictEqual(mocks.optionsHostdate);
+    return queryOptions('actdate', callback).then(data => {
+      expect(data).toStrictEqual(mocks.optionsActdate);
     });
   });
-  test('queries hostname with grep', () => {
-    return queryOptions('hostname', callback, true).then(data => {
-      expect(data).toStrictEqual(mocks.optionsHostnameGrep);
+  test('queries actname with grep', () => {
+    return queryOptions('actname', callback, true).then(data => {
+      expect(data).toStrictEqual(mocks.optionsActnameGrep);
     });
   });
-  test('queries hostdate with grep', () => {
-    return queryOptions('hostdate', callback, true).then(data => {
-      expect(data).toStrictEqual(mocks.optionsHostdateGrep);
+  test('queries actdate with grep', () => {
+    return queryOptions('actdate', callback, true).then(data => {
+      expect(data).toStrictEqual(mocks.optionsActdateGrep);
     });
   });
-  test('queries guestname with grep', () => {
-    return queryOptions('guestname', callback, true).then(data => {
-      expect(data).toStrictEqual(mocks.optionsGuestnameGrep);
+  test('queries sayname with grep', () => {
+    return queryOptions('sayname', callback, true).then(data => {
+      expect(data).toStrictEqual(mocks.optionsSaynameGrep);
     });
   });
-  test('queries guestdate with grep', () => {
-    return queryOptions('guestdate', callback, true).then(data => {
-      expect(data).toStrictEqual(mocks.optionsGuestdateGrep);
+  test('queries saydate with grep', () => {
+    return queryOptions('saydate', callback, true).then(data => {
+      expect(data).toStrictEqual(mocks.optionsSaydateGrep);
     });
   });
 });

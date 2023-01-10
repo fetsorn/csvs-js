@@ -12,8 +12,8 @@ export async function deleteEvent(rootUUID, callback, schemaPath = 'metadir.json
   let schema = JSON.parse(await callback.fetch(schemaPath));
 
   let schemaProps = Object.keys(schema);
-  let root = schemaProps.find(prop => !Object.prototype.hasOwnProperty.call(schema[prop], 'parent'));
-  let props = schemaProps.filter(prop => schema[prop]['parent'] == root);
+  let root = schemaProps.find(prop => !Object.prototype.hasOwnProperty.call(schema[prop], 'trunk'));
+  let props = schemaProps.filter(prop => schema[prop]['trunk'] == root);
 
   let indexPath = `metadir/props/${root}/index.csv`;
   let indexFile = await callback.fetch(indexPath);
@@ -57,7 +57,7 @@ export async function editEvent(eventEdited, callback, schemaPath = 'metadir.jso
   let schema = JSON.parse(await callback.fetch(schemaPath));
 
   let schemaProps = Object.keys(schema);
-  let root = schemaProps.find(prop => !Object.prototype.hasOwnProperty.call(schema[prop], 'parent'));
+  let root = schemaProps.find(prop => !Object.prototype.hasOwnProperty.call(schema[prop], 'trunk'));
 
   // list event props that match the schema
   let eventKeys = Object.keys(event);
@@ -79,7 +79,7 @@ export async function editEvent(eventEdited, callback, schemaPath = 'metadir.jso
   let uuids = {};
   uuids[root] = event.UUID;
 
-  // TODO add queue for props whose branch is not yet processed
+  // TODO add queue for props whose trunk is not yet processed
   for (const i in eventProps) {
     let prop = eventProps[i];
     let propLabel = schema[prop]['label'];
@@ -109,13 +109,13 @@ export async function editEvent(eventEdited, callback, schemaPath = 'metadir.jso
       }
     }
     if (prop != root) {
-      let branch = schema[prop]['parent'];
-      let branchUUID = uuids[branch];
-      let pairLine = `${branchUUID},${propUUID}\n`;
-      let pairPath = `metadir/pairs/${branch}-${prop}.csv`;
+      let trunk = schema[prop]['trunk'];
+      let trunkUUID = uuids[trunk];
+      let pairLine = `${trunkUUID},${propUUID}\n`;
+      let pairPath = `metadir/pairs/${trunk}-${prop}.csv`;
       let pairFile = await callback.fetch(pairPath);
       if (!includes(pairFile, pairLine)) {
-        const pairPruned = prune(pairFile, branchUUID);
+        const pairPruned = prune(pairFile, trunkUUID);
         const pairEdited = pairPruned + pairLine;
         await callback.write(pairPath, pairEdited);
       }

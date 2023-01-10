@@ -28,7 +28,7 @@ function expect(received, expected) {
 async function testQueryMetadir1() {
   console.log('queries name1');
   var searchParams = new URLSearchParams();
-  searchParams.set('hostname', 'name1');
+  searchParams.set('actname', 'name1');
   let data = await csvs.queryMetadir(searchParams, callback);
   expect(data.map(sortObject), [sortObject(mocks.event1)]);
 }
@@ -36,7 +36,7 @@ async function testQueryMetadir1() {
 async function testQueryMetadir2() {
   console.log('queries name2');
   var searchParams = new URLSearchParams();
-  searchParams.set('hostname', 'name2');
+  searchParams.set('actname', 'name2');
   let data = await csvs.queryMetadir(searchParams, callback);
   expect(data.map(sortObject), [sortObject(mocks.event2)]);
 }
@@ -44,7 +44,7 @@ async function testQueryMetadir2() {
 async function testQueryMetadir3() {
   console.log('queries name3');
   var searchParams = new URLSearchParams();
-  searchParams.set('hostname', 'name3');
+  searchParams.set('actname', 'name3');
   let data = await csvs.queryMetadir(searchParams, callback);
   expect(data.map(sortObject), [sortObject(mocks.event3)]);
 }
@@ -52,7 +52,7 @@ async function testQueryMetadir3() {
 async function testQueryMetadirFalse() {
   console.log('queries false');
   var searchParams = new URLSearchParams();
-  searchParams.set('hostname', 'false');
+  searchParams.set('actname', 'false');
   let data = await csvs.queryMetadir(searchParams, callback);
   expect(data.map(sortObject),[]);
 }
@@ -60,7 +60,7 @@ async function testQueryMetadirFalse() {
 async function testQueryMetadirWildcard() {
   console.log('queries regexp');
   var searchParams = new URLSearchParams();
-  searchParams.set('hostname', 'name.*');
+  searchParams.set('actname', 'name.*');
   let data = await csvs.queryMetadir(searchParams, callback);
   expect(data.map(sortObject),[
     sortObject(mocks.event1),
@@ -99,8 +99,8 @@ async function testQueryMetadirRecurseWildcard() {
 async function testQueryMetadirTwoQueries() {
   console.log('queries moddate wildcard');
   var searchParams = new URLSearchParams();
-  searchParams.set('hostname', 'name.*');
-  searchParams.set('hostdate', '2001-01-01');
+  searchParams.set('actname', 'name.*');
+  searchParams.set('actdate', '2001-01-01');
   let data;
   try {
     data = await csvs.queryMetadir(searchParams, callback);
