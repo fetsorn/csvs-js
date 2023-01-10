@@ -30,7 +30,7 @@ async function testQueryMetadir1() {
   var searchParams = new URLSearchParams();
   searchParams.set('actname', 'name1');
   let data = await csvs.queryMetadir(searchParams, callback);
-  expect(data.map(sortObject), [sortObject(mocks.event1)]);
+  expect(data.map(sortObject), [sortObject(mocks.entry1)]);
 }
 
 async function testQueryMetadir2() {
@@ -38,7 +38,7 @@ async function testQueryMetadir2() {
   var searchParams = new URLSearchParams();
   searchParams.set('actname', 'name2');
   let data = await csvs.queryMetadir(searchParams, callback);
-  expect(data.map(sortObject), [sortObject(mocks.event2)]);
+  expect(data.map(sortObject), [sortObject(mocks.entry2)]);
 }
 
 async function testQueryMetadir3() {
@@ -46,7 +46,7 @@ async function testQueryMetadir3() {
   var searchParams = new URLSearchParams();
   searchParams.set('actname', 'name3');
   let data = await csvs.queryMetadir(searchParams, callback);
-  expect(data.map(sortObject), [sortObject(mocks.event3)]);
+  expect(data.map(sortObject), [sortObject(mocks.entry3)]);
 }
 
 async function testQueryMetadirFalse() {
@@ -63,9 +63,9 @@ async function testQueryMetadirWildcard() {
   searchParams.set('actname', 'name.*');
   let data = await csvs.queryMetadir(searchParams, callback);
   expect(data.map(sortObject),[
-    sortObject(mocks.event1),
-    sortObject(mocks.event2),
-    sortObject(mocks.event3)
+    sortObject(mocks.entry1),
+    sortObject(mocks.entry2),
+    sortObject(mocks.entry3)
   ]);
 }
 
@@ -75,7 +75,7 @@ async function testQueryMetadirRecurse() {
   searchParams.set('moddate', '2001-01-01');
   let data = await csvs.queryMetadir(searchParams, callback);
   expect(data.map(sortObject),[
-    sortObject(mocks.event1)
+    sortObject(mocks.entry1)
   ]);
 }
 
@@ -91,8 +91,8 @@ async function testQueryMetadirRecurseWildcard() {
     console.log(e);
   }
   expect(data,[
-    sortObject(mocks.event1),
-    sortObject(mocks.event2)
+    sortObject(mocks.entry1),
+    sortObject(mocks.entry2)
   ]);
 }
 
@@ -109,7 +109,7 @@ async function testQueryMetadirTwoQueries() {
     console.log(e);
   }
   expect(data,[
-    sortObject(mocks.event1)
+    sortObject(mocks.entry1)
   ]);
 }
 

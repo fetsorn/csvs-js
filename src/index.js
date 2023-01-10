@@ -5,7 +5,7 @@ export {
 } from './query.js';
 
 export {
-  editEvent,
-  deleteEvent,
+  editEntry,
+  deleteEntry,
   digestMessage
 } from './edit.js';

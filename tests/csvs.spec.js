@@ -1,5 +1,5 @@
 import { describe, beforeEach, expect, test } from '@jest/globals';
-import { queryMetadir, queryOptions, editEvent, deleteEvent, grep as grepJS } from '../src/index';
+import { queryMetadir, queryOptions, editEntry, deleteEntry, grep as grepJS } from '../src/index';
 import { TextEncoder, TextDecoder, promisify } from 'util';
 import fs from 'fs';
 import crypto from 'crypto';
@@ -42,21 +42,21 @@ describe('queryMetadir no ripgrep', () => {
     var searchParams = new URLSearchParams();
     searchParams.set('actname', 'name1');
     return queryMetadir(searchParams, callback).then(data => {
-      expect(data).toStrictEqual([sortObject(mocks.event1)]);
+      expect(data).toStrictEqual([sortObject(mocks.entry1)]);
     });
   });
   test('queries name2', () => {
     var searchParams = new URLSearchParams();
     searchParams.set('actname', 'name2');
     return queryMetadir(searchParams, callback).then(data => {
-      expect(data).toStrictEqual([sortObject(mocks.event2)]);
+      expect(data).toStrictEqual([sortObject(mocks.entry2)]);
     });
   });
   test('queries name3', () => {
     var searchParams = new URLSearchParams();
     searchParams.set('actname', 'name3');
     return queryMetadir(searchParams, callback).then(data => {
-      expect(data).toStrictEqual([sortObject(mocks.event3)]);
+      expect(data).toStrictEqual([sortObject(mocks.entry3)]);
     });
   });
   test('queries name2 with out-of-order schema', () => {
@@ -64,7 +64,7 @@ describe('queryMetadir no ripgrep', () => {
     searchParams.set('actname', 'name2');
     callback.fetch = (path) => mocks.filesMockUnordered[path];
     return queryMetadir(searchParams, callback).then(data => {
-      expect(data).toStrictEqual([sortObject(mocks.event2)]);
+      expect(data).toStrictEqual([sortObject(mocks.entry2)]);
     });
   });
 });
@@ -107,21 +107,21 @@ describe('queryMetadir ripgrep', () => {
     var searchParams = new URLSearchParams();
     searchParams.set('actname', 'name1');
     return queryMetadir(searchParams, callback).then(data => {
-      expect(data).toStrictEqual([sortObject(mocks.event1)]);
+      expect(data).toStrictEqual([sortObject(mocks.entry1)]);
     });
   });
   test('queries name2', () => {
     var searchParams = new URLSearchParams();
     searchParams.set('actname', 'name2');
     return queryMetadir(searchParams, callback).then(data => {
-      expect(data).toStrictEqual([sortObject(mocks.event2)]);
+      expect(data).toStrictEqual([sortObject(mocks.entry2)]);
     });
   });
   test('queries name3', () => {
     var searchParams = new URLSearchParams();
     searchParams.set('actname', 'name3');
     return queryMetadir(searchParams, callback).then(data => {
-      expect(data).toStrictEqual([sortObject(mocks.event3)]);
+      expect(data).toStrictEqual([sortObject(mocks.entry3)]);
     });
   });
 });
@@ -162,7 +162,7 @@ describe('queryOptions', () => {
   });
 });
 
-describe('editEvent', () => {
+describe('editEntry', () => {
 
   let editedFiles;
 
@@ -177,49 +177,49 @@ describe('editEvent', () => {
   });
 
   test('does nothing on no change', () => {
-    return editEvent(mocks.event1, callback)
+    return editEntry(mocks.entry1, callback)
       .then(() => {
         expect(editedFiles).toStrictEqual(mocks.filesMock);
       });
   });
-  test('edits event', () => {
-    return editEvent(mocks.event3edit, callback)
+  test('edits entry', () => {
+    return editEntry(mocks.entry3edit, callback)
       .then(() => {
         expect(editedFiles).toStrictEqual(mocks.filesMock3);
       });
   });
-  test('adds event', () => {
-    return editEvent(mocks.event4, callback)
+  test('adds entry', () => {
+    return editEntry(mocks.entry4, callback)
       .then(() => {
         expect(editedFiles).toStrictEqual(mocks.filesMock4);
       });
   });
-  test('adds event when metadir files are empty', () => {
+  test('adds entry when metadir files are empty', () => {
     let _editedFiles = { ...mocks.filesEmpty };
     callback.fetch = (path) => _editedFiles[path];
     callback.write = (path, contents) => {_editedFiles[path] = contents;};
-    return editEvent(mocks.event4, callback)
+    return editEntry(mocks.entry4, callback)
       .then(() => {
         expect(_editedFiles).toStrictEqual(mocks.filesMock5);
       });
   });
-  test('adds event with random uuid', () => {
+  test('adds entry with random uuid', () => {
     callback.random = crypto.randomUUID;
-    return editEvent(mocks.event4, callback)
+    return editEntry(mocks.entry4, callback)
       .then(() => {
         expect(editedFiles).not.toStrictEqual(mocks.filesMock4);
       });
   });
   test('falls back to random UUID if callback is not specified', () => {
     delete callback.random;
-    return editEvent(mocks.event4, callback)
+    return editEntry(mocks.entry4, callback)
       .then(() => {
         expect(editedFiles).not.toStrictEqual(mocks.filesMock4);
       });
   });
 });
 
-describe('deleteEvent', () => {
+describe('deleteEntry', () => {
 
   let editedFiles;
 
@@ -232,8 +232,8 @@ describe('deleteEvent', () => {
     callback.write = writeFileMock;
   });
 
-  test('deletes event', () => {
-    return deleteEvent(mocks.event3.UUID, callback)
+  test('deletes entry', () => {
+    return deleteEntry(mocks.entry3.UUID, callback)
       .then(() => {
         expect(editedFiles).toStrictEqual(mocks.filesMockNo3);
       });

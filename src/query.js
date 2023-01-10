@@ -112,7 +112,7 @@ async function findRootUUIDs(schema, prop, propUUIDs, callback) {
   return rootUUIDs;
 }
 
-// return an array of events from metadir that satisfy search params
+// return an array of entries from metadir that satisfy search params
 export async function queryMetadir(searchParams, callback, prefetch = true, schemaPath = 'metadir.json') {
 
   if (prefetch === true) {
@@ -283,7 +283,7 @@ export async function queryMetadir(searchParams, callback, prefetch = true, sche
           // console.log(`grepped for ${propUUIDs} and found ${propValuesStr}`);
           const propValuesLines = split(propValuesStr);
 
-          // set value of propUUID of this event
+          // set value of propUUID of this entry
           for (const line of propValuesLines) {
             const propUUID = takeUUID(line);
             let propValue = takeValue(line);
@@ -297,33 +297,33 @@ export async function queryMetadir(searchParams, callback, prefetch = true, sche
     }
   }
 
-  // type Event = { [string]: Value }
-  // events: Map<string, [Event]>
-  const events = new Map();
+  // type Entry = { [string]: Value }
+  // entries: Map<string, [Entry]>
+  const entries = new Map();
 
   for (const prop of schemaProps) {
     const propLabel = schema[prop]['label'] ?? prop;
     for (const rootUUID of rootUUIDs) {
-      const event = events.get(rootUUID);
-      if (!event) {
-        events.set(rootUUID, {});
+      const entry = entries.get(rootUUID);
+      if (!entry) {
+        entries.set(rootUUID, {});
       }
 
       if (prop == root) {
-        events.get(rootUUID)['UUID'] = rootUUID;
-        events.get(rootUUID)[propLabel] = values.get(rootUUID);
+        entries.get(rootUUID)['UUID'] = rootUUID;
+        entries.get(rootUUID)[propLabel] = values.get(rootUUID);
       } else {
         const rootLinks = fields.get(prop);
         if (rootLinks) {
           const propUUID = rootLinks.get(rootUUID);
           const propValue = values.get(propUUID);
-          events.get(rootUUID)[propLabel] = propValue;
+          entries.get(rootUUID)[propLabel] = propValue;
         }
       }
     }
   }
 
-  const arr = Array.from(events.values());
+  const arr = Array.from(entries.values());
 
   return arr;
 }

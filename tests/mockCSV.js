@@ -1,4 +1,4 @@
-const event1 = {
+const entry1 = {
   'DATUM': 'value1',
   'FILE_PATH': 'path/to/1',
   'SAY_DATE': '2001-01-01',
@@ -9,7 +9,7 @@ const event1 = {
   'UUID': '8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704',
 };
 
-const event2 = {
+const entry2 = {
   'DATUM': 'value2',
   'FILE_PATH': 'path/to/2',
   'SAY_DATE': '2002-01-01',
@@ -20,7 +20,7 @@ const event2 = {
   'UUID': 'b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e',
 };
 
-const event3 = {
+const entry3 = {
   'DATUM': '',
   'SAY_DATE': '2003-01-01',
   'SAY_NAME': 'name3',
@@ -29,7 +29,7 @@ const event3 = {
   'UUID': 'f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265',
 };
 
-const event3edit = {
+const entry3edit = {
   'DATUM': 'value3',
   'FILE_PATH': 'path/to/3',
   'SAY_DATE': '2003-03-01',
@@ -39,7 +39,7 @@ const event3edit = {
   'UUID': 'f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265',
 };
 
-const event4 = {
+const entry4 = {
   'DATUM': 'value4',
   'SAY_DATE': '2004-01-01',
   'SAY_NAME': 'name4',
@@ -362,11 +362,11 @@ const filesMockUnordered = { ...filesMock };
 filesMockUnordered['metadir.json'] = schemaUnordered;
 
 export default {
-  event1,
-  event2,
-  event3,
-  event3edit,
-  event4,
+  entry1,
+  entry2,
+  entry3,
+  entry3edit,
+  entry4,
   filesEmpty,
   filesMock,
   filesMock3,

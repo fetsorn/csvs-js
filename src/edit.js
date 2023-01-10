@@ -6,8 +6,8 @@ function prune(file, regex) {
   }
 }
 
-// remove event with rootUUID from metadir
-export async function deleteEvent(rootUUID, callback, schemaPath = 'metadir.json') {
+// remove entry with rootUUID from metadir
+export async function deleteEntry(rootUUID, callback, schemaPath = 'metadir.json') {
 
   let schema = JSON.parse(await callback.fetch(schemaPath));
 
@@ -49,48 +49,48 @@ export async function digestMessage(message) {
   return hashHex;
 }
 
-// overwrite event in metadir
-export async function editEvent(eventEdited, callback, schemaPath = 'metadir.json') {
+// overwrite entry in metadir
+export async function editEntry(entryEdited, callback, schemaPath = 'metadir.json') {
 
-  let event = { ...eventEdited };
+  let entry = { ...entryEdited };
 
   let schema = JSON.parse(await callback.fetch(schemaPath));
 
   let schemaProps = Object.keys(schema);
   let root = schemaProps.find(prop => !Object.prototype.hasOwnProperty.call(schema[prop], 'trunk'));
 
-  // list event props that match the schema
-  let eventKeys = Object.keys(event);
-  let eventProps = [];
-  for (const i in eventKeys) {
-    let key = eventKeys[i];
+  // list entry props that match the schema
+  let entryKeys = Object.keys(entry);
+  let entryProps = [];
+  for (const i in entryKeys) {
+    let key = entryKeys[i];
     let prop = schemaProps.find(prop => schema[prop].label == key || prop == key);
     if (prop) {
-      eventProps.push(prop);
+      entryProps.push(prop);
     }
   }
 
-  if (!event.UUID) {
+  if (!entry.UUID) {
     const random = callback.random ?? crypto.randomUUID;
     const uuid = await digestMessage(random());
-    event.UUID = uuid;
+    entry.UUID = uuid;
   }
 
   let uuids = {};
-  uuids[root] = event.UUID;
+  uuids[root] = entry.UUID;
 
   // TODO add queue for props whose trunk is not yet processed
-  for (const i in eventProps) {
-    let prop = eventProps[i];
+  for (const i in entryProps) {
+    let prop = entryProps[i];
     let propLabel = schema[prop]['label'];
     let propType = schema[prop]['type'];
-    let propValue = event[prop] ? event[prop] : event[propLabel];
+    let propValue = entry[prop] ? entry[prop] : entry[propLabel];
 
     let propUUID;
     if (prop != root) {
       propUUID = await digestMessage(propValue);
     } else {
-      propUUID = event.UUID;
+      propUUID = entry.UUID;
     }
     uuids[prop] = propUUID;
 
@@ -122,5 +122,5 @@ export async function editEvent(eventEdited, callback, schemaPath = 'metadir.jso
     }
   }
 
-  return event;
+  return entry;
 }
