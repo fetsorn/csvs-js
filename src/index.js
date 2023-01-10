@@ -1,11 +1,12 @@
+/* eslint-disable import/extensions */
 export {
   queryMetadir,
   queryOptions,
-  grep
+  grep,
 } from './query.js';
 
 export {
   editEntry,
   deleteEntry,
-  digestMessage
+  digestMessage,
 } from './edit.js';

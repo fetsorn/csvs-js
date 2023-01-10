@@ -16,9 +16,11 @@
     "test:wasm": "serve"
   },
   "devDependencies": {
-    "@jest/globals": "^29.0.3",
     "@fetsorn/wasm-grep": "0.2.0",
-    "eslint": "^8.23.0",
+    "@jest/globals": "^29.0.3",
+    "eslint": "^7.32.0 || ^8.2.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.25.2",
     "jest": "^27.5.1",
     "serve": "^14.0.1",
     "yarn": "^1.22.17"

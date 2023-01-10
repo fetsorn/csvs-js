@@ -1,50 +1,50 @@
 const entry1 = {
-  'DATUM': 'value1',
-  'FILE_PATH': 'path/to/1',
-  'SAY_DATE': '2001-01-01',
-  'SAY_NAME': 'name1',
-  'ACT_DATE': '2001-01-01',
-  'ACT_NAME': 'name1',
-  'MOD_DATE': '2001-01-01',
-  'UUID': '8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704',
+  DATUM: 'value1',
+  FILE_PATH: 'path/to/1',
+  SAY_DATE: '2001-01-01',
+  SAY_NAME: 'name1',
+  ACT_DATE: '2001-01-01',
+  ACT_NAME: 'name1',
+  MOD_DATE: '2001-01-01',
+  UUID: '8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704',
 };
 
 const entry2 = {
-  'DATUM': 'value2',
-  'FILE_PATH': 'path/to/2',
-  'SAY_DATE': '2002-01-01',
-  'SAY_NAME': 'name2',
-  'ACT_DATE': '2002-01-01',
-  'ACT_NAME': 'name2',
-  'MOD_DATE': '2002-01-01',
-  'UUID': 'b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e',
+  DATUM: 'value2',
+  FILE_PATH: 'path/to/2',
+  SAY_DATE: '2002-01-01',
+  SAY_NAME: 'name2',
+  ACT_DATE: '2002-01-01',
+  ACT_NAME: 'name2',
+  MOD_DATE: '2002-01-01',
+  UUID: 'b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e',
 };
 
 const entry3 = {
-  'DATUM': '',
-  'SAY_DATE': '2003-01-01',
-  'SAY_NAME': 'name3',
-  'ACT_DATE': '2003-01-01',
-  'ACT_NAME': 'name3',
-  'UUID': 'f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265',
+  DATUM: '',
+  SAY_DATE: '2003-01-01',
+  SAY_NAME: 'name3',
+  ACT_DATE: '2003-01-01',
+  ACT_NAME: 'name3',
+  UUID: 'f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265',
 };
 
 const entry3edit = {
-  'DATUM': 'value3',
-  'FILE_PATH': 'path/to/3',
-  'SAY_DATE': '2003-03-01',
-  'SAY_NAME': 'name3',
-  'ACT_DATE': '2003-01-01',
-  'ACT_NAME': 'name3',
-  'UUID': 'f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265',
+  DATUM: 'value3',
+  FILE_PATH: 'path/to/3',
+  SAY_DATE: '2003-03-01',
+  SAY_NAME: 'name3',
+  ACT_DATE: '2003-01-01',
+  ACT_NAME: 'name3',
+  UUID: 'f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265',
 };
 
 const entry4 = {
-  'DATUM': 'value4',
-  'SAY_DATE': '2004-01-01',
-  'SAY_NAME': 'name4',
-  'ACT_DATE': '2005-01-01',
-  'ACT_NAME': 'name5',
+  DATUM: 'value4',
+  SAY_DATE: '2004-01-01',
+  SAY_NAME: 'name4',
+  ACT_DATE: '2005-01-01',
+  ACT_NAME: 'name5',
 };
 
 const schema = `{
@@ -173,11 +173,11 @@ const schemaUnordered = `{
 }
 `;
 
-var filesEmpty = {};
+const filesEmpty = {};
 
 filesEmpty['metadir.json'] = schema;
 
-var filesMock = { ...filesEmpty };
+const filesMock = { ...filesEmpty };
 
 filesMock['metadir/pairs/datum-sayname.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,069587dcb8f8b63329ae53051ba79ba34ba0deb41c7a1e044280d7b6bb15e4f0
@@ -226,7 +226,7 @@ b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,"value2"
 f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,""
 `;
 
-var filesMock3 = { ...filesMock };
+const filesMock3 = { ...filesMock };
 
 filesMock3['metadir/props/datum/index.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,"value1"
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,"value2"
@@ -254,7 +254,7 @@ b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,161c6b3d37ba334
 f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,e11f6f7cedcf5fd13d31ba71df973a1d28f48c847331fa852c17f1d4f5fdc746
 `;
 
-var filesMock4 = { ...filesMock };
+const filesMock4 = { ...filesMock };
 
 filesMock4['metadir/props/datum/index.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,"value1"
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,"value2"
@@ -300,7 +300,7 @@ f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265,b218ca013905fc5
 20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,7b54eeb6e51f461d9d87a7f7718116ee79dfd90440775ce51f1f1963488d23f0
 `;
 
-var filesMockNo3 = { ...filesMock };
+const filesMockNo3 = { ...filesMock };
 
 filesMockNo3['metadir/pairs/datum-sayname.csv'] = `8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704,9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,069587dcb8f8b63329ae53051ba79ba34ba0deb41c7a1e044280d7b6bb15e4f0
@@ -326,7 +326,7 @@ filesMockNo3['metadir/props/datum/index.csv'] = `8260502525153a8775ecb052f41e4e9
 b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e,"value2"
 `;
 
-var filesMock5 = { ...filesEmpty };
+const filesMock5 = { ...filesEmpty };
 
 filesMock5['metadir/props/datum/index.csv'] = `20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,"value4"
 `;
@@ -351,12 +351,12 @@ filesMock5['metadir/pairs/datum-sayname.csv'] = `20b08f6b4c89ed92fa865b00b4ab8b8
 filesMock5['metadir/pairs/datum-actname.csv'] = `20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49,7b54eeb6e51f461d9d87a7f7718116ee79dfd90440775ce51f1f1963488d23f0
 `;
 
-const optionsActname = [ 'name1', 'name2', 'name3', 'name4', 'name5' ];
-const optionsActdate = [ '2001-01-01', '2002-01-01', '2003-01-01', '2004-01-01', '2005-01-01' ];
-const optionsActnameGrep = [ 'name1', 'name2', 'name3', 'name5' ];
-const optionsActdateGrep = [ '2001-01-01', '2002-01-01', '2003-01-01', '2005-01-01' ];
-const optionsSaynameGrep = [ 'name1', 'name2', 'name3', 'name4' ];
-const optionsSaydateGrep = [ '2001-01-01', '2002-01-01', '2003-01-01', '2004-01-01' ];
+const optionsActname = ['name1', 'name2', 'name3', 'name4', 'name5'];
+const optionsActdate = ['2001-01-01', '2002-01-01', '2003-01-01', '2004-01-01', '2005-01-01'];
+const optionsActnameGrep = ['name1', 'name2', 'name3', 'name5'];
+const optionsActdateGrep = ['2001-01-01', '2002-01-01', '2003-01-01', '2005-01-01'];
+const optionsSaynameGrep = ['name1', 'name2', 'name3', 'name4'];
+const optionsSaydateGrep = ['2001-01-01', '2002-01-01', '2003-01-01', '2004-01-01'];
 
 const filesMockUnordered = { ...filesMock };
 filesMockUnordered['metadir.json'] = schemaUnordered;
@@ -379,5 +379,5 @@ export default {
   optionsActdateGrep,
   optionsSaynameGrep,
   optionsSaydateGrep,
-  filesMockUnordered
+  filesMockUnordered,
 };
