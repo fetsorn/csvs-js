@@ -1,6 +1,10 @@
-// each prop can have one trunk and many branches
+/* eslint-disable no-restricted-syntax */
+// each prop in the schema
+// is seen as a branch on a tree
+// a branch can have one trunk and many leaves
+// a branch without a trunk is called a root
 
-// prop without a trunk is root
+// find first prop in schema without a trunk
 function findRoot(schema) {
   return Object.keys(schema).find((prop) => !Object.prototype.hasOwnProperty.call(schema[prop], 'trunk'));
 }
@@ -122,8 +126,6 @@ export function grep(contentFile, patternFile) {
 
 // find trunk uuids until root
 async function findRootUUIDs(schema, prop, propUUIDs, callback) {
-  // console.log("recurseTrunkes")
-
   const root = findRoot(schema);
 
   const { trunk } = schema[prop];
@@ -191,13 +193,13 @@ export async function queryMetadir(searchParams, callbackOriginal, prefetch = tr
 
     rootUUIDs = takeUUIDs(rootLines);
   } else {
-    for (const entry of searchParams.entries()) {
-      const prop = entry[0];
+    for (const searchEntry of searchParams.entries()) {
+      const prop = searchEntry[0];
 
       if (prop !== 'groupBy') {
         const propDir = schema[prop].dir ?? prop;
 
-        const propValue = entry[1];
+        const propValue = searchEntry[1];
 
         let rootUUIDsNew;
 
@@ -252,13 +254,13 @@ export async function queryMetadir(searchParams, callbackOriginal, prefetch = tr
   // type UUID = string
   // type Trunk = UUID
   // type Leaf = UUID
-  // TrunkLinks = Map<Trunk, Leaf>
+  // TrunkLinks = Map<Trunk, Leaf | [Leaf]>
   // pairs: Map<Prop, TrunkLinks>
   const pairs = new Map();
 
   const schemaProps = Object.keys(schema);
 
-  // enqueue props whose trunkes aren't processed yet
+  // enqueue props whose trunks aren't processed yet
   const queue = [...schemaProps];
 
   // type Prup = string
@@ -285,35 +287,66 @@ export async function queryMetadir(searchParams, callbackOriginal, prefetch = tr
         const pairFile = await callback.fetch(`metadir/pairs/${trunk}-${prop}.csv`);
 
         if (pairFile) {
-          const trunkUUIDs = uuids.get(trunk);
+          if (schema[trunk].type === 'array') {
+            const trunkUUIDs = uuids.get(trunk);
 
-          if (trunkUUIDs && trunkUUIDs !== '') {
-            const propUUIDStr = await callback.grep(pairFile, trunkUUIDs.join('\n'));
+            if (trunkUUIDs && trunkUUIDs !== '') {
+              const propUUIDStr = await callback.grep(pairFile, trunkUUIDs.join('\n'));
 
-            // console.log(`grepped for ${trunkUUIDs} and found ${propUUIDStr}`);
+              if (propUUIDStr) {
+                const propUUIDLines = split(propUUIDStr);
 
-            if (propUUIDStr) {
-              const propUUIDLines = split(propUUIDStr);
+                pairs.set(prop, new Map());
 
-              // cache trunkUUID of each leafUUID to find rootUUID later
-              pairs.set(prop, new Map());
+                for (const line of propUUIDLines) {
+                  const trunkUUID = takeUUID(line);
 
-              for (const line of propUUIDLines) {
-                const trunkUUID = takeUUID(line);
+                  if (pairs.get(prop).get(trunkUUID) === undefined) {
+                    pairs.get(prop).set(trunkUUID, []);
+                  }
 
-                const leafUUID = takeValue(line);
+                  const leafUUID = takeValue(line);
 
-                // console.log(`caching ${leafUUID}-${trunkUUID} link`);
+                  // console.log(`caching ${leafUUID}-${trunkUUID} link`);
 
-                pairs.get(prop).set(trunkUUID, leafUUID);
+                  pairs.get(prop).get(trunkUUID).push(leafUUID);
+                }
+                const propUUIDs = propUUIDLines.map((line) => takeValue(line));
+
+                uuids.set(prop, [...new Set(propUUIDs)]);
               }
+            }
+          } else {
+            const trunkUUIDs = uuids.get(trunk);
 
-              const propUUIDs = propUUIDLines.map((line) => takeValue(line));
+            if (trunkUUIDs && trunkUUIDs !== '') {
+              const propUUIDStr = await callback.grep(pairFile, trunkUUIDs.join('\n'));
 
-              // console.log(`caching ${propUUIDs}`);
+              // console.log(`grepped for ${trunkUUIDs} and found ${propUUIDStr}`);
 
-              // cache list of leafUUIDs to grep for values later
-              uuids.set(prop, [...new Set(propUUIDs)]);
+              if (propUUIDStr) {
+                const propUUIDLines = split(propUUIDStr);
+
+                // cache trunkUUID of each leafUUID to find rootUUID later
+                pairs.set(prop, new Map());
+
+                for (const line of propUUIDLines) {
+                  const trunkUUID = takeUUID(line);
+
+                  const leafUUID = takeValue(line);
+
+                  // console.log(`caching ${leafUUID}-${trunkUUID} link`);
+
+                  pairs.get(prop).set(trunkUUID, leafUUID);
+                }
+
+                const propUUIDs = propUUIDLines.map((line) => takeValue(line));
+
+                // console.log(`caching ${propUUIDs}`);
+
+                // cache list of leafUUIDs to grep for values later
+                uuids.set(prop, [...new Set(propUUIDs)]);
+              }
             }
           }
         }
@@ -321,10 +354,12 @@ export async function queryMetadir(searchParams, callbackOriginal, prefetch = tr
     }
   }
 
+  // console.log(pairs);
+
   // type UUID = string
   // type Root = UUID
   // type Leaf = UUID
-  // RootLinks: Map<Root, Leaf>
+  // RootLinks: Map<Root, Leaf | [Leaf]>
   // fields: Map<Prop, RootLinks>
   const fields = new Map();
 
@@ -340,7 +375,7 @@ export async function queryMetadir(searchParams, callbackOriginal, prefetch = tr
         const path = [];
 
         while (trunk !== root) {
-          path.push(trunk);
+          path.unshift(trunk);
 
           trunk = schema[trunk].trunk;
         }
@@ -351,12 +386,20 @@ export async function queryMetadir(searchParams, callbackOriginal, prefetch = tr
           trunkUUID = pairs.get(element).get(trunkUUID);
         }
 
-        const propUUID = pairs.get(prop).get(trunkUUID);
+        if (Array.isArray(trunkUUID)) {
+          const propUUIDs = trunkUUID.map((uuid) => pairs.get(prop).get(uuid));
 
-        fields.get(prop).set(rootUUID, propUUID);
+          fields.get(prop).set(rootUUID, propUUIDs);
+        } else {
+          const propUUID = pairs.get(prop).get(trunkUUID);
+
+          fields.get(prop).set(rootUUID, propUUID);
+        }
       }
     }
   }
+
+  // console.log(fields);
 
   // type UUID = string
   // type Value = string
@@ -402,6 +445,50 @@ export async function queryMetadir(searchParams, callbackOriginal, prefetch = tr
     }
   }
 
+  // console.log(values);
+
+  for (const prop of schemaProps) {
+    const propLabel = schema[prop].label ?? prop;
+
+    for (const rootUUID of rootUUIDs) {
+      const rootLinks = fields.get(prop);
+
+      if (rootLinks) {
+      // console.log(prop, rootLinks);
+
+        const propUUID = rootLinks.get(rootUUID);
+
+        const { trunk } = schema[prop];
+
+        if (schema[prop].type === 'object') {
+          if (Array.isArray(propUUID)) {
+            propUUID.forEach((uuid) => {
+              values.set(uuid, { UUID: uuid, ITEM_NAME: prop });
+            });
+          } else {
+            values.set(propUUID, { UUID: propUUID, ITEM_NAME: prop });
+          }
+        } else if (schema[trunk].type === 'object') {
+          const trunkRootLinks = fields.get(trunk);
+
+          const trunkUUID = trunkRootLinks.get(rootUUID);
+
+          if (Array.isArray(trunkUUID)) {
+            trunkUUID.forEach((uuid) => {
+              const propUUIDactual = pairs.get(prop).get(uuid);
+
+              values.get(uuid)[propLabel] = values.get(propUUIDactual);
+            });
+          } else {
+            values.get(trunkUUID)[propLabel] = values.get(propUUID);
+          }
+        }
+      }
+    }
+  }
+
+  // console.log(values);
+
   // type Entry = { [string]: Value }
   // entries: Map<string, [Entry]>
   const entries = new Map();
@@ -424,11 +511,29 @@ export async function queryMetadir(searchParams, callbackOriginal, prefetch = tr
         const rootLinks = fields.get(prop);
 
         if (rootLinks) {
-          const propUUID = rootLinks.get(rootUUID);
+          if (schema[prop].type === 'array') {
+            entries.get(rootUUID)[propLabel] = [];
+          } else {
+            const { trunk } = schema[prop];
 
-          const propValue = values.get(propUUID);
+            const trunkLabel = schema[trunk].label;
 
-          entries.get(rootUUID)[propLabel] = propValue;
+            const propUUID = rootLinks.get(rootUUID);
+
+            if (schema[trunk].type !== 'object') {
+              if (Array.isArray(propUUID)) {
+                propUUID.forEach((uuid) => {
+                  const propValue = values.get(uuid);
+
+                  entries.get(rootUUID)[trunkLabel].push(propValue);
+                });
+              } else {
+                const propValue = values.get(propUUID);
+
+                entries.get(rootUUID)[propLabel] = propValue;
+              }
+            }
+          }
         }
       }
     }

@@ -4,6 +4,7 @@ import metadirEdited from './metadir_edited';
 import metadirAdded from './metadir_added';
 import metadirDeleted from './metadir_deleted';
 import metadirEmptyAdded from './metadir_empty_added';
+import metadirTags from './metadir_tags';
 import metadirUnordered from './metadir_unordered';
 import {
   entry2001,
@@ -11,6 +12,7 @@ import {
   entry2003Unedited,
   entry2003Edited,
   entryAdded,
+  entryTags,
 } from './entries';
 import {
   optionsActname,
@@ -27,12 +29,14 @@ export default {
   entry2003Unedited,
   entry2003Edited,
   entryAdded,
+  entryTags,
   metadirDefault,
   metadirEmpty,
   metadirEdited,
   metadirAdded,
   metadirDeleted,
   metadirEmptyAdded,
+  metadirTags,
   metadirUnordered,
   optionsActname,
   optionsActdate,

@@ -82,6 +82,18 @@ describe('queryMetadir no ripgrep', () => {
       expect(data).toStrictEqual([sortObject(mocks.entry2002)]);
     });
   });
+
+  test('queries name1 with array of tags', () => {
+    const searchParams = new URLSearchParams();
+
+    searchParams.set('actname', 'name1');
+
+    callback.fetch = (path) => mocks.metadirTags[path];
+
+    return queryMetadir(searchParams, callback).then((data) => {
+      expect(data).toStrictEqual([sortObject(mocks.entryTags)]);
+    });
+  });
 });
 
 describe('queryMetadir ripgrep', () => {
@@ -153,6 +165,18 @@ describe('queryMetadir ripgrep', () => {
 
     return queryMetadir(searchParams, callback).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2003Unedited)]);
+    });
+  });
+
+  test('queries name1 with array of tags', () => {
+    const searchParams = new URLSearchParams();
+
+    searchParams.set('actname', 'name1');
+
+    callback.fetch = (path) => mocks.metadirTags[path];
+
+    return queryMetadir(searchParams, callback).then((data) => {
+      expect(data).toStrictEqual([sortObject(mocks.entryTags)]);
     });
   });
 });
