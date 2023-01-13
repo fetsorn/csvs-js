@@ -92,9 +92,9 @@ export async function editEntry(entryEdited, callback, schemaPath = 'metadir.jso
   if (!entry.UUID) {
     const random = callback.random ?? crypto.randomUUID;
 
-    const uuid = await digestMessage(random());
+    const entryUUID = await digestMessage(random());
 
-    entry.UUID = uuid;
+    entry.UUID = entryUUID;
   }
 
   const uuids = {};
@@ -106,8 +106,6 @@ export async function editEntry(entryEdited, callback, schemaPath = 'metadir.jso
   const processed = new Map();
 
   for (const prop of queue) {
-    console.log(prop);
-
     const propLabel = schema[prop].label;
 
     const propType = schema[prop].type;
@@ -125,30 +123,117 @@ export async function editEntry(entryEdited, callback, schemaPath = 'metadir.jso
         if (!entry[propLabel].UUID) {
           const random = callback.random ?? crypto.randomUUID;
 
-          const uuid = await digestMessage(random());
+          const arrayUUID = await digestMessage(random());
 
-          entry[propLabel].UUID = uuid;
+          entry[propLabel].UUID = arrayUUID;
         }
 
         const propUUID = entry[propLabel].UUID;
 
         // write pair datum-export_tags / root-array_group
+        const trunkUUID = uuids[trunk];
 
+        const pairLine = `${trunkUUID},${propUUID}\n`;
+
+        const pairPath = `metadir/pairs/${trunk}-${prop}.csv`;
+
+        const pairFile = await callback.fetch(pairPath);
+
+        if (!includes(pairFile, pairLine)) {
+          const pairPruned = prune(pairFile, trunkUUID);
+
+          const pairEdited = pairPruned + pairLine;
+
+          await callback.write(pairPath, pairEdited);
+        }
+
+        const arrayItems = entry[propLabel].items;
 
         // for each array items
+        for (const item of arrayItems) {
+          const itemProp = item.ITEM_NAME;
 
-        // get or generate UUID
+          // get or generate UUID
+          if (!item.UUID) {
+            const random = callback.random ?? crypto.randomUUID;
 
-        // write pair for export_tags-export1_tag / array_group-array_item
+            const itemUUID = await digestMessage(random());
 
+            item.UUID = itemUUID;
+          }
 
-        // for each field of array item
+          const itemPropUUID = item.UUID;
 
-        // digest UUID
+          // write pair for export_tags-export1_tag / array_group-array_item
+          const itemPairLine = `${propUUID},${itemPropUUID}\n`;
 
-        // write pair for export1_tag-export1_channel / array_item-prop
+          const itemPairPath = `metadir/pairs/${prop}-${itemProp}.csv`;
 
-        // write prop for export1_channel / prop
+          const itemPairFile = (await callback.fetch(itemPairPath)) ?? '';
+
+          if (!includes(itemPairFile, itemPairLine)) {
+            const itemPairEdited = itemPairFile + itemPairLine;
+
+            await callback.write(itemPairPath, itemPairEdited);
+          }
+
+          delete item.ITEM_NAME;
+
+          delete item.UUID;
+
+          const itemFieldLabels = Object.keys(item);
+
+          // for each field of array item
+          for (const itemFieldLabel of itemFieldLabels) {
+            const itemFieldProp = Object.keys(schema).find(
+              (p) => schema[p].label === itemFieldLabel || p === itemFieldLabel,
+            ) ?? itemFieldLabel;
+
+            // get value
+            let itemFieldPropValue = item[itemFieldLabel];
+
+            // digest UUID
+            const itemFieldPropUUID = await digestMessage(itemFieldPropValue);
+
+            // write pair for export1_tag-export1_channel / array_item-prop
+            const itemFieldPairLine = `${itemPropUUID},${itemFieldPropUUID}\n`;
+
+            const itemFieldPairPath = `metadir/pairs/${itemProp}-${itemFieldProp}.csv`;
+
+            const itemFieldPairFile = await callback.fetch(itemFieldPairPath);
+
+            if (!includes(itemFieldPairFile, itemFieldPairLine)) {
+              const itemFieldPairPruned = prune(itemFieldPairFile, itemPropUUID);
+
+              const itemFieldPairEdited = itemFieldPairPruned + itemFieldPairLine;
+
+              await callback.write(itemFieldPairPath, itemFieldPairEdited);
+            }
+
+            // write prop for export1_channel / prop
+            const itemFieldPropDir = schema[itemFieldProp].dir ?? itemFieldProp;
+
+            const indexPath = `metadir/props/${itemFieldPropDir}/index.csv`;
+
+            const indexFile = await callback.fetch(indexPath);
+
+            const itemFieldPropType = schema[itemFieldProp].type;
+
+            if (itemFieldPropType === 'string') {
+              itemFieldPropValue = JSON.stringify(itemFieldPropValue);
+            }
+
+            const indexLine = `${itemFieldPropUUID},${itemFieldPropValue}\n`;
+
+            if (!includes(indexFile, indexLine)) {
+              const indexPruned = prune(indexFile, itemFieldPropUUID);
+
+              const indexEdited = indexPruned + indexLine;
+
+              await callback.write(indexPath, indexEdited);
+            }
+          }
+        }
       } else {
         let propUUID;
 

@@ -7,7 +7,7 @@ import fs from 'fs';
 import crypto from 'crypto';
 import { exec } from 'child_process';
 import {
-  queryMetadir, queryOptions, editEntry, deleteEntry, grep as grepJS,
+  queryMetadir, queryOptions, editEntry, deleteEntry, grep as grepJS, digestMessage
 } from '../src/index';
 import mocks from './mocks';
 
@@ -29,9 +29,20 @@ function sortObject(a) {
 
 let callback;
 
+let counter = 0;
+
 const callbackOriginal = {
   fetch: (path) => mocks.metadirDefault[path],
-  random: () => '5ff1e403-da6e-430d-891f-89aa46b968bf',
+  random: () => {
+    counter += 1;
+
+    // backwards compatibility with old tests
+    if (counter === 1) {
+      return '5ff1e403-da6e-430d-891f-89aa46b968bf';
+    }
+
+    return counter;
+  },
 };
 
 describe('queryMetadir no ripgrep', () => {
@@ -226,6 +237,8 @@ describe('editEntry', () => {
     callback.write = writeFileMock;
 
     callback.fetch = async (path) => editedFiles[path];
+
+    counter = 0;
   });
 
   test('does nothing on no change', () => editEntry(mocks.entry2001, callback)
@@ -290,9 +303,11 @@ describe('editEntry, arrays', () => {
     callback.write = writeFileMock;
 
     callback.fetch = async (path) => editedFiles[path];
+
+    counter = 0;
   });
 
-  test.only('adds entry with array', () => {
+  test('adds entry with array', () => {
     return editEntry(mocks.entryArrayAdded, callback)
       .then(() => {
         expect(editedFiles).toStrictEqual(mocks.metadirArrayAdded);

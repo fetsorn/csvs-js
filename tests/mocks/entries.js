@@ -87,7 +87,6 @@ const entryArrayAdded = {
         ITEM_NAME: 'export1_tag',
         EXPORT1_CHANNEL: 'https://channel1.url',
         EXPORT1_KEY: 'longkey1',
-        UUID: '1aac93ef4c30bff4153902ad06dc68e685e662bb5fe8a27635db8ba59f572da1',
       },
     ],
   },
