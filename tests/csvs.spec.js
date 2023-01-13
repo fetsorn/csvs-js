@@ -88,10 +88,10 @@ describe('queryMetadir no ripgrep', () => {
 
     searchParams.set('actname', 'name1');
 
-    callback.fetch = (path) => mocks.metadirTags[path];
+    callback.fetch = (path) => mocks.metadirArray[path];
 
     return queryMetadir(searchParams, callback).then((data) => {
-      expect(data).toStrictEqual([sortObject(mocks.entryTags)]);
+      expect(data).toStrictEqual([sortObject(mocks.entryArray)]);
     });
   });
 });
@@ -173,10 +173,10 @@ describe('queryMetadir ripgrep', () => {
 
     searchParams.set('actname', 'name1');
 
-    callback.fetch = (path) => mocks.metadirTags[path];
+    callback.fetch = (path) => mocks.metadirArray[path];
 
     return queryMetadir(searchParams, callback).then((data) => {
-      expect(data).toStrictEqual([sortObject(mocks.entryTags)]);
+      expect(data).toStrictEqual([sortObject(mocks.entryArray)]);
     });
   });
 });
@@ -273,6 +273,56 @@ describe('editEntry', () => {
         expect(editedFiles).not.toStrictEqual(mocks.metadirAdded);
       });
   });
+});
+
+describe('editEntry, arrays', () => {
+  let editedFiles;
+
+  beforeEach(() => {
+    callback = { ...callbackOriginal };
+
+    editedFiles = { ...mocks.metadirArray };
+
+    async function writeFileMock(path, contents) {
+      editedFiles[path] = contents;
+    }
+
+    callback.write = writeFileMock;
+
+    callback.fetch = async (path) => editedFiles[path];
+  });
+
+  test.only('adds entry with array', () => {
+    return editEntry(mocks.entryArrayAdded, callback)
+      .then(() => {
+        expect(editedFiles).toStrictEqual(mocks.metadirArrayAdded);
+      });
+  });
+
+  test('adds entry with array to empty metadir', () => {
+    callback.random = crypto.randomUUID;
+
+    const editedFilesCustom = { ...mocks.metadirArrayEmpty };
+
+    callback.fetch = (path) => editedFilesCustom[path];
+
+    callback.write = (path, contents) => { editedFilesCustom[path] = contents; };
+
+    return editEntry(mocks.entryArray, callback)
+      .then(() => {
+        expect(editedFilesCustom).toStrictEqual(mocks.metadirArray);
+      });
+  });
+
+  test('adds array item to entry', () => editEntry(mocks.entryAddedArrayItem, callback)
+    .then(() => {
+      expect(editedFiles).toStrictEqual(mocks.metadirAddedArrayItem);
+    }));
+
+  test('edits array item', () => editEntry(mocks.entryEditedArrayItem, callback)
+    .then(() => {
+      expect(editedFiles).toStrictEqual(mocks.metadirEditedArrayItem);
+    }));
 });
 
 describe('deleteEntry', () => {

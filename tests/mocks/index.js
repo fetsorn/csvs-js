@@ -4,15 +4,22 @@ import metadirEdited from './metadir_edited';
 import metadirAdded from './metadir_added';
 import metadirDeleted from './metadir_deleted';
 import metadirEmptyAdded from './metadir_empty_added';
-import metadirTags from './metadir_tags';
 import metadirUnordered from './metadir_unordered';
+import metadirArray from './metadir_array';
+import metadirArrayEmpty from './metadir_array_empty';
+import metadirArrayAdded from './metadir_array_added';
+import metadirAddedArrayItem from './metadir_added_array_item';
+import metadirEditedArrayItem from './metadir_edited_array_item';
 import {
   entry2001,
   entry2002,
   entry2003Unedited,
   entry2003Edited,
   entryAdded,
-  entryTags,
+  entryArray,
+  entryArrayAdded,
+  entryAddedArrayItem,
+  entryEditedArrayItem,
 } from './entries';
 import {
   optionsActname,
@@ -29,15 +36,22 @@ export default {
   entry2003Unedited,
   entry2003Edited,
   entryAdded,
-  entryTags,
+  entryArray,
+  entryArrayAdded,
+  entryAddedArrayItem,
+  entryEditedArrayItem,
   metadirDefault,
   metadirEmpty,
   metadirEdited,
   metadirAdded,
   metadirDeleted,
   metadirEmptyAdded,
-  metadirTags,
   metadirUnordered,
+  metadirArray,
+  metadirArrayEmpty,
+  metadirArrayAdded,
+  metadirAddedArrayItem,
+  metadirEditedArrayItem,
   optionsActname,
   optionsActdate,
   optionsActnameGrep,

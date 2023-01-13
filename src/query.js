@@ -386,7 +386,7 @@ export async function queryMetadir(searchParams, callbackOriginal, prefetch = tr
           trunkUUID = pairs.get(element).get(trunkUUID);
         }
 
-        if (Array.isArray(trunkUUID)) {
+        if (schema[trunk].type === 'array') {
           const propUUIDs = trunkUUID.map((uuid) => pairs.get(prop).get(uuid));
 
           fields.get(prop).set(rootUUID, propUUIDs);
@@ -511,21 +511,21 @@ export async function queryMetadir(searchParams, callbackOriginal, prefetch = tr
         const rootLinks = fields.get(prop);
 
         if (rootLinks) {
+          const propUUID = rootLinks.get(rootUUID);
+
           if (schema[prop].type === 'array') {
-            entries.get(rootUUID)[propLabel] = [];
+            entries.get(rootUUID)[propLabel] = { UUID: propUUID, items: [] };
           } else {
             const { trunk } = schema[prop];
 
             const trunkLabel = schema[trunk].label;
-
-            const propUUID = rootLinks.get(rootUUID);
 
             if (schema[trunk].type !== 'object') {
               if (Array.isArray(propUUID)) {
                 propUUID.forEach((uuid) => {
                   const propValue = values.get(uuid);
 
-                  entries.get(rootUUID)[trunkLabel].push(propValue);
+                  entries.get(rootUUID)[trunkLabel].items.push(propValue);
                 });
               } else {
                 const propValue = values.get(propUUID);
