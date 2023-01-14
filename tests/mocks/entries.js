@@ -157,6 +157,30 @@ const entryEditedArrayItem = {
   UUID: '8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704',
 };
 
+const entryDeletedArrayItem = {
+  DATUM: 'value1',
+  ACT_DATE: '2001-01-01',
+  ACT_NAME: 'name1',
+  TAGS: {
+    UUID: '9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f',
+    items: [
+      {
+        ITEM_NAME: 'export1_tag',
+        EXPORT1_CHANNEL: 'https://channel1.url',
+        EXPORT1_KEY: 'longkey1',
+        UUID: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
+      },
+      {
+        ITEM_NAME: 'export2_tag',
+        EXPORT2_USERNAME: 'username',
+        EXPORT2_PASSWORD: 'password',
+        UUID: 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
+      },
+    ],
+  },
+  UUID: '8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704',
+};
+
 export {
   entry2001,
   entry2002,
@@ -167,4 +191,5 @@ export {
   entryArrayAdded,
   entryAddedArrayItem,
   entryEditedArrayItem,
+  entryDeletedArrayItem,
 };

@@ -338,6 +338,11 @@ describe('editEntry, arrays', () => {
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirEditedArrayItem);
     }));
+
+  test('removes array item', () => editEntry(mocks.entryDeletedArrayItem, callback)
+    .then(() => {
+      expect(editedFiles).toStrictEqual(mocks.metadirDeletedArrayItem);
+    }));
 });
 
 describe('deleteEntry', () => {

@@ -10,6 +10,7 @@ import metadirArrayEmpty from './metadir_array_empty';
 import metadirArrayAdded from './metadir_array_added';
 import metadirAddedArrayItem from './metadir_added_array_item';
 import metadirEditedArrayItem from './metadir_edited_array_item';
+import metadirDeletedArrayItem from './metadir_deleted_array_item';
 import {
   entry2001,
   entry2002,
@@ -52,6 +53,7 @@ export default {
   metadirArrayAdded,
   metadirAddedArrayItem,
   metadirEditedArrayItem,
+  metadirDeletedArrayItem,
   optionsActname,
   optionsActdate,
   optionsActnameGrep,

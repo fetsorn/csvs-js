@@ -147,6 +147,19 @@ export async function editEntry(entryEdited, callback, schemaPath = 'metadir.jso
           await callback.write(pairPath, pairEdited);
         }
 
+        // prune every branch of array prop
+        // to rewrite a fresh array in the next step
+        const propBranches = Object.keys(schema).filter((p) => p.trunk === propUUID);
+        for (const propBranch of propBranches) {
+          const propBranchPairPath = `metadir/pairs/${prop}-${propBranch}.csv`;
+
+          const propBranchPairFile = await callback.fetch(propBranchPairPath);
+
+          const propBranchPairPruned = prune(propBranchPairFile, propUUID);
+
+          await callback.write(propBranchPairPath, propBranchPairPruned);
+        }
+
         const arrayItems = entry[propLabel].items;
 
         // for each array items
