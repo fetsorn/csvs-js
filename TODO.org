@@ -4,6 +4,9 @@
    - figure out what files need to be fetched for method
    - fetch all files into a map
    - pass the map of metadir to pure functions
+   - pure functions get a read map, and return a write map
+   - write all files in write map with a callback
+   - unit test IO shell with mock metadir folders and map objects
 
  - remove "label" entity
 

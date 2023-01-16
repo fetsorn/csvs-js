@@ -126,6 +126,8 @@ export function grep(contentFile, patternFile) {
 
 // find trunk uuids until root
 async function findRootUUIDs(schema, prop, propUUIDs, callback) {
+  // console.log('findRootUUIDs', prop, propUUIDs);
+
   const root = findRoot(schema);
 
   const { trunk } = schema[prop];
@@ -133,8 +135,8 @@ async function findRootUUIDs(schema, prop, propUUIDs, callback) {
   // find all pairs with one of the prop uuids
   const pairFile = await callback.fetch(`metadir/pairs/${trunk}-${prop}.csv`);
 
-  // console.log(`grep ${pairFile.split("\n").length} trunk ${trunk} uuids`
-  //             + `against ${propUUIDs.length} ${prop} uuids`, propUUIDs)
+  // console.log(`grep ${pairFile.split('\n').length} trunk ${trunk} uuids`
+  //             + `against ${propUUIDs.length} ${prop} uuids`, propUUIDs);
 
   const trunkLines = await callback.grep(pairFile, propUUIDs.join('\n'));
 
@@ -143,11 +145,11 @@ async function findRootUUIDs(schema, prop, propUUIDs, callback) {
   let rootUUIDs;
 
   if (trunk === root) {
-    // console.log("root reached", trunkUUIDs)
+    // console.log('root reached', trunkUUIDs);
 
     rootUUIDs = trunkUUIDs;
   } else {
-    // console.log(`${prop}'s trunk ${trunk} is not root ${root}`)
+    // console.log(`${prop}'s trunk ${trunk} is not root ${root}`);
 
     rootUUIDs = await findRootUUIDs(schema, trunk, trunkUUIDs, callback);
   }
@@ -185,64 +187,80 @@ export async function queryMetadir(searchParams, callbackOriginal, prefetch = tr
   // for each searchParam, take prop uuids, then take corresponding root uuids
   let rootUUIDs;
 
+  const searchEntries = Array.from(searchParams.entries()).filter(
+    ([key]) => key !== 'groupBy' && key !== 'overviewType',
+  );
+
   // if no search params, return all root uuids
-  if (Array.from(searchParams.entries()).length === 0) {
+  if (Array.from(searchEntries).length === 0) {
     const rootDir = schema[root].dir ?? root;
 
     const rootLines = await callback.fetch(`metadir/props/${rootDir}/index.csv`);
 
     rootUUIDs = takeUUIDs(rootLines);
   } else {
-    for (const searchEntry of searchParams.entries()) {
+    for (const searchEntry of searchEntries) {
       const prop = searchEntry[0];
 
-      if (prop !== 'groupBy') {
-        const propDir = schema[prop].dir ?? prop;
+      const propDir = schema[prop].dir ?? prop;
 
-        const propValue = searchEntry[1];
+      const propType = schema[prop].type;
 
-        let rootUUIDsNew;
+      const propValue = propType === 'string' || propType === 'text' ? JSON.stringify(searchEntry[1]) : searchEntry[1];
 
-        if (schema[prop].type === 'rule') {
-          const rulefile = await callback.fetch(`metadir/props/${propDir}/rules/${propValue}.rule`);
+      const { trunk } = schema[prop];
 
-          const { trunk } = schema[prop];
+      let rootUUIDsNew;
 
-          const trunkDir = schema[prop].dir ?? trunk;
+      if (trunk === undefined) {
+        const indexFile = await callback.fetch(`metadir/props/${propDir}/index.csv`);
 
-          // console.log(`grep ${trunk} in ${trunkDir} index for ${propValue}.rule`)
+        const propLines = await callback.grep(indexFile, `,${propValue}$\n`);
 
-          const indexFile = await callback.fetch(`metadir/props/${trunkDir}/index.csv`);
+        rootUUIDsNew = takeUUIDs(propLines);
+      } else if (propType === 'rule') {
+        const rulefile = await callback.fetch(`metadir/props/${propDir}/rules/${propValue}.rule`);
 
-          const trunkLines = await callback.grep(indexFile, rulefile);
+        const trunkDir = schema[prop].dir ?? trunk;
 
-          const trunkUUIDs = takeUUIDs(trunkLines);
+        // console.log(`grep ${trunk} in ${trunkDir} index for ${propValue}.rule`)
 
-          rootUUIDsNew = await findRootUUIDs(schema, trunk, trunkUUIDs, callback);
-        } else {
-          // console.log(`grep ${prop} in ${propDir} index for ,${propValue}$\n`)
+        const indexFile = await callback.fetch(`metadir/props/${trunkDir}/index.csv`);
 
-          const indexFile = await callback.fetch(`metadir/props/${propDir}/index.csv`);
+        const trunkLines = await callback.grep(indexFile, rulefile);
 
-          const propLines = await callback.grep(indexFile, `,${propValue}$\n`);
+        const trunkUUIDs = takeUUIDs(trunkLines);
 
-          const propUUIDs = takeUUIDs(propLines);
+        rootUUIDsNew = await findRootUUIDs(schema, trunk, trunkUUIDs, callback);
+      } else if (propType === 'array') {
+        // skip
+      } else if (schema[trunk]?.type === 'array') {
+        // search by UUID
+      } else {
+        // console.log(`grep ${prop} in ${propDir} index for ,${propValue}$\n`);
 
-          rootUUIDsNew = await findRootUUIDs(schema, prop, propUUIDs, callback);
-        }
+        const indexFile = await callback.fetch(`metadir/props/${propDir}/index.csv`);
 
-        if (!rootUUIDs) {
-          rootUUIDs = rootUUIDsNew;
-        } else {
-          // console.log(`grep ${rootUUIDsNew.length} new uuids ${rootUUIDs.length} uuids\n`)
+        const propLines = await callback.grep(indexFile, `,${propValue}$\n`);
 
-          const rootLines = await callback.grep(rootUUIDsNew.join('\n'), rootUUIDs.join('\n'));
+        const propUUIDs = takeUUIDs(propLines);
 
-          rootUUIDs = takeUUIDs(rootLines);
-        }
+        rootUUIDsNew = await findRootUUIDs(schema, prop, propUUIDs, callback);
+      }
+
+      if (!rootUUIDs) {
+        rootUUIDs = rootUUIDsNew;
+      } else {
+        // console.log(`grep ${rootUUIDsNew.length} new uuids ${rootUUIDs.length} uuids\n`);
+
+        const rootLines = await callback.grep(rootUUIDsNew.join('\n'), rootUUIDs.join('\n'));
+
+        rootUUIDs = takeUUIDs(rootLines);
       }
     }
   }
+
+  // console.log("csvs-js root uuids", rootUUIDs);
 
   // type Prop = string
   // type UUID = string
@@ -354,7 +372,7 @@ export async function queryMetadir(searchParams, callbackOriginal, prefetch = tr
     }
   }
 
-  // console.log(pairs);
+  // console.log("csvs-js: pairs", pairs);
 
   // type UUID = string
   // type Root = UUID
@@ -399,10 +417,10 @@ export async function queryMetadir(searchParams, callbackOriginal, prefetch = tr
     }
   }
 
-  // console.log(fields);
+  // console.log("csvs-js: fields", fields);
 
   // type UUID = string
-  // type Value = string
+  // type Value = string | object
   // values: Map<UUID, Value>
   const values = new Map();
 
@@ -445,7 +463,7 @@ export async function queryMetadir(searchParams, callbackOriginal, prefetch = tr
     }
   }
 
-  // console.log(values);
+  // console.log("csvs-js: values", values);
 
   for (const prop of schemaProps) {
     const propLabel = schema[prop].label ?? prop;
@@ -487,10 +505,13 @@ export async function queryMetadir(searchParams, callbackOriginal, prefetch = tr
     }
   }
 
-  // console.log(values);
+  // console.log("csvs-js: values", values);
 
-  // type Entry = { [string]: Value }
-  // entries: Map<string, [Entry]>
+  // type UUID = string
+  // type Label = string
+  // type Value = string | object
+  // type Entry = { [Label]: Value }
+  // entries: Map<UUID, Entry>
   const entries = new Map();
 
   for (const prop of schemaProps) {
@@ -538,6 +559,8 @@ export async function queryMetadir(searchParams, callbackOriginal, prefetch = tr
       }
     }
   }
+
+  // console.log("csvs-js: entries", entries);
 
   const arr = Array.from(entries.values());
 

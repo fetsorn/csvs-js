@@ -190,6 +190,18 @@ describe('queryMetadir ripgrep', () => {
       expect(data).toStrictEqual([sortObject(mocks.entryArray)]);
     });
   });
+
+  test('queries export1_key with array of tags', () => {
+    const searchParams = new URLSearchParams();
+
+    searchParams.set('export1_key', 'longkey2');
+
+    callback.fetch = (path) => mocks.metadirArray[path];
+
+    return queryMetadir(searchParams, callback).then((data) => {
+      expect(data).toStrictEqual([sortObject(mocks.entryArray)]);
+    });
+  });
 });
 
 describe('queryOptions', () => {

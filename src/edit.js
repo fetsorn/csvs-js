@@ -20,7 +20,13 @@ export async function deleteEntry(rootUUID, callback, schemaPath = 'metadir.json
 
   const indexPath = `metadir/props/${root}/index.csv`;
 
-  const indexFile = await callback.fetch(indexPath);
+  let indexFile;
+
+  try {
+    indexFile = await callback.fetch(indexPath);
+  } catch {
+    // continue regardless of error
+  }
 
   if (indexFile) {
     await callback.write(
@@ -35,7 +41,13 @@ export async function deleteEntry(rootUUID, callback, schemaPath = 'metadir.json
   Object.values(props).forEach(async (prop) => {
     const pairPath = `metadir/pairs/${root}-${prop}.csv`;
 
-    const pairFile = await callback.fetch(pairPath);
+    let pairFile;
+
+    try {
+      pairFile = await callback.fetch(pairPath);
+    } catch {
+      // continue regardless of error
+    }
 
     if (pairFile) {
       await callback.write(
@@ -137,7 +149,13 @@ export async function editEntry(entryEdited, callback, schemaPath = 'metadir.jso
 
         const pairPath = `metadir/pairs/${trunk}-${prop}.csv`;
 
-        const pairFile = await callback.fetch(pairPath);
+        let pairFile;
+
+        try {
+          pairFile = await callback.fetch(pairPath);
+        } catch {
+          pairFile = '';
+        }
 
         if (!includes(pairFile, pairLine)) {
           const pairPruned = prune(pairFile, trunkUUID);
@@ -153,7 +171,13 @@ export async function editEntry(entryEdited, callback, schemaPath = 'metadir.jso
         for (const propBranch of propBranches) {
           const propBranchPairPath = `metadir/pairs/${prop}-${propBranch}.csv`;
 
-          const propBranchPairFile = await callback.fetch(propBranchPairPath);
+          let propBranchPairFile;
+
+          try {
+            propBranchPairFile = await callback.fetch(propBranchPairPath);
+          } catch {
+            propBranchPairFile = '';
+          }
 
           const propBranchPairPruned = prune(propBranchPairFile, propUUID);
 
@@ -182,7 +206,13 @@ export async function editEntry(entryEdited, callback, schemaPath = 'metadir.jso
 
           const itemPairPath = `metadir/pairs/${prop}-${itemProp}.csv`;
 
-          const itemPairFile = (await callback.fetch(itemPairPath)) ?? '';
+          let itemPairFile;
+
+          try {
+            itemPairFile = (await callback.fetch(itemPairPath)) ?? '';
+          } catch {
+            itemPairFile = '';
+          }
 
           if (!includes(itemPairFile, itemPairLine)) {
             const itemPairEdited = itemPairFile + itemPairLine;
@@ -213,7 +243,13 @@ export async function editEntry(entryEdited, callback, schemaPath = 'metadir.jso
 
             const itemFieldPairPath = `metadir/pairs/${itemProp}-${itemFieldProp}.csv`;
 
-            const itemFieldPairFile = await callback.fetch(itemFieldPairPath);
+            let itemFieldPairFile;
+
+            try {
+              itemFieldPairFile = await callback.fetch(itemFieldPairPath);
+            } catch {
+              itemFieldPairFile = '';
+            }
 
             if (!includes(itemFieldPairFile, itemFieldPairLine)) {
               const itemFieldPairPruned = prune(itemFieldPairFile, itemPropUUID);
@@ -228,7 +264,12 @@ export async function editEntry(entryEdited, callback, schemaPath = 'metadir.jso
 
             const indexPath = `metadir/props/${itemFieldPropDir}/index.csv`;
 
-            const indexFile = await callback.fetch(indexPath);
+            let indexFile;
+            try {
+              indexFile = await callback.fetch(indexPath);
+            } catch {
+              indexFile = '';
+            }
 
             const itemFieldPropType = schema[itemFieldProp].type;
 
@@ -263,7 +304,13 @@ export async function editEntry(entryEdited, callback, schemaPath = 'metadir.jso
 
           const indexPath = `metadir/props/${propDir}/index.csv`;
 
-          const indexFile = await callback.fetch(indexPath);
+          let indexFile;
+
+          try {
+            indexFile = await callback.fetch(indexPath);
+          } catch {
+            indexFile = '';
+          }
 
           if (propType === 'string') {
             propValue = JSON.stringify(propValue);
@@ -287,7 +334,13 @@ export async function editEntry(entryEdited, callback, schemaPath = 'metadir.jso
 
           const pairPath = `metadir/pairs/${trunk}-${prop}.csv`;
 
-          const pairFile = await callback.fetch(pairPath);
+          let pairFile;
+
+          try {
+            pairFile = await callback.fetch(pairPath);
+          } catch {
+            pairFile = '';
+          }
 
           if (!includes(pairFile, pairLine)) {
             const pairPruned = prune(pairFile, trunkUUID);
