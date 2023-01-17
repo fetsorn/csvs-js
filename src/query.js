@@ -577,16 +577,19 @@ export async function queryOptions(prop, callback, doGrep = false, schemaPath = 
 
   const { trunk } = schema[prop];
 
-  const pairFile = await callback.fetch(`metadir/pairs/${trunk}-${prop}.csv`);
 
   if (propType === 'hash') {
+    const pairFile = await callback.fetch(`metadir/pairs/${trunk}-${prop}.csv`);
+
     lines = pairFile;
   } else {
     const propDir = schema[prop].dir ?? prop;
 
     lines = await callback.fetch(`metadir/props/${propDir}/index.csv`);
 
-    if (doGrep) {
+    if (trunk && doGrep) {
+      const pairFile = await callback.fetch(`metadir/pairs/${trunk}-${prop}.csv`);
+
       const propUUIDs = takeValues(pairFile);
 
       lines = await callback.grep(lines, propUUIDs.join('\n'));
