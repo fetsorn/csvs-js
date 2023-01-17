@@ -25,7 +25,11 @@ async function fetchCSV(schemaPath, callback) {
 
   const rootIndexPath = `metadir/props/${root}/index.csv`;
 
-  csv[rootIndexPath] = await callback.fetch(rootIndexPath);
+  try {
+    csv[rootIndexPath] = await callback.fetch(rootIndexPath);
+  } catch (e) {
+    csv[rootIndexPath] = '\n';
+  }
 
   Object.keys(schema).forEach(async (prop) => {
     const propType = schema[prop].type;
@@ -133,7 +137,13 @@ async function findRootUUIDs(schema, prop, propUUIDs, callback) {
   const { trunk } = schema[prop];
 
   // find all pairs with one of the prop uuids
-  const pairFile = await callback.fetch(`metadir/pairs/${trunk}-${prop}.csv`);
+  let pairFile;
+
+  try {
+    pairFile = await callback.fetch(`metadir/pairs/${trunk}-${prop}.csv`);
+  } catch {
+    pairFile = '\n';
+  }
 
   // console.log(`grep ${pairFile.split('\n').length} trunk ${trunk} uuids`
   //             + `against ${propUUIDs.length} ${prop} uuids`, propUUIDs);
