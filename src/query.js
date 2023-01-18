@@ -587,11 +587,19 @@ export async function queryOptions(prop, callback, doGrep = false, schemaPath = 
 
   const { trunk } = schema[prop];
 
-
   if (propType === 'hash') {
     const pairFile = await callback.fetch(`metadir/pairs/${trunk}-${prop}.csv`);
 
     lines = pairFile;
+  } else if (propType === 'object') {
+    // find all UUIDs
+    const pairFile = await callback.fetch(`metadir/pairs/${trunk}-${prop}.csv`);
+
+    lines = pairFile;
+
+    // build objects
+    // TODO: refactor to abstract "build object" function
+    // common with queryMetadir
   } else {
     const propDir = schema[prop].dir ?? prop;
 

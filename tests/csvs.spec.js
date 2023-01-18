@@ -232,6 +232,12 @@ describe('queryOptions', () => {
   test('queries saydate with grep', () => queryOptions('saydate', callback, true).then((data) => {
     expect(data).toStrictEqual(mocks.optionsSaydateGrep);
   }));
+
+  test('queries object', () => queryOptions('export1_tag', callback, true).then((data) => {
+    callback.fetch = async (path) => mocks.metadirArray[path];
+
+    expect(data).toStrictEqual(mocks.optionsSaydateGrep);
+  }));
 });
 
 describe('editEntry', () => {

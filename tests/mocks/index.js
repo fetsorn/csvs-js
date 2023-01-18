@@ -29,6 +29,7 @@ import {
   optionsActdateGrep,
   optionsSaynameGrep,
   optionsSaydateGrep,
+  optionsExport1Tag,
 } from './options';
 
 export default {
@@ -60,4 +61,5 @@ export default {
   optionsActdateGrep,
   optionsSaynameGrep,
   optionsSaydateGrep,
+  optionsExport1Tag,
 };
