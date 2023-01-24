@@ -356,3 +356,5 @@ export async function editEntry(entryEdited, callback, schemaPath = 'metadir.jso
 
   return entry;
 }
+
+async function writeCSV(callback) {}

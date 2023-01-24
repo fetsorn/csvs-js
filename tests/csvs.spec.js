@@ -57,7 +57,7 @@ describe('queryMetadir no ripgrep', () => {
 
     searchParams.set('actname', 'name1');
 
-    return queryMetadir(searchParams, callback).then((data) => {
+    return queryMetadir({ searchParams, callback }).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2001)]);
     });
   });
@@ -67,7 +67,7 @@ describe('queryMetadir no ripgrep', () => {
 
     searchParams.set('actname', 'name2');
 
-    return queryMetadir(searchParams, callback).then((data) => {
+    return queryMetadir({searchParams, callback}).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2002)]);
     });
   });
@@ -77,7 +77,7 @@ describe('queryMetadir no ripgrep', () => {
 
     searchParams.set('actname', 'name3');
 
-    return queryMetadir(searchParams, callback).then((data) => {
+    return queryMetadir({searchParams, callback}).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2003Unedited)]);
     });
   });
@@ -89,7 +89,7 @@ describe('queryMetadir no ripgrep', () => {
 
     callback.fetch = (path) => mocks.metadirUnordered[path];
 
-    return queryMetadir(searchParams, callback).then((data) => {
+    return queryMetadir({searchParams, callback}).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2002)]);
     });
   });
@@ -101,7 +101,7 @@ describe('queryMetadir no ripgrep', () => {
 
     callback.fetch = (path) => mocks.metadirArray[path];
 
-    return queryMetadir(searchParams, callback).then((data) => {
+    return queryMetadir({searchParams, callback}).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entryArray)]);
     });
   });
@@ -154,7 +154,7 @@ describe('queryMetadir ripgrep', () => {
 
     searchParams.set('actname', 'name1');
 
-    return queryMetadir(searchParams, callback).then((data) => {
+    return queryMetadir({searchParams, callback}).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2001)]);
     });
   });
@@ -164,7 +164,7 @@ describe('queryMetadir ripgrep', () => {
 
     searchParams.set('actname', 'name2');
 
-    return queryMetadir(searchParams, callback).then((data) => {
+    return queryMetadir({searchParams, callback}).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2002)]);
     });
   });
@@ -174,7 +174,7 @@ describe('queryMetadir ripgrep', () => {
 
     searchParams.set('actname', 'name3');
 
-    return queryMetadir(searchParams, callback).then((data) => {
+    return queryMetadir({searchParams, callback}).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2003Unedited)]);
     });
   });
@@ -186,7 +186,7 @@ describe('queryMetadir ripgrep', () => {
 
     callback.fetch = (path) => mocks.metadirArray[path];
 
-    return queryMetadir(searchParams, callback).then((data) => {
+    return queryMetadir({searchParams, callback}).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entryArray)]);
     });
   });
@@ -198,7 +198,7 @@ describe('queryMetadir ripgrep', () => {
 
     callback.fetch = (path) => mocks.metadirArray[path];
 
-    return queryMetadir(searchParams, callback).then((data) => {
+    return queryMetadir({searchParams, callback}).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entryArray)]);
     });
   });
@@ -206,7 +206,11 @@ describe('queryMetadir ripgrep', () => {
 
 describe('queryOptions', () => {
   beforeEach(() => {
+    callback = { ...callbackOriginal };
+
     callback.fetch = async (path) => mocks.metadirAdded[path];
+
+    callback.grep = grepJS;
   });
 
   test('queries name', () => queryOptions('actname', callback).then((data) => {
