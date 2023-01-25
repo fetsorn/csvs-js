@@ -237,11 +237,13 @@ describe('queryOptions', () => {
     expect(data).toStrictEqual(mocks.optionsSaydateGrep);
   }));
 
-  test('queries object', () => queryOptions('export1_tag', callback, true).then((data) => {
+  test('queries object', async () => {
     callback.fetch = async (path) => mocks.metadirArray[path];
 
-    expect(data).toStrictEqual(mocks.optionsSaydateGrep);
-  }));
+    const data = await queryOptions('export1_tag', callback, true);
+
+    expect(data).toStrictEqual(mocks.optionsExport1Tag);
+  })
 });
 
 describe('editEntry', () => {

@@ -10,6 +10,21 @@ function findSchemaRoot(schema) {
   return Object.keys(schema).find((prop) => !Object.prototype.hasOwnProperty.call(schema[prop], 'trunk'));
 }
 
+// find if there's a path from prop to root before reaching schema root
+function isBranch(schema, root, prop) {
+  // console.log("isBranch", root, prop)
+  if (schema[prop].trunk === undefined) {
+    // console.log("isBranch undefined")
+    return false
+  } else if (schema[prop].trunk === root) {
+    // console.log("isBranch schema root")
+    return true
+  } else if (isBranch(schema, root, schema[prop].trunk)) {
+    // console.log("isBranch trunk root")
+    return true
+  }
+}
+
 // return a list of paths to fetch
 // function calculateFetch(searchParams) {}
 
@@ -149,11 +164,11 @@ export function grep(contentFile, patternFile) {
 
 // find trunk uuids until schema root
 async function findRootUUIDs({
-  schema, prop, propUUIDs, grepCallback, csv,
+  schema, prop, propUUIDs, rootOriginal, grepCallback, csv,
 }) {
   // console.log('findRootUUIDs', prop, propUUIDs);
 
-  const root = findSchemaRoot(schema);
+  const root = rootOriginal ?? findSchemaRoot(schema);
 
   const { trunk } = schema[prop];
 
@@ -195,17 +210,27 @@ async function getRootUUIDs({
   // for each searchParam, take prop uuids, then take corresponding root uuids
   let rootUUIDs;
 
+  // console.log("getRootUUIDS", root)
+
   const searchEntries = Array.from(searchParams.entries()).filter(
     ([key]) => key !== 'groupBy' && key !== 'overviewType',
   );
 
   // if no search params, return all root uuids
   if (Array.from(searchEntries).length === 0) {
-    const rootDir = schema[root].dir ?? root;
+    if (schema[root].type === 'object') {
+      const { trunk } = schema[root];
 
-    const rootLines = csv[`metadir/props/${rootDir}/index.csv`];
+      const rootLines = csv[`metadir/pairs/${trunk}-${root}.csv`];
 
-    rootUUIDs = takeUUIDs(rootLines);
+      rootUUIDs = [...new Set(takeValues(rootLines))];
+    } else {
+      const rootDir = schema[root].dir ?? root;
+
+      const rootLines = csv[`metadir/props/${rootDir}/index.csv`];
+
+      rootUUIDs = takeUUIDs(rootLines);
+    }
   } else {
     for (const searchEntry of searchEntries) {
       const prop = searchEntry[0];
@@ -239,7 +264,7 @@ async function getRootUUIDs({
 
         const trunkUUIDs = takeUUIDs(trunkLines);
 
-        rootUUIDsNew = await findRootUUIDs({schema, trunk, trunkUUIDs, grepCallback, csv});
+        rootUUIDsNew = await findRootUUIDs({schema, trunk, trunkUUIDs, rootOriginal: root, grepCallback, csv});
       } else if (propType === 'array') {
         // skip
       } else if (schema[trunk]?.type === 'array') {
@@ -255,7 +280,7 @@ async function getRootUUIDs({
 
         const propUUIDs = takeUUIDs(propLines);
 
-        rootUUIDsNew = await findRootUUIDs({schema, prop, propUUIDs, grepCallback, csv});
+        rootUUIDsNew = await findRootUUIDs({schema, prop, propUUIDs, rootOriginal: root, grepCallback, csv});
       }
 
       if (!rootUUIDs) {
@@ -284,6 +309,7 @@ async function getPairs({
   // uuids: Map<Prop, [UUID]>
   const uuids = new Map();
 
+  // console.log("10", root, rootUUIDs)
   uuids.set(root, rootUUIDs);
 
   // type UUID = string
@@ -293,7 +319,9 @@ async function getPairs({
   // pairs: Map<Prop, TrunkLinks>
   const pairs = new Map();
 
-  const schemaProps = Object.keys(schema);
+  const schemaProps = Object.keys(schema).filter((p) => isBranch(schema, root, p));
+
+  // console.log(schemaProps);
 
   // enqueue props whose trunks aren't processed yet
   const queue = [...schemaProps];
@@ -305,6 +333,8 @@ async function getPairs({
   processed.set(root, true);
 
   for (const prop of queue) {
+    // console.log("11")
+
     // console.log(`pair for ${prop}`);
 
     const propType = schema[prop].type;
@@ -315,11 +345,15 @@ async function getPairs({
 
       // if prop's trunk is not processed, process this prop later
       if (!processed.get(trunk)) {
+        // console.log(`${trunk} not processed, readding ${prop}`);
+
         queue.push(prop);
       } else {
         processed.set(prop, true);
 
         const pairFile = csv[`metadir/pairs/${trunk}-${prop}.csv`];
+
+        // console.log("12", pairFile)
 
         if (pairFile) {
           if (schema[trunk].type === 'array') {
@@ -450,9 +484,9 @@ function getFields({
 
 // return map of values of each uuid in schema
 async function getValues({
-  schema, csv, grepCallback, pairs, fields, uuids, rootUUIDs,
+  schema, csv, grepCallback, pairs, fields, uuids, root, rootUUIDs,
 }) {
-  const schemaProps = Object.keys(schema);
+  const schemaProps = Object.keys(schema).filter((p) => p === root || isBranch(schema, root, p));
 
   // type UUID = string
   // type Value = string | object
@@ -522,9 +556,17 @@ async function getValues({
             values.set(propUUID, { UUID: propUUID, ITEM_NAME: prop });
           }
         } else if (schema[trunk].type === 'object') {
-          const trunkRootLinks = fields.get(trunk);
+          let trunkUUID;
 
-          const trunkUUID = trunkRootLinks.get(rootUUID);
+          if (trunk === root) {
+            trunkUUID = rootUUID;
+          } else {
+            const trunkRootLinks = fields.get(trunk);
+
+            trunkUUID = trunkRootLinks.get(rootUUID);
+          }
+
+          // console.log('AAAAA', trunkUUID)
 
           if (Array.isArray(trunkUUID)) {
             trunkUUID.forEach((uuid) => {
@@ -533,6 +575,14 @@ async function getValues({
               values.get(uuid)[propLabel] = values.get(propUUIDactual);
             });
           } else {
+            // console.log('AAAAA', propLabel)
+
+            // console.log('AAAAA', values.get(trunkUUID))
+
+            if (values.get(trunkUUID) === undefined) {
+              values.set(trunkUUID, {ITEM_NAME: trunk})
+            }
+
             values.get(trunkUUID)[propLabel] = values.get(propUUID);
           }
         }
@@ -569,9 +619,15 @@ function getEntries({
       }
 
       if (prop === root) {
-        entries.get(rootUUID).UUID = rootUUID;
+        if (schema[prop].type === 'object') {
+          entries.set(rootUUID, values.get(rootUUID));
 
-        entries.get(rootUUID)[propLabel] = values.get(rootUUID);
+          entries.get(rootUUID).UUID = rootUUID;
+        } else {
+          entries.get(rootUUID).UUID = rootUUID;
+
+          entries.get(rootUUID)[propLabel] = values.get(rootUUID);
+        }
       } else {
         const rootLinks = fields.get(prop);
 
@@ -618,18 +674,22 @@ async function query({
   const rootUUIDs = await getRootUUIDs({
     root, searchParams, grepCallback, schema, csv,
   });
+  // console.log("5 rootUUIDs", rootUUIDs)
 
   const { pairs, uuids } = await getPairs({
     csv, schema, root, rootUUIDs, grepCallback,
   });
+  // console.log("6 pairs, uuids", pairs, uuids)
 
   const fields = getFields({
     schema, rootUUIDs, root, pairs,
   });
+  // console.log("7 fields", fields)
 
   const values = await getValues({
-    schema, csv, grepCallback, pairs, fields, uuids, rootUUIDs,
+    schema, csv, grepCallback, pairs, fields, uuids, root, rootUUIDs,
   });
+  // console.log("8 values", values)
 
   const entries = getEntries({
     values, fields, rootUUIDs, schema, root,
@@ -644,11 +704,15 @@ export async function queryMetadir({ searchParams, callback, rootOriginal }) {
 
   const csv = await fetchCSV(schemaPath, callback.fetch);
 
+  // console.log("1")
   // console.log(csv);
 
   const schema = JSON.parse(csv[schemaPath]);
+  // console.log("2")
 
   const root = rootOriginal ?? findSchemaRoot(schema);
+
+  // console.log("3")
 
   const entries = await query({
     searchParams, schema, csv, root, grepCallback: callback.grep,
@@ -679,9 +743,21 @@ export async function queryOptions(
 
     lines = pairFile;
 
+    const objUUIDs = pairFile;
+
+    const searchParams = new URLSearchParams();
+
+    const queryResult = await queryMetadir({searchParams, callback, rootOriginal: prop})
+
+    // console.log(queryResult);
+
     // build objects
     // TODO: refactor to abstract "build object" function
     // common with queryMetadir
+
+    const objs = queryResult;
+
+    return objs;
   } else {
     const propDir = schema[prop].dir ?? prop;
 
