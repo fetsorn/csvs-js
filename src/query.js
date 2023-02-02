@@ -12,16 +12,16 @@ function findSchemaRoot(schema) {
 
 // find if there's a path from prop to root before reaching schema root
 function isBranch(schema, root, prop) {
-  // console.log("isBranch", root, prop)
+  // console.log('isBranch', root, prop);
   if (schema[prop].trunk === undefined) {
-    // console.log("isBranch undefined")
-    return false
-  } else if (schema[prop].trunk === root) {
-    // console.log("isBranch schema root")
-    return true
-  } else if (isBranch(schema, root, schema[prop].trunk)) {
-    // console.log("isBranch trunk root")
-    return true
+    // console.log('isBranch undefined');
+    return false;
+  } if (schema[prop].trunk === root) {
+    // console.log('isBranch schema root');
+    return true;
+  } if (isBranch(schema, root, schema[prop].trunk)) {
+    // console.log('isBranch trunk root');
+    return true;
   }
 }
 
@@ -197,7 +197,9 @@ async function findRootUUIDs({
   } else {
     // console.log(`${prop}'s trunk ${trunk} is not root ${root}`);
 
-    rootUUIDs = await findRootUUIDs({schema, prop: trunk, propUUIDs: trunkUUIDs, grepCallback, csv});
+    rootUUIDs = await findRootUUIDs({
+      schema, prop: trunk, propUUIDs: trunkUUIDs, grepCallback, csv,
+    });
   }
 
   return rootUUIDs;
@@ -208,7 +210,7 @@ async function getRootUUIDs({
   root, searchParams, grepCallback, schema, csv,
 }) {
   // for each searchParam, take prop uuids, then take corresponding root uuids
-  let rootUUIDs;
+  let rootUUIDs = [];
 
   // console.log("getRootUUIDS", root)
 
@@ -235,62 +237,68 @@ async function getRootUUIDs({
     for (const searchEntry of searchEntries) {
       const prop = searchEntry[0];
 
-      const propDir = schema[prop].dir ?? prop;
+      if (Object.prototype.hasOwnProperty.call(schema, prop)) {
+        const propDir = schema[prop].dir ?? prop;
 
-      const propType = schema[prop].type;
+        const propType = schema[prop].type;
 
-      const propValue = propType === 'string' || propType === 'text' ? JSON.stringify(searchEntry[1]) : searchEntry[1];
+        const propValue = propType === 'string' || propType === 'text' ? JSON.stringify(searchEntry[1]) : searchEntry[1];
 
-      const { trunk } = schema[prop];
+        const { trunk } = schema[prop];
 
-      let rootUUIDsNew;
+        let rootUUIDsNew;
 
-      if (trunk === undefined) {
-        const indexFile = csv[`metadir/props/${propDir}/index.csv`];
+        if (trunk === undefined) {
+          const indexFile = csv[`metadir/props/${propDir}/index.csv`];
 
-        const propLines = await grepCallback(indexFile, `,${propValue}$\n`);
+          const propLines = await grepCallback(indexFile, `,${propValue}$\n`);
 
-        rootUUIDsNew = takeUUIDs(propLines);
-      } else if (propType === 'rule') {
-        const rulefile = csv[`metadir/props/${propDir}/rules/${propValue}.rule`];
+          rootUUIDsNew = takeUUIDs(propLines);
+        } else if (propType === 'rule') {
+          const rulefile = csv[`metadir/props/${propDir}/rules/${propValue}.rule`];
 
-        const trunkDir = schema[prop].dir ?? trunk;
+          const trunkDir = schema[prop].dir ?? trunk;
 
-        // console.log(`grep ${trunk} in ${trunkDir} index for ${propValue}.rule`)
+          // console.log(`grep ${trunk} in ${trunkDir} index for ${propValue}.rule`)
 
-        const indexFile = csv[`metadir/props/${trunkDir}/index.csv`];
+          const indexFile = csv[`metadir/props/${trunkDir}/index.csv`];
 
-        const trunkLines = await grepCallback(indexFile, rulefile);
+          const trunkLines = await grepCallback(indexFile, rulefile);
 
-        const trunkUUIDs = takeUUIDs(trunkLines);
+          const trunkUUIDs = takeUUIDs(trunkLines);
 
-        rootUUIDsNew = await findRootUUIDs({schema, trunk, trunkUUIDs, rootOriginal: root, grepCallback, csv});
-      } else if (propType === 'array') {
+          rootUUIDsNew = await findRootUUIDs({
+            schema, trunk, trunkUUIDs, rootOriginal: root, grepCallback, csv,
+          });
+        } else if (propType === 'array') {
         // skip
-      } else if (schema[trunk]?.type === 'array') {
+        } else if (schema[trunk]?.type === 'array') {
         // search by UUID
-      } else {
+        } else {
         // console.log(`grep ${prop} in ${propDir} index for ,${propValue}$\n`);
 
-        const indexFile = csv[`metadir/props/${propDir}/index.csv`];
+          const indexFile = csv[`metadir/props/${propDir}/index.csv`];
 
-        // console.log(`metadir/props/${propDir}/index.csv`, indexFile);
+          // console.log(`metadir/props/${propDir}/index.csv`, indexFile);
 
-        const propLines = await grepCallback(indexFile, `,${propValue}$\n`);
+          const propLines = await grepCallback(indexFile, `,${propValue}$\n`);
 
-        const propUUIDs = takeUUIDs(propLines);
+          const propUUIDs = takeUUIDs(propLines);
 
-        rootUUIDsNew = await findRootUUIDs({schema, prop, propUUIDs, rootOriginal: root, grepCallback, csv});
-      }
+          rootUUIDsNew = await findRootUUIDs({
+            schema, prop, propUUIDs, rootOriginal: root, grepCallback, csv,
+          });
+        }
 
-      if (!rootUUIDs) {
-        rootUUIDs = rootUUIDsNew;
-      } else {
+        if (rootUUIDs.length === 0 && rootUUIDsNew !== undefined) {
+          rootUUIDs = rootUUIDsNew;
+        } else {
         // console.log(`grep ${rootUUIDsNew.length} new uuids ${rootUUIDs.length} uuids\n`);
 
-        const rootLines = await grepCallback(rootUUIDsNew.join('\n'), rootUUIDs.join('\n'));
+          const rootLines = await grepCallback(rootUUIDsNew.join('\n'), rootUUIDs.join('\n'));
 
-        rootUUIDs = takeUUIDs(rootLines);
+          rootUUIDs = takeUUIDs(rootLines);
+        }
       }
     }
   }
@@ -580,7 +588,7 @@ async function getValues({
             // console.log('AAAAA', values.get(trunkUUID))
 
             if (values.get(trunkUUID) === undefined) {
-              values.set(trunkUUID, {ITEM_NAME: trunk})
+              values.set(trunkUUID, { ITEM_NAME: trunk });
             }
 
             values.get(trunkUUID)[propLabel] = values.get(propUUID);
@@ -674,26 +682,27 @@ async function query({
   const rootUUIDs = await getRootUUIDs({
     root, searchParams, grepCallback, schema, csv,
   });
-  // console.log("5 rootUUIDs", rootUUIDs)
+  // console.log('5 rootUUIDs', rootUUIDs);
 
   const { pairs, uuids } = await getPairs({
     csv, schema, root, rootUUIDs, grepCallback,
   });
-  // console.log("6 pairs, uuids", pairs, uuids)
+  // console.log('6 pairs, uuids', pairs, uuids);
 
   const fields = getFields({
     schema, rootUUIDs, root, pairs,
   });
-  // console.log("7 fields", fields)
+  // console.log('7 fields', fields);
 
   const values = await getValues({
     schema, csv, grepCallback, pairs, fields, uuids, root, rootUUIDs,
   });
-  // console.log("8 values", values)
+  // console.log('8 values', values);
 
   const entries = getEntries({
     values, fields, rootUUIDs, schema, root,
   });
+  // console.log('9 entries', entries);
 
   return entries;
 }
@@ -722,9 +731,7 @@ export async function queryMetadir({ searchParams, callback, rootOriginal }) {
 }
 
 // return an array of unique values of a prop
-export async function queryOptions(
-  prop, callback, doGrep = false, schemaPath = 'metadir.json',
-) {
+export async function queryOptions(prop, callback, doGrep = false, schemaPath = 'metadir.json') {
   const schema = JSON.parse(await callback.fetch(schemaPath));
 
   const propType = schema[prop].type;
@@ -743,11 +750,9 @@ export async function queryOptions(
 
     lines = pairFile;
 
-    const objUUIDs = pairFile;
-
     const searchParams = new URLSearchParams();
 
-    const queryResult = await queryMetadir({searchParams, callback, rootOriginal: prop})
+    const queryResult = await queryMetadir({ searchParams, callback, rootOriginal: prop });
 
     // console.log(queryResult);
 
