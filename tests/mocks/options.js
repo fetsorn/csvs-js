@@ -1,6 +1,6 @@
-const optionsActname = ['name1', 'name2', 'name3', 'name4', 'name5'];
+const optionsActname = ['name1', 'name2', 'name3', 'name5', 'name4'];
 
-const optionsActdate = ['2001-01-01', '2002-01-01', '2003-01-01', '2004-01-01', '2005-01-01'];
+const optionsActdate = ['2001-01-01', '2002-01-01', '2003-01-01', '2005-01-01', '2004-01-01'];
 
 const optionsActnameGrep = ['name1', 'name2', 'name3', 'name5'];
 

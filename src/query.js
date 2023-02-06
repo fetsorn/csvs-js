@@ -440,6 +440,10 @@ async function getPairs({
 function getFields({
   schema, rootUUIDs, root, pairs,
 }) {
+  // console.log('getFields');
+
+  // console.log('root:', root);
+
   const schemaProps = Object.keys(schema);
 
   // type UUID = string
@@ -452,24 +456,41 @@ function getFields({
   for (const prop of schemaProps) {
     const trunkLinks = pairs.get(prop);
 
+    // console.log(`prop: ${prop}, trunkToBranchLinks: `, trunkLinks);
+
     if (trunkLinks) {
       fields.set(prop, new Map());
 
       for (const rootUUID of rootUUIDs) {
         let { trunk } = schema[prop];
+        // console.log('----rootUUID', rootUUID);
 
+        // console.log('------trunk', trunk);
         const path = [];
 
         while (trunk !== root) {
+          // console.log('--------trunk !== root');
+          // console.log('--------trunk', trunk);
+          // console.log('--------path', path);
+
           path.unshift(trunk);
 
           trunk = schema[trunk].trunk;
         }
 
+        // console.log('------path', path);
+
         let trunkUUID = rootUUID;
 
+        // for every element of prop path from deepest to shallow
+        // get the uuid of branch or array of branches
         for (const element of path) {
+          // console.log('--------element', element);
+          // console.log('--------trunkUUID', trunkUUID);
+
           trunkUUID = pairs.get(element).get(trunkUUID);
+
+          // console.log('--------trunkUUID new', trunkUUID);
         }
 
         if (schema[trunk].type === 'array') {
@@ -479,13 +500,16 @@ function getFields({
         } else {
           const propUUID = pairs.get(prop).get(trunkUUID);
 
-          fields.get(prop).set(rootUUID, propUUID);
+          if (propUUID) {
+            // console.log(`--------set ${prop} -> ${rootUUID} -> ${propUUID}`);
+            fields.get(prop).set(rootUUID, propUUID);
+          }
         }
       }
     }
   }
 
-  // console.log("csvs-js: fields", fields);
+  // console.log('csvs-js: fields', fields);
 
   return fields;
 }
@@ -496,15 +520,19 @@ async function getValues({
 }) {
   const schemaProps = Object.keys(schema).filter((p) => p === root || isBranch(schema, root, p));
 
+  // console.log('getValues');
+
   // type UUID = string
   // type Value = string | object
   // values: Map<UUID, Value>
   const values = new Map();
 
   for (const prop of schemaProps) {
-    // console.log(`index for ${prop}`);
+    // console.log(`1 prop: ${prop}`);
 
     const propType = schema[prop].type;
+
+    // console.log(`--propType: ${propType}`);
 
     if (propType !== 'rule' && propType !== 'hash') {
       const propDir = schema[prop].dir ?? prop;
@@ -516,6 +544,7 @@ async function getValues({
       if (indexFile) {
         const propUUIDs = uuids.get(prop);
 
+        // console.log('--no index file');
         if (propUUIDs) {
           const propValuesStr = await grepCallback(indexFile, propUUIDs.join('\n'));
 
@@ -533,6 +562,7 @@ async function getValues({
               propValue = JSON.parse(propValue);
             }
 
+            // console.log(`--set ${propUUID} ${propValue}`);
             values.set(propUUID, propValue);
           }
         }
@@ -543,27 +573,33 @@ async function getValues({
   // console.log("csvs-js: values", values);
 
   for (const prop of schemaProps) {
+    // console.log(`2 prop: ${prop}`);
     const propLabel = schema[prop].label ?? prop;
 
     for (const rootUUID of rootUUIDs) {
+      // console.log(`--rootUUID: ${rootUUID}`);
       const rootLinks = fields.get(prop);
 
       if (rootLinks) {
-      // console.log(prop, rootLinks);
+        // console.log('----rootToBranchLinks:', rootLinks);
 
         const propUUID = rootLinks.get(rootUUID);
 
         const { trunk } = schema[prop];
 
         if (schema[prop].type === 'object') {
+          // console.log('----prop is object');
           if (Array.isArray(propUUID)) {
             propUUID.forEach((uuid) => {
+              // console.log(`----set ${uuid}`, { UUID: uuid, ITEM_NAME: prop });
               values.set(uuid, { UUID: uuid, ITEM_NAME: prop });
             });
-          } else {
+          } else if (propUUID) {
+            // console.log(`----set ${propUUID}`, { UUID: propUUID, ITEM_NAME: prop });
             values.set(propUUID, { UUID: propUUID, ITEM_NAME: prop });
           }
         } else if (schema[trunk].type === 'object') {
+          // console.log('----trunk is object');
           let trunkUUID;
 
           if (trunk === root) {
@@ -574,22 +610,23 @@ async function getValues({
             trunkUUID = trunkRootLinks.get(rootUUID);
           }
 
-          // console.log('AAAAA', trunkUUID)
-
           if (Array.isArray(trunkUUID)) {
+            // console.log('------value is array');
             trunkUUID.forEach((uuid) => {
               const propUUIDactual = pairs.get(prop).get(uuid);
+
+              // console.log(`----set values[${uuid}][${propLabel}]`, values.get(propUUIDactual));
 
               values.get(uuid)[propLabel] = values.get(propUUIDactual);
             });
           } else {
-            // console.log('AAAAA', propLabel)
-
-            // console.log('AAAAA', values.get(trunkUUID))
-
+            // console.log('------value is not array');
             if (values.get(trunkUUID) === undefined) {
+              // console.log(`----set values[${trunkUUID}]`, { ITEM_NAME: trunk });
               values.set(trunkUUID, { ITEM_NAME: trunk });
             }
+
+            // console.log(`----set values[${trunkUUID}][${propLabel}]`, values.get(propUUID));
 
             values.get(trunkUUID)[propLabel] = values.get(propUUID);
           }
@@ -609,6 +646,8 @@ function getEntries({
 }) {
   const schemaProps = Object.keys(schema);
 
+  // console.log('getEntries');
+
   // type UUID = string
   // type Label = string
   // type Value = string | object
@@ -619,21 +658,28 @@ function getEntries({
   for (const prop of schemaProps) {
     const propLabel = schema[prop].label ?? prop;
 
+    // console.log('--prop:', prop);
+
     for (const rootUUID of rootUUIDs) {
       const entry = entries.get(rootUUID);
+
+      // console.log('----rootUUID:', rootUUID);
 
       if (!entry) {
         entries.set(rootUUID, {});
       }
 
       if (prop === root) {
+        // console.log('------prop is root');
         if (schema[prop].type === 'object') {
           entries.set(rootUUID, values.get(rootUUID));
 
+          // console.log('------set root object UUID');
           entries.get(rootUUID).UUID = rootUUID;
         } else {
           entries.get(rootUUID).UUID = rootUUID;
 
+          // console.log('------set root prop UUID');
           entries.get(rootUUID)[propLabel] = values.get(rootUUID);
         }
       } else {
@@ -643,23 +689,35 @@ function getEntries({
           const propUUID = rootLinks.get(rootUUID);
 
           if (schema[prop].type === 'array') {
-            entries.get(rootUUID)[propLabel] = { UUID: propUUID, items: [] };
+            // console.log('------prop is array');
+            // console.log('------set empty array', rootUUID,
+            //             propLabel, { UUID: propUUID, items: [] });
+            if (propUUID) {
+              entries.get(rootUUID)[propLabel] = { UUID: propUUID, items: [] };
+            }
           } else {
+            // console.log('------prop is not array');
             const { trunk } = schema[prop];
 
             const trunkLabel = schema[trunk].label;
 
             if (schema[trunk].type !== 'object') {
+              // console.log('------trunk is not object');
               if (Array.isArray(propUUID)) {
+                // console.log('--------value is array');
                 propUUID.forEach((uuid) => {
                   const propValue = values.get(uuid);
 
+                  // console.log('------push array item', rootUUID, trunkLabel, propValue);
                   entries.get(rootUUID)[trunkLabel].items.push(propValue);
                 });
               } else {
                 const propValue = values.get(propUUID);
 
-                entries.get(rootUUID)[propLabel] = propValue;
+                if (schema[trunk].type !== 'array') {
+                  // console.log('------set prop', rootUUID, propLabel, propValue);
+                  entries.get(rootUUID)[propLabel] = propValue;
+                }
               }
             }
           }
@@ -687,7 +745,8 @@ async function query({
   const { pairs, uuids } = await getPairs({
     csv, schema, root, rootUUIDs, grepCallback,
   });
-  // console.log('6 pairs, uuids', pairs, uuids);
+  // console.log('6 pairs', pairs);
+  // console.log('6 uuids', uuids);
 
   const fields = getFields({
     schema, rootUUIDs, root, pairs,

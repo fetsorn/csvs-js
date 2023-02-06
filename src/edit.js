@@ -87,8 +87,8 @@ function hasPropsDir(propType) {
 }
 
 // overwrite entry in metadir
-export async function editEntry(entryEdited, callback, schemaPath = 'metadir.json') {
-  const entry = { ...entryEdited };
+export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.json') {
+  const entry = { ...entryOriginal };
 
   const schema = JSON.parse(await callback.fetch(schemaPath));
 
@@ -113,7 +113,7 @@ export async function editEntry(entryEdited, callback, schemaPath = 'metadir.jso
 
   uuids[root] = entry.UUID;
 
-  const queue = [...entryProps];
+  const queue = [...Object.keys(schema)];
 
   const processed = new Map();
 
@@ -122,8 +122,6 @@ export async function editEntry(entryEdited, callback, schemaPath = 'metadir.jso
 
     const propType = schema[prop].type;
 
-    let propValue = entry[prop] ? entry[prop] : entry[propLabel];
-
     const { trunk } = schema[prop];
 
     if (!processed.get(trunk) && prop !== root) {
@@ -131,7 +129,29 @@ export async function editEntry(entryEdited, callback, schemaPath = 'metadir.jso
     } else {
       processed.set(prop, true);
 
-      if (schema[prop].type === 'array') {
+      if (!entryProps.includes(prop)) {
+        if (schema[prop].trunk === root) {
+          // prune pairs file for trunk UUID
+          const trunkUUID = uuids[trunk];
+
+          const pairPath = `metadir/pairs/${root}-${prop}.csv`;
+
+          try {
+            // if file, prune it for trunk UUID
+            const pairFile = await callback.fetch(pairPath);
+
+            if (pairFile) {
+              const pairPruned = prune(pairFile, trunkUUID);
+
+              await callback.write(pairPath, pairPruned);
+            }
+          } catch {
+            // do nothing
+          }
+        } else {
+          // do nothing
+        }
+      } else if (schema[prop].type === 'array') {
         if (!entry[propLabel].UUID) {
           const random = callback.random ?? crypto.randomUUID;
 
@@ -167,7 +187,8 @@ export async function editEntry(entryEdited, callback, schemaPath = 'metadir.jso
 
         // prune every branch of array prop
         // to rewrite a fresh array in the next step
-        const propBranches = Object.keys(schema).filter((p) => p.trunk === propUUID);
+        const propBranches = Object.keys(schema).filter((p) => schema[p].trunk === prop);
+
         for (const propBranch of propBranches) {
           const propBranchPairPath = `metadir/pairs/${prop}-${propBranch}.csv`;
 
@@ -184,7 +205,7 @@ export async function editEntry(entryEdited, callback, schemaPath = 'metadir.jso
           await callback.write(propBranchPairPath, propBranchPairPruned);
         }
 
-        const arrayItems = entry[propLabel].items;
+        const arrayItems = JSON.parse(JSON.stringify(entry[propLabel].items));
 
         // for each array items
         for (const item of arrayItems) {
@@ -290,6 +311,8 @@ export async function editEntry(entryEdited, callback, schemaPath = 'metadir.jso
         }
       } else {
         let propUUID;
+
+        let propValue = JSON.parse(JSON.stringify(entry[prop] ?? entry[propLabel]));
 
         if (prop !== root) {
           propUUID = await digestMessage(propValue);
