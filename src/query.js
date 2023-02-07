@@ -23,6 +23,8 @@ function isBranch(schema, root, prop) {
     // console.log('isBranch trunk root');
     return true;
   }
+
+  return false;
 }
 
 // return a list of paths to fetch
