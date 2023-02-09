@@ -145,7 +145,7 @@ describe('queryMetadir ripgrep', () => {
           output = stdout;
         }
       } catch (e) {
-        console.log('grep returned empty', e, contentFile, patternFile);
+        // console.log('grep returned empty', e, contentFile, patternFile);
       }
 
       await fs.promises.unlink(contentFilePath);
@@ -199,7 +199,24 @@ describe('queryMetadir ripgrep', () => {
 
     searchParams.set('actname', 'name1');
 
-    callback.readFile = (path) => mocks.metadirArray[path];
+    callback.readFile = (path) => mocks.metadirArrayAdded[path];
+
+    const query = new Query({ searchParams, ...callback });
+
+    return query.run().then((data) => {
+      // array is unordered, order for reproducible test
+      data[0].export_tags.items.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
+
+      expect(data).toStrictEqual([sortObject(mocks.entryArray)]);
+    });
+  });
+
+  test('queries value2 with array of tags', () => {
+    const searchParams = new URLSearchParams();
+
+    searchParams.set('datum', 'value1');
+
+    callback.readFile = (path) => mocks.metadirArrayAdded[path];
 
     const query = new Query({ searchParams, ...callback });
 
@@ -214,15 +231,15 @@ describe('queryMetadir ripgrep', () => {
   test('queries export1_key with array of tags', () => {
     const searchParams = new URLSearchParams();
 
-    searchParams.set('export1_key', 'longkey2');
+    searchParams.set('export1_key', 'longkey1');
 
-    callback.readFile = (path) => mocks.metadirArray[path];
+    callback.readFile = (path) => mocks.metadirArrayAdded[path];
 
     const query = new Query({ searchParams, ...callback });
 
     return query.run().then((data) => {
       // array is unordered, order for reproducible test
-      data[0].export_tags.items.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
+      data.forEach((item) => item.export_tags.items.sort((a, b) => (a.UUID < b.UUID ? -1 : 1)));
 
       expect(data).toStrictEqual([sortObject(mocks.entryArray)]);
     });
@@ -375,7 +392,7 @@ describe('editEntry, arrays', () => {
       expect(editedFiles).toStrictEqual(mocks.metadirAddedArrayItem);
     }));
 
-  test.skip('edits array item', () => editEntry(mocks.entryEditedArrayItem, callback)
+  test('edits array item', () => editEntry(mocks.entryEditedArrayItem, callback)
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirEditedArrayItem);
     }));

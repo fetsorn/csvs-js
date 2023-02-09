@@ -78,15 +78,15 @@ const entryArray = {
 };
 
 const entryArrayAdded = {
-  datum: 'value1',
-  actdate: '2001-01-01',
-  actname: 'name1',
+  datum: 'value2',
+  actdate: '2002-01-01',
+  actname: 'name2',
   export_tags: {
     items: [
       {
         item_name: 'export1_tag',
-        export1_channel: 'https://channel1.url',
-        export1_key: 'longkey1',
+        export1_channel: 'https://channel2.url',
+        export1_key: 'longkey2',
       },
     ],
   },

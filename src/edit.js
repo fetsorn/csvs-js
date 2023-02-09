@@ -209,7 +209,7 @@ export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.j
 
         // for each array items
         for (const item of arrayItems) {
-          const itemProp = item.ITEM_NAME;
+          const itemProp = item.item_name;
 
           // get or generate UUID
           if (!item.UUID) {
@@ -241,7 +241,7 @@ export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.j
             await callback.writeFile(itemPairPath, itemPairEdited);
           }
 
-          delete item.ITEM_NAME;
+          delete item.item_name;
 
           delete item.UUID;
 
