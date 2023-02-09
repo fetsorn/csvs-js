@@ -182,3 +182,55 @@ export async function findRootUUIDs({
 
   return rootUUIDs;
 }
+
+// get all search actions required by searchParams
+export function tbn8(schema, base) {
+  const filePaths = [];
+
+  // TODO: omit files for branches below base branch
+  Object.keys(schema).forEach((branch) => {
+    const { trunk } = schema[branch];
+
+    if (trunk !== undefined) {
+      filePaths.push(`metadir/pairs/${trunk}-${branch}.csv`);
+    }
+
+    // TODO: add exception for other branches without index: arrays, objects
+    if (schema[branch].type !== 'hash') {
+      filePaths.push(`metadir/props/${schema[branch].dir ?? branch}/index.csv`);
+    }
+  });
+
+  return filePaths;
+}
+
+export function tbn12(searchParams, base, schema, store) {
+  // TODO: add exception for groupBy and overviewType
+  return Array.from(searchParams.entries()).map(([branch, value]) => (
+    schema[branch].trunk === base
+      ? {
+        branch,
+        indexPath: `metadir/props/${schema[branch].dir ?? branch}/index.csv`,
+        regex: `,${value}$`,
+      } : undefined)).filter(Boolean);
+}
+
+// get array of all UUIDs of the branch
+export function tbn16(store, schema, branch) {
+  const { trunk } = schema[branch];
+
+  return trunk !== undefined
+    ? takeValues(store[`metadir/pairs/${trunk}-${branch}.csv`])
+    : takeUUIDs(store[`metadir/props/${schema[branch].dir ?? branch}/index.csv`]);
+}
+
+// return array of branches above base
+export function tbn20(base, schema) {
+  // TODO: add support for all branches above base
+  // only works for direct leaves of base
+  return Object.keys(schema).filter((branch) => schema[branch].trunk === base);
+}
+
+export function tbn9(schema) {
+  return Object.keys(schema).find((prop) => !Object.prototype.hasOwnProperty.call(schema[prop], 'trunk'));
+}

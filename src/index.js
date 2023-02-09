@@ -1,9 +1,5 @@
 /* eslint-disable import/extensions */
-export {
-  queryMetadir,
-  queryOptions,
-  grep,
-} from './query.js';
+export { default as Query } from './query.js';
 
 export {
   editEntry,

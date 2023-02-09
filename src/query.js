@@ -1,6 +1,6 @@
 import { grepPolyfill, randomUUIDPolyfill } from './polyfill';
 import {
-  tbn8, tbn9, tbn12, tbn16, tbn20,
+  tbn8, tbn9, tbn12, tbn16, tbn20, takeUUIDs, takeValue, splitLines,
 } from './tbn';
 
 /**
@@ -109,13 +109,16 @@ export default class Query {
    * @returns {Object[]}
    */
   async run() {
-    this.#schema = await this.tbn10();
+    this.#schema = await this.#tbn10();
 
-    this.#searchParams = this.searchParams ?? new URLSearchParams();
+    this.#searchParams = this.#searchParams ?? new URLSearchParams();
 
-    this.#base = this.base ?? tbn9(this.schema);
+    // if no base is provided, find schema root
+    this.#base = this.#base ?? tbn9(this.#schema);
 
     this.#store = await this.#tbn5(this.#base);
+
+    console.log(this.#store);
 
     const baseUUIDs = await this.#tbn6(this.#base);
 
@@ -139,10 +142,10 @@ export default class Query {
     // get array of all filepaths required to search for base branch
     const filePaths = tbn8(this.#schema, base);
 
-    const store = new Map();
+    const store = {};
 
-    Promise.all(filePaths.map(async (filePath) => {
-      store.set(filePath, await this.#readFile(filePath));
+    await Promise.all(filePaths.map(async (filePath) => {
+      store[filePath] = (await this.#readFile(filePath)) ?? '\n';
     }));
 
     return store;
@@ -156,6 +159,8 @@ export default class Query {
    * @returns {string[]} - Array of base UUIDs.
    */
   async #tbn6(base) {
+    // TODO: add support for all branches
+    // only works if searchParams are for direct leaves of base
     // get all search actions required by searchParams
     const tbn11 = tbn12(this.#searchParams, base, this.#schema, this.#store);
 
@@ -163,12 +168,23 @@ export default class Query {
     let baseUUIDs = tbn16(this.#store, this.#schema, base);
 
     // grep against every search result until reaching a common set of UUIDs
-    Promise.all(tbn11.map(async (tbn13) => {
+    await Promise.all(tbn11.map(async (tbn13) => {
       const tbn14 = this.#store[tbn13.indexPath];
 
       const tbn15 = await this.#grep(tbn14, tbn13.regex);
 
-      baseUUIDs = await this.#grep(baseUUIDs.join('\n'), tbn15.join('\n'));
+      const tbn33 = takeUUIDs(tbn15);
+
+      const tbn31 = await this.#grep(
+        this.#store[`metadir/pairs/${base}-${tbn13.branch}.csv`],
+        tbn33.join('\n'),
+      );
+
+      const tbn32 = takeUUIDs(tbn31);
+
+      const tbn34 = await this.#grep(baseUUIDs.join('\n'), tbn32.join('\n'));
+
+      baseUUIDs = splitLines(tbn34);
     }));
 
     return baseUUIDs;
@@ -185,7 +201,7 @@ export default class Query {
   async #tbn7(base, baseUUIDs) {
     const tbn4 = [];
 
-    Promise.all(baseUUIDs.map(async (baseUUID) => {
+    await Promise.all(baseUUIDs.map(async (baseUUID) => {
       tbn4.push(await this.#tbn18(base, baseUUID));
     }));
 
@@ -201,6 +217,7 @@ export default class Query {
    * @returns {object} - Entry.
    */
   async #tbn18(base, baseUUID) {
+    console.log(18, base, baseUUID);
     const tbn24 = { UUID: baseUUID };
 
     // init front of the queue with an array of branches above base
@@ -214,23 +231,33 @@ export default class Query {
     // map of branch to UUID
     const tbn28 = new Map();
 
+    tbn28.set(base, true);
+
     while (depth < DEPTH || tbn19.length > 0) {
       // init rear of the queue with empty list
       const tbn21 = [];
 
-      Promise.all(tbn19.map(async (branch) => {
-        // get value of branch
-        const tbn25 = await this.#tbn23(base, baseUUID, tbn28, branch);
+      await Promise.all(tbn19.map(async (branch) => {
+      // for (const branch of tbn19) {
+        console.log('18-branch', branch);
 
-        if (tbn25 !== undefined) {
+        const { trunk } = this.#schema[branch];
+
+        // if trunk has not been processed, return undefined to repeat again later
+        if (!tbn28.get(trunk)) {
+          // enqueue another processing of branch
+          tbn21.push(branch);
+        } else {
           // set branch as processed
           tbn28.set(branch, true);
 
-          // assign value to entry
-          tbn24[branch] = tbn25;
-        } else {
-          // enqueue another processing of branch
-          tbn21.push(branch);
+          // get value of branch
+          const tbn25 = await this.#tbn23(base, baseUUID, tbn28, branch);
+
+          if (tbn25 !== undefined) {
+            // assign value to entry
+            tbn24[branch] = tbn25;
+          }
         }
       }));
 
@@ -253,23 +280,21 @@ export default class Query {
    * @returns {object} - Entry.
    */
   async #tbn23(base, baseUUID, tbn28, branch) {
+    console.log(23, base, baseUUID, tbn28, branch);
     // if searchParams already has value, return it
     if (this.#searchParams.has(branch)) {
       return this.#searchParams.get(branch);
     }
 
-    const { trunk } = this.#schema[branch];
-
-    // if trunk has not been processed, return undefined to repeat again later
-    if (!tbn28.get(trunk)) {
-      return undefined;
-    }
-
     // get the branch UUID related to the base UUID
     const branchUUID = await this.#tbn27(base, baseUUID, branch);
 
+    console.log('23-27', branch, branchUUID);
+
     // get value of branch
     const branchValue = await this.#tbn30(branch, branchUUID);
+
+    console.log('23-30', branch, branchUUID, branchValue);
 
     return branchValue;
   }
@@ -284,13 +309,22 @@ export default class Query {
    * @returns {string} - Branch UUID.
    */
   async #tbn27(base, baseUUID, branch) {
+    console.log(27, base, baseUUID, branch);
     const { trunk } = this.#schema[branch];
 
     const trunkUUID = trunk === base
       ? baseUUID
       : await this.#tbn27(base, baseUUID, trunk);
 
-    return this.#grep(this.#store[`metadir/pairs/${trunk}-${branch}.csv`], `^${trunkUUID}$\n`);
+    const tbn35 = await this.#grep(
+      this.#store[`metadir/pairs/${trunk}-${branch}.csv`],
+      `^${trunkUUID},`,
+    );
+
+    const tbn36 = takeValue(tbn35);
+    console.log('27-35', base, branch, tbn36);
+
+    return tbn36;
   }
 
   /**
@@ -302,6 +336,7 @@ export default class Query {
    * @returns {object} - Branch value.
    */
   async #tbn30(branch, branchUUID) {
+    console.log(30, branch, branchUUID);
     switch (this.#schema[branch].type) {
       case 'array':
         return this.#tbn18(branch, branchUUID);
@@ -309,11 +344,34 @@ export default class Query {
       case 'object':
         return this.#tbn18(branch, branchUUID);
 
-      case 'string':
-        return JSON.parse(await this.#grep(`metadir/pairs/${this.#schema[branch].dir ?? branch}/index.csv`, `^${branchUUID}`));
+      case 'string': {
+        const tbn37 = await this.#grep(
+          this.#store[`metadir/props/${this.#schema[branch].dir ?? branch}/index.csv`],
+          `^${branchUUID}`,
+        );
 
-      default:
-        return this.#grep(`metadir/pairs/${this.#schema[branch].dir ?? branch}/index.csv`, `^${branchUUID}`);
+        if (tbn37 !== '') {
+          const tbn38 = JSON.parse(takeValue(tbn37));
+
+          return tbn38;
+        }
+
+        break;
+      }
+
+      default: {
+        console.log('30-default', `metadir/props/${this.#schema[branch].dir ?? branch}/index.csv`, `^${branchUUID}`);
+        const tbn37 = await this.#grep(
+          this.#store[`metadir/props/${this.#schema[branch].dir ?? branch}/index.csv`],
+          `^${branchUUID}`,
+        );
+
+        if (tbn37 !== '') {
+          const tbn38 = takeValue(tbn37);
+
+          return tbn38;
+        }
+      }
     }
   }
 }

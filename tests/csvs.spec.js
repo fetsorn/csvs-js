@@ -7,7 +7,7 @@ import fs from 'fs';
 import crypto from 'crypto';
 import { exec } from 'child_process';
 import {
-  queryMetadir, queryOptions, editEntry, deleteEntry, grep as grepJS, digestMessage,
+  Query, editEntry, deleteEntry,
 } from '../src/index';
 import mocks from './mocks';
 
@@ -32,8 +32,8 @@ let callback;
 let counter = 0;
 
 const callbackOriginal = {
-  fetch: (path) => mocks.metadirDefault[path],
-  random: () => {
+  readFile: (path) => mocks.metadirDefault[path],
+  randomUUID: () => {
     counter += 1;
 
     // backwards compatibility with old tests
@@ -46,18 +46,13 @@ const callbackOriginal = {
 };
 
 describe('queryMetadir no ripgrep', () => {
-  beforeEach(() => {
-    callback = { ...callbackOriginal };
-
-    callback.grep = grepJS;
-  });
-
-  test('queries name1', () => {
+  test.only('queries name1', () => {
     const searchParams = new URLSearchParams();
 
     searchParams.set('actname', 'name1');
 
-    return queryMetadir({ searchParams, callback }).then((data) => {
+    const query = new Query({ searchParams, ...callbackOriginal });
+    return query.run().then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2001)]);
     });
   });
