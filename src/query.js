@@ -75,34 +75,6 @@ function findSchemaRoot(schema) {
 }
 
 /**
- * This finds paths to all files required to search for base branch.
- * @name findStorePaths
- * @function
- * @param {object} schema - Database schema.
- * @param {string} base - Base branch name.
- * @returns {string[]} - Array of file paths.
- */
-function findStorePaths(schema, base) {
-  const filePaths = [];
-
-  // TODO: omit files for branches below base branch
-  Object.keys(schema).forEach((branch) => {
-    const { trunk } = schema[branch];
-
-    if (trunk !== undefined) {
-      filePaths.push(`metadir/pairs/${trunk}-${branch}.csv`);
-    }
-
-    // TODO: add exception for other branches without index: arrays, objects
-    if (schema[branch].type !== 'hash') {
-      filePaths.push(`metadir/props/${schema[branch].dir ?? branch}/index.csv`);
-    }
-  });
-
-  return filePaths;
-}
-
-/**
  * This tells if a leaf branch is connected to base branch.
  * @name findStorePaths
  * @function
@@ -146,8 +118,48 @@ function findLeaves(schema, base) {
 }
 
 /**
+ * This finds paths to all files required to search for base branch.
+ * @name findStorePaths
+ * @function
+ * @param {object} schema - Database schema.
+ * @param {string} base - Base branch name.
+ * @returns {string[]} - Array of file paths.
+ */
+function findStorePaths(schema, base) {
+  let filePaths = [];
+
+  const leaves = findLeaves(schema, base);
+
+  leaves.concat([base]).forEach((branch) => {
+    const { trunk } = schema[branch];
+
+    if (trunk !== undefined && schema[branch].type !== 'regex') {
+      filePaths.push(`metadir/pairs/${trunk}-${branch}.csv`);
+    }
+
+    switch (schema[branch].type) {
+      case 'hash':
+      case 'regex':
+        break;
+
+      case 'object':
+      case 'array':
+        if (branch !== base) {
+          filePaths = filePaths.concat(findStorePaths(schema, branch));
+        }
+        break;
+
+      default:
+        filePaths.push(`metadir/props/${schema[branch].dir ?? branch}/index.csv`);
+    }
+  });
+
+  return filePaths.filter(Boolean).flat();
+}
+
+/**
  * This finds all UUIDs of the branch.
- * @name findLeaves
+ * @name findAllUUIDs
  * @function
  * @param {object} store - Map of file paths to file contents.
  * @param {object} schema - Database schema.
@@ -449,7 +461,8 @@ export default class Query {
     }
 
     // find all branches connected to base
-    const leaves = findLeaves(this.#schema, base);
+    const leaves = findLeaves(this.#schema, base)
+      .filter((branch) => this.#schema[branch].type !== 'regex');
 
     await Promise.all(leaves.map(async (branch) => {
     // for (const branch of leaves) {
