@@ -51,25 +51,25 @@ const entryArray = {
   datum: 'value1',
   actdate: '2001-01-01',
   actname: 'name1',
-  TAGS: {
+  export_tags: {
     UUID: '9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f',
     items: [
       {
         ITEM_NAME: 'export1_tag',
-        EXPORT1_CHANNEL: 'https://channel1.url',
-        EXPORT1_KEY: 'longkey1',
+        export1_channel: 'https://channel1.url',
+        export1_key: 'longkey1',
         UUID: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
       },
       {
         ITEM_NAME: 'export1_tag',
-        EXPORT1_CHANNEL: 'https://channel2.url',
-        EXPORT1_KEY: 'longkey2',
+        export1_channel: 'https://channel2.url',
+        export1_key: 'longkey2',
         UUID: 'fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77',
       },
       {
         ITEM_NAME: 'export2_tag',
-        EXPORT2_USERNAME: 'username',
-        EXPORT2_PASSWORD: 'password',
+        export2_username: 'username',
+        export2_password: 'password',
         UUID: 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
       },
     ],
@@ -81,12 +81,12 @@ const entryArrayAdded = {
   datum: 'value1',
   actdate: '2001-01-01',
   actname: 'name1',
-  TAGS: {
+  export_tags: {
     items: [
       {
         ITEM_NAME: 'export1_tag',
-        EXPORT1_CHANNEL: 'https://channel1.url',
-        EXPORT1_KEY: 'longkey1',
+        export1_channel: 'https://channel1.url',
+        export1_key: 'longkey1',
       },
     ],
   },
@@ -96,31 +96,31 @@ const entryAddedArrayItem = {
   datum: 'value1',
   actdate: '2001-01-01',
   actname: 'name1',
-  TAGS: {
+  export_tags: {
     UUID: '9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f',
     items: [
       {
         ITEM_NAME: 'export1_tag',
-        EXPORT1_CHANNEL: 'https://channel1.url',
-        EXPORT1_KEY: 'longkey1',
+        export1_channel: 'https://channel1.url',
+        export1_key: 'longkey1',
         UUID: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
       },
       {
         ITEM_NAME: 'export1_tag',
-        EXPORT1_CHANNEL: 'https://channel2.url',
-        EXPORT1_KEY: 'longkey2',
+        export1_channel: 'https://channel2.url',
+        export1_key: 'longkey2',
         UUID: 'fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77',
       },
       {
         ITEM_NAME: 'export2_tag',
-        EXPORT2_USERNAME: 'username',
-        EXPORT2_PASSWORD: 'password',
+        export2_username: 'username',
+        export2_password: 'password',
         UUID: 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
       },
       {
         ITEM_NAME: 'export2_tag',
-        EXPORT2_USERNAME: 'username2',
-        EXPORT2_PASSWORD: 'password2',
+        export2_username: 'username2',
+        export2_password: 'password2',
       },
     ],
   },
@@ -131,25 +131,25 @@ const entryEditedArrayItem = {
   datum: 'value1',
   actdate: '2001-01-01',
   actname: 'name1',
-  TAGS: {
+  export_tags: {
     UUID: '9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f',
     items: [
       {
-        ITEM_NAME: 'export1_tag',
-        EXPORT1_CHANNEL: 'https://channel1.url',
-        EXPORT1_KEY: 'longkey3',
+        item_name: 'export1_tag',
+        export1_channel: 'https://channel1.url',
+        export1_key: 'longkey3',
         UUID: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
       },
       {
-        ITEM_NAME: 'export1_tag',
-        EXPORT1_CHANNEL: 'https://channel2.url',
-        EXPORT1_KEY: 'longkey2',
+        item_name: 'export1_tag',
+        export1_channel: 'https://channel2.url',
+        export1_key: 'longkey2',
         UUID: 'fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77',
       },
       {
-        ITEM_NAME: 'export2_tag',
-        EXPORT2_USERNAME: 'username',
-        EXPORT2_PASSWORD: 'password',
+        item_name: 'export2_tag',
+        export2_username: 'username',
+        export2_password: 'password',
         UUID: 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
       },
     ],
@@ -161,19 +161,19 @@ const entryDeletedArrayItem = {
   datum: 'value1',
   actdate: '2001-01-01',
   actname: 'name1',
-  TAGS: {
+  export_tags: {
     UUID: '9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f',
     items: [
       {
-        ITEM_NAME: 'export1_tag',
-        EXPORT1_CHANNEL: 'https://channel1.url',
-        EXPORT1_KEY: 'longkey1',
+        item_name: 'export1_tag',
+        export1_channel: 'https://channel1.url',
+        export1_key: 'longkey1',
         UUID: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
       },
       {
-        ITEM_NAME: 'export2_tag',
-        EXPORT2_USERNAME: 'username',
-        EXPORT2_PASSWORD: 'password',
+        item_name: 'export2_tag',
+        export2_username: 'username',
+        export2_password: 'password',
         UUID: 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
       },
     ],

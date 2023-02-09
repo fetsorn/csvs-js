@@ -115,7 +115,7 @@ export function takeUUID(line) {
 
 // get a line, return a metadir value
 export function takeValue(line) {
-  return line.slice(65);
+  return line.slice(65).replace(/\n*$/, '');
 }
 
 // get a string of metadir lines, return array of uuids

@@ -10,7 +10,7 @@ function prune(file, regex) {
 
 // remove entry with rootUUID from metadir
 export async function deleteEntry(rootUUID, callback, schemaPath = 'metadir.json') {
-  const schema = JSON.parse(await callback.fetch(schemaPath));
+  const schema = JSON.parse(await callback.readFile(schemaPath));
 
   const schemaProps = Object.keys(schema);
 
@@ -23,13 +23,13 @@ export async function deleteEntry(rootUUID, callback, schemaPath = 'metadir.json
   let indexFile;
 
   try {
-    indexFile = await callback.fetch(indexPath);
+    indexFile = await callback.readFile(indexPath);
   } catch {
     // continue regardless of error
   }
 
   if (indexFile) {
-    await callback.write(
+    await callback.writeFile(
 
       indexPath,
 
@@ -44,13 +44,13 @@ export async function deleteEntry(rootUUID, callback, schemaPath = 'metadir.json
     let pairFile;
 
     try {
-      pairFile = await callback.fetch(pairPath);
+      pairFile = await callback.readFile(pairPath);
     } catch {
       // continue regardless of error
     }
 
     if (pairFile) {
-      await callback.write(
+      await callback.writeFile(
         pairPath,
         prune(pairFile, rootUUID),
       );
@@ -90,7 +90,7 @@ function hasPropsDir(propType) {
 export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.json') {
   const entry = { ...entryOriginal };
 
-  const schema = JSON.parse(await callback.fetch(schemaPath));
+  const schema = JSON.parse(await callback.readFile(schemaPath));
 
   const root = Object.keys(schema).find((prop) => !Object.prototype.hasOwnProperty.call(schema[prop], 'trunk'));
 
@@ -102,7 +102,7 @@ export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.j
   ).filter(Boolean);
 
   if (!entry.UUID) {
-    const random = callback.random ?? crypto.randomUUID;
+    const random = callback.randomUUID ?? crypto.randomUUID;
 
     const entryUUID = await digestMessage(random());
 
@@ -138,12 +138,12 @@ export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.j
 
           try {
             // if file, prune it for trunk UUID
-            const pairFile = await callback.fetch(pairPath);
+            const pairFile = await callback.readFile(pairPath);
 
             if (pairFile) {
               const pairPruned = prune(pairFile, trunkUUID);
 
-              await callback.write(pairPath, pairPruned);
+              await callback.writeFile(pairPath, pairPruned);
             }
           } catch {
             // do nothing
@@ -153,7 +153,7 @@ export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.j
         }
       } else if (schema[prop].type === 'array') {
         if (!entry[propLabel].UUID) {
-          const random = callback.random ?? crypto.randomUUID;
+          const random = callback.randomUUID ?? crypto.randomUUID;
 
           const arrayUUID = await digestMessage(random());
 
@@ -172,7 +172,7 @@ export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.j
         let pairFile;
 
         try {
-          pairFile = await callback.fetch(pairPath);
+          pairFile = await callback.readFile(pairPath);
         } catch {
           pairFile = '';
         }
@@ -182,7 +182,7 @@ export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.j
 
           const pairEdited = pairPruned + pairLine;
 
-          await callback.write(pairPath, pairEdited);
+          await callback.writeFile(pairPath, pairEdited);
         }
 
         // prune every branch of array prop
@@ -195,14 +195,14 @@ export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.j
           let propBranchPairFile;
 
           try {
-            propBranchPairFile = await callback.fetch(propBranchPairPath);
+            propBranchPairFile = await callback.readFile(propBranchPairPath);
           } catch {
             propBranchPairFile = '';
           }
 
           const propBranchPairPruned = prune(propBranchPairFile, propUUID);
 
-          await callback.write(propBranchPairPath, propBranchPairPruned);
+          await callback.writeFile(propBranchPairPath, propBranchPairPruned);
         }
 
         const arrayItems = JSON.parse(JSON.stringify(entry[propLabel].items));
@@ -213,7 +213,7 @@ export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.j
 
           // get or generate UUID
           if (!item.UUID) {
-            const random = callback.random ?? crypto.randomUUID;
+            const random = callback.randomUUID ?? crypto.randomUUID;
 
             const itemUUID = await digestMessage(random());
 
@@ -230,7 +230,7 @@ export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.j
           let itemPairFile;
 
           try {
-            itemPairFile = (await callback.fetch(itemPairPath)) ?? '';
+            itemPairFile = (await callback.readFile(itemPairPath)) ?? '';
           } catch {
             itemPairFile = '';
           }
@@ -238,7 +238,7 @@ export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.j
           if (!includes(itemPairFile, itemPairLine)) {
             const itemPairEdited = itemPairFile + itemPairLine;
 
-            await callback.write(itemPairPath, itemPairEdited);
+            await callback.writeFile(itemPairPath, itemPairEdited);
           }
 
           delete item.ITEM_NAME;
@@ -267,7 +267,7 @@ export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.j
             let itemFieldPairFile;
 
             try {
-              itemFieldPairFile = await callback.fetch(itemFieldPairPath);
+              itemFieldPairFile = await callback.readFile(itemFieldPairPath);
             } catch {
               itemFieldPairFile = '';
             }
@@ -277,7 +277,7 @@ export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.j
 
               const itemFieldPairEdited = itemFieldPairPruned + itemFieldPairLine;
 
-              await callback.write(itemFieldPairPath, itemFieldPairEdited);
+              await callback.writeFile(itemFieldPairPath, itemFieldPairEdited);
             }
 
             // write prop for export1_channel / prop
@@ -287,7 +287,7 @@ export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.j
 
             let indexFile;
             try {
-              indexFile = await callback.fetch(indexPath);
+              indexFile = await callback.readFile(indexPath);
             } catch {
               indexFile = '';
             }
@@ -305,7 +305,7 @@ export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.j
 
               const indexEdited = indexPruned + indexLine;
 
-              await callback.write(indexPath, indexEdited);
+              await callback.writeFile(indexPath, indexEdited);
             }
           }
         }
@@ -330,7 +330,7 @@ export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.j
           let indexFile;
 
           try {
-            indexFile = await callback.fetch(indexPath);
+            indexFile = await callback.readFile(indexPath);
           } catch {
             indexFile = '';
           }
@@ -346,7 +346,7 @@ export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.j
 
             const indexEdited = indexPruned + indexLine;
 
-            await callback.write(indexPath, indexEdited);
+            await callback.writeFile(indexPath, indexEdited);
           }
         }
 
@@ -360,7 +360,7 @@ export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.j
           let pairFile;
 
           try {
-            pairFile = await callback.fetch(pairPath);
+            pairFile = await callback.readFile(pairPath);
           } catch {
             pairFile = '';
           }
@@ -370,7 +370,7 @@ export async function editEntry(entryOriginal, callback, schemaPath = 'metadir.j
 
             const pairEdited = pairPruned + pairLine;
 
-            await callback.write(pairPath, pairEdited);
+            await callback.writeFile(pairPath, pairEdited);
           }
         }
       }
