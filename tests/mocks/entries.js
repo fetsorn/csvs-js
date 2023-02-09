@@ -55,22 +55,22 @@ const entryArray = {
     UUID: '9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f',
     items: [
       {
-        ITEM_NAME: 'export1_tag',
+        item_name: 'export1_tag',
         export1_channel: 'https://channel1.url',
         export1_key: 'longkey1',
         UUID: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
       },
       {
-        ITEM_NAME: 'export1_tag',
-        export1_channel: 'https://channel2.url',
-        export1_key: 'longkey2',
-        UUID: 'fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77',
-      },
-      {
-        ITEM_NAME: 'export2_tag',
+        item_name: 'export2_tag',
         export2_username: 'username',
         export2_password: 'password',
         UUID: 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
+      },
+      {
+        item_name: 'export1_tag',
+        export1_channel: 'https://channel2.url',
+        export1_key: 'longkey2',
+        UUID: 'fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77',
       },
     ],
   },
@@ -84,7 +84,7 @@ const entryArrayAdded = {
   export_tags: {
     items: [
       {
-        ITEM_NAME: 'export1_tag',
+        item_name: 'export1_tag',
         export1_channel: 'https://channel1.url',
         export1_key: 'longkey1',
       },
@@ -100,25 +100,25 @@ const entryAddedArrayItem = {
     UUID: '9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f',
     items: [
       {
-        ITEM_NAME: 'export1_tag',
+        item_name: 'export1_tag',
         export1_channel: 'https://channel1.url',
         export1_key: 'longkey1',
         UUID: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
       },
       {
-        ITEM_NAME: 'export1_tag',
+        item_name: 'export1_tag',
         export1_channel: 'https://channel2.url',
         export1_key: 'longkey2',
         UUID: 'fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77',
       },
       {
-        ITEM_NAME: 'export2_tag',
+        item_name: 'export2_tag',
         export2_username: 'username',
         export2_password: 'password',
         UUID: 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
       },
       {
-        ITEM_NAME: 'export2_tag',
+        item_name: 'export2_tag',
         export2_username: 'username2',
         export2_password: 'password2',
       },

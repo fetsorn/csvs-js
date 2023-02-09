@@ -101,7 +101,7 @@ describe('queryMetadir no ripgrep', () => {
     });
   });
 
-  test.skip('queries name1 with array of tags', () => {
+  test('queries name1 with array of tags', () => {
     const searchParams = new URLSearchParams();
 
     searchParams.set('actname', 'name1');
@@ -111,6 +111,9 @@ describe('queryMetadir no ripgrep', () => {
     const query = new Query({ searchParams, ...callback });
 
     return query.run().then((data) => {
+      // array is unordered, order for reproducible test
+      data[0].export_tags.items.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
+
       expect(data).toStrictEqual([sortObject(mocks.entryArray)]);
     });
   });
@@ -191,7 +194,7 @@ describe('queryMetadir ripgrep', () => {
     });
   });
 
-  test.skip('queries name1 with array of tags', () => {
+  test('queries name1 with array of tags', () => {
     const searchParams = new URLSearchParams();
 
     searchParams.set('actname', 'name1');
@@ -201,11 +204,14 @@ describe('queryMetadir ripgrep', () => {
     const query = new Query({ searchParams, ...callback });
 
     return query.run().then((data) => {
+      // array is unordered, order for reproducible test
+      data[0].export_tags.items.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
+
       expect(data).toStrictEqual([sortObject(mocks.entryArray)]);
     });
   });
 
-  test.skip('queries export1_key with array of tags', () => {
+  test('queries export1_key with array of tags', () => {
     const searchParams = new URLSearchParams();
 
     searchParams.set('export1_key', 'longkey2');
@@ -215,6 +221,9 @@ describe('queryMetadir ripgrep', () => {
     const query = new Query({ searchParams, ...callback });
 
     return query.run().then((data) => {
+      // array is unordered, order for reproducible test
+      data[0].export_tags.items.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
+
       expect(data).toStrictEqual([sortObject(mocks.entryArray)]);
     });
   });

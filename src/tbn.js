@@ -5,11 +5,15 @@ export function findSchemaRoot(schema) {
 
 // find if there's a path from prop to root before reaching schema root
 export function isBranch(schema, base, branch) {
-  if (schema[branch]?.trunk === undefined) {
+  const { trunk } = schema[branch];
+
+  if (trunk === undefined) {
     return false;
-  } if (schema[branch].trunk === base) {
+  } if (trunk === base) {
     return true;
-  } if (isBranch(schema, base, schema[branch].trunk)) {
+  } if (schema[trunk].type === 'object' || schema[trunk].type === 'array') {
+    return false;
+  } if (isBranch(schema, base, trunk)) {
     return true;
   }
 

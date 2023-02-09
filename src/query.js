@@ -1,6 +1,6 @@
 import { grepPolyfill, randomUUIDPolyfill } from './polyfill';
 import {
-  tbn8, tbn9, tbn12, tbn16, tbn20, takeUUIDs, takeValue, splitLines,
+  tbn8, tbn9, tbn12, tbn16, tbn20, takeUUIDs, takeValue, splitLines, takeValues,
 } from './tbn';
 
 /**
@@ -220,10 +220,17 @@ export default class Query {
     console.log(18, base, baseUUID);
     const tbn24 = { UUID: baseUUID };
 
-    if (this.#schema[base].type === 'object') {
-      tbn24.item_name = base;
-    } else {
-      tbn24[base] = await this.#tbn30(base, baseUUID);
+    switch (this.#schema[base].type) {
+      case 'object':
+        tbn24.item_name = base;
+        break;
+
+      case 'array':
+        tbn24.items = [];
+        break;
+
+      default:
+        tbn24[base] = await this.#tbn30(base, baseUUID);
     }
 
     // init front of the queue with an array of branches above base
@@ -243,8 +250,8 @@ export default class Query {
       // init rear of the queue with empty list
       const tbn21 = [];
 
-      await Promise.all(tbn19.map(async (branch) => {
-      // for (const branch of tbn19) {
+      // await Promise.all(tbn19.map(async (branch) => {
+      for (const branch of tbn19) {
         console.log('18-branch', branch);
 
         const { trunk } = this.#schema[branch];
@@ -261,11 +268,17 @@ export default class Query {
           const tbn25 = await this.#tbn23(base, baseUUID, tbn28, branch);
 
           if (tbn25 !== undefined) {
-            // assign value to entry
-            tbn24[branch] = tbn25;
+            if (this.#schema[base].type === 'array') {
+              tbn24.items.push(tbn25);
+
+              tbn24.items = tbn24.items.flat();
+            } else {
+              // assign value to entry
+              tbn24[branch] = tbn25;
+            }
           }
         }
-      }));
+      }
 
       tbn19 = [...tbn21];
 
@@ -287,8 +300,12 @@ export default class Query {
    */
   async #tbn23(base, baseUUID, tbn28, branch) {
     console.log(23, base, baseUUID, tbn28, branch);
-    // if searchParams already has value, return it
-    if (this.#searchParams.has(branch)) {
+
+    const { trunk: baseTrunk } = this.#schema[base];
+
+    // if searchParams already has value, return it immediately
+    // skip if branch belongs to an array item because those branch values can vary
+    if (this.#searchParams.has(branch) && this.#schema[baseTrunk]?.type !== 'array') {
       return this.#searchParams.get(branch);
     }
 
@@ -299,6 +316,21 @@ export default class Query {
 
     if (branchUUID === undefined) {
       return undefined;
+    }
+
+    if (Array.isArray(branchUUID)) {
+      const branchValues = [];
+
+      await Promise.all(branchUUID.map(async (uuid) => {
+        // get value of branch
+        const branchValue = await this.#tbn30(branch, uuid);
+
+        branchValues.push(branchValue);
+      }));
+
+      console.log('23-30', branch, branchUUID, branchValues);
+
+      return branchValues;
     }
 
     // get value of branch
@@ -316,7 +348,7 @@ export default class Query {
    * @param {string} base - Base branch.
    * @param {string} baseUUID - Base UUID.
    * @param {string} branch - Branch name.
-   * @returns {string} - Branch UUID.
+   * @returns {string|string[]} - Branch UUID(s).
    */
   async #tbn27(base, baseUUID, branch) {
     console.log(27, base, baseUUID, branch);
@@ -332,7 +364,16 @@ export default class Query {
     );
 
     if (tbn35 !== '') {
+      if (this.#schema[base].type === 'array') {
+        const tbn36 = takeValues(tbn35);
+
+        console.log('27-35', base, branch, tbn36);
+
+        return tbn36;
+      }
+
       const tbn36 = takeValue(tbn35);
+
       console.log('27-35', base, branch, tbn36);
 
       return tbn36;
