@@ -220,6 +220,8 @@ export default class Query {
     console.log(18, base, baseUUID);
     const tbn24 = { UUID: baseUUID };
 
+    tbn24[base] = await this.#tbn30(base, baseUUID);
+
     // init front of the queue with an array of branches above base
     let tbn19 = tbn20(base, this.#schema);
 
@@ -237,8 +239,8 @@ export default class Query {
       // init rear of the queue with empty list
       const tbn21 = [];
 
-      await Promise.all(tbn19.map(async (branch) => {
-      // for (const branch of tbn19) {
+      // await Promise.all(tbn19.map(async (branch) => {
+      for (const branch of tbn19) {
         console.log('18-branch', branch);
 
         const { trunk } = this.#schema[branch];
@@ -259,7 +261,7 @@ export default class Query {
             tbn24[branch] = tbn25;
           }
         }
-      }));
+      }
 
       tbn19 = [...tbn21];
 
@@ -291,6 +293,10 @@ export default class Query {
 
     console.log('23-27', branch, branchUUID);
 
+    if (branchUUID === undefined) {
+      return undefined;
+    }
+
     // get value of branch
     const branchValue = await this.#tbn30(branch, branchUUID);
 
@@ -321,10 +327,12 @@ export default class Query {
       `^${trunkUUID},`,
     );
 
-    const tbn36 = takeValue(tbn35);
-    console.log('27-35', base, branch, tbn36);
+    if (tbn35 !== '') {
+      const tbn36 = takeValue(tbn35);
+      console.log('27-35', base, branch, tbn36);
 
-    return tbn36;
+      return tbn36;
+    }
   }
 
   /**
@@ -343,6 +351,9 @@ export default class Query {
 
       case 'object':
         return this.#tbn18(branch, branchUUID);
+
+      case 'hash':
+        return branchUUID;
 
       case 'string': {
         const tbn37 = await this.#grep(

@@ -4,16 +4,12 @@ export function findSchemaRoot(schema) {
 }
 
 // find if there's a path from prop to root before reaching schema root
-export function isBranch(schema, root, prop) {
-  // console.log('isBranch', root, prop);
-  if (schema[prop].trunk === undefined) {
-    // console.log('isBranch undefined');
+export function isBranch(schema, base, branch) {
+  if (schema[branch]?.trunk === undefined) {
     return false;
-  } if (schema[prop].trunk === root) {
-    // console.log('isBranch schema root');
+  } if (schema[branch].trunk === base) {
     return true;
-  } if (isBranch(schema, root, schema[prop].trunk)) {
-    // console.log('isBranch trunk root');
+  } if (isBranch(schema, base, schema[branch].trunk)) {
     return true;
   }
 
@@ -228,7 +224,7 @@ export function tbn16(store, schema, branch) {
 export function tbn20(base, schema) {
   // TODO: add support for all branches above base
   // only works for direct leaves of base
-  return Object.keys(schema).filter((branch) => schema[branch].trunk === base);
+  return Object.keys(schema).filter((branch) => isBranch(schema, base, branch));
 }
 
 export function tbn9(schema) {
