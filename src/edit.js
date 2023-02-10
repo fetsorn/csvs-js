@@ -1,12 +1,4 @@
-import { randomUUIDPolyfill } from './polyfill';
-
-function prune(file, regex) {
-  if (file) {
-    return file.split('\n').filter((line) => !(new RegExp(regex)).test(line)).join('\n');
-  }
-
-  return '';
-}
+import { grepPolyfill, randomUUIDPolyfill } from './polyfill';
 
 /**
  * This tells if file includes line.
@@ -170,6 +162,20 @@ export default class Entry {
   #writeFile;
 
   /**
+   * This callback searches files.
+   * @callback grepCallback
+   * @param {string} contents - The file contents.
+   * @param {string} regex - The regular expression in ripgrep format.
+   * @returns {string} - The search results
+   */
+
+  /**
+   * grep is the callback that searches files.
+   * @type {grepCallback}
+   */
+  #grep;
+
+  /**
    * This callback returns a UUID.
    * @callback randomUUIDCallback
    * @returns {string} - UUID compliant with RFC 4122
@@ -210,17 +216,19 @@ export default class Entry {
    * @param {Object} args - Object with callbacks.
    * @param {readFileCallback} args.readFile - The callback that reads db.
    * @param {writeFileCallback} args.writeFile - The callback that writes db.
+   * @param {grepCallback} args.grep - The callback that searches files.
    * @param {randomUUIDCallback} args.randomUUID - The callback that returns a UUID.
    * @param {string} args.base - The field to search for.
    * @param {object} args.entry - A database entry.
    */
   constructor({
-    readFile, writeFile, randomUUID, entry, base,
+    readFile, writeFile, grep, randomUUID, entry, base,
   }) {
     this.#entry = entry;
     this.#base = base;
     this.#readFile = readFile;
     this.#writeFile = writeFile;
+    this.#grep = grep ?? grepPolyfill;
     this.#randomUUID = randomUUID ?? crypto.randomUUID ?? randomUUIDPolyfill;
   }
 
@@ -283,7 +291,7 @@ export default class Entry {
               const pairFile = await this.#readFile(pairPath);
 
               if (pairFile) {
-                const pairPruned = prune(pairFile, trunkUUID);
+                const pairPruned = await this.#grep(pairFile, trunkUUID, true);
 
                 await this.#writeFile(pairPath, pairPruned);
               }
@@ -320,7 +328,7 @@ export default class Entry {
           }
 
           if (!includes(pairFile, pairLine)) {
-            const pairPruned = prune(pairFile, trunkUUID);
+            const pairPruned = await this.#grep(pairFile, trunkUUID, true);
 
             const pairEdited = pairPruned + pairLine;
 
@@ -343,7 +351,7 @@ export default class Entry {
               propBranchPairFile = '';
             }
 
-            const propBranchPairPruned = prune(propBranchPairFile, propUUID);
+            const propBranchPairPruned = await this.#grep(propBranchPairFile, propUUID, true);
 
             await this.#writeFile(propBranchPairPath, propBranchPairPruned);
           }
@@ -416,7 +424,7 @@ export default class Entry {
               }
 
               if (!includes(itemFieldPairFile, itemFieldPairLine)) {
-                const itemFieldPairPruned = prune(itemFieldPairFile, itemPropUUID);
+                const itemFieldPairPruned = await this.#grep(itemFieldPairFile, itemPropUUID, true);
 
                 const itemFieldPairEdited = itemFieldPairPruned + itemFieldPairLine;
 
@@ -444,7 +452,7 @@ export default class Entry {
               const indexLine = `${itemFieldPropUUID},${itemFieldPropValue}\n`;
 
               if (!includes(indexFile, indexLine)) {
-                const indexPruned = prune(indexFile, itemFieldPropUUID);
+                const indexPruned = await this.#grep(indexFile, itemFieldPropUUID, true);
 
                 const indexEdited = indexPruned + indexLine;
 
@@ -485,7 +493,7 @@ export default class Entry {
             const indexLine = `${propUUID},${propValue}\n`;
 
             if (!includes(indexFile, indexLine)) {
-              const indexPruned = prune(indexFile, propUUID);
+              const indexPruned = await this.#grep(indexFile, propUUID, true);
 
               const indexEdited = indexPruned + indexLine;
 
@@ -509,7 +517,7 @@ export default class Entry {
             }
 
             if (!includes(pairFile, pairLine)) {
-              const pairPruned = prune(pairFile, trunkUUID);
+              const pairPruned = await this.#grep(pairFile, trunkUUID, true);
 
               const pairEdited = pairPruned + pairLine;
 
@@ -534,47 +542,41 @@ export default class Entry {
     // get a map of database file contents
     this.#store = await this.#readStore(this.#base);
 
-    const props = Object.keys(this.#schema)
-      .filter((prop) => this.#schema[prop].trunk === this.#base);
-
-    const indexPath = `metadir/props/${this.#base}/index.csv`;
-
-    let indexFile;
-
     try {
-      indexFile = await this.#readFile(indexPath);
+      const indexPath = `metadir/props/${this.#base}/index.csv`;
+
+      const indexFile = await this.#readFile(indexPath);
+
+      if (indexFile) {
+        await this.#writeFile(
+          indexPath,
+          await this.#grep(indexFile, this.#entry.UUID, true),
+        );
+      }
     } catch {
     // continue regardless of error
     }
 
-    if (indexFile) {
-      await this.#writeFile(
+    const leaves = Object.keys(this.#schema)
+      .filter((prop) => this.#schema[prop].trunk === this.#base);
 
-        indexPath,
-
-        prune(indexFile, this.#entry.UUID),
-
-      );
-    }
-
-    Object.values(props).forEach(async (prop) => {
-      const pairPath = `metadir/pairs/${this.#base}-${prop}.csv`;
-
-      let pairFile;
-
+    await Promise.all(leaves.map(async (branch) => {
+    // for (const branch of leaves) {
       try {
-        pairFile = await this.#readFile(pairPath);
+        const pairPath = `metadir/pairs/${this.#base}-${branch}.csv`;
+
+        const pairFile = await this.#readFile(pairPath);
+
+        if (pairFile) {
+          await this.#writeFile(
+            pairPath,
+            await this.#grep(pairFile, this.#entry.UUID, true),
+          );
+        }
       } catch {
       // continue regardless of error
       }
-
-      if (pairFile) {
-        await this.#writeFile(
-          pairPath,
-          prune(pairFile, this.#entry.UUID),
-        );
-      }
-    });
+    }));
   }
 
   /**

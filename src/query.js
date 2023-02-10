@@ -190,19 +190,6 @@ export default class Query {
   #readFile;
 
   /**
-   * This callback writes db.
-   * @callback writeFileCallback
-   * @param {string} path - The file path.
-   * @param {string} contents - The file contents.
-   */
-
-  /**
-   * writeFile is the callback that writes db.
-   * @type {writeFileCallback}
-   */
-  #writeFile;
-
-  /**
    * This callback searches files.
    * @callback grepCallback
    * @param {string} contents - The file contents.
@@ -256,17 +243,15 @@ export default class Query {
    * Create a database instance.
    * @param {Object} args - Object with callbacks.
    * @param {readFileCallback} args.readFile - The callback that reads db.
-   * @param {writeFileCallback} args.writeFile - The callback that writes db.
    * @param {grepCallback} args.grep - The callback that searches files.
    * @param {randomUUIDCallback} args.randomUUID - The callback that returns a UUID.
    * @param {URLSearchParams} args.searchParams - The search parameters.
    * @param {string} args.base - The field to search for.
    */
   constructor({
-    readFile, writeFile, grep, randomUUID, searchParams, base,
+    readFile, grep, randomUUID, searchParams, base,
   }) {
     this.#readFile = readFile;
-    this.#writeFile = writeFile;
     this.#grep = grep ?? grepPolyfill;
     this.#randomUUID = randomUUID ?? crypto.randomUUID ?? randomUUIDPolyfill;
     this.#searchParams = searchParams;

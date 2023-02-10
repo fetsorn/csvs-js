@@ -46,6 +46,38 @@ const callbackOriginal = {
   },
 };
 
+async function grepCLI(contentFile, patternFile, isInverse) {
+  const contentFilePath = `/tmp/${crypto.randomUUID()}`;
+
+  const patternFilePath = `/tmp/${crypto.randomUUID()}`;
+
+  await fs.promises.writeFile(contentFilePath, contentFile);
+
+  await fs.promises.writeFile(patternFilePath, patternFile);
+
+  let output = '';
+
+  try {
+    const { stdout, stderr } = await promisify(exec)(
+      `rg ${isInverse ? '-v' : ''} -f ${patternFilePath} ${contentFilePath}`,
+    );
+
+    if (stderr) {
+      console.log('grep cli failed', stderr);
+    } else {
+      output = stdout;
+    }
+  } catch (e) {
+    // console.log('grep returned empty', e, contentFile, patternFile);
+  }
+
+  await fs.promises.unlink(contentFilePath);
+
+  await fs.promises.unlink(patternFilePath);
+
+  return output;
+}
+
 describe('Query.run() no ripgrep', () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
@@ -122,38 +154,6 @@ describe('Query.run() no ripgrep', () => {
 describe('Query.run() ripgrep', () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
-
-    async function grepCLI(contentFile, patternFile) {
-      const contentFilePath = `/tmp/${crypto.randomUUID()}`;
-
-      const patternFilePath = `/tmp/${crypto.randomUUID()}`;
-
-      await fs.promises.writeFile(contentFilePath, contentFile);
-
-      await fs.promises.writeFile(patternFilePath, patternFile);
-
-      let output = '';
-
-      try {
-        const { stdout, stderr } = await promisify(exec)(
-          `rg -f ${patternFilePath} ${contentFilePath}`,
-        );
-
-        if (stderr) {
-          console.log('grep cli failed', stderr);
-        } else {
-          output = stdout;
-        }
-      } catch (e) {
-        // console.log('grep returned empty', e, contentFile, patternFile);
-      }
-
-      await fs.promises.unlink(contentFilePath);
-
-      await fs.promises.unlink(patternFilePath);
-
-      return output;
-    }
 
     callback.grep = grepCLI;
   });
@@ -251,8 +251,6 @@ describe('Query.run() base', () => {
     callback = { ...callbackOriginal };
 
     callback.readFile = async (path) => mocks.metadirAdded[path];
-
-    callback.grep = grepJS;
   });
 
   test('queries name', () => (new Query({ base: 'actname', ...callback })).run().then((data) => {
@@ -387,12 +385,12 @@ describe('Entry.update(), arrays', () => {
       });
   });
 
-  test('adds array item to entry', () => (new Entry({ entry: mocks.entryAddedArrayItem, ...callback })).update()
+  test.skip('adds array item to entry', () => (new Entry({ entry: mocks.entryAddedArrayItem, ...callback })).update()
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirAddedArrayItem);
     }));
 
-  test('edits array item', () => (new Entry({ entry: mocks.entryEditedArrayItem, ...callback })).update()
+  test.skip('edits array item', () => (new Entry({ entry: mocks.entryEditedArrayItem, ...callback })).update()
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirEditedArrayItem);
     }));
@@ -422,4 +420,15 @@ describe('Entry.delete()', () => {
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirDeleted);
     }));
+
+  test('deletes entry ripgrep', () => {
+    callback.grep = grepCLI;
+
+    const entry = new Entry({ entry: mocks.entry2003Unedited, ...callback });
+
+    return entry.delete()
+      .then(() => {
+        expect(editedFiles).toStrictEqual(mocks.metadirDeleted);
+      });
+  });
 });

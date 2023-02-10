@@ -14,23 +14,41 @@ function splitLines(str) {
  * @name grepPolyfill
  * @function
  * @param {string} contents - The file contents.
- * @param {string} regex - The regular expression in ripgrep format.
+ * @param {string} regex - The regular expression in JS format.
+ * @param {Boolean} isInverse - Switch for inverse grep or prune.
  * @returns {string} - Search results.
  */
-export function grepPolyfill(contentFile, patternFile) {
+export function grepPolyfill(contentFile, patternFile, isInverse) {
+  if (contentFile === undefined || contentFile === '') {
+    return '';
+  }
+  if (patternFile === undefined || patternFile === '') {
+    return contentFile;
+  }
+
   const contentLines = splitLines(contentFile);
 
   const patternLines = splitLines(patternFile);
 
-  const searchLines = patternLines.map(
+  if (isInverse) {
+    const prunedLines = contentLines.filter(
+      (line) => patternLines.every(
+        (pattern) => !(new RegExp(pattern)).test(line),
+      ),
+    );
+
+    return `${prunedLines.join('\n')}\n`;
+  }
+
+  const matchedSets = patternLines.map(
     (pattern) => contentLines.filter(
       (line) => new RegExp(pattern).test(line),
     ),
   );
 
-  const matches = [...new Set(searchLines.flat())].join('\n');
+  const matchedLines = [...new Set(matchedSets.flat())];
 
-  return matches;
+  return matchedLines.join('\n');
 }
 
 /**
