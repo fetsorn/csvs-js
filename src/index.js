@@ -2,7 +2,6 @@
 export { default as Query } from './query.js';
 
 export {
-  editEntry,
-  deleteEntry,
+  default as Entry,
   digestMessage,
 } from './edit.js';

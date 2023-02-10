@@ -76,7 +76,7 @@ function findSchemaRoot(schema) {
 
 /**
  * This tells if a leaf branch is connected to base branch.
- * @name findStorePaths
+ * @name isLeaf
  * @function
  * @param {object} schema - Database schema.
  * @param {string} base - Base branch name.
