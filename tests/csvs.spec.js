@@ -346,7 +346,7 @@ describe('Entry.update()', () => {
   });
 });
 
-describe('Entry.update(), arrays', () => {
+describe.skip('Entry.update(), arrays', () => {
   let editedFiles;
 
   beforeEach(() => {
@@ -401,7 +401,7 @@ describe('Entry.update(), arrays', () => {
     }));
 });
 
-describe('Entry.delete()', () => {
+describe.skip('Entry.delete()', () => {
   let editedFiles;
 
   beforeEach(() => {

@@ -1,22 +1,6 @@
 import { grepPolyfill, randomUUIDPolyfill } from './polyfill';
 
 /**
- * This tells if file includes line.
- * @name includes
- * @function
- * @param {string} file - A file with multiple lines.
- * @param {string} line - A line.
- * @returns {Boolean}
- */
-function includes(file, line) {
-  if (file) {
-    return file.includes(line);
-  }
-
-  return false;
-}
-
-/**
  * This generates a SHA-256 hashsum.
  * @name digestMessage
  * @function
@@ -130,7 +114,7 @@ function findStorePaths(schema, base) {
  * @returns {string} - Root branch.
  */
 function findSchemaRoot(schema) {
-  return Object.keys(schema).find((prop) => !Object.prototype.hasOwnProperty.call(schema[prop], 'trunk'));
+  return Object.keys(schema).find((branch) => !Object.prototype.hasOwnProperty.call(schema[branch], 'trunk'));
 }
 
 /** Class representing a database entry. */
@@ -206,10 +190,16 @@ export default class Entry {
   #entry;
 
   /**
-   * store is the map of file paths to file contents.
+   * store is the map of file paths to file contents read before.
    * @type {URLSearchParams}
    */
   #store;
+
+  /**
+   * tbn is the map of file paths to file contents to write.
+   * @type {URLSearchParams}
+   */
+  #tbn1 = {};
 
   /**
    * Create a database instance.
@@ -232,7 +222,6 @@ export default class Entry {
     this.#randomUUID = randomUUID ?? crypto.randomUUID ?? randomUUIDPolyfill;
   }
 
-  // overwrite entry in metadir
   async update() {
     this.#schema = await this.#readSchema();
 
@@ -241,15 +230,6 @@ export default class Entry {
 
     // get a map of database file contents
     this.#store = await this.#readStore(this.#base);
-
-    ///
-
-    // find props for each label in the this.#entry
-    const entryProps = Object.keys(this.#entry).map(
-      (label) => Object.keys(this.#schema).find(
-        (prop) => this.#schema[prop].label === label || prop === label,
-      ),
-    ).filter(Boolean);
 
     if (!this.#entry.UUID) {
       const random = this.#randomUUID ?? crypto.randomUUID;
@@ -267,272 +247,100 @@ export default class Entry {
 
     const processed = new Map();
 
-    for (const prop of queue) {
-      const propLabel = this.#schema[prop].label;
+    for (const branch of queue) {
+      console.log('update-branch', branch);
+      const branchType = this.#schema[branch].type;
 
-      const propType = this.#schema[prop].type;
+      const { trunk } = this.#schema[branch];
 
-      const { trunk } = this.#schema[prop];
-
-      if (!processed.get(trunk) && prop !== this.#base) {
-        queue.push(prop);
+      if (!processed.get(trunk) && branch !== this.#base) {
+        queue.push(branch);
       } else {
-        processed.set(prop, true);
+        processed.set(branch, true);
 
-        if (!entryProps.includes(prop)) {
-          if (this.#schema[prop].trunk === this.#base) {
+        if (!Object.keys(this.#entry).includes(branch)) {
+          console.log('update-remove');
+          if (this.#schema[branch].trunk === this.#base) {
           // prune pairs file for trunk UUID
             const trunkUUID = uuids[trunk];
 
-            const pairPath = `metadir/pairs/${this.#base}-${prop}.csv`;
+            const pairPath = `metadir/pairs/${this.#base}-${branch}.csv`;
 
-            try {
-              // if file, prune it for trunk UUID
-              const pairFile = await this.#readFile(pairPath);
+            console.log(pairPath, this.#store[pairPath]);
 
-              if (pairFile) {
-                const pairPruned = await this.#grep(pairFile, trunkUUID, true);
+            // if file, prune it for trunk UUID
+            const pairFile = this.#store[pairPath];
 
-                await this.#writeFile(pairPath, pairPruned);
-              }
-            } catch {
-            // do nothing
+            if (pairFile !== '\n') {
+              const pairPruned = await this.#grep(pairFile, trunkUUID, true);
+
+              this.#tbn1[pairPath] = pairPruned;
             }
           } else {
           // do nothing
           }
-        } else if (this.#schema[prop].type === 'array') {
-          if (!this.#entry[propLabel].UUID) {
-            const random = this.#randomUUID ?? crypto.randomUUID;
-
-            const arrayUUID = await digestMessage(random());
-
-            this.#entry[propLabel].UUID = arrayUUID;
-          }
-
-          const propUUID = this.#entry[propLabel].UUID;
-
-          // write pair datum-export_tags / root-array_group
-          const trunkUUID = uuids[trunk];
-
-          const pairLine = `${trunkUUID},${propUUID}\n`;
-
-          const pairPath = `metadir/pairs/${trunk}-${prop}.csv`;
-
-          let pairFile;
-
-          try {
-            pairFile = await this.#readFile(pairPath);
-          } catch {
-            pairFile = '';
-          }
-
-          if (!includes(pairFile, pairLine)) {
-            const pairPruned = await this.#grep(pairFile, trunkUUID, true);
-
-            const pairEdited = pairPruned + pairLine;
-
-            await this.#writeFile(pairPath, pairEdited);
-          }
-
-          // prune every branch of array prop
-          // to rewrite a fresh array in the next step
-          const propBranches = Object.keys(this.#schema)
-            .filter((p) => this.#schema[p].trunk === prop);
-
-          for (const propBranch of propBranches) {
-            const propBranchPairPath = `metadir/pairs/${prop}-${propBranch}.csv`;
-
-            let propBranchPairFile;
-
-            try {
-              propBranchPairFile = await this.#readFile(propBranchPairPath);
-            } catch {
-              propBranchPairFile = '';
-            }
-
-            const propBranchPairPruned = await this.#grep(propBranchPairFile, propUUID, true);
-
-            await this.#writeFile(propBranchPairPath, propBranchPairPruned);
-          }
-
-          const arrayItems = JSON.parse(JSON.stringify(this.#entry[propLabel].items));
-
-          // for each array items
-          for (const item of arrayItems) {
-            const itemProp = item.item_name;
-
-            // get or generate UUID
-            if (!item.UUID) {
-              const random = this.#randomUUID ?? crypto.randomUUID;
-
-              const itemUUID = await digestMessage(random());
-
-              item.UUID = itemUUID;
-            }
-
-            const itemPropUUID = item.UUID;
-
-            // write pair for export_tags-export1_tag / array_group-array_item
-            const itemPairLine = `${propUUID},${itemPropUUID}\n`;
-
-            const itemPairPath = `metadir/pairs/${prop}-${itemProp}.csv`;
-
-            let itemPairFile;
-
-            try {
-              itemPairFile = (await this.#readFile(itemPairPath)) ?? '';
-            } catch {
-              itemPairFile = '';
-            }
-
-            if (!includes(itemPairFile, itemPairLine)) {
-              const itemPairEdited = itemPairFile + itemPairLine;
-
-              await this.#writeFile(itemPairPath, itemPairEdited);
-            }
-
-            delete item.item_name;
-
-            delete item.UUID;
-
-            const itemFieldLabels = Object.keys(item);
-
-            // for each field of array item
-            for (const itemFieldLabel of itemFieldLabels) {
-              const itemFieldProp = Object.keys(this.#schema).find(
-                (p) => this.#schema[p].label === itemFieldLabel || p === itemFieldLabel,
-              ) ?? itemFieldLabel;
-
-              // get value
-              let itemFieldPropValue = item[itemFieldLabel];
-
-              // digest UUID
-              const itemFieldPropUUID = await digestMessage(itemFieldPropValue);
-
-              // write pair for export1_tag-export1_channel / array_item-prop
-              const itemFieldPairLine = `${itemPropUUID},${itemFieldPropUUID}\n`;
-
-              const itemFieldPairPath = `metadir/pairs/${itemProp}-${itemFieldProp}.csv`;
-
-              let itemFieldPairFile;
-
-              try {
-                itemFieldPairFile = await this.#readFile(itemFieldPairPath);
-              } catch {
-                itemFieldPairFile = '';
-              }
-
-              if (!includes(itemFieldPairFile, itemFieldPairLine)) {
-                const itemFieldPairPruned = await this.#grep(itemFieldPairFile, itemPropUUID, true);
-
-                const itemFieldPairEdited = itemFieldPairPruned + itemFieldPairLine;
-
-                await this.#writeFile(itemFieldPairPath, itemFieldPairEdited);
-              }
-
-              // write prop for export1_channel / prop
-              const itemFieldPropDir = this.#schema[itemFieldProp].dir ?? itemFieldProp;
-
-              const indexPath = `metadir/props/${itemFieldPropDir}/index.csv`;
-
-              let indexFile;
-              try {
-                indexFile = await this.#readFile(indexPath);
-              } catch {
-                indexFile = '';
-              }
-
-              const itemFieldPropType = this.#schema[itemFieldProp].type;
-
-              if (itemFieldPropType === 'string') {
-                itemFieldPropValue = JSON.stringify(itemFieldPropValue);
-              }
-
-              const indexLine = `${itemFieldPropUUID},${itemFieldPropValue}\n`;
-
-              if (!includes(indexFile, indexLine)) {
-                const indexPruned = await this.#grep(indexFile, itemFieldPropUUID, true);
-
-                const indexEdited = indexPruned + indexLine;
-
-                await this.#writeFile(indexPath, indexEdited);
-              }
-            }
-          }
         } else {
-          let propUUID;
+          console.log('update-edit');
+          let branchUUID;
 
-          let propValue = JSON.parse(JSON.stringify(this.#entry[prop] ?? this.#entry[propLabel]));
+          let branchValue = JSON.parse(JSON.stringify(
+            this.#entry[branch],
+          ));
 
-          if (prop !== this.#base) {
-            propUUID = await digestMessage(propValue);
+          if (branch !== this.#base) {
+            branchUUID = await digestMessage(branchValue);
           } else {
-            propUUID = this.#entry.UUID;
+            branchUUID = this.#entry.UUID;
           }
 
-          uuids[prop] = propUUID;
+          uuids[branch] = branchUUID;
 
-          if (propType !== 'hash') {
-            const propDir = this.#schema[prop].dir ?? prop;
+          if (branchType !== 'hash') {
+            const indexPath = `metadir/props/${this.#schema[branch].dir ?? branch}/index.csv`;
 
-            const indexPath = `metadir/props/${propDir}/index.csv`;
+            const indexFile = this.#tbn1[indexPath] ?? this.#store[indexPath];
 
-            let indexFile;
-
-            try {
-              indexFile = await this.#readFile(indexPath);
-            } catch {
-              indexFile = '';
+            if (branchType === 'string') {
+              branchValue = JSON.stringify(branchValue);
             }
 
-            if (propType === 'string') {
-              propValue = JSON.stringify(propValue);
-            }
+            const indexLine = `${branchUUID},${branchValue}\n`;
 
-            const indexLine = `${propUUID},${propValue}\n`;
+            if (indexFile === '\n') {
+              this.#tbn1[indexPath] = indexLine;
+            } else if (!indexFile.includes(indexLine)) {
+              const indexPruned = await this.#grep(indexFile, branchUUID, true);
 
-            if (!includes(indexFile, indexLine)) {
-              const indexPruned = await this.#grep(indexFile, propUUID, true);
-
-              const indexEdited = indexPruned + indexLine;
-
-              await this.#writeFile(indexPath, indexEdited);
+              this.#tbn1[indexPath] = indexPruned + indexLine;
             }
           }
 
-          if (prop !== this.#base) {
+          if (branch !== this.#base) {
             const trunkUUID = uuids[trunk];
 
-            const pairLine = `${trunkUUID},${propUUID}\n`;
+            const pairLine = `${trunkUUID},${branchUUID}\n`;
 
-            const pairPath = `metadir/pairs/${trunk}-${prop}.csv`;
+            const pairPath = `metadir/pairs/${trunk}-${branch}.csv`;
 
-            let pairFile;
+            const pairFile = this.#tbn1[pairPath] ?? this.#store[pairPath];
 
-            try {
-              pairFile = await this.#readFile(pairPath);
-            } catch {
-              pairFile = '';
-            }
-
-            if (!includes(pairFile, pairLine)) {
+            if (pairFile === '\n') {
+              this.#tbn1[pairPath] = pairLine;
+            } else if (!pairFile.includes(pairLine)) {
               const pairPruned = await this.#grep(pairFile, trunkUUID, true);
 
-              const pairEdited = pairPruned + pairLine;
-
-              await this.#writeFile(pairPath, pairEdited);
+              this.#tbn1[pairPath] = pairPruned + pairLine;
             }
           }
         }
       }
     }
 
-    ///
+    await this.#writeStore();
+
     return this.#entry;
   }
 
-  // remove entry with rootUUID from metadir
   async delete() {
     this.#schema = await this.#readSchema();
 
@@ -541,42 +349,6 @@ export default class Entry {
 
     // get a map of database file contents
     this.#store = await this.#readStore(this.#base);
-
-    try {
-      const indexPath = `metadir/props/${this.#base}/index.csv`;
-
-      const indexFile = await this.#readFile(indexPath);
-
-      if (indexFile) {
-        await this.#writeFile(
-          indexPath,
-          await this.#grep(indexFile, this.#entry.UUID, true),
-        );
-      }
-    } catch {
-    // continue regardless of error
-    }
-
-    const leaves = Object.keys(this.#schema)
-      .filter((prop) => this.#schema[prop].trunk === this.#base);
-
-    await Promise.all(leaves.map(async (branch) => {
-    // for (const branch of leaves) {
-      try {
-        const pairPath = `metadir/pairs/${this.#base}-${branch}.csv`;
-
-        const pairFile = await this.#readFile(pairPath);
-
-        if (pairFile) {
-          await this.#writeFile(
-            pairPath,
-            await this.#grep(pairFile, this.#entry.UUID, true),
-          );
-        }
-      } catch {
-      // continue regardless of error
-      }
-    }));
   }
 
   /**
@@ -606,6 +378,20 @@ export default class Entry {
       store[filePath] = (await this.#readFile(filePath)) ?? '\n';
     }));
 
+    console.log('readStore', store);
+
     return store;
+  }
+
+  /**
+   * This returns a map of database file contents.
+   * @name writeStore
+   * @function
+   */
+  async #writeStore() {
+    console.log('writeStore', this.#tbn1);
+    await Promise.all(Object.entries(this.#tbn1).map(async ([filePath, contents]) => {
+      await this.#writeFile(filePath, contents);
+    }));
   }
 }
