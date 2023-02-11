@@ -98,10 +98,10 @@ export default class Entry {
   #store;
 
   /**
-   * tbn is the map of file paths to file contents to write.
+   * output is the map of file paths to file contents to write.
    * @type {URLSearchParams}
    */
-  #tbn1 = {};
+  #output = {};
 
   /**
    * Create a database instance.
@@ -195,7 +195,7 @@ export default class Entry {
    * @function
    */
   async #writeStore() {
-    await Promise.all(Object.entries(this.#tbn1).map(async ([filePath, contents]) => {
+    await Promise.all(Object.entries(this.#output).map(async ([filePath, contents]) => {
       await this.#writeFile(filePath, contents);
     }));
   }
@@ -232,7 +232,7 @@ export default class Entry {
     if (branchType !== 'hash' && branchType !== 'object' && branchType !== 'array') {
       const indexPath = `metadir/props/${this.#schema[branch].dir ?? branch}/index.csv`;
 
-      const indexFile = this.#tbn1[indexPath] ?? this.#store[indexPath];
+      const indexFile = this.#output[indexPath] ?? this.#store[indexPath];
 
       const branchValueEscaped = this.#schema[branch].type === 'string'
         ? JSON.stringify(branchValue)
@@ -241,11 +241,11 @@ export default class Entry {
       const indexLine = `${branchUUID},${branchValueEscaped}\n`;
 
       if (indexFile === '\n') {
-        this.#tbn1[indexPath] = indexLine;
+        this.#output[indexPath] = indexLine;
       } else if (!indexFile.includes(indexLine)) {
         const indexPruned = await this.#grep(indexFile, branchUUID, true);
 
-        this.#tbn1[indexPath] = indexPruned + indexLine;
+        this.#output[indexPath] = indexPruned + indexLine;
       }
     }
 
@@ -289,11 +289,11 @@ export default class Entry {
     // prune props if exist
     const indexPath = `metadir/props/${this.#schema[branch].dir ?? branch}/index.csv`;
 
-    const indexFile = this.#tbn1[indexPath] ?? this.#store[indexPath];
+    const indexFile = this.#output[indexPath] ?? this.#store[indexPath];
 
     const indexPruned = await this.#grep(indexFile, branchUUID, true);
 
-    this.#tbn1[indexPath] = indexPruned;
+    this.#output[indexPath] = indexPruned;
 
     return branchUUID;
   }
@@ -365,17 +365,17 @@ export default class Entry {
 
     const pairPath = `metadir/pairs/${trunk}-${branch}.csv`;
 
-    const pairFile = this.#tbn1[pairPath] ?? this.#store[pairPath];
+    const pairFile = this.#output[pairPath] ?? this.#store[pairPath];
 
     if (pairFile === '\n') {
-      this.#tbn1[pairPath] = pairLine;
+      this.#output[pairPath] = pairLine;
     } else if (!pairFile.includes(pairLine)) {
       if (this.#schema[trunk].type === 'array') {
-        this.#tbn1[pairPath] = pairFile + pairLine;
+        this.#output[pairPath] = pairFile + pairLine;
       } else {
         const pairPruned = await this.#grep(pairFile, trunkUUID, true);
 
-        this.#tbn1[pairPath] = pairPruned + pairLine;
+        this.#output[pairPath] = pairPruned + pairLine;
       }
     }
   }
@@ -397,7 +397,7 @@ export default class Entry {
     if (pairFile !== '\n') {
       const pairPruned = await this.#grep(pairFile, trunkUUID, true);
 
-      this.#tbn1[pairPath] = pairPruned;
+      this.#output[pairPath] = pairPruned;
     }
   }
 
