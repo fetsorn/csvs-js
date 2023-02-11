@@ -1,4 +1,5 @@
 import { grepPolyfill, randomUUIDPolyfill } from './polyfill';
+import { findCrownPaths } from './schema';
 
 /**
  * This generates a SHA-256 hashsum.
@@ -21,100 +22,6 @@ export async function digestMessage(message) {
   const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 
   return hashHex;
-}
-
-/**
- * This tells if a leaf branch is connected to base branch.
- * @name isLeaf
- * @function
- * @param {object} schema - Database schema.
- * @param {string} base - Base branch name.
- * @param {string} leaf - Leaf branch name.
- * @returns {Boolean}
- */
-export function isLeaf(schema, base, leaf) {
-  const { trunk } = schema[leaf];
-
-  if (trunk === undefined) {
-    // if schema root is reached, leaf is connected to base
-    return false;
-  } if (trunk === base) {
-    // if trunk is base, leaf is connected to base
-    return true;
-  } if (schema[trunk].type === 'object' || schema[trunk].type === 'array') {
-    // if trunk is object or array, leaf is not connected to base
-    // because objects and arrays have their own leaves
-    return false;
-  } if (isLeaf(schema, base, trunk)) {
-    // if trunk is connected to base, leaf is also connected to base
-    return true;
-  }
-
-  // if trunk is not connected to base, leaf is also not connected to base
-  return false;
-}
-
-/**
- * This finds all branches that are connected to the base branch.
- * @name findLeaves
- * @function
- * @param {object} schema - Database schema.
- * @param {string} base - Base branch name.
- * @returns {string[]} - Array of leaf branches connected to the base branch.
- */
-function findLeaves(schema, base) {
-  return Object.keys(schema).filter((branch) => isLeaf(schema, base, branch));
-}
-
-/**
- * This finds paths to all files required to search for base branch.
- * @name findStorePaths
- * @function
- * @param {object} schema - Database schema.
- * @param {string} base - Base branch name.
- * @returns {string[]} - Array of file paths.
- */
-function findStorePaths(schema, base) {
-  let filePaths = [];
-
-  const leaves = findLeaves(schema, base);
-
-  leaves.concat([base]).forEach((branch) => {
-    const { trunk } = schema[branch];
-
-    if (trunk !== undefined && schema[branch].type !== 'regex') {
-      filePaths.push(`metadir/pairs/${trunk}-${branch}.csv`);
-    }
-
-    switch (schema[branch].type) {
-      case 'hash':
-      case 'regex':
-        break;
-
-      case 'object':
-      case 'array':
-        if (branch !== base) {
-          filePaths = filePaths.concat(findStorePaths(schema, branch));
-        }
-        break;
-
-      default:
-        filePaths.push(`metadir/props/${schema[branch].dir ?? branch}/index.csv`);
-    }
-  });
-
-  return filePaths.filter(Boolean).flat();
-}
-
-/**
- * This finds the root branch of a database schema.
- * @name findSchemaRoot
- * @function
- * @param {object} schema - Database schema.
- * @returns {string} - Root branch.
- */
-function findSchemaRoot(schema) {
-  return Object.keys(schema).find((branch) => !Object.prototype.hasOwnProperty.call(schema[branch], 'trunk'));
 }
 
 /** Class representing a database entry. */
@@ -178,12 +85,6 @@ export default class Entry {
   #schema;
 
   /**
-   * base is the branch to search for.
-   * @type {URLSearchParams}
-   */
-  #base;
-
-  /**
    * Database entry.
    * @type {object}
    */
@@ -208,14 +109,12 @@ export default class Entry {
    * @param {writeFileCallback} args.writeFile - The callback that writes db.
    * @param {grepCallback} args.grep - The callback that searches files.
    * @param {randomUUIDCallback} args.randomUUID - The callback that returns a UUID.
-   * @param {string} args.base - The field to search for.
    * @param {object} args.entry - A database entry.
    */
   constructor({
-    readFile, writeFile, grep, randomUUID, entry, base,
+    readFile, writeFile, grep, randomUUID, entry,
   }) {
     this.#entry = entry;
-    this.#base = base;
     this.#readFile = readFile;
     this.#writeFile = writeFile;
     this.#grep = grep ?? grepPolyfill;
@@ -225,130 +124,140 @@ export default class Entry {
   async update() {
     this.#schema = await this.#readSchema();
 
-    // if no base is provided, find schema root
-    this.#base = this.#base ?? findSchemaRoot(this.#schema);
-
     // get a map of database file contents
-    this.#store = await this.#readStore(this.#base);
+    this.#store = await this.#readStore(this.#entry['|']);
 
-    if (!this.#entry.UUID) {
-      const random = this.#randomUUID ?? crypto.randomUUID;
-
-      const entryUUID = await digestMessage(random());
-
-      this.#entry.UUID = entryUUID;
-    }
-
-    const uuids = {};
-
-    uuids[this.#base] = this.#entry.UUID;
-
-    const queue = [...Object.keys(this.#schema)];
-
-    const processed = new Map();
-
-    for (const branch of queue) {
-      console.log('update-branch', branch);
-      const branchType = this.#schema[branch].type;
-
-      const { trunk } = this.#schema[branch];
-
-      if (!processed.get(trunk) && branch !== this.#base) {
-        queue.push(branch);
-      } else {
-        processed.set(branch, true);
-
-        if (!Object.keys(this.#entry).includes(branch)) {
-          console.log('update-remove');
-          if (this.#schema[branch].trunk === this.#base) {
-          // prune pairs file for trunk UUID
-            const trunkUUID = uuids[trunk];
-
-            const pairPath = `metadir/pairs/${this.#base}-${branch}.csv`;
-
-            console.log(pairPath, this.#store[pairPath]);
-
-            // if file, prune it for trunk UUID
-            const pairFile = this.#store[pairPath];
-
-            if (pairFile !== '\n') {
-              const pairPruned = await this.#grep(pairFile, trunkUUID, true);
-
-              this.#tbn1[pairPath] = pairPruned;
-            }
-          } else {
-          // do nothing
-          }
-        } else {
-          console.log('update-edit');
-          let branchUUID;
-
-          let branchValue = JSON.parse(JSON.stringify(
-            this.#entry[branch],
-          ));
-
-          if (branch !== this.#base) {
-            branchUUID = await digestMessage(branchValue);
-          } else {
-            branchUUID = this.#entry.UUID;
-          }
-
-          uuids[branch] = branchUUID;
-
-          if (branchType !== 'hash') {
-            const indexPath = `metadir/props/${this.#schema[branch].dir ?? branch}/index.csv`;
-
-            const indexFile = this.#tbn1[indexPath] ?? this.#store[indexPath];
-
-            if (branchType === 'string') {
-              branchValue = JSON.stringify(branchValue);
-            }
-
-            const indexLine = `${branchUUID},${branchValue}\n`;
-
-            if (indexFile === '\n') {
-              this.#tbn1[indexPath] = indexLine;
-            } else if (!indexFile.includes(indexLine)) {
-              const indexPruned = await this.#grep(indexFile, branchUUID, true);
-
-              this.#tbn1[indexPath] = indexPruned + indexLine;
-            }
-          }
-
-          if (branch !== this.#base) {
-            const trunkUUID = uuids[trunk];
-
-            const pairLine = `${trunkUUID},${branchUUID}\n`;
-
-            const pairPath = `metadir/pairs/${trunk}-${branch}.csv`;
-
-            const pairFile = this.#tbn1[pairPath] ?? this.#store[pairPath];
-
-            if (pairFile === '\n') {
-              this.#tbn1[pairPath] = pairLine;
-            } else if (!pairFile.includes(pairLine)) {
-              const pairPruned = await this.#grep(pairFile, trunkUUID, true);
-
-              this.#tbn1[pairPath] = pairPruned + pairLine;
-            }
-          }
-        }
-      }
-    }
+    const { value } = await this.#save(this.#entry);
 
     await this.#writeStore();
 
-    return this.#entry;
+    return value;
+  }
+
+  async #save(entry) {
+    console.log('save', entry);
+
+    const branch = entry['|'];
+
+    const branchType = this.#schema[branch].type;
+
+    const branchValue = branchType === 'array' || branchType === 'object'
+      ? entry
+      : entry[branch];
+
+    let branchUUID;
+
+    if (entry.UUID) {
+      console.log('uuid is provided');
+      branchUUID = entry.UUID;
+    } else if (this.#schema[branch].trunk === undefined
+               || branchType === 'array'
+               || branchType === 'object') {
+      console.log('uuid is random');
+      branchUUID = await digestMessage(await this.#randomUUID());
+    } else {
+      console.log('uuid is hashsum');
+      branchUUID = await digestMessage(branchValue);
+    }
+
+    console.log('save-UUID', branch, branchUUID);
+
+    // add to props if needed
+    if (branchType !== 'hash' && branchType !== 'object' && branchType !== 'array') {
+      const indexPath = `metadir/props/${this.#schema[branch].dir ?? branch}/index.csv`;
+
+      const indexFile = this.#tbn1[indexPath] ?? this.#store[indexPath];
+
+      const branchValueEscaped = this.#schema[branch].type === 'string'
+        ? JSON.stringify(branchValue)
+        : branchValue;
+
+      const indexLine = `${branchUUID},${branchValueEscaped}\n`;
+
+      if (indexFile === '\n') {
+        this.#tbn1[indexPath] = indexLine;
+      } else if (!indexFile.includes(indexLine)) {
+        const indexPruned = await this.#grep(indexFile, branchUUID, true);
+
+        console.log('save-index', branch, indexPath, indexPruned, indexLine);
+        this.#tbn1[indexPath] = indexPruned + indexLine;
+      }
+    }
+
+    // map leaves
+    const leaves = Object.keys(this.#schema)
+      .filter((b) => this.#schema[b].trunk === branch
+              && this.#schema[b].type !== 'regex');
+
+    console.log('save-leaves', leaves);
+
+    for (const leaf of leaves) {
+      if (Object.keys(entry).includes(leaf)) {
+        console.log('value includes', leaf, entry);
+
+        const leafEntry = Object.keys(entry)
+          .filter((b) => this.#schema[b]?.trunk === leaf)
+          .reduce((acc, key) => ({ [key]: entry[key], ...acc }), { '|': leaf, [leaf]: entry[leaf] });
+
+        /// link if in the entry
+        await this.#link(branchUUID, leafEntry);
+      } else {
+        console.log('value does not include', leaf, branchValue);
+        // TODO think about exception for non-object branches with leaves like filepaths
+        /// unlink if not in the entry
+        await this.#unlink(branchUUID, leaf);
+      }
+    }
+
+    return { UUID: branchUUID, ...branchValue };
+  }
+
+  async #link(trunkUUID, entry) {
+    console.log('link', trunkUUID, entry);
+
+    const branch = entry['|'];
+
+    // save if needed
+    const { UUID: branchUUID } = await this.#save(entry);
+
+    // add to pairs
+    const pairLine = `${trunkUUID},${branchUUID}\n`;
+
+    const pairPath = `metadir/pairs/${this.#schema[branch].trunk}-${branch}.csv`;
+
+    const pairFile = this.#tbn1[pairPath] ?? this.#store[pairPath];
+
+    if (pairFile === '\n') {
+      this.#tbn1[pairPath] = pairLine;
+    } else if (!pairFile.includes(pairLine)) {
+      const pairPruned = await this.#grep(pairFile, trunkUUID, true);
+
+      this.#tbn1[pairPath] = pairPruned + pairLine;
+    }
+  }
+
+  // remove from pairs
+  async #unlink(trunkUUID, branch) {
+    console.log('unlink', trunkUUID, branch);
+    // prune pairs file for trunk UUID
+    const pairPath = `metadir/pairs/${this.#schema[branch].trunk}-${branch}.csv`;
+
+    // if file, prune it for trunk UUID
+    const pairFile = this.#store[pairPath];
+
+    if (pairFile !== '\n') {
+      const pairPruned = await this.#grep(pairFile, trunkUUID, true);
+
+      console.log('unlink-prune', pairFile, pairPruned);
+      this.#tbn1[pairPath] = pairPruned;
+    }
   }
 
   async delete() {
     this.#schema = await this.#readSchema();
 
-    // if no base is provided, find schema root
-    this.#base = this.#base ?? findSchemaRoot(this.#schema);
-
     // get a map of database file contents
-    this.#store = await this.#readStore(this.#base);
+    this.#store = await this.#readStore(this.#entry['|']);
   }
 
   /**
@@ -370,7 +279,7 @@ export default class Entry {
    */
   async #readStore(base) {
     // get array of all filepaths required to search for base branch
-    const filePaths = findStorePaths(this.#schema, base);
+    const filePaths = findCrownPaths(this.#schema, base);
 
     const store = {};
 

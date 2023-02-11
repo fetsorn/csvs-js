@@ -1,4 +1,5 @@
 const entry2001 = {
+  '|': 'datum',
   datum: 'value1',
   filepath: 'path/to/1',
   saydate: '2001-01-01',
@@ -10,6 +11,7 @@ const entry2001 = {
 };
 
 const entry2002 = {
+  '|': 'datum',
   datum: 'value2',
   filepath: 'path/to/2',
   saydate: '2002-01-01',
@@ -21,6 +23,7 @@ const entry2002 = {
 };
 
 const entry2003Unedited = {
+  '|': 'datum',
   datum: '',
   saydate: '2003-01-01',
   sayname: 'name3',
@@ -30,6 +33,7 @@ const entry2003Unedited = {
 };
 
 const entry2003Edited = {
+  '|': 'datum',
   datum: 'value3',
   filepath: 'path/to/3',
   saydate: '2003-03-01',
@@ -40,6 +44,7 @@ const entry2003Edited = {
 };
 
 const entryAdded = {
+  '|': 'datum',
   datum: 'value4',
   saydate: '2004-01-01',
   sayname: 'name4',
@@ -48,26 +53,28 @@ const entryAdded = {
 };
 
 const entryArray = {
+  '|': 'datum',
   datum: 'value1',
   actdate: '2001-01-01',
   actname: 'name1',
   export_tags: {
+    '|': 'export_tags',
     UUID: '9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f',
     items: [
       {
-        item_name: 'export1_tag',
+        '|': 'export1_tag',
         export1_channel: 'https://channel1.url',
         export1_key: 'longkey1',
         UUID: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
       },
       {
-        item_name: 'export2_tag',
+        '|': 'export2_tag',
         export2_username: 'username',
         export2_password: 'password',
         UUID: 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
       },
       {
-        item_name: 'export1_tag',
+        '|': 'export1_tag',
         export1_channel: 'https://channel2.url',
         export1_key: 'longkey2',
         UUID: 'fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77',
@@ -78,13 +85,15 @@ const entryArray = {
 };
 
 const entryArrayAdded = {
+  '|': 'datum',
   datum: 'value2',
   actdate: '2002-01-01',
   actname: 'name2',
   export_tags: {
+    '|': 'export_tags',
     items: [
       {
-        item_name: 'export1_tag',
+        '|': 'export1_tag',
         export1_channel: 'https://channel2.url',
         export1_key: 'longkey2',
       },
@@ -93,32 +102,34 @@ const entryArrayAdded = {
 };
 
 const entryAddedArrayItem = {
+  '|': 'datum',
   datum: 'value1',
   actdate: '2001-01-01',
   actname: 'name1',
   export_tags: {
+    '|': 'export_tags',
     UUID: '9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f',
     items: [
       {
-        item_name: 'export1_tag',
+        '|': 'export1_tag',
         export1_channel: 'https://channel1.url',
         export1_key: 'longkey1',
         UUID: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
       },
       {
-        item_name: 'export1_tag',
+        '|': 'export1_tag',
         export1_channel: 'https://channel2.url',
         export1_key: 'longkey2',
         UUID: 'fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77',
       },
       {
-        item_name: 'export2_tag',
+        '|': 'export2_tag',
         export2_username: 'username',
         export2_password: 'password',
         UUID: 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
       },
       {
-        item_name: 'export2_tag',
+        '|': 'export2_tag',
         export2_username: 'username2',
         export2_password: 'password2',
       },
@@ -128,26 +139,28 @@ const entryAddedArrayItem = {
 };
 
 const entryEditedArrayItem = {
+  '|': 'datum',
   datum: 'value1',
   actdate: '2001-01-01',
   actname: 'name1',
   export_tags: {
+    '|': 'export_tags',
     UUID: '9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f',
     items: [
       {
-        item_name: 'export1_tag',
+        '|': 'export1_tag',
         export1_channel: 'https://channel1.url',
         export1_key: 'longkey3',
         UUID: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
       },
       {
-        item_name: 'export1_tag',
+        '|': 'export1_tag',
         export1_channel: 'https://channel2.url',
         export1_key: 'longkey2',
         UUID: 'fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77',
       },
       {
-        item_name: 'export2_tag',
+        '|': 'export2_tag',
         export2_username: 'username',
         export2_password: 'password',
         UUID: 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
@@ -158,20 +171,22 @@ const entryEditedArrayItem = {
 };
 
 const entryDeletedArrayItem = {
+  '|': 'datum',
   datum: 'value1',
   actdate: '2001-01-01',
   actname: 'name1',
   export_tags: {
+    '|': 'export_tags',
     UUID: '9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f',
     items: [
       {
-        item_name: 'export1_tag',
+        '|': 'export1_tag',
         export1_channel: 'https://channel1.url',
         export1_key: 'longkey1',
         UUID: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
       },
       {
-        item_name: 'export2_tag',
+        '|': 'export2_tag',
         export2_username: 'username',
         export2_password: 'password',
         UUID: 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',

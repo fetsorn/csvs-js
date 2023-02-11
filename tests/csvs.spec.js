@@ -327,7 +327,7 @@ describe('Entry.update()', () => {
       });
   });
 
-  test.skip('adds entry with random uuid', () => {
+  test('adds entry with random uuid', () => {
     callback.randomUUID = crypto.randomUUID;
 
     return (new Entry({ entry: mocks.entryAdded, ...callback })).update()
@@ -336,7 +336,7 @@ describe('Entry.update()', () => {
       });
   });
 
-  test.skip('falls back to random UUID if callback is not specified', () => {
+  test('falls back to random UUID if callback is not specified', () => {
     delete callback.randomUUID;
 
     return (new Entry({ entry: mocks.entryAdded, ...callback })).update()

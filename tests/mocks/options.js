@@ -12,13 +12,13 @@ const optionsSaydateGrep = ['2001-01-01', '2002-01-01', '2003-01-01', '2004-01-0
 
 const optionsExport1Tag = [
   {
-    item_name: 'export1_tag',
+    '|': 'export1_tag',
     export1_channel: 'https://channel1.url',
     export1_key: 'longkey1',
     UUID: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
   },
   {
-    item_name: 'export1_tag',
+    '|': 'export1_tag',
     export1_channel: 'https://channel2.url',
     export1_key: 'longkey2',
     UUID: 'fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77',
