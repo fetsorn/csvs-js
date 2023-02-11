@@ -9,7 +9,6 @@ import { exec } from 'child_process';
 import {
   Query, Entry,
 } from '../src/index';
-import { grepPolyfill as grepJS } from '../src/polyfill';
 import mocks from './mocks';
 
 // node polyfills for browser APIs
@@ -78,7 +77,7 @@ async function grepCLI(contentFile, patternFile, isInverse) {
   return output;
 }
 
-describe('Query.run() no ripgrep', () => {
+describe('Query.select() no ripgrep', () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
   });
@@ -90,7 +89,7 @@ describe('Query.run() no ripgrep', () => {
 
     const query = new Query({ searchParams, ...callback });
 
-    return query.run().then((data) => {
+    return query.select().then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2001)]);
     });
   });
@@ -102,7 +101,7 @@ describe('Query.run() no ripgrep', () => {
 
     const query = new Query({ searchParams, ...callback });
 
-    return query.run().then((data) => {
+    return query.select().then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2002)]);
     });
   });
@@ -114,7 +113,7 @@ describe('Query.run() no ripgrep', () => {
 
     const query = new Query({ searchParams, ...callback });
 
-    return query.run().then((data) => {
+    return query.select().then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2003Unedited)]);
     });
   });
@@ -128,7 +127,7 @@ describe('Query.run() no ripgrep', () => {
 
     const query = new Query({ searchParams, ...callback });
 
-    return query.run().then((data) => {
+    return query.select().then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2002)]);
     });
   });
@@ -142,7 +141,7 @@ describe('Query.run() no ripgrep', () => {
 
     const query = new Query({ searchParams, ...callback });
 
-    return query.run().then((data) => {
+    return query.select().then((data) => {
       // array is unordered, order for reproducible test
       data[0].export_tags.items.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
 
@@ -151,7 +150,7 @@ describe('Query.run() no ripgrep', () => {
   });
 });
 
-describe('Query.run() ripgrep', () => {
+describe('Query.select() ripgrep', () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
 
@@ -165,7 +164,7 @@ describe('Query.run() ripgrep', () => {
 
     const query = new Query({ searchParams, ...callback });
 
-    return query.run().then((data) => {
+    return query.select().then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2001)]);
     });
   });
@@ -177,7 +176,7 @@ describe('Query.run() ripgrep', () => {
 
     const query = new Query({ searchParams, ...callback });
 
-    return query.run().then((data) => {
+    return query.select().then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2002)]);
     });
   });
@@ -189,7 +188,7 @@ describe('Query.run() ripgrep', () => {
 
     const query = new Query({ searchParams, ...callback });
 
-    return query.run().then((data) => {
+    return query.select().then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2003Unedited)]);
     });
   });
@@ -203,7 +202,7 @@ describe('Query.run() ripgrep', () => {
 
     const query = new Query({ searchParams, ...callback });
 
-    return query.run().then((data) => {
+    return query.select().then((data) => {
       // array is unordered, order for reproducible test
       data[0].export_tags.items.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
 
@@ -220,7 +219,7 @@ describe('Query.run() ripgrep', () => {
 
     const query = new Query({ searchParams, ...callback });
 
-    return query.run().then((data) => {
+    return query.select().then((data) => {
       // array is unordered, order for reproducible test
       data[0].export_tags.items.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
 
@@ -237,35 +236,98 @@ describe('Query.run() ripgrep', () => {
 
     const query = new Query({ searchParams, ...callback });
 
-    return query.run().then((data) => {
+    return query.select().then((data) => {
       // array is unordered, order for reproducible test
       data.forEach((item) => item.export_tags.items.sort((a, b) => (a.UUID < b.UUID ? -1 : 1)));
 
       expect(data).toStrictEqual([sortObject(mocks.entryArray)]);
     });
   });
+
+  test('queries name1 with regexp', () => {
+    const searchParams = new URLSearchParams();
+
+    searchParams.set('actname', 'name.*');
+
+    const query = new Query({ searchParams, ...callback });
+
+    return query.select().then((data) => {
+      const dataSorted = data.map(sortObject)
+        .sort((a, b) => (a.saydate < b.saydate ? -1 : 1));
+
+      expect(dataSorted).toStrictEqual([
+        sortObject(mocks.entry2001),
+        sortObject(mocks.entry2002),
+        sortObject(mocks.entry2003Unedited),
+      ]);
+    });
+  });
+
+  test('queries moddate', () => {
+    const searchParams = new URLSearchParams();
+
+    searchParams.set('moddate', '2001-01-01');
+
+    const query = new Query({ searchParams, ...callback });
+
+    return query.select().then((data) => expect(data).toStrictEqual([
+      sortObject(mocks.entry2001),
+    ]));
+  });
+
+  test('queries moddate regex', () => {
+    const searchParams = new URLSearchParams();
+
+    searchParams.set('moddate', '.*-01-01');
+
+    const query = new Query({ searchParams, ...callback });
+
+    return query.select().then((data) => {
+      const dataSorted = data.map(sortObject)
+        .sort((a, b) => (a.saydate < b.saydate ? -1 : 1));
+
+      expect(dataSorted).toStrictEqual([
+        sortObject(mocks.entry2001),
+        sortObject(mocks.entry2002),
+      ]);
+    });
+  });
+
+  test('queries two queries', () => {
+    const searchParams = new URLSearchParams();
+
+    searchParams.set('actname', 'name.*');
+
+    searchParams.set('actdate', '2001-01-01');
+
+    const query = new Query({ searchParams, ...callback });
+
+    return query.select().then((data) => expect(data).toStrictEqual([
+      sortObject(mocks.entry2001),
+    ]));
+  });
 });
 
-describe('Query.run() base', () => {
+describe('Query.select() base', () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
 
     callback.readFile = async (path) => mocks.metadirAdded[path];
   });
 
-  test('queries name', () => (new Query({ base: 'actname', ...callback })).run().then((data) => {
+  test('queries name', () => (new Query({ base: 'actname', ...callback })).select().then((data) => {
     expect(data.map((obj) => obj.actname)).toStrictEqual(mocks.optionsActname);
   }));
 
-  test('queries date', () => (new Query({ base: 'actdate', ...callback })).run().then((data) => {
+  test('queries date', () => (new Query({ base: 'actdate', ...callback })).select().then((data) => {
     expect(data.map((obj) => obj.actdate)).toStrictEqual(mocks.optionsActdate);
   }));
 
-  test('queries sayname with grep', () => (new Query({ base: 'sayname', ...callback })).run().then((data) => {
+  test('queries sayname with grep', () => (new Query({ base: 'sayname', ...callback })).select().then((data) => {
     expect(data.map((obj) => obj.sayname)).toStrictEqual(mocks.optionsSaynameGrep);
   }));
 
-  test('queries saydate with grep', () => (new Query({ base: 'saydate', ...callback })).run().then((data) => {
+  test('queries saydate with grep', () => (new Query({ base: 'saydate', ...callback })).select().then((data) => {
     expect(data.map((obj) => obj.saydate)).toStrictEqual(mocks.optionsSaydateGrep);
   }));
 
@@ -274,7 +336,7 @@ describe('Query.run() base', () => {
 
     const query = new Query({ base: 'export1_tag', ...callback });
 
-    const data = await query.run();
+    const data = await query.select();
 
     expect(data).toStrictEqual(mocks.optionsExport1Tag);
   });

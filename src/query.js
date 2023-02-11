@@ -1,8 +1,9 @@
-import { grepPolyfill, randomUUIDPolyfill } from './polyfill';
-import { findSchemaRoot, findCrown, findCrownPaths } from './schema';
+/* eslint-disable import/extensions */
+import { grepPolyfill, randomUUIDPolyfill } from './polyfill.js';
+import { findSchemaRoot, findCrown, findCrownPaths } from './schema.js';
 import {
   takeUUID, takeValue, takeUUIDs, takeValues,
-} from './metadir';
+} from './metadir.js';
 
 /**
  * This finds all UUIDs of the branch.
@@ -111,7 +112,7 @@ export default class Query {
    * @function
    * @returns {Object[]}
    */
-  async run() {
+  async select() {
     this.#schema = await this.#readSchema();
 
     this.#searchParams = this.#searchParams ?? new URLSearchParams();
@@ -203,12 +204,12 @@ export default class Query {
             ? JSON.stringify(value)
             : value;
 
-          const branchLine = await this.#grep(
+          const branchLines = await this.#grep(
             this.#store[`metadir/props/${this.#schema[branch].dir ?? branch}/index.csv`],
             `,${branchValue}$`,
           );
 
-          const branchUUIDs = [takeUUID(branchLine)];
+          const branchUUIDs = takeUUIDs(branchLines);
 
           if (branch === base) {
             baseUUIDSets.push(branchUUIDs);
@@ -329,9 +330,9 @@ export default class Query {
 
     // if searchParams already has value, return it immediately
     // skip if branch belongs to an array item because those branch values can vary
-    if (this.#searchParams.has(branch) && this.#schema[baseTrunk]?.type !== 'array') {
-      return this.#searchParams.get(branch);
-    }
+    // if (this.#searchParams.has(branch) && this.#schema[baseTrunk]?.type !== 'array') {
+    //   return this.#searchParams.get(branch);
+    // }
 
     // get the branch UUID related to the base UUID
     const branchUUID = await this.#findBranchUUID(base, baseUUID, branch);

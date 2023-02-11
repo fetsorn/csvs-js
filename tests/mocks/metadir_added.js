@@ -1,4 +1,6 @@
-import metadirDefault from './metadir_default';
+/* eslint-disable import/extensions */
+// .js extensions are required for wasm tests
+import metadirDefault from './metadir_default.js';
 
 const metadir = { ...metadirDefault };
 

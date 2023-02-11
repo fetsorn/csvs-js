@@ -1,4 +1,5 @@
-import { splitLines } from './metadir';
+/* eslint-disable import/extensions */
+import { splitLines } from './metadir.js';
 
 /**
  * This find lines in contentFile that match regex lines in patternFile.

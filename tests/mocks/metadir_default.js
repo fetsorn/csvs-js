@@ -1,4 +1,6 @@
-import schema from './schema';
+/* eslint-disable import/extensions */
+// .js extensions are required for wasm tests
+import schema from './schema.js';
 
 const metadir = {};
 

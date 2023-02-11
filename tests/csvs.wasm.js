@@ -13,7 +13,7 @@ function sortObject(a) {
 }
 
 const callback = {
-  fetch: (path) => mocks.filesMock[path],
+  readFile: (path) => mocks.metadirDefault[path],
   grep,
 };
 
@@ -27,86 +27,89 @@ function expect(received, expected) {
   }
 }
 
-async function testQueryMetadir1() {
+async function testQuery1() {
   console.log('queries name1');
 
   const searchParams = new URLSearchParams();
 
   searchParams.set('actname', 'name1');
 
-  const data = await csvs.queryMetadir(searchParams, callback);
+  const data = await (new csvs.Query({ searchParams, ...callback }).select());
 
-  expect(data.map(sortObject), [sortObject(mocks.entry1)]);
+  expect(data.map(sortObject), [sortObject(mocks.entry2001)]);
 }
 
-async function testQueryMetadir2() {
+async function testQuery2() {
   console.log('queries name2');
 
   const searchParams = new URLSearchParams();
 
   searchParams.set('actname', 'name2');
 
-  const data = await csvs.queryMetadir(searchParams, callback);
+  const data = await (new csvs.Query({ searchParams, ...callback }).select());
 
-  expect(data.map(sortObject), [sortObject(mocks.entry2)]);
+  expect(data.map(sortObject), [sortObject(mocks.entry2002)]);
 }
 
-async function testQueryMetadir3() {
+async function testQuery3() {
   console.log('queries name3');
 
   const searchParams = new URLSearchParams();
 
   searchParams.set('actname', 'name3');
 
-  const data = await csvs.queryMetadir(searchParams, callback);
+  const data = await (new csvs.Query({ searchParams, ...callback }).select());
 
-  expect(data.map(sortObject), [sortObject(mocks.entry3)]);
+  expect(data.map(sortObject), [sortObject(mocks.entry2003Unedited)]);
 }
 
-async function testQueryMetadirFalse() {
+async function testQueryFalse() {
   console.log('queries false');
 
   const searchParams = new URLSearchParams();
 
   searchParams.set('actname', 'false');
 
-  const data = await csvs.queryMetadir(searchParams, callback);
+  const data = await (new csvs.Query({ searchParams, ...callback }).select());
 
   expect(data.map(sortObject), []);
 }
 
-async function testQueryMetadirWildcard() {
+async function testQueryRegex() {
   console.log('queries regexp');
 
   const searchParams = new URLSearchParams();
 
   searchParams.set('actname', 'name.*');
 
-  const data = await csvs.queryMetadir(searchParams, callback);
+  const data = await (new csvs.Query({ searchParams, ...callback }).select());
 
-  expect(data.map(sortObject), [
-    sortObject(mocks.entry1),
-    sortObject(mocks.entry2),
-    sortObject(mocks.entry3),
+  const dataSorted = data.map(sortObject)
+    .sort((a, b) => (a.saydate < b.saydate ? -1 : 1));
+
+  expect(dataSorted, [
+    sortObject(mocks.entry2001),
+    sortObject(mocks.entry2002),
+    sortObject(mocks.entry2003Unedited),
   ]);
 }
 
-async function testQueryMetadirRecurse() {
+async function testQueryLeaf() {
   console.log('queries moddate');
 
   const searchParams = new URLSearchParams();
 
   searchParams.set('moddate', '2001-01-01');
 
-  const data = await csvs.queryMetadir(searchParams, callback);
+  const data = await (new csvs.Query({ searchParams, ...callback }).select());
 
   expect(data.map(sortObject), [
-    sortObject(mocks.entry1),
+    sortObject(mocks.entry2001),
   ]);
 }
 
-async function testQueryMetadirRecurseWildcard() {
-  console.log('queries moddate wildcard');
+async function testQueryLeafRegex() {
+  console.log('queries moddate regex');
 
   const searchParams = new URLSearchParams();
 
@@ -115,7 +118,7 @@ async function testQueryMetadirRecurseWildcard() {
   let data;
 
   try {
-    data = await csvs.queryMetadir(searchParams, callback);
+    data = await (new csvs.Query({ searchParams, ...callback }).select());
 
     data = data.map(sortObject);
   } catch (e) {
@@ -123,13 +126,13 @@ async function testQueryMetadirRecurseWildcard() {
   }
 
   expect(data, [
-    sortObject(mocks.entry1),
-    sortObject(mocks.entry2),
+    sortObject(mocks.entry2001),
+    sortObject(mocks.entry2002),
   ]);
 }
 
-async function testQueryMetadirTwoQueries() {
-  console.log('queries moddate wildcard');
+async function testQueryTwoQueries() {
+  console.log('queries two params');
 
   const searchParams = new URLSearchParams();
 
@@ -140,7 +143,7 @@ async function testQueryMetadirTwoQueries() {
   let data;
 
   try {
-    data = await csvs.queryMetadir(searchParams, callback);
+    data = await (new csvs.Query({ searchParams, ...callback }).select());
 
     data = data.map(sortObject);
   } catch (e) {
@@ -148,26 +151,26 @@ async function testQueryMetadirTwoQueries() {
   }
 
   expect(data, [
-    sortObject(mocks.entry1),
+    sortObject(mocks.entry2001),
   ]);
 }
 
 export default async function test() {
-  console.log('queryMetadir');
+  console.log('Query.select()');
 
-  await testQueryMetadir1();
+  await testQuery1();
 
-  await testQueryMetadir2();
+  await testQuery2();
 
-  await testQueryMetadir3();
+  await testQuery3();
 
-  await testQueryMetadirFalse();
+  await testQueryFalse();
 
-  await testQueryMetadirWildcard();
+  await testQueryRegex();
 
-  await testQueryMetadirRecurse();
+  await testQueryLeaf();
 
-  await testQueryMetadirRecurseWildcard();
+  await testQueryLeafRegex();
 
-  await testQueryMetadirTwoQueries();
+  await testQueryTwoQueries();
 }

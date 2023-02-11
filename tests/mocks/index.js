@@ -1,16 +1,18 @@
-import metadirDefault from './metadir_default';
-import metadirEmpty from './metadir_empty';
-import metadirEdited from './metadir_edited';
-import metadirAdded from './metadir_added';
-import metadirDeleted from './metadir_deleted';
-import metadirEmptyAdded from './metadir_empty_added';
-import metadirUnordered from './metadir_unordered';
-import metadirArray from './metadir_array';
-import metadirArrayEmpty from './metadir_array_empty';
-import metadirArrayAdded from './metadir_array_added';
-import metadirAddedArrayItem from './metadir_added_array_item';
-import metadirEditedArrayItem from './metadir_edited_array_item';
-import metadirDeletedArrayItem from './metadir_deleted_array_item';
+/* eslint-disable import/extensions */
+// .js extensions are required for wasm tests
+import metadirDefault from './metadir_default.js';
+import metadirEmpty from './metadir_empty.js';
+import metadirEdited from './metadir_edited.js';
+import metadirAdded from './metadir_added.js';
+import metadirDeleted from './metadir_deleted.js';
+import metadirEmptyAdded from './metadir_empty_added.js';
+import metadirUnordered from './metadir_unordered.js';
+import metadirArray from './metadir_array.js';
+import metadirArrayEmpty from './metadir_array_empty.js';
+import metadirArrayAdded from './metadir_array_added.js';
+import metadirAddedArrayItem from './metadir_added_array_item.js';
+import metadirEditedArrayItem from './metadir_edited_array_item.js';
+import metadirDeletedArrayItem from './metadir_deleted_array_item.js';
 import {
   entry2001,
   entry2002,
@@ -22,7 +24,7 @@ import {
   entryAddedArrayItem,
   entryEditedArrayItem,
   entryDeletedArrayItem,
-} from './entries';
+} from './entries.js';
 import {
   optionsActname,
   optionsActdate,
@@ -31,7 +33,7 @@ import {
   optionsSaynameGrep,
   optionsSaydateGrep,
   optionsExport1Tag,
-} from './options';
+} from './options.js';
 
 export default {
   entry2001,

@@ -1,6 +1,7 @@
-import { grepPolyfill, randomUUIDPolyfill } from './polyfill';
-import { findCrownPaths } from './schema';
-import { takeUUIDs } from './metadir';
+/* eslint-disable import/extensions */
+import { grepPolyfill, randomUUIDPolyfill } from './polyfill.js';
+import { findCrownPaths } from './schema.js';
+import { takeUUIDs } from './metadir.js';
 
 /**
  * This generates a SHA-256 hashsum.
