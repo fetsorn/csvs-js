@@ -91,7 +91,7 @@ export default class Entry {
   #entry;
 
   /**
-   * store is the map of file paths to file contents read before.
+   * store is the map of file paths to file contents read at start.
    * @type {URLSearchParams}
    */
   #store;
@@ -135,8 +135,6 @@ export default class Entry {
   }
 
   async #save(entry) {
-    console.log('save', entry);
-
     const branch = entry['|'];
 
     const branchType = this.#schema[branch].type;
@@ -148,19 +146,14 @@ export default class Entry {
     let branchUUID;
 
     if (entry.UUID) {
-      console.log('uuid is provided');
       branchUUID = entry.UUID;
     } else if (this.#schema[branch].trunk === undefined
                || branchType === 'array'
                || branchType === 'object') {
-      console.log('uuid is random');
       branchUUID = await digestMessage(await this.#randomUUID());
     } else {
-      console.log('uuid is hashsum');
       branchUUID = await digestMessage(branchValue);
     }
-
-    console.log('save-UUID', branch, branchUUID);
 
     // add to props if needed
     if (branchType !== 'hash' && branchType !== 'object' && branchType !== 'array') {
@@ -179,66 +172,77 @@ export default class Entry {
       } else if (!indexFile.includes(indexLine)) {
         const indexPruned = await this.#grep(indexFile, branchUUID, true);
 
-        console.log('save-index', branch, indexPath, indexPruned, indexLine);
         this.#tbn1[indexPath] = indexPruned + indexLine;
       }
     }
 
-    // map leaves
     const leaves = Object.keys(this.#schema)
       .filter((b) => this.#schema[b].trunk === branch
               && this.#schema[b].type !== 'regex');
 
-    console.log('save-leaves', leaves);
+    // map leaves
+    await Promise.all(leaves.map(async (leaf) => {
+    // for (const leaf of leaves) {
+      const entryLeaves = branchType === 'array'
+        ? entry.items.map((item) => item['|'])
+        : Object.keys(entry);
 
-    for (const leaf of leaves) {
-      if (Object.keys(entry).includes(leaf)) {
-        console.log('value includes', leaf, entry);
+      if (entryLeaves.includes(leaf)) {
+        // link if in the entry
+        if (this.#schema[branch].type === 'array') {
+          const leafItems = entry.items.filter((item) => item['|'] === leaf);
 
-        const leafEntry = Object.keys(entry)
-          .filter((b) => this.#schema[b]?.trunk === leaf)
-          .reduce((acc, key) => ({ [key]: entry[key], ...acc }), { '|': leaf, [leaf]: entry[leaf] });
+          await Promise.all(leafItems.map(async (item) => {
+          // for (const item of leafItems) {
+            await this.#link(branchUUID, item);
+          }));
+        } else {
+          const leafEntry = this.#schema[leaf].type === 'array'
+            ? entry[leaf]
+            : Object.keys(entry)
+              .filter((b) => this.#schema[b]?.trunk === leaf)
+              .reduce((acc, key) => ({ [key]: entry[key], ...acc }), { '|': leaf, [leaf]: entry[leaf] });
 
-        /// link if in the entry
-        await this.#link(branchUUID, leafEntry);
+          await this.#link(branchUUID, leafEntry);
+        }
       } else {
-        console.log('value does not include', leaf, branchValue);
-        // TODO think about exception for non-object branches with leaves like filepaths
         /// unlink if not in the entry
         await this.#unlink(branchUUID, leaf);
       }
-    }
+    }));
 
     return { UUID: branchUUID, ...branchValue };
   }
 
   async #link(trunkUUID, entry) {
-    console.log('link', trunkUUID, entry);
-
     const branch = entry['|'];
 
+    const { trunk } = this.#schema[branch];
     // save if needed
     const { UUID: branchUUID } = await this.#save(entry);
 
     // add to pairs
     const pairLine = `${trunkUUID},${branchUUID}\n`;
 
-    const pairPath = `metadir/pairs/${this.#schema[branch].trunk}-${branch}.csv`;
+    const pairPath = `metadir/pairs/${trunk}-${branch}.csv`;
 
     const pairFile = this.#tbn1[pairPath] ?? this.#store[pairPath];
 
     if (pairFile === '\n') {
       this.#tbn1[pairPath] = pairLine;
     } else if (!pairFile.includes(pairLine)) {
-      const pairPruned = await this.#grep(pairFile, trunkUUID, true);
+      if (this.#schema[trunk].type === 'array') {
+        this.#tbn1[pairPath] = pairFile + pairLine;
+      } else {
+        const pairPruned = await this.#grep(pairFile, trunkUUID, true);
 
-      this.#tbn1[pairPath] = pairPruned + pairLine;
+        this.#tbn1[pairPath] = pairPruned + pairLine;
+      }
     }
   }
 
   // remove from pairs
   async #unlink(trunkUUID, branch) {
-    console.log('unlink', trunkUUID, branch);
     // prune pairs file for trunk UUID
     const pairPath = `metadir/pairs/${this.#schema[branch].trunk}-${branch}.csv`;
 
@@ -248,7 +252,6 @@ export default class Entry {
     if (pairFile !== '\n') {
       const pairPruned = await this.#grep(pairFile, trunkUUID, true);
 
-      console.log('unlink-prune', pairFile, pairPruned);
       this.#tbn1[pairPath] = pairPruned;
     }
   }
@@ -287,8 +290,6 @@ export default class Entry {
       store[filePath] = (await this.#readFile(filePath)) ?? '\n';
     }));
 
-    console.log('readStore', store);
-
     return store;
   }
 
@@ -298,7 +299,6 @@ export default class Entry {
    * @function
    */
   async #writeStore() {
-    console.log('writeStore', this.#tbn1);
     await Promise.all(Object.entries(this.#tbn1).map(async ([filePath, contents]) => {
       await this.#writeFile(filePath, contents);
     }));

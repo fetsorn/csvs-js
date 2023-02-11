@@ -346,7 +346,7 @@ describe('Entry.update()', () => {
   });
 });
 
-describe.skip('Entry.update(), arrays', () => {
+describe('Entry.update(), arrays', () => {
   let editedFiles;
 
   beforeEach(() => {
@@ -385,17 +385,17 @@ describe.skip('Entry.update(), arrays', () => {
       });
   });
 
-  test.skip('adds array item to entry', () => (new Entry({ entry: mocks.entryAddedArrayItem, ...callback })).update()
+  test('adds array item to entry', () => (new Entry({ entry: mocks.entryAddedArrayItem, ...callback })).update()
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirAddedArrayItem);
     }));
 
-  test.skip('edits array item', () => (new Entry({ entry: mocks.entryEditedArrayItem, ...callback })).update()
+  test('edits array item', () => (new Entry({ entry: mocks.entryEditedArrayItem, ...callback })).update()
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirEditedArrayItem);
     }));
 
-  test.skip('removes array item', () => (new Entry({ entry: mocks.entryDeletedArrayItem, ...callback })).update()
+  test('removes array item', () => (new Entry({ entry: mocks.entryDeletedArrayItem, ...callback })).update()
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirDeletedArrayItem);
     }));
