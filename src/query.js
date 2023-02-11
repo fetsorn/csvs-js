@@ -1,68 +1,8 @@
 import { grepPolyfill, randomUUIDPolyfill } from './polyfill';
 import { findSchemaRoot, findCrown, findCrownPaths } from './schema';
-
-/**
- * This splits string on newlines and filters empty lines.
- * @name splitLines
- * @function
- * @param {string} str - Newline separated lines.
- * @returns {string[]} - Array of lines.
- */
-function splitLines(str) {
-  return str.split('\n').filter((line) => line !== '');
-}
-
-/**
- * This takes a UUID from a database entry.
- * @name takeUUID
- * @function
- * @param {string} line - Entry line.
- * @returns {string} - UUID.
- */
-function takeUUID(line) {
-  return line.slice(0, 64);
-}
-
-/**
- * This takes a value from a database entry.
- * @name takeValue
- * @function
- * @param {string} line - Entry line.
- * @returns {string} - Value.
- */
-function takeValue(line) {
-  return line.slice(65).replace(/\n*$/, '');
-}
-
-/**
- * This takes UUIDs from database entries.
- * @name takeUUIDs
- * @function
- * @param {string} line - Newline separated entry lines.
- * @returns {string[]} - UUIDs.
- */
-function takeUUIDs(str) {
-  const lines = splitLines(str.replace(/\n*$/, ''));
-
-  const uuids = lines.map((line) => takeUUID(line));
-
-  return uuids;
-}
-
-/**
- * This takes values from database entries.
- * @name takeValues
- * @function
- * @param {string} line - Newline separated entry lines.
- * @returns {string[]} - Values.
- */
-function takeValues(str) {
-  const lines = splitLines(str.replace(/\n*$/, ''));
-
-  const uuids = lines.map((line) => takeValue(line));
-
-  return uuids;
-}
+import {
+  takeUUID, takeValue, takeUUIDs, takeValues,
+} from './metadir';
 
 /**
  * This finds all UUIDs of the branch.

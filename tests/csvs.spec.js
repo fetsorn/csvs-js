@@ -401,7 +401,7 @@ describe('Entry.update(), arrays', () => {
     }));
 });
 
-describe.skip('Entry.delete()', () => {
+describe('Entry.delete()', () => {
   let editedFiles;
 
   beforeEach(() => {

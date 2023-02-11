@@ -1,5 +1,6 @@
 import { grepPolyfill, randomUUIDPolyfill } from './polyfill';
 import { findCrownPaths } from './schema';
+import { takeUUIDs } from './metadir';
 
 /**
  * This generates a SHA-256 hashsum.
@@ -121,10 +122,15 @@ export default class Entry {
     this.#randomUUID = randomUUID ?? crypto.randomUUID ?? randomUUIDPolyfill;
   }
 
+  /**
+   * This updates the database entry.
+   * @name update
+   * @function
+   * @returns {object} - A database entry.
+   */
   async update() {
     this.#schema = await this.#readSchema();
 
-    // get a map of database file contents
     this.#store = await this.#readStore(this.#entry['|']);
 
     const { value } = await this.#save(this.#entry);
@@ -134,6 +140,73 @@ export default class Entry {
     return value;
   }
 
+  /**
+   * This deletes the database entry.
+   * @name delete
+   * @function
+   */
+  async delete() {
+    this.#schema = await this.#readSchema();
+
+    this.#store = await this.#readStore(this.#entry['|']);
+
+    const branchUUID = await this.#remove(this.#entry);
+
+    await this.#unlinkTrunks(this.#entry['|'], this.#entry.UUID ?? branchUUID);
+
+    await this.#unlinkLeaves(this.#entry['|'], this.#entry.UUID ?? branchUUID);
+
+    await this.#writeStore();
+  }
+
+  /**
+   * This returns the database schema.
+   * @name readSchema
+   * @function
+   * @returns {object} - database schema.
+   */
+  async #readSchema() {
+    return JSON.parse(await this.#readFile('metadir.json'));
+  }
+
+  /**
+   * This returns a map of database file contents.
+   * @name readStore
+   * @function
+   * @param {string} base - Base branch.
+   * @returns {Map} - Map of file paths to file contents.
+   */
+  async #readStore(base) {
+    // get array of all filepaths required to search for base branch
+    const filePaths = findCrownPaths(this.#schema, base);
+
+    const store = {};
+
+    await Promise.all(filePaths.map(async (filePath) => {
+      store[filePath] = (await this.#readFile(filePath)) ?? '\n';
+    }));
+
+    return store;
+  }
+
+  /**
+   * This returns a map of database file contents.
+   * @name writeStore
+   * @function
+   */
+  async #writeStore() {
+    await Promise.all(Object.entries(this.#tbn1).map(async ([filePath, contents]) => {
+      await this.#writeFile(filePath, contents);
+    }));
+  }
+
+  /**
+   * This saves an entry to the database.
+   * @name save
+   * @param {object} entry - A database entry.
+   * @function
+   * @returns {object} - A database entry with new UUID.
+   */
   async #save(entry) {
     const branch = entry['|'];
 
@@ -176,6 +249,67 @@ export default class Entry {
       }
     }
 
+    await this.#linkLeaves(entry, branchUUID);
+
+    return { UUID: branchUUID, ...branchValue };
+  }
+
+  /**
+   * This removes an entry from the database.
+   * @name remove
+   * @param {object} entry - A database entry.
+   * @function
+   */
+  async #remove(entry) {
+    const branch = entry['|'];
+
+    const branchType = this.#schema[branch].type;
+
+    if (branchType === 'hash'
+        || branchType === 'object'
+        || branchType === 'array') {
+      if (entry.UUID === undefined) {
+        throw Error(`failed to remove ${branchType} branch ${branch} entry without UUID`);
+      }
+      return undefined;
+    }
+
+    const branchValue = entry[branch];
+
+    let branchUUID;
+
+    if (entry.UUID) {
+      branchUUID = entry.UUID;
+    } else if (this.#schema[branch].trunk === undefined) {
+      throw Error(`failed to remove root branch ${branch} entry without UUID`);
+    } else {
+      branchUUID = await digestMessage(branchValue);
+    }
+
+    // prune props if exist
+    const indexPath = `metadir/props/${this.#schema[branch].dir ?? branch}/index.csv`;
+
+    const indexFile = this.#tbn1[indexPath] ?? this.#store[indexPath];
+
+    const indexPruned = await this.#grep(indexFile, branchUUID, true);
+
+    this.#tbn1[indexPath] = indexPruned;
+
+    return branchUUID;
+  }
+
+  /**
+   * This links all leaves to the branch.
+   * @name linkLeaves
+   * @param {object} entry - A database entry.
+   * @param {object} branchUUID - The branch UUID.
+   * @function
+   */
+  async #linkLeaves(entry, branchUUID) {
+    const branch = entry['|'];
+
+    const branchType = this.#schema[branch].type;
+
     const leaves = Object.keys(this.#schema)
       .filter((b) => this.#schema[b].trunk === branch
               && this.#schema[b].type !== 'regex');
@@ -194,7 +328,7 @@ export default class Entry {
 
           await Promise.all(leafItems.map(async (item) => {
           // for (const item of leafItems) {
-            await this.#link(branchUUID, item);
+            await this.#linkTrunk(branchUUID, item);
           }));
         } else {
           const leafEntry = this.#schema[leaf].type === 'array'
@@ -203,18 +337,23 @@ export default class Entry {
               .filter((b) => this.#schema[b]?.trunk === leaf)
               .reduce((acc, key) => ({ [key]: entry[key], ...acc }), { '|': leaf, [leaf]: entry[leaf] });
 
-          await this.#link(branchUUID, leafEntry);
+          await this.#linkTrunk(branchUUID, leafEntry);
         }
       } else {
         /// unlink if not in the entry
-        await this.#unlink(branchUUID, leaf);
+        await this.#unlinkTrunk(branchUUID, leaf);
       }
     }));
-
-    return { UUID: branchUUID, ...branchValue };
   }
 
-  async #link(trunkUUID, entry) {
+  /**
+   * This links an entry to a trunk UUID.
+   * @name linkTrunk
+   * @param {object} trunkUUID - The trunk UUID.
+   * @param {object} entry - A database entry.
+   * @function
+   */
+  async #linkTrunk(trunkUUID, entry) {
     const branch = entry['|'];
 
     const { trunk } = this.#schema[branch];
@@ -241,8 +380,14 @@ export default class Entry {
     }
   }
 
-  // remove from pairs
-  async #unlink(trunkUUID, branch) {
+  /**
+   * This unlinks an entry from a trunk UUID.
+   * @name unlinkTrunk
+   * @param {object} trunkUUID - The trunk UUID.
+   * @param {object} entry - A database entry.
+   * @function
+   */
+  async #unlinkTrunk(trunkUUID, branch) {
     // prune pairs file for trunk UUID
     const pairPath = `metadir/pairs/${this.#schema[branch].trunk}-${branch}.csv`;
 
@@ -256,51 +401,48 @@ export default class Entry {
     }
   }
 
-  async delete() {
-    this.#schema = await this.#readSchema();
+  /**
+   * This unlinks a branch UUID from all trunk UUIDs.
+   * @name unlinkTrunks
+   * @param {string} branch - A branch name.
+   * @param {string} branchUUID - A branch UUID.
+   * @function
+   */
+  async #unlinkTrunks(branch, branchUUID) {
+    const { trunk } = this.#schema[branch];
 
-    // get a map of database file contents
-    this.#store = await this.#readStore(this.#entry['|']);
+    // unlink trunk if it exists
+    if (trunk !== undefined) {
+      // find trunkUUIDs
+      const trunkLines = await this.#grep(
+        `metadir/pairs/${trunk}-${branch}.csv`,
+        `,${branchUUID}$`,
+      );
+
+      const trunkUUIDs = takeUUIDs(trunkLines);
+
+      // unlink trunk
+      await Promise.all(trunkUUIDs.map(async (trunkUUID) => {
+        await this.#unlinkTrunk(trunkUUID, branch);
+      }));
+    }
   }
 
   /**
-   * This returns the database schema.
-   * @name readSchema
-   * @function
-   * @returns {object} - database schema.
-   */
-  async #readSchema() {
-    return JSON.parse(await this.#readFile('metadir.json'));
-  }
-
-  /**
-   * This returns a map of database file contents.
-   * @name readStore
-   * @function
-   * @param {string} base - Base branch.
-   * @returns {Map} - Map of file paths to file contents.
-   */
-  async #readStore(base) {
-    // get array of all filepaths required to search for base branch
-    const filePaths = findCrownPaths(this.#schema, base);
-
-    const store = {};
-
-    await Promise.all(filePaths.map(async (filePath) => {
-      store[filePath] = (await this.#readFile(filePath)) ?? '\n';
-    }));
-
-    return store;
-  }
-
-  /**
-   * This returns a map of database file contents.
-   * @name writeStore
+   * This unlinks a branch UUID from all leaf UUIDs.
+   * @name unlinkLeaves
+   * @param {string} branch - A branch name.
+   * @param {string} branchUUID - A branch UUID.
    * @function
    */
-  async #writeStore() {
-    await Promise.all(Object.entries(this.#tbn1).map(async ([filePath, contents]) => {
-      await this.#writeFile(filePath, contents);
+  async #unlinkLeaves(branch, branchUUID) {
+    // find all leaves
+    const leaves = Object.keys(this.#schema)
+      .filter((b) => this.#schema[b].trunk === branch
+              && this.#schema[b].type !== 'regex');
+
+    await Promise.all(leaves.map(async (leaf) => {
+      await this.#unlinkTrunk(branchUUID, leaf);
     }));
   }
 }

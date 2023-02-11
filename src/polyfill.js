@@ -1,13 +1,4 @@
-/**
- * This splits string on newlines and filters empty lines.
- * @name splitLines
- * @function
- * @param {string} str - Newline separated lines.
- * @returns {string[]} - Array of lines.
- */
-function splitLines(str) {
-  return str.split('\n').filter((line) => line !== '');
-}
+import { splitLines } from './metadir';
 
 /**
  * This find lines in contentFile that match regex lines in patternFile.
