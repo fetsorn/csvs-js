@@ -94,10 +94,10 @@ export default class Query {
    * @param {grepCallback} args.grep - The callback that searches files.
    * @param {randomUUIDCallback} args.randomUUID - The callback that returns a UUID.
    * @param {URLSearchParams} args.searchParams - The search parameters.
-   * @param {string} args.base - The field to search for.
+   * @param {string} args['|'] - The field to search for.
    */
   constructor({
-    readFile, grep, randomUUID, searchParams, base,
+    readFile, grep, randomUUID, searchParams, '|': base,
   }) {
     this.#readFile = readFile;
     this.#grep = grep ?? grepPolyfill;
