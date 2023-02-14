@@ -148,6 +148,30 @@ describe('Query.select() no ripgrep', () => {
       expect(data).toStrictEqual([sortObject(mocks.entryArray)]);
     });
   });
+
+  test('returns empty when query does not match', () => {
+    const searchParams = new URLSearchParams();
+
+    searchParams.set('actname', 'nomatch');
+
+    const query = new Query({ searchParams, ...callback });
+
+    return query.select().then((data) => {
+      expect(data).toStrictEqual([]);
+    });
+  });
+
+  test('queries name1 by UUID', () => {
+    const searchParams = new URLSearchParams();
+
+    searchParams.set('actname', '9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1');
+
+    const query = new Query({ searchParams, ...callback });
+
+    return query.select().then((data) => {
+      expect(data).toStrictEqual([sortObject(mocks.entry2001)]);
+    });
+  });
 });
 
 describe('Query.select() ripgrep', () => {
@@ -315,26 +339,26 @@ describe('Query.select() base', () => {
     callback.readFile = async (path) => mocks.metadirAdded[path];
   });
 
-  test('queries name', () => (new Query({ base: 'actname', ...callback })).select().then((data) => {
-    expect(data.map((obj) => obj.actname)).toStrictEqual(mocks.optionsActname);
+  test('queries name', () => (new Query({ '|': 'actname', ...callback })).select().then((data) => {
+    expect(data).toStrictEqual(mocks.optionsActname);
   }));
 
-  test('queries date', () => (new Query({ base: 'actdate', ...callback })).select().then((data) => {
-    expect(data.map((obj) => obj.actdate)).toStrictEqual(mocks.optionsActdate);
+  test('queries date', () => (new Query({ '|': 'actdate', ...callback })).select().then((data) => {
+    expect(data).toStrictEqual(mocks.optionsActdate);
   }));
 
-  test('queries sayname with grep', () => (new Query({ base: 'sayname', ...callback })).select().then((data) => {
-    expect(data.map((obj) => obj.sayname)).toStrictEqual(mocks.optionsSaynameGrep);
+  test('queries sayname with grep', () => (new Query({ '|': 'sayname', ...callback })).select().then((data) => {
+    expect(data).toStrictEqual(mocks.optionsSayname);
   }));
 
-  test('queries saydate with grep', () => (new Query({ base: 'saydate', ...callback })).select().then((data) => {
-    expect(data.map((obj) => obj.saydate)).toStrictEqual(mocks.optionsSaydateGrep);
+  test('queries saydate with grep', () => (new Query({ '|': 'saydate', ...callback })).select().then((data) => {
+    expect(data).toStrictEqual(mocks.optionsSaydate);
   }));
 
   test('queries object', async () => {
     callback.readFile = async (path) => mocks.metadirArray[path];
 
-    const query = new Query({ base: 'export1_tag', ...callback });
+    const query = new Query({ '|': 'export1_tag', ...callback });
 
     const data = await query.select();
 

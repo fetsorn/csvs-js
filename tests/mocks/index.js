@@ -28,10 +28,8 @@ import {
 import {
   optionsActname,
   optionsActdate,
-  optionsActnameGrep,
-  optionsActdateGrep,
-  optionsSaynameGrep,
-  optionsSaydateGrep,
+  optionsSayname,
+  optionsSaydate,
   optionsExport1Tag,
 } from './options.js';
 
@@ -61,9 +59,7 @@ export default {
   metadirDeletedArrayItem,
   optionsActname,
   optionsActdate,
-  optionsActnameGrep,
-  optionsActdateGrep,
-  optionsSaynameGrep,
-  optionsSaydateGrep,
+  optionsSayname,
+  optionsSaydate,
   optionsExport1Tag,
 };

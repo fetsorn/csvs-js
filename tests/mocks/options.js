@@ -1,14 +1,87 @@
-const optionsActname = ['name1', 'name2', 'name3', 'name5'];
+const optionsActname = [{
+  UUID: '9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1',
+  actname: 'name1',
+  '|': 'actname',
+},
+{
+  UUID: '069587dcb8f8b63329ae53051ba79ba34ba0deb41c7a1e044280d7b6bb15e4f0',
+  actname: 'name2',
+  '|': 'actname',
+},
+{
+  UUID: 'b218ca013905fc528204bdadf9e104acd87d646a2d90ef834526fbf85b17e690',
+  actname: 'name3',
+  '|': 'actname',
+},
+{
+  UUID: '7b54eeb6e51f461d9d87a7f7718116ee79dfd90440775ce51f1f1963488d23f0',
+  actname: 'name5',
+  '|': 'actname',
+}];
 
-const optionsActdate = ['2001-01-01', '2002-01-01', '2003-01-01', '2005-01-01'];
+const optionsActdate = [
+  {
+    UUID: '4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d',
+    actdate: '2001-01-01',
+    '|': 'actdate',
+  },
+  {
+    UUID: '161c6b3d37ba3341b7775b10730b2ded837c3d84d77fb1a046fa198e9db8cbbc',
+    actdate: '2002-01-01',
+    '|': 'actdate',
+  },
+  {
+    UUID: '28a15dd418a2eed8bc7c2133b21bf942182cc58160dfea0c9dd98f155d80ea10',
+    actdate: '2003-01-01',
+    '|': 'actdate',
+  },
+  {
+    UUID: '0c54836dcb1d1b88790774a67704dac761613d3af3fa942cb339d355328c5bb7',
+    actdate: '2005-01-01',
+    '|': 'actdate',
+  }];
 
-const optionsActnameGrep = ['name1', 'name2', 'name3', 'name5'];
+const optionsSayname = [{
+  UUID: '9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1',
+  sayname: 'name1',
+  '|': 'sayname',
+},
+{
+  UUID: '069587dcb8f8b63329ae53051ba79ba34ba0deb41c7a1e044280d7b6bb15e4f0',
+  sayname: 'name2',
+  '|': 'sayname',
+},
+{
+  UUID: 'b218ca013905fc528204bdadf9e104acd87d646a2d90ef834526fbf85b17e690',
+  sayname: 'name3',
+  '|': 'sayname',
+},
+{
+  UUID: '8b30955ad81009092a766bab12ede073956eb5ef1862f2ab5ac5b69ab43a79c5',
+  sayname: 'name4',
+  '|': 'sayname',
+}];
 
-const optionsActdateGrep = ['2001-01-01', '2002-01-01', '2003-01-01', '2005-01-01'];
-
-const optionsSaynameGrep = ['name1', 'name2', 'name3', 'name4'];
-
-const optionsSaydateGrep = ['2001-01-01', '2002-01-01', '2003-01-01', '2004-01-01'];
+const optionsSaydate = [{
+  UUID: '4935b73812dd87780ee8deae03d0bbcb125bbcdc05271066ca527ab029e4e79d',
+  saydate: '2001-01-01',
+  '|': 'saydate',
+},
+{
+  UUID: '161c6b3d37ba3341b7775b10730b2ded837c3d84d77fb1a046fa198e9db8cbbc',
+  saydate: '2002-01-01',
+  '|': 'saydate',
+},
+{
+  UUID: '28a15dd418a2eed8bc7c2133b21bf942182cc58160dfea0c9dd98f155d80ea10',
+  saydate: '2003-01-01',
+  '|': 'saydate',
+},
+{
+  UUID: 'd21966fdfaca51c457dddf8b6f8089b41190551166eede4e377edcb762f6bcc8',
+  saydate: '2004-01-01',
+  '|': 'saydate',
+}];
 
 const optionsExport1Tag = [
   {
@@ -28,9 +101,7 @@ const optionsExport1Tag = [
 export {
   optionsActname,
   optionsActdate,
-  optionsActnameGrep,
-  optionsActdateGrep,
-  optionsSaynameGrep,
-  optionsSaydateGrep,
+  optionsSayname,
+  optionsSaydate,
   optionsExport1Tag,
 };

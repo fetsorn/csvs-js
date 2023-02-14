@@ -2,7 +2,7 @@
 import { grepPolyfill, randomUUIDPolyfill } from './polyfill.js';
 import { findSchemaRoot, findCrown, findCrownPaths } from './schema.js';
 import {
-  takeUUID, takeValue, takeUUIDs, takeValues,
+  takeValue, takeUUIDs, takeValues,
 } from './metadir.js';
 
 /**
@@ -206,7 +206,7 @@ export default class Query {
 
           const branchLines = await this.#grep(
             this.#store[`metadir/props/${this.#schema[branch].dir ?? branch}/index.csv`],
-            `,${branchValue}$`,
+            `(^${branchValue},)|(,${branchValue}$)`,
           );
 
           const branchUUIDs = takeUUIDs(branchLines);
@@ -214,7 +214,9 @@ export default class Query {
           if (branch === base) {
             baseUUIDSets.push(branchUUIDs);
           } else {
-            baseUUIDSets.push(await this.#findBaseUUIDs(base, branch, branchUUIDs));
+            const baseUUIDs = await this.#findBaseUUIDs(base, branch, branchUUIDs);
+
+            baseUUIDSets.push(baseUUIDs);
           }
         }
       }
@@ -235,6 +237,8 @@ export default class Query {
    * @returns {string[]} - Array of base UUIDs.
    */
   async #findBaseUUIDs(base, branch, branchUUIDs) {
+    if (branchUUIDs.length === 0) { return []; }
+
     const { trunk } = this.#schema[branch];
 
     const pairLines = await this.#grep(
