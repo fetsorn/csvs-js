@@ -330,6 +330,34 @@ describe('Query.select() ripgrep', () => {
       sortObject(mocks.entry2001),
     ]));
   });
+
+  test('queries export1_tag with export1_key', () => {
+    const searchParams = new URLSearchParams();
+
+    searchParams.set('export1_key', 'longkey1');
+
+    callback.readFile = (path) => mocks.metadirArrayAdded[path];
+
+    const query = new Query({ '|': 'export1_tag', searchParams, ...callback });
+
+    return query.select().then((data) => {
+      expect(data).toStrictEqual([sortObject(mocks.entryExport1Tag)]);
+    });
+  });
+
+  test('queries unlinked export1_tag with export1_key', () => {
+    const searchParams = new URLSearchParams();
+
+    searchParams.set('export1_key', 'longkey1');
+
+    callback.readFile = (path) => mocks.metadirDeletedArrayItem[path];
+
+    const query = new Query({ '|': 'export1_tag', searchParams, ...callback });
+
+    return query.select().then((data) => {
+      expect(data).toStrictEqual([sortObject(mocks.entryExport1Tag)]);
+    });
+  });
 });
 
 describe('Query.select() base', () => {

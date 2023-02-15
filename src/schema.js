@@ -73,15 +73,17 @@ export function findCrownPaths(schema, base) {
     }
 
     switch (schema[branch].type) {
-      case 'hash':
       case 'regex':
         break;
 
       case 'object':
       case 'array':
+        filePaths.push(`metadir/props/${schema[branch].dir ?? branch}/index.csv`);
+
         if (branch !== base) {
           filePaths = filePaths.concat(findCrownPaths(schema, branch));
         }
+
         break;
 
       default:

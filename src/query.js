@@ -330,14 +330,6 @@ export default class Query {
    * @returns {object|object[]} - Value or array of values.
    */
   async #buildBranchValue(base, baseUUID, branch) {
-    const { trunk: baseTrunk } = this.#schema[base];
-
-    // if searchParams already has value, return it immediately
-    // skip if branch belongs to an array item because those branch values can vary
-    // if (this.#searchParams.has(branch) && this.#schema[baseTrunk]?.type !== 'array') {
-    //   return this.#searchParams.get(branch);
-    // }
-
     // get the branch UUID related to the base UUID
     const branchUUID = await this.#findBranchUUID(base, baseUUID, branch);
 

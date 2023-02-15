@@ -230,24 +230,24 @@ export default class Entry {
     }
 
     // add to props if needed
-    if (branchType !== 'hash' && branchType !== 'object' && branchType !== 'array') {
-      const indexPath = `metadir/props/${this.#schema[branch].dir ?? branch}/index.csv`;
+    const indexPath = `metadir/props/${this.#schema[branch].dir ?? branch}/index.csv`;
 
-      const indexFile = this.#output[indexPath] ?? this.#store[indexPath];
+    const indexFile = this.#output[indexPath] ?? this.#store[indexPath];
 
-      const branchValueEscaped = this.#schema[branch].type === 'string'
-        ? JSON.stringify(branchValue)
-        : branchValue;
+    const branchValueEscaped = this.#schema[branch].type === 'string'
+      ? JSON.stringify(branchValue)
+      : branchValue;
 
-      const indexLine = `${branchUUID},${branchValueEscaped}\n`;
+    const isUUID = branchType === 'hash' || branchType === 'object' || branchType === 'array';
 
-      if (indexFile === '\n') {
-        this.#output[indexPath] = indexLine;
-      } else if (!indexFile.includes(indexLine)) {
-        const indexPruned = await this.#grep(indexFile, branchUUID, true);
+    const indexLine = isUUID ? `${branchUUID}\n` : `${branchUUID},${branchValueEscaped}\n`;
 
-        this.#output[indexPath] = indexPruned + indexLine;
-      }
+    if (indexFile === '\n') {
+      this.#output[indexPath] = indexLine;
+    } else if (!indexFile.includes(indexLine)) {
+      const indexPruned = await this.#grep(indexFile, branchUUID, true);
+
+      this.#output[indexPath] = indexPruned + indexLine;
     }
 
     await this.#linkLeaves(entry, branchUUID);
@@ -327,8 +327,11 @@ export default class Entry {
         if (this.#schema[branch].type === 'array') {
           const leafItems = entry.items.filter((item) => item['|'] === leaf);
 
+          // unlink all items from branch for refresh
+          await this.#unlinkLeaves(branch, branchUUID);
+
           await Promise.all(leafItems.map(async (item) => {
-          // for (const item of leafItems) {
+            // for (const item of leafItems) {
             await this.#linkTrunk(branchUUID, item);
           }));
         } else {

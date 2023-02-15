@@ -18,6 +18,18 @@ metadir['metadir/props/date/index.csv'] = `4935b73812dd87780ee8deae03d0bbcb125bb
 161c6b3d37ba3341b7775b10730b2ded837c3d84d77fb1a046fa198e9db8cbbc,2002-01-01
 `;
 
+metadir['metadir/props/export_tags/index.csv'] = `9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f
+d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35
+`;
+
+metadir['metadir/props/export1_tag/index.csv'] = `1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42
+fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77
+4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce
+`;
+
+metadir['metadir/props/export2_tag/index.csv'] = `de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579
+`;
+
 metadir['metadir/props/export1_channel/index.csv'] = `63437e32bb26ceb2573dfcc40d39d910f994509d0c2ebee14865e2bfd93b50cd,"https://channel1.url"
 704fa022122f091ab89c1ad98a7fb9b38fcc13a9491b79ebf95d2f2ed705142f,"https://channel2.url"
 `;

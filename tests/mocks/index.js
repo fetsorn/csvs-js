@@ -24,6 +24,7 @@ import {
   entryAddedArrayItem,
   entryEditedArrayItem,
   entryDeletedArrayItem,
+  entryExport1Tag,
 } from './entries.js';
 import {
   optionsActname,
@@ -44,6 +45,7 @@ export default {
   entryAddedArrayItem,
   entryEditedArrayItem,
   entryDeletedArrayItem,
+  entryExport1Tag,
   metadirDefault,
   metadirEmpty,
   metadirEdited,

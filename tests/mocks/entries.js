@@ -196,6 +196,13 @@ const entryDeletedArrayItem = {
   UUID: '8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704',
 };
 
+const entryExport1Tag = {
+  '|': 'export1_tag',
+  export1_channel: 'https://channel1.url',
+  export1_key: 'longkey1',
+  UUID: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
+};
+
 export {
   entry2001,
   entry2002,
@@ -207,4 +214,5 @@ export {
   entryAddedArrayItem,
   entryEditedArrayItem,
   entryDeletedArrayItem,
+  entryExport1Tag,
 };
