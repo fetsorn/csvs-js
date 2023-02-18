@@ -1,9 +1,9 @@
 /* eslint-disable import/extensions */
-import { grepPolyfill, randomUUIDPolyfill } from './polyfill.js';
-import { findSchemaRoot, findCrown, findCrownPaths } from './schema.js';
+import { findSchemaRoot, findCrown } from './schema.js';
 import {
   takeValue, takeUUIDs, takeValues,
 } from './metadir.js';
+import Store from './store.js';
 
 /**
  * This finds all UUIDs of the branch.
@@ -25,67 +25,27 @@ export function findAllUUIDs(store, schema, branch) {
 /** Class representing a database query. */
 export default class Query {
   /**
-   * This callback reads db.
-   * @callback readFileCallback
-   * @param {string} path - The file path.
-   * @returns {string} - The file contents
+   * .
+   * @type {Object}
    */
+  #callback;
 
   /**
-   * readFile is the callback that reads db.
-   * @type {readFileCallback}
-   */
-  #readFile;
-
-  /**
-   * This callback searches files.
-   * @callback grepCallback
-   * @param {string} contents - The file contents.
-   * @param {string} regex - The regular expression in ripgrep format.
-   * @returns {string} - The search results
-   */
-
-  /**
-   * grep is the callback that searches files.
-   * @type {grepCallback}
-   */
-  #grep;
-
-  /**
-   * This callback returns a UUID.
-   * @callback randomUUIDCallback
-   * @returns {string} - UUID compliant with RFC 4122
-   */
-
-  /**
-   * randomUUID is the callback that returns a UUID.
-   * @type {randomUUIDCallback}
-   */
-  #randomUUID;
-
-  /**
-   * schema is the database schema.
-   * @type {object}
-   */
-  #schema;
-
-  /**
-   * store is the map of file paths to file contents.
-   * @type {URLSearchParams}
+   * .
+   * @type {Store}
    */
   #store;
 
   /**
    * Create a database instance.
-   * @param {Object} args - Object with callbacks.
-   * @param {readFileCallback} args.readFile - The callback that reads db.
-   * @param {grepCallback} args.grep - The callback that searches files.
-   * @param {randomUUIDCallback} args.randomUUID - The callback that returns a UUID.
+   * @param {Object} callback - Object with callbacks.
+   * @param {readFileCallback} callback.readFile - The callback that reads db.
+   * @param {grepCallback} callback.grep - The callback that searches files.
    */
-  constructor({ readFile, grep, randomUUID }) {
-    this.#readFile = readFile;
-    this.#grep = grep ?? grepPolyfill;
-    this.#randomUUID = randomUUID ?? crypto.randomUUID ?? randomUUIDPolyfill;
+  constructor(callback) {
+    this.#callback = callback;
+
+    this.#store = new Store(callback);
   }
 
   /**
@@ -96,15 +56,15 @@ export default class Query {
    * @returns {Object[]}
    */
   async select(urlSearchParams) {
-    this.#schema = await this.#readSchema();
+    await this.#store.readSchema();
 
     const searchParams = urlSearchParams ?? new URLSearchParams();
 
     // if no base is provided, find first schema root
-    const base = searchParams.get('|') ?? findSchemaRoot(this.#schema);
+    const base = searchParams.get('|') ?? findSchemaRoot(this.#store.schema);
 
     // get a map of database file contents
-    this.#store = await this.#readStore(base);
+    await this.#store.read(base);
 
     // get an array of base UUIDs
     const baseUUIDs = await this.#searchUUIDs(base, searchParams);
@@ -113,36 +73,6 @@ export default class Query {
     const entries = await this.#buildEntries(base, baseUUIDs);
 
     return entries;
-  }
-
-  /**
-   * This returns the database schema.
-   * @name readSchema
-   * @function
-   * @returns {object} - database schema.
-   */
-  async #readSchema() {
-    return JSON.parse(await this.#readFile('metadir.json'));
-  }
-
-  /**
-   * This returns a map of database file contents.
-   * @name readStore
-   * @function
-   * @param {string} base - Base branch.
-   * @returns {Map} - Map of file paths to file contents.
-   */
-  async #readStore(base) {
-    // get array of all filepaths required to search for base branch
-    const filePaths = findCrownPaths(this.#schema, base);
-
-    const store = {};
-
-    await Promise.all(filePaths.map(async (filePath) => {
-      store[filePath] = (await this.#readFile(filePath)) ?? '\n';
-    }));
-
-    return store;
   }
 
   /**
@@ -155,7 +85,7 @@ export default class Query {
    */
   async #searchUUIDs(base, searchParams) {
     // get array of all UUIDs of the base branch
-    const baseUUIDSets = [findAllUUIDs(this.#store, this.#schema, base)];
+    const baseUUIDSets = [findAllUUIDs(this.#store.cache, this.#store.schema, base)];
 
     const searchEntries = Array.from(searchParams.entries()).filter(
       ([key]) => key !== 'groupBy' && key !== 'overviewType' && key !== '|',
@@ -163,13 +93,17 @@ export default class Query {
 
     // grep against every search result until reaching a common set of UUIDs
     await Promise.all(searchEntries.map(async ([branch, value]) => {
-      switch (this.#schema[branch].type) {
+      switch (this.#store.schema[branch].type) {
         case 'rule': {
-          const { trunk } = this.#schema[branch];
+          const { trunk } = this.#store.schema[branch];
 
-          const trunkLines = await this.#grep(
-            this.#store[`metadir/props/${this.#schema[trunk].dir ?? trunk}/index.csv`],
-            this.#store[`metadir/props/${this.#schema[branch].dir ?? branch}/rules/${value}.rule`],
+          const rulePath = `metadir/props/${this.#store.schema[branch].dir ?? branch}/rules/${value}.rule`;
+
+          const ruleFile = await this.#callback.readFile(rulePath) ?? '\n';
+
+          const trunkLines = await this.#callback.grep(
+            this.#store.cache[`metadir/props/${this.#store.schema[trunk].dir ?? trunk}/index.csv`],
+            ruleFile,
           );
 
           const trunkUUIDs = takeUUIDs(trunkLines);
@@ -184,12 +118,12 @@ export default class Query {
         }
 
         default: {
-          const branchValue = this.#schema[branch].type === 'string'
+          const branchValue = this.#store.schema[branch].type === 'string'
             ? JSON.stringify(value)
             : value;
 
-          const branchLines = await this.#grep(
-            this.#store[`metadir/props/${this.#schema[branch].dir ?? branch}/index.csv`],
+          const branchLines = await this.#callback.grep(
+            this.#store.cache[`metadir/props/${this.#store.schema[branch].dir ?? branch}/index.csv`],
             `(^${branchValue},)|(,${branchValue}$)`,
           );
 
@@ -223,10 +157,10 @@ export default class Query {
   async #findBaseUUIDs(base, branch, branchUUIDs) {
     if (branchUUIDs.length === 0) { return []; }
 
-    const { trunk } = this.#schema[branch];
+    const { trunk } = this.#store.schema[branch];
 
-    const pairLines = await this.#grep(
-      this.#store[`metadir/pairs/${trunk}-${branch}.csv`],
+    const pairLines = await this.#callback.grep(
+      this.#store.cache[`metadir/pairs/${trunk}-${branch}.csv`],
       branchUUIDs.join('\n'),
     );
 
@@ -268,7 +202,7 @@ export default class Query {
   async #buildEntry(base, baseUUID) {
     const entry = { '|': base, UUID: baseUUID };
 
-    switch (this.#schema[base].type) {
+    switch (this.#store.schema[base].type) {
       case 'object':
         break;
 
@@ -281,8 +215,8 @@ export default class Query {
     }
 
     // find all branches connected to base
-    const crown = findCrown(this.#schema, base)
-      .filter((branch) => this.#schema[branch].type !== 'regex');
+    const crown = findCrown(this.#store.schema, base)
+      .filter((branch) => this.#store.schema[branch].type !== 'regex');
 
     await Promise.all(crown.map(async (branch) => {
     // for (const branch of leaves) {
@@ -290,7 +224,7 @@ export default class Query {
       const branchValue = await this.#buildBranchValue(base, baseUUID, branch);
 
       if (branchValue !== undefined) {
-        if (this.#schema[base].type === 'array') {
+        if (this.#store.schema[base].type === 'array') {
           entry.items.push(branchValue);
 
           entry.items = entry.items.flat();
@@ -350,14 +284,14 @@ export default class Query {
    * @returns {string|string[]} - Branch UUID(s).
    */
   async #findBranchUUID(base, baseUUID, branch) {
-    const { trunk } = this.#schema[branch];
+    const { trunk } = this.#store.schema[branch];
 
     const trunkUUID = trunk === base
       ? baseUUID
       : await this.#findBranchUUID(base, baseUUID, trunk);
 
-    const pairLines = await this.#grep(
-      this.#store[`metadir/pairs/${trunk}-${branch}.csv`],
+    const pairLines = await this.#callback.grep(
+      this.#store.cache[`metadir/pairs/${trunk}-${branch}.csv`],
       `^${trunkUUID},`,
     );
 
@@ -365,7 +299,7 @@ export default class Query {
       return undefined;
     }
 
-    if (this.#schema[base].type === 'array') {
+    if (this.#store.schema[base].type === 'array') {
       const branchUUIDs = takeValues(pairLines);
 
       return branchUUIDs;
@@ -385,7 +319,7 @@ export default class Query {
    * @returns {object} - Branch value.
    */
   async #findBranchValue(branch, branchUUID) {
-    switch (this.#schema[branch].type) {
+    switch (this.#store.schema[branch].type) {
       case 'array':
         return this.#buildEntry(branch, branchUUID);
 
@@ -396,8 +330,8 @@ export default class Query {
         return branchUUID;
 
       case 'string': {
-        const branchLine = await this.#grep(
-          this.#store[`metadir/props/${this.#schema[branch].dir ?? branch}/index.csv`],
+        const branchLine = await this.#callback.grep(
+          this.#store.cache[`metadir/props/${this.#store.schema[branch].dir ?? branch}/index.csv`],
           `^${branchUUID}`,
         );
 
@@ -411,8 +345,8 @@ export default class Query {
       }
 
       default: {
-        const branchLine = await this.#grep(
-          this.#store[`metadir/props/${this.#schema[branch].dir ?? branch}/index.csv`],
+        const branchLine = await this.#callback.grep(
+          this.#store.cache[`metadir/props/${this.#store.schema[branch].dir ?? branch}/index.csv`],
           `^${branchUUID}`,
         );
 

@@ -6,9 +6,7 @@ import { TextEncoder, TextDecoder, promisify } from 'util';
 import fs from 'fs';
 import crypto from 'crypto';
 import { exec } from 'child_process';
-import {
-  Query, Entry,
-} from '../src/index';
+import { CSVS } from '../src/index';
 import mocks from './mocks';
 
 // node polyfills for browser APIs
@@ -87,7 +85,7 @@ describe('Query.select() no ripgrep', () => {
 
     searchParams.set('actname', 'name1');
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2001)]);
@@ -99,7 +97,7 @@ describe('Query.select() no ripgrep', () => {
 
     searchParams.set('actname', 'name2');
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2002)]);
@@ -111,7 +109,7 @@ describe('Query.select() no ripgrep', () => {
 
     searchParams.set('actname', 'name3');
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2003Unedited)]);
@@ -125,7 +123,7 @@ describe('Query.select() no ripgrep', () => {
 
     callback.readFile = (path) => mocks.metadirUnordered[path];
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2002)]);
@@ -139,7 +137,7 @@ describe('Query.select() no ripgrep', () => {
 
     callback.readFile = (path) => mocks.metadirArray[path];
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       // array is unordered, order for reproducible test
@@ -154,7 +152,7 @@ describe('Query.select() no ripgrep', () => {
 
     searchParams.set('actname', 'nomatch');
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([]);
@@ -166,7 +164,7 @@ describe('Query.select() no ripgrep', () => {
 
     searchParams.set('actname', '9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1');
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2001)]);
@@ -174,7 +172,7 @@ describe('Query.select() no ripgrep', () => {
   });
 });
 
-describe('Query.select(searchParams) ripgrep', () => {
+describe('CSVS.select(searchParams) ripgrep', () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
 
@@ -186,7 +184,7 @@ describe('Query.select(searchParams) ripgrep', () => {
 
     searchParams.set('actname', 'name1');
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2001)]);
@@ -198,7 +196,7 @@ describe('Query.select(searchParams) ripgrep', () => {
 
     searchParams.set('actname', 'name2');
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2002)]);
@@ -210,7 +208,7 @@ describe('Query.select(searchParams) ripgrep', () => {
 
     searchParams.set('actname', 'name3');
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2003Unedited)]);
@@ -224,7 +222,7 @@ describe('Query.select(searchParams) ripgrep', () => {
 
     callback.readFile = (path) => mocks.metadirArrayAdded[path];
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       // array is unordered, order for reproducible test
@@ -241,7 +239,7 @@ describe('Query.select(searchParams) ripgrep', () => {
 
     callback.readFile = (path) => mocks.metadirArrayAdded[path];
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       // array is unordered, order for reproducible test
@@ -258,7 +256,7 @@ describe('Query.select(searchParams) ripgrep', () => {
 
     callback.readFile = (path) => mocks.metadirArrayAdded[path];
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       // array is unordered, order for reproducible test
@@ -273,7 +271,7 @@ describe('Query.select(searchParams) ripgrep', () => {
 
     searchParams.set('actname', 'name.*');
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       const dataSorted = data.map(sortObject)
@@ -292,7 +290,7 @@ describe('Query.select(searchParams) ripgrep', () => {
 
     searchParams.set('moddate', '2001-01-01');
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => expect(data).toStrictEqual([
       sortObject(mocks.entry2001),
@@ -304,7 +302,7 @@ describe('Query.select(searchParams) ripgrep', () => {
 
     searchParams.set('moddate', '.*-01-01');
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       const dataSorted = data.map(sortObject)
@@ -324,7 +322,7 @@ describe('Query.select(searchParams) ripgrep', () => {
 
     searchParams.set('actdate', '2001-01-01');
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => expect(data).toStrictEqual([
       sortObject(mocks.entry2001),
@@ -340,7 +338,7 @@ describe('Query.select(searchParams) ripgrep', () => {
 
     callback.readFile = (path) => mocks.metadirArrayAdded[path];
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entryExport1Tag)]);
@@ -356,7 +354,7 @@ describe('Query.select(searchParams) ripgrep', () => {
 
     callback.readFile = (path) => mocks.metadirDeletedArrayItem[path];
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entryExport1Tag)]);
@@ -364,7 +362,7 @@ describe('Query.select(searchParams) ripgrep', () => {
   });
 });
 
-describe('Query.select(searchParams) base', () => {
+describe('CSVS.select(searchParams) base', () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
 
@@ -376,11 +374,11 @@ describe('Query.select(searchParams) base', () => {
 
     searchParams.set('|', 'actname');
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual(mocks.optionsActname);
-    })
+    });
   });
 
   test('queries date', () => {
@@ -388,11 +386,11 @@ describe('Query.select(searchParams) base', () => {
 
     searchParams.set('|', 'actdate');
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual(mocks.optionsActdate);
-    })
+    });
   });
 
   test('queries sayname with grep', () => {
@@ -402,14 +400,14 @@ describe('Query.select(searchParams) base', () => {
 
     searchParams.set('|', 'sayname');
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       const dataSorted = data.map(sortObject)
         .sort((a, b) => (a.sayname < b.sayname ? -1 : 1));
 
       expect(dataSorted).toStrictEqual(mocks.optionsSayname);
-    })
+    });
   });
 
   test('queries saydate with grep', () => {
@@ -419,14 +417,14 @@ describe('Query.select(searchParams) base', () => {
 
     searchParams.set('|', 'saydate');
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     return query.select(searchParams).then((data) => {
       const dataSorted = data.map(sortObject)
         .sort((a, b) => (a.saydate < b.saydate ? -1 : 1));
 
       expect(dataSorted).toStrictEqual(mocks.optionsSaydate);
-    })
+    });
   });
 
   test('queries object', async () => {
@@ -436,7 +434,7 @@ describe('Query.select(searchParams) base', () => {
 
     searchParams.set('|', 'export1_tag');
 
-    const query = new Query(callback);
+    const query = new CSVS(callback);
 
     const data = await query.select(searchParams);
 
@@ -463,17 +461,17 @@ describe('Entry.update()', () => {
     counter = 0;
   });
 
-  test('does nothing on no change', () => (new Entry(callback)).update(mocks.entry2001)
+  test('does nothing on no change', () => (new CSVS(callback)).update(mocks.entry2001)
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirDefault);
     }));
 
-  test('edits entry', () => (new Entry(callback)).update(mocks.entry2003Edited)
+  test('edits entry', () => (new CSVS(callback)).update(mocks.entry2003Edited)
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirEdited);
     }));
 
-  test('adds entry', () => (new Entry(callback)).update(mocks.entryAdded)
+  test('adds entry', () => (new CSVS(callback)).update(mocks.entryAdded)
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirAdded);
     }));
@@ -485,7 +483,7 @@ describe('Entry.update()', () => {
 
     callback.writeFile = (path, contents) => { editedFilesCustom[path] = contents; };
 
-    return (new Entry(callback)).update(mocks.entryAdded)
+    return (new CSVS(callback)).update(mocks.entryAdded)
       .then(() => {
         expect(editedFilesCustom).toStrictEqual(mocks.metadirEmptyAdded);
       });
@@ -494,7 +492,7 @@ describe('Entry.update()', () => {
   test('adds entry with random uuid', () => {
     callback.randomUUID = crypto.randomUUID;
 
-    return (new Entry(callback)).update(mocks.entryAdded)
+    return (new CSVS(callback)).update(mocks.entryAdded)
       .then(() => {
         expect(editedFiles).not.toStrictEqual(mocks.metadirAdded);
       });
@@ -503,7 +501,7 @@ describe('Entry.update()', () => {
   test('falls back to random UUID if callback is not specified', () => {
     delete callback.randomUUID;
 
-    return (new Entry(callback)).update(mocks.entryAdded)
+    return (new CSVS(callback)).update(mocks.entryAdded)
       .then(() => {
         expect(editedFiles).not.toStrictEqual(mocks.metadirAdded);
       });
@@ -529,7 +527,7 @@ describe('Entry.update(), arrays', () => {
     counter = 0;
   });
 
-  test('adds entry with array', () => (new Entry(callback)).update(mocks.entryArrayAdded)
+  test('adds entry with array', () => (new CSVS(callback)).update(mocks.entryArrayAdded)
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirArrayAdded);
     }));
@@ -543,23 +541,23 @@ describe('Entry.update(), arrays', () => {
 
     callback.writeFile = (path, contents) => { editedFilesCustom[path] = contents; };
 
-    return (new Entry(callback)).update(mocks.entryArray)
+    return (new CSVS(callback)).update(mocks.entryArray)
       .then(() => {
         expect(editedFilesCustom).toStrictEqual(mocks.metadirArray);
       });
   });
 
-  test('adds array item to entry', () => (new Entry(callback)).update(mocks.entryAddedArrayItem)
+  test('adds array item to entry', () => (new CSVS(callback)).update(mocks.entryAddedArrayItem)
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirAddedArrayItem);
     }));
 
-  test('edits array item', () => (new Entry(callback)).update(mocks.entryEditedArrayItem)
+  test('edits array item', () => (new CSVS(callback)).update(mocks.entryEditedArrayItem)
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirEditedArrayItem);
     }));
 
-  test('removes array item', () => (new Entry(callback)).update(mocks.entryDeletedArrayItem)
+  test('removes array item', () => (new CSVS(callback)).update(mocks.entryDeletedArrayItem)
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirDeletedArrayItem);
     }));
@@ -580,7 +578,7 @@ describe('Entry.delete()', () => {
     callback.writeFile = writeFileMock;
   });
 
-  test('deletes entry', () => (new Entry(callback)).delete(mocks.entry2003Unedited)
+  test('deletes entry', () => (new CSVS(callback)).delete(mocks.entry2003Unedited)
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirDeleted);
     }));
@@ -588,7 +586,7 @@ describe('Entry.delete()', () => {
   test('deletes entry ripgrep', () => {
     callback.grep = grepCLI;
 
-    const entry = new Entry(callback);
+    const entry = new CSVS(callback);
 
     return entry.delete(mocks.entry2003Unedited)
       .then(() => {

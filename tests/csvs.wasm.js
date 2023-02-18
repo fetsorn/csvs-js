@@ -2,7 +2,7 @@
 /* eslint-disable import/extensions */
 // eslint-disable-next-line import/no-relative-packages
 import init, { grep } from '../node_modules/@fetsorn/wasm-grep/pkg/web/index.js';
-import * as csvs from '../src/index.js';
+import { CSVS } from '../src/index.js';
 import mocks from './mocks/index.js';
 
 function sortObject(a) {
@@ -34,7 +34,7 @@ async function testQuery1() {
 
   searchParams.set('actname', 'name1');
 
-  const data = await (new csvs.Query(callback).select(searchParams));
+  const data = await (new CSVS(callback).select(searchParams));
 
   expect(data.map(sortObject), [sortObject(mocks.entry2001)]);
 }
@@ -46,7 +46,7 @@ async function testQuery2() {
 
   searchParams.set('actname', 'name2');
 
-  const data = await (new csvs.Query(callback).select(searchParams));
+  const data = await (new CSVS(callback).select(searchParams));
 
   expect(data.map(sortObject), [sortObject(mocks.entry2002)]);
 }
@@ -58,7 +58,7 @@ async function testQuery3() {
 
   searchParams.set('actname', 'name3');
 
-  const data = await (new csvs.Query(callback).select(searchParams));
+  const data = await (new CSVS(callback).select(searchParams));
 
   expect(data.map(sortObject), [sortObject(mocks.entry2003Unedited)]);
 }
@@ -70,7 +70,7 @@ async function testQueryFalse() {
 
   searchParams.set('actname', 'false');
 
-  const data = await (new csvs.Query(callback).select(searchParams));
+  const data = await (new CSVS(callback).select(searchParams));
 
   expect(data.map(sortObject), []);
 }
@@ -82,7 +82,7 @@ async function testQueryRegex() {
 
   searchParams.set('actname', 'name.*');
 
-  const data = await (new csvs.Query(callback).select(searchParams));
+  const data = await (new CSVS(callback).select(searchParams));
 
   const dataSorted = data.map(sortObject)
     .sort((a, b) => (a.saydate < b.saydate ? -1 : 1));
@@ -101,7 +101,7 @@ async function testQueryLeaf() {
 
   searchParams.set('moddate', '2001-01-01');
 
-  const data = await (new csvs.Query(callback).select(searchParams));
+  const data = await (new CSVS(callback).select(searchParams));
 
   expect(data.map(sortObject), [
     sortObject(mocks.entry2001),
@@ -118,7 +118,7 @@ async function testQueryLeafRegex() {
   let data;
 
   try {
-    data = await (new csvs.Query(callback).select(searchParams));
+    data = await (new CSVS(callback).select(searchParams));
 
     data = data.map(sortObject);
   } catch (e) {
@@ -143,7 +143,7 @@ async function testQueryTwoQueries() {
   let data;
 
   try {
-    data = await (new csvs.Query(callback).select(searchParams));
+    data = await (new CSVS(callback).select(searchParams));
 
     data = data.map(sortObject);
   } catch (e) {
