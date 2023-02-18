@@ -2,57 +2,46 @@ export default `{
   "moddate": {
     "trunk": "filepath",
     "dir": "date",
-    "type": "date",
-    "label": "moddate"
+    "type": "date"
   },
   "filetype": {
     "trunk": "filepath",
-    "label": "filetype",
     "type": "string"
   },
   "filesize": {
-    "trunk": "filepath",
-    "label": "filesize"
+    "trunk": "filepath"
   },
   "filehash": {
     "trunk": "filepath",
-    "label": "filehash",
     "type": "hash"
   },
   "actdate": {
     "trunk": "datum",
     "dir": "date",
-    "type": "date",
-    "label": "actdate"
+    "type": "date"
   },
   "tag": {
-    "trunk": "datum",
-    "label": "tag"
+    "trunk": "datum"
   },
   "filepath": {
     "trunk": "datum",
-    "label": "filepath",
     "type": "string"
   },
   "actname": {
     "trunk": "datum",
-    "dir": "name",
-    "label": "actname"
+    "dir": "name"
   },
   "datum": {
-    "type": "string",
-    "label": "datum"
+    "type": "string"
   },
   "saydate": {
     "trunk": "datum",
     "dir": "date",
-    "type": "date",
-    "label": "saydate"
+    "type": "date"
   },
   "sayname": {
     "trunk": "datum",
-    "dir": "name",
-    "label": "sayname"
+    "dir": "name"
   },
   "pathrule": {
     "trunk": "filepath",

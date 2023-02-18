@@ -1,53 +1,43 @@
 export default `{
   "datum": {
-    "type": "string",
-    "label": "datum"
+    "type": "string"
   },
   "actdate": {
     "trunk": "datum",
     "dir": "date",
-    "type": "date",
-    "label": "actdate"
+    "type": "date"
   },
   "actname": {
     "trunk": "datum",
-    "dir": "name",
-    "label": "actname"
+    "dir": "name"
   },
   "saydate": {
     "trunk": "datum",
     "dir": "date",
-    "type": "date",
-    "label": "saydate"
+    "type": "date"
   },
   "sayname": {
     "trunk": "datum",
-    "dir": "name",
-    "label": "sayname"
+    "dir": "name"
   },
   "filepath": {
     "trunk": "datum",
-    "label": "filepath",
     "type": "string"
   },
   "moddate": {
     "trunk": "filepath",
     "dir": "date",
-    "type": "date",
-    "label": "moddate"
+    "type": "date"
   },
   "filetype": {
     "trunk": "filepath",
-    "label": "filetype",
     "type": "string"
   },
   "filesize": {
-    "trunk": "filepath",
-    "label": "filesize"
+    "trunk": "filepath"
   },
   "filehash": {
     "trunk": "filepath",
-    "label": "filehash",
     "type": "hash"
   },
   "pathrule": {
@@ -56,37 +46,42 @@ export default `{
   },
   "export_tags": {
     "trunk": "datum",
-    "type": "array",
-    "label": "export_tags"
+    "type": "array"
   },
   "export1_tag": {
     "trunk": "export_tags",
-    "type": "object",
-    "label": "export1_tag"
+    "type": "object"
   },
   "export1_channel": {
     "trunk": "export1_tag",
-    "type": "string",
-    "label": "export1_channel"
+    "type": "string"
   },
   "export1_key": {
     "trunk": "export1_tag",
-    "type": "string",
-    "label": "export1_key"
+    "type": "string"
   },
   "export2_tag": {
     "trunk": "export_tags",
-    "type": "object",
-    "label": "export2_tag"
+    "type": "object"
   },
   "export2_username": {
     "trunk": "export2_tag",
-    "type": "string",
-    "label": "export2_username"
+    "type": "string"
   },
   "export2_password": {
     "trunk": "export2_tag",
-    "type": "string",
-    "label": "export2_password"
+    "type": "string"
+  },
+  "export2_tag_description": {
+    "trunk": "export2_tag",
+    "type": "object"
+  },
+  "export2_tag_description_text1": {
+    "trunk": "export2_tag_description",
+    "type": "string"
+  },
+  "export2_tag_description_text2": {
+    "trunk": "export2_tag_description",
+    "type": "string"
   }
 }`;

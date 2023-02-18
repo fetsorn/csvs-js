@@ -196,6 +196,43 @@ const entryDeletedArrayItem = {
   UUID: '8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704',
 };
 
+const entryEditedArrayItemObject = {
+  '|': 'datum',
+  datum: 'value1',
+  actdate: '2001-01-01',
+  actname: 'name1',
+  export_tags: {
+    '|': 'export_tags',
+    UUID: '9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f',
+    items: [
+      {
+        '|': 'export1_tag',
+        export1_channel: 'https://channel1.url',
+        export1_key: 'longkey1',
+        UUID: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
+      },
+      {
+        '|': 'export2_tag',
+        export2_username: 'username',
+        export2_password: 'password',
+        export2_tag_description: {
+          '|': 'export2_tag_description',
+          export2_tag_description_text1: 'text1',
+          export2_tag_description_text2: 'text2',
+        },
+        UUID: 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
+      },
+      {
+        '|': 'export1_tag',
+        export1_channel: 'https://channel2.url',
+        export1_key: 'longkey2',
+        UUID: 'fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77',
+      },
+    ],
+  },
+  UUID: '8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704',
+};
+
 const entryExport1Tag = {
   '|': 'export1_tag',
   export1_channel: 'https://channel1.url',
@@ -214,5 +251,6 @@ export {
   entryAddedArrayItem,
   entryEditedArrayItem,
   entryDeletedArrayItem,
+  entryEditedArrayItemObject,
   entryExport1Tag,
 };

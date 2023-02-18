@@ -13,6 +13,7 @@ import metadirArrayAdded from './metadir_array_added.js';
 import metadirAddedArrayItem from './metadir_added_array_item.js';
 import metadirEditedArrayItem from './metadir_edited_array_item.js';
 import metadirDeletedArrayItem from './metadir_deleted_array_item.js';
+import metadirEditedArrayItemObject from './metadir_edited_array_item_object.js';
 import {
   entry2001,
   entry2002,
@@ -24,6 +25,7 @@ import {
   entryAddedArrayItem,
   entryEditedArrayItem,
   entryDeletedArrayItem,
+  entryEditedArrayItemObject,
   entryExport1Tag,
 } from './entries.js';
 import {
@@ -45,6 +47,7 @@ export default {
   entryAddedArrayItem,
   entryEditedArrayItem,
   entryDeletedArrayItem,
+  entryEditedArrayItemObject,
   entryExport1Tag,
   metadirDefault,
   metadirEmpty,
@@ -59,6 +62,7 @@ export default {
   metadirAddedArrayItem,
   metadirEditedArrayItem,
   metadirDeletedArrayItem,
+  metadirEditedArrayItemObject,
   optionsActname,
   optionsActdate,
   optionsSayname,

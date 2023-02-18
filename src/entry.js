@@ -143,7 +143,7 @@ export default class Entry {
 
     await this.#linkLeaves(entry, branchUUID);
 
-    return { UUID: branchUUID, ...branchValue };
+    return { UUID: branchUUID, ...entry };
   }
 
   /**
@@ -222,15 +222,18 @@ export default class Entry {
           await this.#unlinkLeaves(branch, branchUUID);
 
           await Promise.all(leafItems.map(async (item) => {
-            // for (const item of leafItems) {
+          // for (const item of leafItems) {
             await this.#linkTrunk(branchUUID, item);
           }));
         } else {
-          const leafEntry = this.#store.schema[leaf].type === 'array'
+          const leafEntry = this.#store.schema[leaf].type === 'array' || this.#store.schema[leaf].type === 'object'
             ? entry[leaf]
             : Object.keys(entry)
               .filter((b) => this.#store.schema[b]?.trunk === leaf)
-              .reduce((acc, key) => ({ [key]: entry[key], ...acc }), { '|': leaf, [leaf]: entry[leaf] });
+              .reduce(
+                (acc, key) => ({ [key]: entry[key], ...acc }),
+                { '|': leaf, [leaf]: entry[leaf] },
+              );
 
           await this.#linkTrunk(branchUUID, leafEntry);
         }

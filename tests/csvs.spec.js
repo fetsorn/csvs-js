@@ -561,6 +561,11 @@ describe('Entry.update(), arrays', () => {
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirDeletedArrayItem);
     }));
+
+  test('edits array item of type object', () => (new CSVS(callback)).update(mocks.entryEditedArrayItemObject)
+    .then(() => {
+      expect(editedFiles).toStrictEqual(mocks.metadirEditedArrayItemObject);
+    }));
 });
 
 describe('Entry.delete()', () => {
