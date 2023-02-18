@@ -1,6 +1,6 @@
 /* eslint-disable import/extensions */
 import Query from './query.js';
-import Entry from './edit.js';
+import Entry from './entry.js';
 import { grepPolyfill, randomUUIDPolyfill } from './polyfill.js';
 
 export default class CSVS {

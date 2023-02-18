@@ -60,7 +60,12 @@ export default class Store {
     const cache = {};
 
     await Promise.all(filePaths.map(async (filePath) => {
-      cache[filePath] = (await this.#callback.readFile(filePath)) ?? '\n';
+      try {
+        cache[filePath] = (await this.#callback.readFile(filePath)) ?? '\n';
+      } catch (e) {
+        // console.log(e);
+        cache[filePath] = '\n';
+      }
     }));
 
     this.cache = cache;
