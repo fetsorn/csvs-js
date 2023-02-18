@@ -70,18 +70,6 @@ export default class Query {
   #schema;
 
   /**
-   * searchParams are the search parameters.
-   * @type {URLSearchParams}
-   */
-  #searchParams;
-
-  /**
-   * base is the branch to search for.
-   * @type {URLSearchParams}
-   */
-  #base;
-
-  /**
    * store is the map of file paths to file contents.
    * @type {URLSearchParams}
    */
@@ -93,41 +81,36 @@ export default class Query {
    * @param {readFileCallback} args.readFile - The callback that reads db.
    * @param {grepCallback} args.grep - The callback that searches files.
    * @param {randomUUIDCallback} args.randomUUID - The callback that returns a UUID.
-   * @param {URLSearchParams} args.searchParams - The search parameters.
-   * @param {string} args['|'] - The field to search for.
    */
-  constructor({
-    readFile, grep, randomUUID, searchParams, '|': base,
-  }) {
+  constructor({ readFile, grep, randomUUID }) {
     this.#readFile = readFile;
     this.#grep = grep ?? grepPolyfill;
     this.#randomUUID = randomUUID ?? crypto.randomUUID ?? randomUUIDPolyfill;
-    this.#searchParams = searchParams;
-    this.#base = base;
   }
 
   /**
    * This returns an array of entries from the database.
-   * @name run
+   * @name select
    * @function
+   * @param {URLSearchParams} urlSearchParams - The search parameters.
    * @returns {Object[]}
    */
-  async select() {
+  async select(urlSearchParams) {
     this.#schema = await this.#readSchema();
 
-    this.#searchParams = this.#searchParams ?? new URLSearchParams();
+    const searchParams = urlSearchParams ?? new URLSearchParams();
 
     // if no base is provided, find first schema root
-    this.#base = this.#base ?? findSchemaRoot(this.#schema);
+    const base = searchParams.get('|') ?? findSchemaRoot(this.#schema);
 
     // get a map of database file contents
-    this.#store = await this.#readStore(this.#base);
+    this.#store = await this.#readStore(base);
 
     // get an array of base UUIDs
-    const baseUUIDs = await this.#searchUUIDs(this.#base);
+    const baseUUIDs = await this.#searchUUIDs(base, searchParams);
 
     // get an array of entries
-    const entries = await this.#buildEntries(this.#base, baseUUIDs);
+    const entries = await this.#buildEntries(base, baseUUIDs);
 
     return entries;
   }
@@ -167,14 +150,15 @@ export default class Query {
    * @name searchUUIDs
    * @function
    * @param {string} base - Base branch.
+   * @param {URLSearchParams} searchParams - The search parameters.
    * @returns {string[]} - Array of base UUIDs.
    */
-  async #searchUUIDs(base) {
+  async #searchUUIDs(base, searchParams) {
     // get array of all UUIDs of the base branch
     const baseUUIDSets = [findAllUUIDs(this.#store, this.#schema, base)];
 
-    const searchEntries = Array.from(this.#searchParams.entries()).filter(
-      ([key]) => key !== 'groupBy' && key !== 'overviewType',
+    const searchEntries = Array.from(searchParams.entries()).filter(
+      ([key]) => key !== 'groupBy' && key !== 'overviewType' && key !== '|',
     );
 
     // grep against every search result until reaching a common set of UUIDs

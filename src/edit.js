@@ -111,12 +111,10 @@ export default class Entry {
    * @param {writeFileCallback} args.writeFile - The callback that writes db.
    * @param {grepCallback} args.grep - The callback that searches files.
    * @param {randomUUIDCallback} args.randomUUID - The callback that returns a UUID.
-   * @param {object} args.entry - A database entry.
    */
   constructor({
-    readFile, writeFile, grep, randomUUID, entry,
+    readFile, writeFile, grep, randomUUID,
   }) {
-    this.#entry = entry;
     this.#readFile = readFile;
     this.#writeFile = writeFile;
     this.#grep = grep ?? grepPolyfill;
@@ -127,14 +125,15 @@ export default class Entry {
    * This updates the database entry.
    * @name update
    * @function
+   * @param {object} entry - A database entry.
    * @returns {object} - A database entry.
    */
-  async update() {
+  async update(entry) {
     this.#schema = await this.#readSchema();
 
-    this.#store = await this.#readStore(this.#entry['|']);
+    this.#store = await this.#readStore(entry['|']);
 
-    const { value } = await this.#save(this.#entry);
+    const { value } = await this.#save(entry);
 
     await this.#writeStore();
 
@@ -144,18 +143,19 @@ export default class Entry {
   /**
    * This deletes the database entry.
    * @name delete
+   * @param {object} entry - A database entry.
    * @function
    */
-  async delete() {
+  async delete(entry) {
     this.#schema = await this.#readSchema();
 
-    this.#store = await this.#readStore(this.#entry['|']);
+    this.#store = await this.#readStore(entry['|']);
 
-    const branchUUID = await this.#remove(this.#entry);
+    const branchUUID = await this.#remove(entry);
 
-    await this.#unlinkTrunks(this.#entry['|'], this.#entry.UUID ?? branchUUID);
+    await this.#unlinkTrunks(entry['|'], entry.UUID ?? branchUUID);
 
-    await this.#unlinkLeaves(this.#entry['|'], this.#entry.UUID ?? branchUUID);
+    await this.#unlinkLeaves(entry['|'], entry.UUID ?? branchUUID);
 
     await this.#writeStore();
   }

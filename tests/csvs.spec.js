@@ -87,9 +87,9 @@ describe('Query.select() no ripgrep', () => {
 
     searchParams.set('actname', 'name1');
 
-    const query = new Query({ searchParams, ...callback });
+    const query = new Query(callback);
 
-    return query.select().then((data) => {
+    return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2001)]);
     });
   });
@@ -99,9 +99,9 @@ describe('Query.select() no ripgrep', () => {
 
     searchParams.set('actname', 'name2');
 
-    const query = new Query({ searchParams, ...callback });
+    const query = new Query(callback);
 
-    return query.select().then((data) => {
+    return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2002)]);
     });
   });
@@ -111,9 +111,9 @@ describe('Query.select() no ripgrep', () => {
 
     searchParams.set('actname', 'name3');
 
-    const query = new Query({ searchParams, ...callback });
+    const query = new Query(callback);
 
-    return query.select().then((data) => {
+    return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2003Unedited)]);
     });
   });
@@ -125,9 +125,9 @@ describe('Query.select() no ripgrep', () => {
 
     callback.readFile = (path) => mocks.metadirUnordered[path];
 
-    const query = new Query({ searchParams, ...callback });
+    const query = new Query(callback);
 
-    return query.select().then((data) => {
+    return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2002)]);
     });
   });
@@ -139,9 +139,9 @@ describe('Query.select() no ripgrep', () => {
 
     callback.readFile = (path) => mocks.metadirArray[path];
 
-    const query = new Query({ searchParams, ...callback });
+    const query = new Query(callback);
 
-    return query.select().then((data) => {
+    return query.select(searchParams).then((data) => {
       // array is unordered, order for reproducible test
       data[0].export_tags.items.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
 
@@ -154,9 +154,9 @@ describe('Query.select() no ripgrep', () => {
 
     searchParams.set('actname', 'nomatch');
 
-    const query = new Query({ searchParams, ...callback });
+    const query = new Query(callback);
 
-    return query.select().then((data) => {
+    return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([]);
     });
   });
@@ -166,15 +166,15 @@ describe('Query.select() no ripgrep', () => {
 
     searchParams.set('actname', '9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1');
 
-    const query = new Query({ searchParams, ...callback });
+    const query = new Query(callback);
 
-    return query.select().then((data) => {
+    return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2001)]);
     });
   });
 });
 
-describe('Query.select() ripgrep', () => {
+describe('Query.select(searchParams) ripgrep', () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
 
@@ -186,9 +186,9 @@ describe('Query.select() ripgrep', () => {
 
     searchParams.set('actname', 'name1');
 
-    const query = new Query({ searchParams, ...callback });
+    const query = new Query(callback);
 
-    return query.select().then((data) => {
+    return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2001)]);
     });
   });
@@ -198,9 +198,9 @@ describe('Query.select() ripgrep', () => {
 
     searchParams.set('actname', 'name2');
 
-    const query = new Query({ searchParams, ...callback });
+    const query = new Query(callback);
 
-    return query.select().then((data) => {
+    return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2002)]);
     });
   });
@@ -210,9 +210,9 @@ describe('Query.select() ripgrep', () => {
 
     searchParams.set('actname', 'name3');
 
-    const query = new Query({ searchParams, ...callback });
+    const query = new Query(callback);
 
-    return query.select().then((data) => {
+    return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entry2003Unedited)]);
     });
   });
@@ -224,9 +224,9 @@ describe('Query.select() ripgrep', () => {
 
     callback.readFile = (path) => mocks.metadirArrayAdded[path];
 
-    const query = new Query({ searchParams, ...callback });
+    const query = new Query(callback);
 
-    return query.select().then((data) => {
+    return query.select(searchParams).then((data) => {
       // array is unordered, order for reproducible test
       data[0].export_tags.items.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
 
@@ -241,9 +241,9 @@ describe('Query.select() ripgrep', () => {
 
     callback.readFile = (path) => mocks.metadirArrayAdded[path];
 
-    const query = new Query({ searchParams, ...callback });
+    const query = new Query(callback);
 
-    return query.select().then((data) => {
+    return query.select(searchParams).then((data) => {
       // array is unordered, order for reproducible test
       data[0].export_tags.items.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
 
@@ -258,9 +258,9 @@ describe('Query.select() ripgrep', () => {
 
     callback.readFile = (path) => mocks.metadirArrayAdded[path];
 
-    const query = new Query({ searchParams, ...callback });
+    const query = new Query(callback);
 
-    return query.select().then((data) => {
+    return query.select(searchParams).then((data) => {
       // array is unordered, order for reproducible test
       data.forEach((item) => item.export_tags.items.sort((a, b) => (a.UUID < b.UUID ? -1 : 1)));
 
@@ -273,9 +273,9 @@ describe('Query.select() ripgrep', () => {
 
     searchParams.set('actname', 'name.*');
 
-    const query = new Query({ searchParams, ...callback });
+    const query = new Query(callback);
 
-    return query.select().then((data) => {
+    return query.select(searchParams).then((data) => {
       const dataSorted = data.map(sortObject)
         .sort((a, b) => (a.saydate < b.saydate ? -1 : 1));
 
@@ -292,9 +292,9 @@ describe('Query.select() ripgrep', () => {
 
     searchParams.set('moddate', '2001-01-01');
 
-    const query = new Query({ searchParams, ...callback });
+    const query = new Query(callback);
 
-    return query.select().then((data) => expect(data).toStrictEqual([
+    return query.select(searchParams).then((data) => expect(data).toStrictEqual([
       sortObject(mocks.entry2001),
     ]));
   });
@@ -304,9 +304,9 @@ describe('Query.select() ripgrep', () => {
 
     searchParams.set('moddate', '.*-01-01');
 
-    const query = new Query({ searchParams, ...callback });
+    const query = new Query(callback);
 
-    return query.select().then((data) => {
+    return query.select(searchParams).then((data) => {
       const dataSorted = data.map(sortObject)
         .sort((a, b) => (a.saydate < b.saydate ? -1 : 1));
 
@@ -324,9 +324,9 @@ describe('Query.select() ripgrep', () => {
 
     searchParams.set('actdate', '2001-01-01');
 
-    const query = new Query({ searchParams, ...callback });
+    const query = new Query(callback);
 
-    return query.select().then((data) => expect(data).toStrictEqual([
+    return query.select(searchParams).then((data) => expect(data).toStrictEqual([
       sortObject(mocks.entry2001),
     ]));
   });
@@ -334,13 +334,15 @@ describe('Query.select() ripgrep', () => {
   test('queries export1_tag with export1_key', () => {
     const searchParams = new URLSearchParams();
 
+    searchParams.set('|', 'export1_tag');
+
     searchParams.set('export1_key', 'longkey1');
 
     callback.readFile = (path) => mocks.metadirArrayAdded[path];
 
-    const query = new Query({ '|': 'export1_tag', searchParams, ...callback });
+    const query = new Query(callback);
 
-    return query.select().then((data) => {
+    return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entryExport1Tag)]);
     });
   });
@@ -348,47 +350,95 @@ describe('Query.select() ripgrep', () => {
   test('queries unlinked export1_tag with export1_key', () => {
     const searchParams = new URLSearchParams();
 
+    searchParams.set('|', 'export1_tag');
+
     searchParams.set('export1_key', 'longkey1');
 
     callback.readFile = (path) => mocks.metadirDeletedArrayItem[path];
 
-    const query = new Query({ '|': 'export1_tag', searchParams, ...callback });
+    const query = new Query(callback);
 
-    return query.select().then((data) => {
+    return query.select(searchParams).then((data) => {
       expect(data).toStrictEqual([sortObject(mocks.entryExport1Tag)]);
     });
   });
 });
 
-describe('Query.select() base', () => {
+describe('Query.select(searchParams) base', () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
 
     callback.readFile = async (path) => mocks.metadirAdded[path];
   });
 
-  test('queries name', () => (new Query({ '|': 'actname', ...callback })).select().then((data) => {
-    expect(data).toStrictEqual(mocks.optionsActname);
-  }));
+  test('queries name', () => {
+    const searchParams = new URLSearchParams();
 
-  test('queries date', () => (new Query({ '|': 'actdate', ...callback })).select().then((data) => {
-    expect(data).toStrictEqual(mocks.optionsActdate);
-  }));
+    searchParams.set('|', 'actname');
 
-  test('queries sayname with grep', () => (new Query({ '|': 'sayname', ...callback })).select().then((data) => {
-    expect(data).toStrictEqual(mocks.optionsSayname);
-  }));
+    const query = new Query(callback);
 
-  test('queries saydate with grep', () => (new Query({ '|': 'saydate', ...callback })).select().then((data) => {
-    expect(data).toStrictEqual(mocks.optionsSaydate);
-  }));
+    return query.select(searchParams).then((data) => {
+      expect(data).toStrictEqual(mocks.optionsActname);
+    })
+  });
+
+  test('queries date', () => {
+    const searchParams = new URLSearchParams();
+
+    searchParams.set('|', 'actdate');
+
+    const query = new Query(callback);
+
+    return query.select(searchParams).then((data) => {
+      expect(data).toStrictEqual(mocks.optionsActdate);
+    })
+  });
+
+  test('queries sayname with grep', () => {
+    callback.grep = grepCLI;
+
+    const searchParams = new URLSearchParams();
+
+    searchParams.set('|', 'sayname');
+
+    const query = new Query(callback);
+
+    return query.select(searchParams).then((data) => {
+      const dataSorted = data.map(sortObject)
+        .sort((a, b) => (a.sayname < b.sayname ? -1 : 1));
+
+      expect(dataSorted).toStrictEqual(mocks.optionsSayname);
+    })
+  });
+
+  test('queries saydate with grep', () => {
+    callback.grep = grepCLI;
+
+    const searchParams = new URLSearchParams();
+
+    searchParams.set('|', 'saydate');
+
+    const query = new Query(callback);
+
+    return query.select(searchParams).then((data) => {
+      const dataSorted = data.map(sortObject)
+        .sort((a, b) => (a.saydate < b.saydate ? -1 : 1));
+
+      expect(dataSorted).toStrictEqual(mocks.optionsSaydate);
+    })
+  });
 
   test('queries object', async () => {
     callback.readFile = async (path) => mocks.metadirArray[path];
 
-    const query = new Query({ '|': 'export1_tag', ...callback });
+    const searchParams = new URLSearchParams();
 
-    const data = await query.select();
+    searchParams.set('|', 'export1_tag');
+
+    const query = new Query(callback);
+
+    const data = await query.select(searchParams);
 
     expect(data).toStrictEqual(mocks.optionsExport1Tag);
   });
@@ -413,17 +463,17 @@ describe('Entry.update()', () => {
     counter = 0;
   });
 
-  test('does nothing on no change', () => (new Entry({ entry: mocks.entry2001, ...callback })).update()
+  test('does nothing on no change', () => (new Entry(callback)).update(mocks.entry2001)
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirDefault);
     }));
 
-  test('edits entry', () => (new Entry({ entry: mocks.entry2003Edited, ...callback })).update()
+  test('edits entry', () => (new Entry(callback)).update(mocks.entry2003Edited)
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirEdited);
     }));
 
-  test('adds entry', () => (new Entry({ entry: mocks.entryAdded, ...callback })).update()
+  test('adds entry', () => (new Entry(callback)).update(mocks.entryAdded)
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirAdded);
     }));
@@ -435,7 +485,7 @@ describe('Entry.update()', () => {
 
     callback.writeFile = (path, contents) => { editedFilesCustom[path] = contents; };
 
-    return (new Entry({ entry: mocks.entryAdded, ...callback })).update()
+    return (new Entry(callback)).update(mocks.entryAdded)
       .then(() => {
         expect(editedFilesCustom).toStrictEqual(mocks.metadirEmptyAdded);
       });
@@ -444,7 +494,7 @@ describe('Entry.update()', () => {
   test('adds entry with random uuid', () => {
     callback.randomUUID = crypto.randomUUID;
 
-    return (new Entry({ entry: mocks.entryAdded, ...callback })).update()
+    return (new Entry(callback)).update(mocks.entryAdded)
       .then(() => {
         expect(editedFiles).not.toStrictEqual(mocks.metadirAdded);
       });
@@ -453,7 +503,7 @@ describe('Entry.update()', () => {
   test('falls back to random UUID if callback is not specified', () => {
     delete callback.randomUUID;
 
-    return (new Entry({ entry: mocks.entryAdded, ...callback })).update()
+    return (new Entry(callback)).update(mocks.entryAdded)
       .then(() => {
         expect(editedFiles).not.toStrictEqual(mocks.metadirAdded);
       });
@@ -479,7 +529,7 @@ describe('Entry.update(), arrays', () => {
     counter = 0;
   });
 
-  test('adds entry with array', () => (new Entry({ entry: mocks.entryArrayAdded, ...callback })).update()
+  test('adds entry with array', () => (new Entry(callback)).update(mocks.entryArrayAdded)
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirArrayAdded);
     }));
@@ -493,23 +543,23 @@ describe('Entry.update(), arrays', () => {
 
     callback.writeFile = (path, contents) => { editedFilesCustom[path] = contents; };
 
-    return (new Entry({ entry: mocks.entryArray, ...callback })).update()
+    return (new Entry(callback)).update(mocks.entryArray)
       .then(() => {
         expect(editedFilesCustom).toStrictEqual(mocks.metadirArray);
       });
   });
 
-  test('adds array item to entry', () => (new Entry({ entry: mocks.entryAddedArrayItem, ...callback })).update()
+  test('adds array item to entry', () => (new Entry(callback)).update(mocks.entryAddedArrayItem)
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirAddedArrayItem);
     }));
 
-  test('edits array item', () => (new Entry({ entry: mocks.entryEditedArrayItem, ...callback })).update()
+  test('edits array item', () => (new Entry(callback)).update(mocks.entryEditedArrayItem)
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirEditedArrayItem);
     }));
 
-  test('removes array item', () => (new Entry({ entry: mocks.entryDeletedArrayItem, ...callback })).update()
+  test('removes array item', () => (new Entry(callback)).update(mocks.entryDeletedArrayItem)
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirDeletedArrayItem);
     }));
@@ -530,7 +580,7 @@ describe('Entry.delete()', () => {
     callback.writeFile = writeFileMock;
   });
 
-  test('deletes entry', () => (new Entry({ entry: mocks.entry2003Unedited, ...callback })).delete()
+  test('deletes entry', () => (new Entry(callback)).delete(mocks.entry2003Unedited)
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirDeleted);
     }));
@@ -538,9 +588,9 @@ describe('Entry.delete()', () => {
   test('deletes entry ripgrep', () => {
     callback.grep = grepCLI;
 
-    const entry = new Entry({ entry: mocks.entry2003Unedited, ...callback });
+    const entry = new Entry(callback);
 
-    return entry.delete()
+    return entry.delete(mocks.entry2003Unedited)
       .then(() => {
         expect(editedFiles).toStrictEqual(mocks.metadirDeleted);
       });
