@@ -61,7 +61,7 @@ export default class Query {
     const searchParams = urlSearchParams ?? new URLSearchParams();
 
     // if no base is provided, find first schema root
-    const base = searchParams.get('|') ?? findSchemaRoot(this.#store.schema);
+    const base = searchParams.has('|') ? searchParams.get('|') : findSchemaRoot(this.#store.schema);
 
     // get a map of database file contents
     await this.#store.read(base);

@@ -43,7 +43,9 @@ export default class Store {
    * @returns {object} - database schema.
    */
   async readSchema() {
-    this.schema = JSON.parse(await this.#callback.readFile('metadir.json'));
+    const schemaString = await this.#callback.readFile('metadir.json');
+
+    this.schema = JSON.parse(schemaString);
   }
 
   /**

@@ -6,7 +6,9 @@
  * @returns {string} - Root branch.
  */
 export function findSchemaRoot(schema) {
-  return Object.keys(schema).find((prop) => !Object.prototype.hasOwnProperty.call(schema[prop], 'trunk'));
+  const firstRoot = Object.keys(schema).find((branch) => !Object.prototype.hasOwnProperty.call(schema[branch], 'trunk'));
+
+  return firstRoot;
 }
 
 /**
