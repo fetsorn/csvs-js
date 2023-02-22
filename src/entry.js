@@ -65,7 +65,7 @@ export default class Entry {
 
     await this.#store.read(entry['|']);
 
-    const { value } = await this.#save(entry);
+    const value = await this.#save(entry);
 
     await this.#store.write();
 
