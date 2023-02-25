@@ -39,7 +39,7 @@ const callbackOriginal = {
       return '5ff1e403-da6e-430d-891f-89aa46b968bf';
     }
 
-    return counter;
+    return `${counter}`;
   },
 };
 

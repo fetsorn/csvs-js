@@ -10,11 +10,25 @@ import Store from './store.js';
  * @returns {string} - SHA-256 hashsum.
  */
 export async function digestMessage(message) {
-  // encode as (utf-8) Uint8Array
-  const msgUint8 = new TextEncoder().encode(message);
-
   // hash as buffer
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+  // const hashBuffer = await digest(message);
+
+  let hashBuffer;
+
+  if (typeof window === 'undefined') {
+    const crypto = await import('crypto');
+
+    // hashBuffer = crypto.createHash('sha256').update(message, 'utf8').digest();
+    hashBuffer = await crypto.webcrypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(message),
+    );
+  } else {
+    hashBuffer = await crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(message),
+    );
+  }
 
   // convert buffer to byte array
   const hashArray = Array.from(new Uint8Array(hashBuffer));

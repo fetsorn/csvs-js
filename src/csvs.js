@@ -1,7 +1,7 @@
 /* eslint-disable import/extensions */
 import Query from './query.js';
 import Entry from './entry.js';
-import { grepPolyfill, randomUUIDPolyfill } from './polyfill.js';
+import { grepPolyfill, randomUUID as randomUUIDPolyfill } from './polyfill.js';
 
 export default class CSVS {
   /**
@@ -70,7 +70,7 @@ export default class CSVS {
     this.readFile = readFile;
     this.writeFile = writeFile;
     this.grep = grep ?? grepPolyfill;
-    this.randomUUID = randomUUID ?? crypto.randomUUID ?? randomUUIDPolyfill;
+    this.randomUUID = randomUUID ?? randomUUIDPolyfill;
   }
 
   /**
