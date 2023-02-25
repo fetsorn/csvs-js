@@ -124,7 +124,7 @@ export default class Query {
 
           const branchLines = await this.#callback.grep(
             this.#store.cache[`metadir/props/${this.#store.schema[branch].dir ?? branch}/index.csv`],
-            `(^${branchValue},)|(,${branchValue}$)`,
+            `(^${value},)|(,${branchValue}$)`,
           );
 
           const branchUUIDs = takeUUIDs(branchLines);
