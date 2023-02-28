@@ -94,7 +94,7 @@ export default class Query {
     // grep against every search result until reaching a common set of UUIDs
     await Promise.all(searchEntries.map(async ([branch, value]) => {
       switch (this.#store.schema[branch].type) {
-        case 'rule': {
+        case 'regex': {
           const { trunk } = this.#store.schema[branch];
 
           const rulePath = `metadir/props/${this.#store.schema[branch].dir ?? branch}/rules/${value}.rule`;
@@ -184,9 +184,14 @@ export default class Query {
   async #buildEntries(base, baseUUIDs) {
     const entries = [];
 
-    await Promise.all(baseUUIDs.map(async (baseUUID) => {
+    // Promise.all requires too much memory on big databases
+    // await Promise.all(baseUUIDs.map(async (baseUUID) => {
+    for (let i = 0; i < baseUUIDs.length; i += 1) {
+      const baseUUID = baseUUIDs[i];
+
+      // eslint-disable-next-line
       entries.push(await this.#buildEntry(base, baseUUID));
-    }));
+    }
 
     return entries;
   }
