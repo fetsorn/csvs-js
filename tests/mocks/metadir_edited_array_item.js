@@ -29,9 +29,9 @@ metadir['metadir/props/export1_channel/index.csv'] = `63437e32bb26ceb2573dfcc40d
 704fa022122f091ab89c1ad98a7fb9b38fcc13a9491b79ebf95d2f2ed705142f,"https://channel2.url"
 `;
 
-metadir['metadir/props/export1_key/index.csv'] = `a7dfd582f1176e0caf0302cd7993a26645e41ebdcaee195530cbdf85971d06fb,"longkey1"
-0150e70d69706d9afe2ce75b31a3050bd981cd22040155af13b971010763c582,"longkey2"
+metadir['metadir/props/export1_key/index.csv'] = `0150e70d69706d9afe2ce75b31a3050bd981cd22040155af13b971010763c582,"longkey2"
 58f55c48e62e9df88700bcc7559ea06e6eebc83d44546ae9ccb036615c7f0361,"longkey3"
+a7dfd582f1176e0caf0302cd7993a26645e41ebdcaee195530cbdf85971d06fb,"longkey1"
 `;
 
 metadir['metadir/props/export2_username/index.csv'] = `16f78a7d6317f102bbd95fc9a4f3ff2e3249287690b8bdad6b7810f82b34ace3,"username"
@@ -60,8 +60,8 @@ metadir['metadir/pairs/export1_tag-export1_channel.csv'] = `1c42c99eab4eba24719b
 fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77,704fa022122f091ab89c1ad98a7fb9b38fcc13a9491b79ebf95d2f2ed705142f
 `;
 
-metadir['metadir/pairs/export1_tag-export1_key.csv'] = `fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77,0150e70d69706d9afe2ce75b31a3050bd981cd22040155af13b971010763c582
-1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42,58f55c48e62e9df88700bcc7559ea06e6eebc83d44546ae9ccb036615c7f0361
+metadir['metadir/pairs/export1_tag-export1_key.csv'] = `1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42,58f55c48e62e9df88700bcc7559ea06e6eebc83d44546ae9ccb036615c7f0361
+fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77,0150e70d69706d9afe2ce75b31a3050bd981cd22040155af13b971010763c582
 `;
 
 metadir['metadir/pairs/export2_tag-export2_username.csv'] = `de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579,16f78a7d6317f102bbd95fc9a4f3ff2e3249287690b8bdad6b7810f82b34ace3

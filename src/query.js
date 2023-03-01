@@ -1,9 +1,11 @@
 /* eslint-disable import/extensions */
+import fs from 'fs';
 import { findSchemaRoot, findCrown } from './schema.js';
 import {
   takeValue, takeUUIDs, takeValues,
 } from './metadir.js';
 import Store from './store.js';
+import { grep, lookup } from './grep.js';
 
 /**
  * This finds all UUIDs of the branch.
@@ -35,6 +37,12 @@ export default class Query {
    * @type {Store}
    */
   #store;
+
+  /**
+   * .
+   * @type {Object}
+   */
+  #crowns = {};
 
   /**
    * Create a database instance.
@@ -159,7 +167,7 @@ export default class Query {
 
     const { trunk } = this.#store.schema[branch];
 
-    const pairLines = await this.#callback.grep(
+    const pairLines = grep(
       this.#store.cache[`metadir/pairs/${trunk}-${branch}.csv`],
       branchUUIDs.join('\n'),
     );
@@ -184,13 +192,15 @@ export default class Query {
   async #buildEntries(base, baseUUIDs) {
     const entries = [];
 
-    // Promise.all requires too much memory on big databases
     // await Promise.all(baseUUIDs.map(async (baseUUID) => {
     for (let i = 0; i < baseUUIDs.length; i += 1) {
       const baseUUID = baseUUIDs[i];
 
+      fs.writeSync(1, `${Date.now()} buildEntries ${baseUUID}\n`);
       // eslint-disable-next-line
       entries.push(await this.#buildEntry(base, baseUUID));
+      fs.writeSync(1, `${Date.now()} buildEntries-finish ${baseUUID}\n`);
+    // }));
     }
 
     return entries;
@@ -219,12 +229,16 @@ export default class Query {
         entry[base] = await this.#findBranchValue(base, baseUUID);
     }
 
+    if (this.#crowns[base] === undefined) {
+      this.#crowns[base] = findCrown(this.#store.schema, base)
+        .filter((branch) => this.#store.schema[branch].type !== 'regex');
+    }
+
+    const crown = this.#crowns[base];
     // find all branches connected to base
-    const crown = findCrown(this.#store.schema, base)
-      .filter((branch) => this.#store.schema[branch].type !== 'regex');
 
     await Promise.all(crown.map(async (branch) => {
-    // for (const branch of leaves) {
+      // for (const branch of leaves) {
       // get value of branch
       const branchValue = await this.#buildBranchValue(base, baseUUID, branch);
 
@@ -295,9 +309,10 @@ export default class Query {
       ? baseUUID
       : await this.#findBranchUUID(base, baseUUID, trunk);
 
-    const pairLines = await this.#callback.grep(
+    const pairLines = await lookup(
       this.#store.cache[`metadir/pairs/${trunk}-${branch}.csv`],
-      `^${trunkUUID},`,
+      trunkUUID,
+      true,
     );
 
     if (pairLines === '') {
@@ -335,9 +350,9 @@ export default class Query {
         return branchUUID;
 
       case 'string': {
-        const branchLine = await this.#callback.grep(
+        const branchLine = lookup(
           this.#store.cache[`metadir/props/${this.#store.schema[branch].dir ?? branch}/index.csv`],
-          `^${branchUUID}`,
+          branchUUID,
         );
 
         if (branchLine !== '') {
@@ -350,9 +365,9 @@ export default class Query {
       }
 
       default: {
-        const branchLine = await this.#callback.grep(
+        const branchLine = lookup(
           this.#store.cache[`metadir/props/${this.#store.schema[branch].dir ?? branch}/index.csv`],
-          `^${branchUUID}`,
+          branchUUID,
         );
 
         if (branchLine !== '') {

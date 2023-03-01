@@ -1,7 +1,8 @@
 /* eslint-disable import/extensions */
 import Query from './query.js';
 import Entry from './entry.js';
-import { grepPolyfill, randomUUID as randomUUIDPolyfill } from './polyfill.js';
+import { grep as grepPolyfill } from './grep.js';
+import { randomUUID as randomUUIDPolyfill } from './random.js';
 
 export default class CSVS {
   /**
@@ -95,11 +96,11 @@ export default class CSVS {
    */
   async update(entry) {
     const {
-      readFile, writeFile, grep, randomUUID,
+      readFile, writeFile, randomUUID,
     } = this;
 
     return (new Entry({
-      readFile, writeFile, grep, randomUUID,
+      readFile, writeFile, randomUUID,
     }).update(entry));
   }
 
@@ -111,11 +112,11 @@ export default class CSVS {
    */
   async delete(entry) {
     const {
-      readFile, writeFile, grep, randomUUID,
+      readFile, writeFile, randomUUID,
     } = this;
 
     return (new Entry({
-      readFile, writeFile, grep, randomUUID,
+      readFile, writeFile, randomUUID,
     }).delete(entry));
   }
 }

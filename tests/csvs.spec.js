@@ -587,15 +587,4 @@ describe('Entry.delete()', () => {
     .then(() => {
       expect(editedFiles).toStrictEqual(mocks.metadirDeleted);
     }));
-
-  test('deletes entry ripgrep', () => {
-    callback.grep = grepCLI;
-
-    const entry = new CSVS(callback);
-
-    return entry.delete(mocks.entry2003Unedited)
-      .then(() => {
-        expect(editedFiles).toStrictEqual(mocks.metadirDeleted);
-      });
-  });
 });

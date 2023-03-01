@@ -1,5 +1,6 @@
 /* eslint-disable import/extensions */
 import { findCrownPaths } from './schema.js';
+import { takeUUID } from './metadir.js';
 
 export default class Store {
   /**
@@ -63,7 +64,14 @@ export default class Store {
 
     await Promise.all(filePaths.map(async (filePath) => {
       try {
-        cache[filePath] = (await this.#callback.readFile(filePath)) ?? '\n';
+        const contents = (await this.#callback.readFile(filePath)) ?? '\n';
+
+        const contentsSorted = contents.split('\n')
+          .filter((line) => line !== '')
+          .sort((a, b) => takeUUID(a).localeCompare(takeUUID(b)))
+          .join('\n');
+
+        cache[filePath] = contentsSorted;
       } catch (e) {
         // console.log(e);
         cache[filePath] = '\n';
@@ -73,6 +81,18 @@ export default class Store {
     this.cache = cache;
   }
 
+  getCache(filePath) {
+    return this.cache[filePath];
+  }
+
+  getOutput(filePath) {
+    return this.output[filePath];
+  }
+
+  setOutput(filePath, fileContents) {
+    this.output[filePath] = fileContents;
+  }
+
   /**
    * This returns a map of database file contents.
    * @name write
@@ -80,7 +100,13 @@ export default class Store {
    */
   async write() {
     await Promise.all(Object.entries(this.output).map(async ([filePath, contents]) => {
-      await this.#callback.writeFile(filePath, contents);
+      const contentsSorted = `${contents.split('\n')
+        .filter((line) => line !== '')
+        .sort((a, b) => a.localeCompare(b))
+        .join('\n')
+      }\n`;
+
+      await this.#callback.writeFile(filePath, contentsSorted);
     }));
 
     this.output = {};

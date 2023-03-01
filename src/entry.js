@@ -1,5 +1,6 @@
 /* eslint-disable import/extensions */
 import { takeUUIDs } from './metadir.js';
+import { grep, prune } from './grep.js';
 import Store from './store.js';
 
 /**
@@ -58,7 +59,6 @@ export default class Entry {
    * @param {Object} callback - The callback that returns a UUID.
    * @param {CSVS~readFileCallback} callback.readFile - The callback that reads db.
    * @param {CSVS~writeFileCallback} callback.writeFile - The callback that writes db.
-   * @param {CSVS~grepCallback} callback.grep - The callback that searches files.
    * @param {CSVS~randomUUIDCallback} callback.randomUUID - The callback that returns a UUID.
    */
   constructor(callback) {
@@ -137,8 +137,6 @@ export default class Entry {
     // add to props if needed
     const indexPath = `metadir/props/${this.#store.schema[branch].dir ?? branch}/index.csv`;
 
-    const indexFile = this.#store.output[indexPath] ?? this.#store.cache[indexPath];
-
     const branchValueEscaped = this.#store.schema[branch].type === 'string'
       ? JSON.stringify(branchValue)
       : branchValue;
@@ -147,12 +145,18 @@ export default class Entry {
 
     const indexLine = isUUID ? `${branchUUID}\n` : `${branchUUID},${branchValueEscaped}\n`;
 
-    if (indexFile === '\n') {
-      this.#store.output[indexPath] = indexLine;
-    } else if (!indexFile.includes(indexLine)) {
-      const indexPruned = await this.#callback.grep(indexFile, branchUUID, true);
+    const indexFile = this.#store.getOutput(indexPath) ?? this.#store.getCache(indexPath);
 
-      this.#store.output[indexPath] = indexPruned + indexLine;
+    if (indexFile === '\n') {
+      this.#store.setOutput(indexPath, indexLine);
+    } else if (!indexFile.includes(indexLine)) {
+      const indexPruned = prune(indexFile, branchUUID);
+
+      if (indexPruned === '\n') {
+        this.#store.setOutput(indexPath, indexLine);
+      } else {
+        this.#store.setOutput(indexPath, `${indexPruned}\n${indexLine}`);
+      }
     }
 
     await this.#linkLeaves(entry, branchUUID);
@@ -195,11 +199,11 @@ export default class Entry {
     // prune props if exist
     const indexPath = `metadir/props/${this.#store.schema[branch].dir ?? branch}/index.csv`;
 
-    const indexFile = this.#store.output[indexPath] ?? this.#store.cache[indexPath];
+    const indexFile = this.#store.getOutput(indexPath) ?? this.#store.getCache(indexPath);
 
-    const indexPruned = await this.#callback.grep(indexFile, branchUUID, true);
+    const indexPruned = prune(indexFile, branchUUID);
 
-    this.#store.output[indexPath] = indexPruned;
+    this.#store.setOutput(indexPath, indexPruned);
 
     return branchUUID;
   }
@@ -220,6 +224,11 @@ export default class Entry {
       .filter((b) => this.#store.schema[b].trunk === branch
               && this.#store.schema[b].type !== 'regex');
 
+    if (this.#store.schema[branch].type === 'array') {
+      // unlink all items from branch for refresh
+      await this.#unlinkLeaves(branch, branchUUID);
+    }
+
     // map leaves
     await Promise.all(leaves.map(async (leaf) => {
     // for (const leaf of leaves) {
@@ -231,9 +240,6 @@ export default class Entry {
         // link if in the entry
         if (this.#store.schema[branch].type === 'array') {
           const leafItems = entry.items.filter((item) => item['|'] === leaf);
-
-          // unlink all items from branch for refresh
-          await this.#unlinkLeaves(branch, branchUUID);
 
           await Promise.all(leafItems.map(async (item) => {
           // for (const item of leafItems) {
@@ -256,6 +262,7 @@ export default class Entry {
         await this.#unlinkTrunk(branchUUID, leaf);
       }
     }));
+    // }
   }
 
   /**
@@ -277,17 +284,21 @@ export default class Entry {
 
     const pairPath = `metadir/pairs/${trunk}-${branch}.csv`;
 
-    const pairFile = this.#store.output[pairPath] ?? this.#store.cache[pairPath];
+    const pairFile = this.#store.getOutput(pairPath) ?? this.#store.getCache(pairPath);
 
     if (pairFile === '\n') {
-      this.#store.output[pairPath] = pairLine;
+      this.#store.setOutput(pairPath, pairLine);
     } else if (!pairFile.includes(pairLine)) {
       if (this.#store.schema[trunk].type === 'array') {
-        this.#store.output[pairPath] = pairFile + pairLine;
+        this.#store.setOutput(pairPath, pairFile + pairLine);
       } else {
-        const pairPruned = await this.#callback.grep(pairFile, trunkUUID, true);
+        const pairPruned = prune(pairFile, trunkUUID);
 
-        this.#store.output[pairPath] = pairPruned + pairLine;
+        if (pairPruned === '\n') {
+          this.#store.setOutput(pairPath, pairLine);
+        } else {
+          this.#store.setOutput(pairPath, `${pairPruned}\n${pairLine}`);
+        }
       }
     }
   }
@@ -304,13 +315,15 @@ export default class Entry {
     const pairPath = `metadir/pairs/${this.#store.schema[branch].trunk}-${branch}.csv`;
 
     // if file, prune it for trunk UUID
-    const pairFile = this.#store.cache[pairPath];
+    const pairFile = this.#store.getCache(pairPath);
 
-    if (pairFile !== '\n') {
-      const pairPruned = await this.#callback.grep(pairFile, trunkUUID, true);
-
-      this.#store.output[pairPath] = pairPruned;
+    if (pairFile === '\n' || pairFile === '') {
+      return;
     }
+
+    const pairPruned = prune(pairFile, trunkUUID);
+
+    this.#store.setOutput(pairPath, `${pairPruned}\n`);
   }
 
   /**
@@ -326,7 +339,7 @@ export default class Entry {
     // unlink trunk if it exists
     if (trunk !== undefined) {
       // find trunkUUIDs
-      const trunkLines = await this.#callback.grep(
+      const trunkLines = grep(
         `metadir/pairs/${trunk}-${branch}.csv`,
         `,${branchUUID}$`,
       );
