@@ -1,5 +1,4 @@
 /* eslint-disable import/extensions */
-import fs from 'fs';
 import { findSchemaRoot, findCrown } from './schema.js';
 import {
   takeValue, takeUUIDs, takeValues,
@@ -192,16 +191,14 @@ export default class Query {
   async #buildEntries(base, baseUUIDs) {
     const entries = [];
 
-    // await Promise.all(baseUUIDs.map(async (baseUUID) => {
-    for (let i = 0; i < baseUUIDs.length; i += 1) {
-      const baseUUID = baseUUIDs[i];
+    await Promise.all(baseUUIDs.map(async (baseUUID) => {
+    // for (let i = 0; i < baseUUIDs.length; i += 1) {
+      // const baseUUID = baseUUIDs[i];
 
-      fs.writeSync(1, `${Date.now()} buildEntries ${baseUUID}\n`);
       // eslint-disable-next-line
       entries.push(await this.#buildEntry(base, baseUUID));
-      fs.writeSync(1, `${Date.now()} buildEntries-finish ${baseUUID}\n`);
-    // }));
-    }
+    }));
+    // }
 
     return entries;
   }
