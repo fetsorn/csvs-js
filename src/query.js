@@ -68,7 +68,7 @@ export default class Query {
     const searchParams = urlSearchParams ?? new URLSearchParams();
 
     // if no base is provided, find first schema root
-    const base = searchParams.has('|') ? searchParams.get('|') : findSchemaRoot(this.#store.schema);
+    const base = searchParams.has('_') ? searchParams.get('_') : findSchemaRoot(this.#store.schema);
 
     // get a map of database file contents
     await this.#store.read(base);
@@ -95,7 +95,7 @@ export default class Query {
     const baseUUIDSets = [findAllUUIDs(this.#store.cache, this.#store.schema, base)];
 
     const searchEntries = Array.from(searchParams.entries()).filter(
-      ([key]) => key !== 'groupBy' && key !== 'overviewType' && key !== '|',
+      ([key]) => key !== '.' && key !== '~' && key !== '-' && key !== '_',
     );
 
     // grep against every search result until reaching a common set of UUIDs
@@ -212,7 +212,7 @@ export default class Query {
    * @returns {object} - Entry.
    */
   async #buildEntry(base, baseUUID) {
-    const entry = { '|': base, UUID: baseUUID };
+    const entry = { _: base, UUID: baseUUID };
 
     switch (this.#store.schema[base].type) {
       case 'object':

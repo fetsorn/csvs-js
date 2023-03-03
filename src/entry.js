@@ -77,7 +77,7 @@ export default class Entry {
   async update(entry) {
     await this.#store.readSchema();
 
-    await this.#store.read(entry['|']);
+    await this.#store.read(entry._);
 
     const value = await this.#save(entry);
 
@@ -95,13 +95,13 @@ export default class Entry {
   async delete(entry) {
     await this.#store.readSchema();
 
-    await this.#store.read(entry['|']);
+    await this.#store.read(entry._);
 
     const branchUUID = await this.#remove(entry);
 
-    await this.#unlinkTrunks(entry['|'], entry.UUID ?? branchUUID);
+    await this.#unlinkTrunks(entry._, entry.UUID ?? branchUUID);
 
-    await this.#unlinkLeaves(entry['|'], entry.UUID ?? branchUUID);
+    await this.#unlinkLeaves(entry._, entry.UUID ?? branchUUID);
 
     await this.#store.write();
   }
@@ -114,7 +114,7 @@ export default class Entry {
    * @returns {object} - A database entry with new UUID.
    */
   async #save(entry) {
-    const branch = entry['|'];
+    const branch = entry._;
 
     const branchType = this.#store.schema[branch].type;
 
@@ -171,7 +171,7 @@ export default class Entry {
    * @function
    */
   async #remove(entry) {
-    const branch = entry['|'];
+    const branch = entry._;
 
     const branchType = this.#store.schema[branch].type;
 
@@ -216,7 +216,7 @@ export default class Entry {
    * @function
    */
   async #linkLeaves(entry, branchUUID) {
-    const branch = entry['|'];
+    const branch = entry._;
 
     const branchType = this.#store.schema[branch].type;
 
@@ -233,13 +233,13 @@ export default class Entry {
     await Promise.all(leaves.map(async (leaf) => {
     // for (const leaf of leaves) {
       const entryLeaves = branchType === 'array'
-        ? entry.items.map((item) => item['|'])
+        ? entry.items.map((item) => item._)
         : Object.keys(entry);
 
       if (entryLeaves.includes(leaf)) {
         // link if in the entry
         if (this.#store.schema[branch].type === 'array') {
-          const leafItems = entry.items.filter((item) => item['|'] === leaf);
+          const leafItems = entry.items.filter((item) => item._ === leaf);
 
           await Promise.all(leafItems.map(async (item) => {
           // for (const item of leafItems) {
@@ -252,7 +252,7 @@ export default class Entry {
               .filter((b) => this.#store.schema[b]?.trunk === leaf)
               .reduce(
                 (acc, key) => ({ [key]: entry[key], ...acc }),
-                { '|': leaf, [leaf]: entry[leaf] },
+                { _: leaf, [leaf]: entry[leaf] },
               );
 
           await this.#linkTrunk(branchUUID, leafEntry);
@@ -273,7 +273,7 @@ export default class Entry {
    * @function
    */
   async #linkTrunk(trunkUUID, entry) {
-    const branch = entry['|'];
+    const branch = entry._;
 
     const { trunk } = this.#store.schema[branch];
     // save if needed

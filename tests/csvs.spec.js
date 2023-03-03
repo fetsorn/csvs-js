@@ -332,7 +332,7 @@ describe('CSVS.select(searchParams) ripgrep', () => {
   test('queries export1_tag with export1_key', () => {
     const searchParams = new URLSearchParams();
 
-    searchParams.set('|', 'export1_tag');
+    searchParams.set('_', 'export1_tag');
 
     searchParams.set('export1_key', 'longkey1');
 
@@ -348,7 +348,7 @@ describe('CSVS.select(searchParams) ripgrep', () => {
   test('queries unlinked export1_tag with export1_key', () => {
     const searchParams = new URLSearchParams();
 
-    searchParams.set('|', 'export1_tag');
+    searchParams.set('_', 'export1_tag');
 
     searchParams.set('export1_key', 'longkey1');
 
@@ -372,7 +372,7 @@ describe('CSVS.select(searchParams) base', () => {
   test('queries name', () => {
     const searchParams = new URLSearchParams();
 
-    searchParams.set('|', 'actname');
+    searchParams.set('_', 'actname');
 
     const query = new CSVS(callback);
 
@@ -384,7 +384,7 @@ describe('CSVS.select(searchParams) base', () => {
   test('queries date', () => {
     const searchParams = new URLSearchParams();
 
-    searchParams.set('|', 'actdate');
+    searchParams.set('_', 'actdate');
 
     const query = new CSVS(callback);
 
@@ -398,7 +398,7 @@ describe('CSVS.select(searchParams) base', () => {
 
     const searchParams = new URLSearchParams();
 
-    searchParams.set('|', 'sayname');
+    searchParams.set('_', 'sayname');
 
     const query = new CSVS(callback);
 
@@ -415,7 +415,7 @@ describe('CSVS.select(searchParams) base', () => {
 
     const searchParams = new URLSearchParams();
 
-    searchParams.set('|', 'saydate');
+    searchParams.set('_', 'saydate');
 
     const query = new CSVS(callback);
 
@@ -432,7 +432,7 @@ describe('CSVS.select(searchParams) base', () => {
 
     const searchParams = new URLSearchParams();
 
-    searchParams.set('|', 'export1_tag');
+    searchParams.set('_', 'export1_tag');
 
     const query = new CSVS(callback);
 
