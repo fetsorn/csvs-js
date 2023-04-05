@@ -130,6 +130,8 @@ export default class Entry {
                || branchType === 'array'
                || branchType === 'object') {
       branchUUID = await digestMessage(await this.#callback.randomUUID());
+    } else if (branchType === 'hash') {
+      branchUUID = branchValue;
     } else {
       branchUUID = await digestMessage(branchValue);
     }
