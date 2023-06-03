@@ -1,4 +1,5 @@
 /* eslint-disable import/extensions */
+import stream from 'stream';
 import { findSchemaRoot, findCrown } from './schema.js';
 import {
   takeValue, takeUUIDs, takeValues,
@@ -80,6 +81,43 @@ export default class Query {
     const entries = await this.#buildEntries(base, baseUUIDs);
 
     return entries;
+  }
+
+  async selectStream(urlSearchParams) {
+    await this.#store.readSchema();
+
+    const searchParams = urlSearchParams ?? new URLSearchParams();
+
+    // if no base is provided, find first schema root
+    const base = searchParams.has('_') ? searchParams.get('_') : findSchemaRoot(this.#store.schema);
+
+    // get a map of database file contents
+    await this.#store.read(base);
+
+    // get an array of base UUIDs
+    const baseUUIDs = await this.#searchUUIDs(base, searchParams);
+
+    const query = this;
+
+    return new stream.Readable({
+      objectMode: true,
+
+      async read(controller) {
+        if (this._buffer === undefined) {
+          this._buffer = baseUUIDs;
+        }
+
+        const baseUUID = this._buffer.pop();
+
+        const entry = await query.#buildEntry(base, baseUUID);
+
+        this.push(entry)
+
+        if (this._buffer.length === 0) {
+          this.push(null)
+        }
+      },
+    })
   }
 
   /**

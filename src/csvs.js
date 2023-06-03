@@ -87,6 +87,12 @@ export default class CSVS {
     return (new Query({ readFile, grep })).select(urlSearchParams);
   }
 
+  async selectStream(urlSearchParams) {
+    const { readFile, grep } = this;
+
+    return (new Query({ readFile, grep })).selectStream(urlSearchParams);
+  }
+
   /**
    * This updates the database entry.
    * @name update
