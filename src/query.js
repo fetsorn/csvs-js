@@ -111,7 +111,7 @@ export default class Query {
 
         const entry = await query.#buildEntry(base, baseUUID);
 
-        this.push(entry)
+        this.push(entry);
 
         if (this._buffer.length === 0) {
           this.push(null)
