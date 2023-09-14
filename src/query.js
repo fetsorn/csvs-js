@@ -83,7 +83,7 @@ export default class Query {
     return entries;
   }
 
-  async selectStream(urlSearchParams) {
+  async selectBaseUUIDs(urlSearchParams) {
     await this.#store.readSchema();
 
     const searchParams = urlSearchParams ?? new URLSearchParams();
@@ -97,27 +97,15 @@ export default class Query {
     // get an array of base UUIDs
     const baseUUIDs = await this.#searchUUIDs(base, searchParams);
 
-    const query = this;
+    return {base, baseUUIDs}
+  }
 
-    return new stream.Readable({
-      objectMode: true,
+  async buildEntry(base, baseUUID) {
+    await this.#store.readSchema();
 
-      async read(controller) {
-        if (this._buffer === undefined) {
-          this._buffer = baseUUIDs;
-        }
+    await this.#store.read(base);
 
-        const baseUUID = this._buffer.pop();
-
-        const entry = await query.#buildEntry(base, baseUUID);
-
-        this.push(entry);
-
-        if (this._buffer.length === 0) {
-          this.push(null)
-        }
-      },
-    })
+    return this.#buildEntry(base, baseUUID);
   }
 
   /**

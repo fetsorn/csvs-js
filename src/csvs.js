@@ -87,10 +87,16 @@ export default class CSVS {
     return (new Query({ readFile, grep })).select(urlSearchParams);
   }
 
-  async selectStream(urlSearchParams) {
+  async selectBaseUUIDs(urlSearchParams) {
     const { readFile, grep } = this;
 
-    return (new Query({ readFile, grep })).selectStream(urlSearchParams);
+    return (new Query({ readFile, grep })).selectBaseUUIDs(urlSearchParams);
+  }
+
+  async buildEntry(base, baseUUID) {
+    const { readFile, grep } = this;
+
+    return (new Query({ readFile, grep })).buildEntry(base, baseUUID);
   }
 
   /**
