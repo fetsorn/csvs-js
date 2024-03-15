@@ -1,71 +1,66 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 /* eslint-disable import/extensions */
 // .js extensions are required for wasm tests
-import metadirDefault from './metadir_default.js';
-import metadirEmpty from './metadir_empty.js';
-import metadirEdited from './metadir_edited.js';
-import metadirAdded from './metadir_added.js';
-import metadirDeleted from './metadir_deleted.js';
-import metadirEmptyAdded from './metadir_empty_added.js';
-import metadirUnordered from './metadir_unordered.js';
-import metadirArray from './metadir_array.js';
-import metadirArrayEmpty from './metadir_array_empty.js';
-import metadirArrayAdded from './metadir_array_added.js';
-import metadirAddedArrayItem from './metadir_added_array_item.js';
-import metadirEditedArrayItem from './metadir_edited_array_item.js';
-import metadirDeletedArrayItem from './metadir_deleted_array_item.js';
-import metadirEditedArrayItemObject from './metadir_edited_array_item_object.js';
-import {
-  entry2001,
-  entry2002,
-  entry2003Unedited,
-  entry2003Edited,
-  entryAdded,
-  entryArray,
-  entryArrayAdded,
-  entryAddedArrayItem,
-  entryEditedArrayItem,
-  entryDeletedArrayItem,
-  entryEditedArrayItemObject,
-  entryExport1Tag,
-} from './entries.js';
-import {
-  optionsActname,
-  optionsActdate,
-  optionsSayname,
-  optionsSaydate,
-  optionsExport1Tag,
-} from './options.js';
+import records from './0.0.1/records.js';
+import options from './0.0.1/options.js';
 
-export default {
-  entry2001,
-  entry2002,
-  entry2003Unedited,
-  entry2003Edited,
-  entryAdded,
-  entryArray,
-  entryArrayAdded,
-  entryAddedArrayItem,
-  entryEditedArrayItem,
-  entryDeletedArrayItem,
-  entryEditedArrayItemObject,
-  entryExport1Tag,
-  metadirDefault,
-  metadirEmpty,
-  metadirEdited,
-  metadirAdded,
-  metadirDeleted,
-  metadirEmptyAdded,
-  metadirUnordered,
-  metadirArray,
-  metadirArrayEmpty,
-  metadirArrayAdded,
-  metadirAddedArrayItem,
-  metadirEditedArrayItem,
-  metadirDeletedArrayItem,
-  metadirEditedArrayItemObject,
-  optionsActname,
-  optionsActdate,
-  optionsSayname,
-  optionsSaydate,
-  optionsExport1Tag,
-};
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+function findpath(loadname) {
+  const loadpath = path.join(__dirname, loadname);
+
+  const loadtype = fs.statSync(loadpath);
+
+  if (loadtype.isFile()) {
+    return [ loadname ] ;
+  } else if (loadtype.isDirectory()) {
+    const filenames = fs.readdirSync(loadpath);
+
+    const entries = filenames.map((filename) => {
+      const filepath = path.join(loadname, filename);
+
+      return findpath(filepath);
+    })
+
+    return entries.flat();
+  }
+}
+
+function loadContents(loadname) {
+  const paths = findpath(loadname);
+
+  const entries = paths.map((filename) => {
+    const filepath = path.join(__dirname, filename)
+
+    const contents = fs.readFileSync(filepath, {encoding: "utf8"});
+
+    const filenameRelative = filename.replace(new RegExp(`${loadname}/`),"")
+
+    return [filenameRelative, contents]
+  })
+
+  return Object.fromEntries(entries)
+}
+
+export function loadMocks() {
+  return {
+    metadirDefault: loadContents("0.0.1/default"),
+    metadirEmpty: loadContents("0.0.1/empty"),
+    metadirEdited: loadContents("0.0.1/edited"),
+    metadirAdded: loadContents("0.0.1/added"),
+    metadirDeleted: loadContents("0.0.1/deleted"),
+    metadirEmptyAdded: loadContents("0.0.1/empty_added"),
+    metadirUnordered: loadContents("0.0.1/unordered"),
+    metadirArray: loadContents("0.0.1/array"),
+    metadirArrayEmpty: loadContents("0.0.1/array_empty"),
+    metadirArrayAdded: loadContents("0.0.1/array_added"),
+    metadirAddedArrayItem: loadContents("0.0.1/added_array_item"),
+    metadirEditedArrayItem: loadContents("0.0.1/edited_array_item"),
+    metadirDeletedArrayItem: loadContents("0.0.1/deleted_array_item"),
+    metadirEditedArrayItemObject: loadContents("0.0.1/edited_array_item_object"),
+    ...options,
+    ...records
+  }
+}

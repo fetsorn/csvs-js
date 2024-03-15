@@ -8,8 +8,10 @@ import crypto from 'crypto';
 import { exec } from 'child_process';
 import stream from 'stream';
 import { CSVS } from '../src/index';
-import mocks from './mocks';
+import { loadMocks } from './mocks';
 const pipeline = promisify(stream.pipeline);
+
+const mocks = loadMocks()
 
 // node polyfills for browser APIs
 // used in csvs_js.digestMessage for hashes
@@ -591,33 +593,3 @@ describe('Entry.delete()', () => {
     }));
 });
 
-describe.only('Query.selectStream no ripgrep', () => {
-  beforeEach(() => {
-    callback = { ...callbackOriginal };
-  });
-
-  test('queries name1', async () => {
-    const searchParams = new URLSearchParams();
-
-    searchParams.set('actname', 'name1');
-
-    const query = new CSVS(callback);
-
-    const queryStream = await query.selectStream(searchParams);
-
-    const data = []
-
-    await new Promise((res, rej) => {
-      queryStream.on('data', (entry) => {
-        console.log(entry)
-        data.push(entry)
-      })
-      queryStream.on('end', () => {
-        console.log("B")
-        res();
-      })
-    })
-
-    expect(data).toStrictEqual([sortObject(mocks.entry2001)]);
-  });
-});

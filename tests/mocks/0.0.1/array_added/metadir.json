@@ -1,0 +1,87 @@
+{
+  "datum": {
+    "type": "string"
+  },
+  "actdate": {
+    "trunk": "datum",
+    "dir": "date",
+    "type": "date"
+  },
+  "actname": {
+    "trunk": "datum",
+    "dir": "name"
+  },
+  "saydate": {
+    "trunk": "datum",
+    "dir": "date",
+    "type": "date"
+  },
+  "sayname": {
+    "trunk": "datum",
+    "dir": "name"
+  },
+  "filepath": {
+    "trunk": "datum",
+    "type": "string"
+  },
+  "moddate": {
+    "trunk": "filepath",
+    "dir": "date",
+    "type": "date"
+  },
+  "filetype": {
+    "trunk": "filepath",
+    "type": "string"
+  },
+  "filesize": {
+    "trunk": "filepath"
+  },
+  "filehash": {
+    "trunk": "filepath",
+    "type": "hash"
+  },
+  "pathrule": {
+    "trunk": "filepath",
+    "type": "regex"
+  },
+  "export_tags": {
+    "trunk": "datum",
+    "type": "array"
+  },
+  "export1_tag": {
+    "trunk": "export_tags",
+    "type": "object"
+  },
+  "export1_channel": {
+    "trunk": "export1_tag",
+    "type": "string"
+  },
+  "export1_key": {
+    "trunk": "export1_tag",
+    "type": "string"
+  },
+  "export2_tag": {
+    "trunk": "export_tags",
+    "type": "object"
+  },
+  "export2_username": {
+    "trunk": "export2_tag",
+    "type": "string"
+  },
+  "export2_password": {
+    "trunk": "export2_tag",
+    "type": "string"
+  },
+  "export2_tag_description": {
+    "trunk": "export2_tag",
+    "type": "object"
+  },
+  "export2_tag_description_text1": {
+    "trunk": "export2_tag_description",
+    "type": "string"
+  },
+  "export2_tag_description_text2": {
+    "trunk": "export2_tag_description",
+    "type": "string"
+  }
+}
