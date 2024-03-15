@@ -1,6 +1,6 @@
-const mocks = loadMocks()
+import { loadMocks } from './mocks/index.js';
 
-import { loadMocks } from './mocks';
+const mocks = loadMocks()
 
 export const testCasesSelect = [
   {

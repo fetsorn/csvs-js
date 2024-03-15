@@ -1,5 +1,4 @@
 /* eslint-disable import/extensions */
-import stream from 'stream';
 import { findSchemaRoot, findCrown } from './schema.js';
 import {
   takeValue, takeUUIDs, takeValues,
