@@ -1,4 +1,3 @@
 /* eslint-disable import/extensions */
 export { default as CSVS } from './csvs.js';
-export { digestMessage } from './entry.js';
-export { randomUUID } from './random.js';
+export { randomUUID, digestMessage } from './random.js';

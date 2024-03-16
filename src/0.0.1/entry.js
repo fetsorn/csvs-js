@@ -2,43 +2,7 @@
 import { takeUUIDs } from './metadir.js';
 import { grep, prune } from './grep.js';
 import Store from './store.js';
-
-/**
- * This generates a SHA-256 hashsum.
- * @name digestMessage
- * @function
- * @param {string} message - A string.
- * @returns {string} - SHA-256 hashsum.
- */
-export async function digestMessage(message) {
-  // hash as buffer
-  // const hashBuffer = await digest(message);
-
-  let hashBuffer;
-
-  if (typeof window === 'undefined') {
-    const crypto = await import('crypto');
-
-    // hashBuffer = crypto.createHash('sha256').update(message, 'utf8').digest();
-    hashBuffer = await crypto.webcrypto.subtle.digest(
-      'SHA-256',
-      new TextEncoder().encode(message),
-    );
-  } else {
-    hashBuffer = await crypto.subtle.digest(
-      'SHA-256',
-      new TextEncoder().encode(message),
-    );
-  }
-
-  // convert buffer to byte array
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-
-  // convert bytes to hex string
-  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-
-  return hashHex;
-}
+import { digestMessage } from '../random.js';
 
 /** Class representing a database entry. */
 export default class Entry {
