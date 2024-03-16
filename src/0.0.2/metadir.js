@@ -1,3 +1,5 @@
+import { parse } from 'csv-parse/lib/sync';
+
 /**
  * This splits string on newlines and filters empty lines.
  * @name splitLines
@@ -17,7 +19,11 @@ export function splitLines(str) {
  * @returns {string} - UUID.
  */
 export function takeUUID(line) {
-  return line.slice(0, 64);
+  const parser = parse(line)
+
+  for (const [trunk,leaf] of parser) {
+    return trunk
+  }
 }
 
 /**
@@ -28,7 +34,11 @@ export function takeUUID(line) {
  * @returns {string} - Value.
  */
 export function takeValue(line) {
-  return line.slice(65).replace(/\n*$/, '');
+  const parser = parse(line)
+
+  for (const [trunk,leaf] of parser) {
+    return leaf.replace(/\n*$/, '')
+  }
 }
 
 /**

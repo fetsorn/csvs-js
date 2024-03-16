@@ -73,12 +73,14 @@ export default class Store {
       try {
         const contents = (await this.#callback.readFile(filePath)) ?? '\n';
 
-        const contentsSorted = contents.split('\n')
-          .filter((line) => line !== '')
-          .sort((a, b) => takeUUID(a).localeCompare(takeUUID(b)))
-          .join('\n');
+        // const contentsSorted = contents.split('\n')
+        //   .filter((line) => line !== '')
+        //   .sort((a, b) => takeUUID(a).localeCompare(takeUUID(b)))
+        //   .join('\n');
 
-        cache[filePath] = contentsSorted;
+        // cache[filePath] = contentsSorted;
+
+        cache[filePath] = contents;
       } catch (e) {
         // console.log(e);
         cache[filePath] = '\n';
@@ -107,13 +109,17 @@ export default class Store {
    */
   async write() {
     await Promise.all(Object.entries(this.output).map(async ([filePath, contents]) => {
-      const contentsSorted = `${contents.split('\n')
-        .filter((line) => line !== '')
-        .sort((a, b) => a.localeCompare(b))
+      // const contentsSorted = `${contents.split('\n')
+      //   .filter((line) => line !== '')
+      //   .sort((a, b) => a.localeCompare(b))
+      //   .join('\n')
+      // }\n`;
+      const contentsJoined = `${contents.split('\n')
+        .filter((line) => line !== '') // TODO: preserve empty lines
         .join('\n')
       }\n`;
 
-      await this.#callback.writeFile(filePath, contentsSorted);
+      await this.#callback.writeFile(filePath, contentsJoined);
     }));
 
     this.output = {};

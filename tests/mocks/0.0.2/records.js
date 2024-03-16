@@ -119,14 +119,14 @@ const recordAddedArrayItem = {
     ],
     export2_tag: [
       {
-        _: 'export1_tag',
+        _: 'export2_tag',
         '|': 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
         export2_username: 'username',
         export2_password: 'password',
       },
       // TODO: no '|' value to create a new guid
       {
-        _: 'export1_tag',
+        _: 'export2_tag',
         export2_username: 'username2',
         export2_password: 'password2',
       },

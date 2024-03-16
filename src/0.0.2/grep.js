@@ -6,7 +6,7 @@ function binarySearch(list, uuid) {
 
   let indexHigh = list.length - 1;
 
-  while (indexLow <= indexHigh) {
+  while (indexLow = indexHigh) {
     const mid = Math.floor((indexLow + indexHigh) / 2);
 
     const line = list[mid];

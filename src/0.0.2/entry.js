@@ -32,6 +32,25 @@ export default class Entry {
   }
 
   /**
+   * This updates the database entry.
+   * @name update
+   * @function
+   * @param {object} entry - A database entry.
+   * @returns {object} - A database entry.
+   */
+  async update(entry) {
+    await this.#store.readSchema();
+
+    await this.#store.read(entry._);
+
+    const value = await this.#save(entry);
+
+    await this.#store.write();
+
+    return value;
+  }
+
+  /**
    * This deletes the database entry.
    * @name delete
    * @param {object} entry - A database entry.
@@ -50,6 +69,84 @@ export default class Entry {
   }
 
   /**
+   * This saves an entry to the database.
+   * @name save
+   * @param {object} entry - A database entry.
+   * @function
+   * @returns {object} - A database entry with new UUID.
+   */
+  async #save(entry) {
+    const branch = entry._;
+
+    const branchValue = entry['|'] ?? await digestMessage(await this.#callback.randomUUID());
+
+    await this.#linkLeaves(entry, branchValue);
+
+    return { '|': branchValue, ...entry };
+  }
+
+  /**
+   * This links all leaves to the branch.
+   * @name linkLeaves
+   * @param {object} entry - A database entry.
+   * @param {object} branchUUID - The branch UUID.
+   * @function
+   */
+  async #linkLeaves(entry, branchValue) {
+    const branch = entry._;
+
+    const leaves = Object.keys(this.#store.schema)
+      .filter((b) => this.#store.schema[b].trunk === branch);
+
+    // for each leaf branch
+    // await Promise.all(leaves.map(async (leaf) => {
+    for (const leaf of leaves) {
+      const hasLeaf = Object.prototype.hasOwnProperty.call(entry, leaf)
+
+      if (hasLeaf) {
+        // move this normalization of data structure elsewhere
+        const leafValue = typeof entry[leaf] === "string"
+              ? [ { _: leaf, "|": entry[leaf] } ]
+              : [ entry[leaf] ].flat()
+
+        await Promise.all(leafValue.map(async (item) => {
+          await this.#linkTrunk(branchValue, item);
+        }))
+      }
+    // }));
+    }
+  }
+
+  /**
+   * This links an entry to a trunk UUID.
+   * @name linkTrunk
+   * @param {object} trunkValue - The trunk value.
+   * @param {object} entry - A database entry.
+   * @function
+   */
+  async #linkTrunk(trunkValue, entry) {
+    const branch = entry._;
+
+    const { trunk } = this.#store.schema[branch];
+
+    // save if needed
+    const { '|': branchValue } = await this.#save(entry);
+
+    // add to pairs
+    const pairLine = `${trunkValue},${branchValue}\n`;
+
+    const pairPath = `${trunk}-${branch}.csv`;
+
+    const pairFile = this.#store.getOutput(pairPath) ?? this.#store.getCache(pairPath);
+
+    if (pairFile === '\n') {
+      this.#store.setOutput(pairPath, pairLine);
+    } else if (!pairFile.includes(pairLine)) {
+      this.#store.setOutput(pairPath, `${pairFile}\n${pairLine}`);
+    }
+  }
+
+  /**
    * This unlinks an entry from a trunk UUID.
    * @name unlinkTrunk
    * @param {string} trunkValue - The trunk value.
@@ -64,7 +161,7 @@ export default class Entry {
 
     // if file, prune it for trunk UUID
     const pairFile = this.#store.getCache(pairPath);
-    // const trunkContents = this.#store.getOutput(trunkPath) ?? this.#store.getCache(trunkPath);
+    // const pairFile = this.#store.getOutput(pairPath) ?? this.#store.getCache(pairPath);
 
     if (pairFile === '\n' || pairFile === '' || pairFile === undefined) {
       return;
@@ -93,8 +190,6 @@ export default class Entry {
         `,${branchValue}$`,
       );
 
-      console.log("trunkLines", trunkLines)
-
       const trunkUUIDs = takeUUIDs(trunkLines);
 
       // unlink trunk
@@ -119,21 +214,5 @@ export default class Entry {
     await Promise.all(leaves.map(async (leaf) => {
       await this.#unlinkTrunk(branchValue, leaf);
     }));
-
-
-    // leaves.forEach((leaf) => {
-    //   const leafPath = `${branch}-${leaf}.csv`;
-
-    //   const leafContents = this.#store.getOutput(leafPath) ?? this.#store.getCache(leafPath);
-
-    //   if (leafContents) {
-    //     // TODO: prune only for ^value,
-    //     const leafPruned = prune(leafContents, branchValue);
-
-    //     console.log("prune",  leafPruned)
-
-    //     this.#store.setOutput(leafPath, leafPruned);
-    //   }
-    // })
   }
 }

@@ -115,9 +115,18 @@ export default class CSVS {
       readFile, writeFile, randomUUID,
     } = this;
 
-    return (new Entry1({
-      readFile, writeFile, randomUUID,
-    }).update(entry));
+    // detect dataset version
+    const version = await detectVersion(readFile);
+
+    if (version === "0.0.1") {
+      return (new Entry1({
+        readFile, writeFile, randomUUID,
+      }).update(entry));
+    } else if (version === "0.0.2") {
+      return (new Entry2({
+        readFile, writeFile, randomUUID,
+      }).update(entry));
+    }
   }
 
   /**
@@ -143,6 +152,5 @@ export default class CSVS {
         readFile, writeFile, randomUUID,
       }).delete(entry));
     }
-
   }
 }
