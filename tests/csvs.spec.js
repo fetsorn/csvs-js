@@ -74,7 +74,7 @@ async function grepCLI(contentFile, patternFile, isInverse) {
   return output;
 }
 
-describe('Query.select() no ripgrep', () => {
+describe('Query.select() no ripgrep 0.0.1', () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
   });
@@ -102,6 +102,11 @@ describe('Query.select() no ripgrep', () => {
       })
     })
   })
+})
+describe('Query.select() no ripgrep 0.0.2', () => {
+  beforeEach(() => {
+    callback = { ...callbackOriginal };
+  });
 
   testCasesSelect("0.0.2").forEach((testCase) => {
     test(testCase.name, () => {
@@ -128,7 +133,7 @@ describe('Query.select() no ripgrep', () => {
   })
 })
 
-describe('Query.select() ripgrep', () => {
+describe('Query.select() ripgrep 0.0.1', () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
 
@@ -158,6 +163,13 @@ describe('Query.select() ripgrep', () => {
       })
     })
   })
+})
+describe('Query.select() ripgrep 0.0.2', () => {
+  beforeEach(() => {
+    callback = { ...callbackOriginal };
+
+    callback.grep = grepCLI;
+  });
 
   testCasesSelect("0.0.2").forEach((testCase) => {
     test(testCase.name, () => {
@@ -184,7 +196,7 @@ describe('Query.select() ripgrep', () => {
   })
 })
 
-describe('Entry.update()', () => {
+describe('Entry.update() 0.0.1', () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
   });
@@ -210,6 +222,12 @@ describe('Entry.update()', () => {
       })
     })
   })
+})
+
+describe('Entry.update() 0.0.2', () => {
+  beforeEach(() => {
+    callback = { ...callbackOriginal };
+  });
 
   testCasesUpdate("0.0.2").forEach((testCase) => {
     test(testCase.name, () => {
@@ -234,7 +252,7 @@ describe('Entry.update()', () => {
   })
 })
 
-describe('Entry.delete()', () => {
+describe('Entry.delete() 0.0.1', () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
   });
@@ -258,7 +276,13 @@ describe('Entry.delete()', () => {
       })
     })
   })
+})
 
+
+describe('Entry.delete() 0.0.2', () => {
+  beforeEach(() => {
+    callback = { ...callbackOriginal };
+  });
   testCasesDelete("0.0.2").forEach((testCase) => {
     test(testCase.name, () => {
       let editedFiles = { ...testCase.initial };

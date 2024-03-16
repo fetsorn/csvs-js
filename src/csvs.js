@@ -1,8 +1,12 @@
 /* eslint-disable import/extensions */
-import Query from './0.0.1/query.js';
-import Entry from './0.0.1/entry.js';
-import { grep as grepPolyfill } from './0.0.1/grep.js';
+import Query1 from './0.0.1/query.js';
+import Entry1 from './0.0.1/entry.js';
+import { grep as grepPolyfill1 } from './0.0.1/grep.js';
+// import Query2 from './0.0.2/query.js';
+import Entry2 from './0.0.2/entry.js';
+import { grep as grepPolyfill2 } from './0.0.2/grep.js';
 import { randomUUID as randomUUIDPolyfill } from './random.js';
+import { detectVersion } from './version.js';
 
 export default class CSVS {
   /**
@@ -70,7 +74,7 @@ export default class CSVS {
   }) {
     this.readFile = readFile;
     this.writeFile = writeFile;
-    this.grep = grep ?? grepPolyfill;
+    this.grep = grep ?? grepPolyfill1;
     this.randomUUID = randomUUID ?? randomUUIDPolyfill;
   }
 
@@ -84,19 +88,19 @@ export default class CSVS {
   async select(urlSearchParams) {
     const { readFile, grep } = this;
 
-    return (new Query({ readFile, grep })).select(urlSearchParams);
+    return (new Query1({ readFile, grep })).select(urlSearchParams);
   }
 
   async selectBaseUUIDs(urlSearchParams) {
     const { readFile, grep } = this;
 
-    return (new Query({ readFile, grep })).selectBaseUUIDs(urlSearchParams);
+    return (new Query1({ readFile, grep })).selectBaseUUIDs(urlSearchParams);
   }
 
   async buildEntry(base, baseUUID) {
     const { readFile, grep } = this;
 
-    return (new Query({ readFile, grep })).buildEntry(base, baseUUID);
+    return (new Query1({ readFile, grep })).buildEntry(base, baseUUID);
   }
 
   /**
@@ -111,7 +115,7 @@ export default class CSVS {
       readFile, writeFile, randomUUID,
     } = this;
 
-    return (new Entry({
+    return (new Entry1({
       readFile, writeFile, randomUUID,
     }).update(entry));
   }
@@ -127,8 +131,18 @@ export default class CSVS {
       readFile, writeFile, randomUUID,
     } = this;
 
-    return (new Entry({
-      readFile, writeFile, randomUUID,
-    }).delete(entry));
+    // detect dataset version
+    const version = await detectVersion(readFile);
+
+    if (version === "0.0.1") {
+      return (new Entry1({
+        readFile, writeFile, randomUUID,
+      }).delete(entry));
+    } else if (version === "0.0.2") {
+      return (new Entry2({
+        readFile, writeFile, randomUUID,
+      }).delete(entry));
+    }
+
   }
 }

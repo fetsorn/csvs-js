@@ -1,4 +1,4 @@
-const entry2001 = {
+const record2001 = {
   _: 'datum',
   datum: 'value1',
   filepath: 'path/to/1',
@@ -10,7 +10,7 @@ const entry2001 = {
   UUID: '8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704',
 };
 
-const entry2002 = {
+const record2002 = {
   _: 'datum',
   datum: 'value2',
   filepath: 'path/to/2',
@@ -22,7 +22,7 @@ const entry2002 = {
   UUID: 'b52dc2b8884fc396c108c095da157d8607ee7d61a1e6b4b501b660d42f93c58e',
 };
 
-const entry2003Unedited = {
+const record2003Unedited = {
   _: 'datum',
   datum: '',
   saydate: '2003-01-01',
@@ -32,7 +32,7 @@ const entry2003Unedited = {
   UUID: 'f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265',
 };
 
-const entry2003Edited = {
+const record2003Edited = {
   _: 'datum',
   datum: 'value3',
   filepath: 'path/to/3',
@@ -43,7 +43,7 @@ const entry2003Edited = {
   UUID: 'f35d45c3ee3e68cf9e36ee10df3edb02104c22b2d47ab17e64114ffb9c208265',
 };
 
-const entryAdded = {
+const recordAdded = {
   _: 'datum',
   datum: 'value4',
   saydate: '2004-01-01',
@@ -52,7 +52,7 @@ const entryAdded = {
   actname: 'name5',
 };
 
-const entryArray = {
+const recordArray = {
   _: 'datum',
   datum: 'value1',
   actdate: '2001-01-01',
@@ -84,7 +84,7 @@ const entryArray = {
   UUID: '8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704',
 };
 
-const entryArrayAdded = {
+const recordArrayAdded = {
   _: 'datum',
   datum: 'value2',
   actdate: '2002-01-01',
@@ -101,7 +101,7 @@ const entryArrayAdded = {
   },
 };
 
-const entryAddedArrayItem = {
+const recordAddedArrayItem = {
   _: 'datum',
   datum: 'value1',
   actdate: '2001-01-01',
@@ -138,7 +138,7 @@ const entryAddedArrayItem = {
   UUID: '8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704',
 };
 
-const entryEditedArrayItem = {
+const recordEditedArrayItem = {
   _: 'datum',
   datum: 'value1',
   actdate: '2001-01-01',
@@ -170,7 +170,7 @@ const entryEditedArrayItem = {
   UUID: '8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704',
 };
 
-const entryDeletedArrayItem = {
+const recordDeletedArrayItem = {
   _: 'datum',
   datum: 'value1',
   actdate: '2001-01-01',
@@ -196,7 +196,7 @@ const entryDeletedArrayItem = {
   UUID: '8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704',
 };
 
-const entryEditedArrayItemObject = {
+const recordEditedArrayItemObject = {
   _: 'datum',
   datum: 'value1',
   actdate: '2001-01-01',
@@ -233,7 +233,7 @@ const entryEditedArrayItemObject = {
   UUID: '8260502525153a8775ecb052f41e4e908aba4c94b07ef90263fff77195392704',
 };
 
-const entryExport1Tag = {
+const recordExport1Tag = {
   _: 'export1_tag',
   export1_channel: 'https://channel1.url',
   export1_key: 'longkey1',
@@ -241,16 +241,16 @@ const entryExport1Tag = {
 };
 
 export default {
-  entry2001,
-  entry2002,
-  entry2003Unedited,
-  entry2003Edited,
-  entryAdded,
-  entryArray,
-  entryArrayAdded,
-  entryAddedArrayItem,
-  entryEditedArrayItem,
-  entryDeletedArrayItem,
-  entryEditedArrayItemObject,
-  entryExport1Tag,
+  record2001,
+  record2002,
+  record2003Unedited,
+  record2003Edited,
+  recordAdded,
+  recordArray,
+  recordArrayAdded,
+  recordAddedArrayItem,
+  recordEditedArrayItem,
+  recordDeletedArrayItem,
+  recordEditedArrayItemObject,
+  recordExport1Tag,
 };
