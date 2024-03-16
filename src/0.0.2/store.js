@@ -103,7 +103,7 @@ export default class Store {
   }
 
   /**
-   * This returns a map of database file contents.
+   * This writes new file contents to the database.
    * @name write
    * @function
    */
