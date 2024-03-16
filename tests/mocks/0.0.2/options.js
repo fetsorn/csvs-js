@@ -1,19 +1,21 @@
-const optionsActname = [{
-  _: 'actname',
-  '|' 'name5',
-},
-{
-  '|': 'name1',
-  _: 'actname',
-},
-{
-  '|': 'name2',
-  _: 'actname',
-},
-{
-  '|': 'name3',
-  _: 'actname',
-}];
+const optionsActname = [
+  {
+    _: 'actname',
+    '|': 'name5',
+  },
+  {
+    '|': 'name1',
+    _: 'actname',
+  },
+  {
+    '|': 'name2',
+    _: 'actname',
+  },
+  {
+    '|': 'name3',
+    _: 'actname',
+  }
+];
 
 const optionsActdate = [{
   '|': '2005-01-01',

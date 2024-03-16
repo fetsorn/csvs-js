@@ -79,7 +79,31 @@ describe('Query.select() no ripgrep', () => {
     callback = { ...callbackOriginal };
   });
 
-  testCasesSelect.forEach((testCase) => {
+  testCasesSelect("0.0.1").forEach((testCase) => {
+    test(testCase.name, () => {
+      const searchParams = new URLSearchParams(testCase.query);
+
+      callback.readFile = (path) => testCase.initial[path];
+
+      const client = new CSVS(callback)
+
+      return client.select(searchParams).then((data) => {
+        if (data[0].export_tags) {
+          data[0].export_tags.items.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
+        }
+
+        data.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
+
+        const expected = testCase.expected
+                                 .map(sortObject)
+                                 .sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
+
+        expect(data).toStrictEqual(expected)
+      })
+    })
+  })
+
+  testCasesSelect("0.0.2").forEach((testCase) => {
     test(testCase.name, () => {
       const searchParams = new URLSearchParams(testCase.query);
 
@@ -111,7 +135,31 @@ describe('Query.select() ripgrep', () => {
     callback.grep = grepCLI;
   });
 
-  testCasesSelect.forEach((testCase) => {
+  testCasesSelect("0.0.1").forEach((testCase) => {
+    test(testCase.name, () => {
+      const searchParams = new URLSearchParams(testCase.query);
+
+      callback.readFile = (path) => testCase.initial[path];
+
+      const client = new CSVS(callback)
+
+      return client.select(searchParams).then((data) => {
+        if (data[0].export_tags) {
+          data[0].export_tags.items.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
+        }
+
+        data.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
+
+        const expected = testCase.expected
+                                 .map(sortObject)
+                                 .sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
+
+        expect(data).toStrictEqual(expected)
+      })
+    })
+  })
+
+  testCasesSelect("0.0.2").forEach((testCase) => {
     test(testCase.name, () => {
       const searchParams = new URLSearchParams(testCase.query);
 
@@ -141,7 +189,29 @@ describe('Entry.update()', () => {
     callback = { ...callbackOriginal };
   });
 
-  testCasesUpdate.forEach((testCase) => {
+  testCasesUpdate("0.0.1").forEach((testCase) => {
+    test(testCase.name, () => {
+      let editedFiles = { ...testCase.initial };
+
+      async function writeFileMock(path, contents) {
+        editedFiles[path] = contents;
+      }
+
+      callback.writeFile = writeFileMock;
+
+      callback.readFile = async (path) => editedFiles[path];
+
+      counter = 0;
+
+      const client = new CSVS(callback)
+
+      return client.update(testCase.query).then((data) => {
+        expect(editedFiles).toStrictEqual(testCase.expected)
+      })
+    })
+  })
+
+  testCasesUpdate("0.0.2").forEach((testCase) => {
     test(testCase.name, () => {
       let editedFiles = { ...testCase.initial };
 
@@ -169,7 +239,27 @@ describe('Entry.delete()', () => {
     callback = { ...callbackOriginal };
   });
 
-  testCasesDelete.forEach((testCase) => {
+  testCasesDelete("0.0.1").forEach((testCase) => {
+    test(testCase.name, () => {
+      let editedFiles = { ...testCase.initial };
+
+      async function writeFileMock(path, contents) {
+        editedFiles[path] = contents;
+      }
+
+      callback.writeFile = writeFileMock;
+
+      callback.readFile = async (path) => editedFiles[path];
+
+      const client = new CSVS(callback)
+
+      return client.delete(testCase.query).then((data) => {
+        expect(editedFiles).toStrictEqual(testCase.expected)
+      })
+    })
+  })
+
+  testCasesDelete("0.0.2").forEach((testCase) => {
     test(testCase.name, () => {
       let editedFiles = { ...testCase.initial };
 

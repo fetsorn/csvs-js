@@ -2,191 +2,191 @@ import { loadMocks } from './mocks/index.js';
 
 const mocks = loadMocks()
 
-export const testCasesSelect = [
+export const testCasesSelect = (version) => [
   {
     name: "queries name1",
     query: "actname=name1",
-    initial: mocks.metadirDefault,
-    expected: [mocks.entry2001]
+    initial: mocks[version].datasetDefault,
+    expected: [mocks[version].entry2001]
   },
   {
     name: "queries name2",
     query: "actname=name2",
-    initial: mocks.metadirDefault,
-    expected: [mocks.entry2002]
+    initial: mocks[version].datasetDefault,
+    expected: [mocks[version].entry2002]
   },
   {
     name: "queries name3",
     query: "actname=name3",
-    initial: mocks.metadirDefault,
-    expected: [mocks.entry2003Unedited]
+    initial: mocks[version].datasetDefault,
+    expected: [mocks[version].entry2003Unedited]
   },
   {
     name: "queries name2 with out-of-order schema",
     query: "actname=name2",
-    initial: mocks.metadirUnordered,
-    expected: [mocks.entry2002]
+    initial: mocks[version].datasetUnordered,
+    expected: [mocks[version].entry2002]
   },
   {
     name: "queries name1 with array of tags",
     query: "actname=name1",
-    initial: mocks.metadirArray,
-    expected: [mocks.entryArray]
+    initial: mocks[version].datasetArray,
+    expected: [mocks[version].entryArray]
   },
   {
     name: "queries name1 by UUID",
     query: "actname=9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1",
-    initial: mocks.metadirDefault,
-    expected: [mocks.entry2001]
+    initial: mocks[version].datasetDefault,
+    expected: [mocks[version].entry2001]
   },
   {
     name: "queries value2 with array of tags",
     query: "datum=value1",
-    initial: mocks.metadirArrayAdded,
-    expected: [mocks.entryArray]
+    initial: mocks[version].datasetArrayAdded,
+    expected: [mocks[version].entryArray]
   },
   {
     name: "queries export1_key with array of tags",
     query: "export1_key=longkey1",
-    initial: mocks.metadirArrayAdded,
-    expected: [mocks.entryArray]
+    initial: mocks[version].datasetArrayAdded,
+    expected: [mocks[version].entryArray]
   },
   {
     name: "queries name1 with regexp",
     query: "actname=name.*",
-    initial: mocks.metadirDefault,
-    expected: [mocks.entry2001,mocks.entry2002,mocks.entry2003Unedited]
+    initial: mocks[version].datasetDefault,
+    expected: [mocks[version].entry2001,mocks[version].entry2002,mocks[version].entry2003Unedited]
   },
   {
     name: "queries moddate regex",
     query: "moddate=.*-01-01",
-    initial: mocks.metadirDefault,
-    expected: [mocks.entry2001,mocks.entry2002]
+    initial: mocks[version].datasetDefault,
+    expected: [mocks[version].entry2001,mocks[version].entry2002]
   },
   {
     name: "queries two queries",
     query: "actname=name.*&actdate=2001-01-01",
-    initial: mocks.metadirDefault,
-    expected: [mocks.entry2001]
+    initial: mocks[version].datasetDefault,
+    expected: [mocks[version].entry2001]
   },
   {
     name: "queries export1_tag with export1_key",
     query: "_=export1_tag&export1_key=longkey1",
-    initial: mocks.metadirArrayAdded,
-    expected: [mocks.entryExport1Tag]
+    initial: mocks[version].datasetArrayAdded,
+    expected: [mocks[version].entryExport1Tag]
   },
   {
     name: "queries unlinked export1_tag with export1_key",
     query: "_=export1_tag&export1_key=longkey1",
-    initial: mocks.metadirDeletedArrayItem,
-    expected: [mocks.entryExport1Tag]
+    initial: mocks[version].datasetDeletedArrayItem,
+    expected: [mocks[version].entryExport1Tag]
   },
   {
     name: "queries name",
     query: "_=actname",
-    initial: mocks.metadirAdded,
-    expected: mocks.optionsActname
+    initial: mocks[version].datasetAdded,
+    expected: mocks[version].optionsActname
   },
   {
     name: "queries date",
     query: "_=actdate",
-    initial: mocks.metadirAdded,
-    expected: mocks.optionsActdate
+    initial: mocks[version].datasetAdded,
+    expected: mocks[version].optionsActdate
   },
   {
     name: "queries sayname with grep",
     query: "_=sayname",
-    initial: mocks.metadirAdded,
-    expected: mocks.optionsSayname
+    initial: mocks[version].datasetAdded,
+    expected: mocks[version].optionsSayname
   },
   {
     name: "queries saydate with grep",
     query: "_=saydate",
-    initial: mocks.metadirAdded,
-    expected: mocks.optionsSaydate
+    initial: mocks[version].datasetAdded,
+    expected: mocks[version].optionsSaydate
   },
   {
     name: "queries object",
     query: "_=export1_tag",
-    initial: mocks.metadirArray,
-    expected: mocks.optionsExport1Tag
+    initial: mocks[version].datasetArray,
+    expected: mocks[version].optionsExport1Tag
   },
 ]
 
-export const testCasesUpdate = [
+export const testCasesUpdate = (version) => [
   {
     name: "does nothing on no change",
-    query: mocks.entry2001,
-    initial: mocks.metadirDefault,
-    expected: mocks.metadirDefault
+    query: mocks[version].entry2001,
+    initial: mocks[version].datasetDefault,
+    expected: mocks[version].datasetDefault
   },
   {
     name: "edits entry",
-    query: mocks.entry2003Edited,
-    initial: mocks.metadirDefault,
-    expected: mocks.metadirEdited
+    query: mocks[version].entry2003Edited,
+    initial: mocks[version].datasetDefault,
+    expected: mocks[version].datasetEdited
   },
   {
     name: "adds entry",
-    query: mocks.entryAdded,
-    initial: mocks.metadirDefault,
-    expected: mocks.metadirAdded
+    query: mocks[version].entryAdded,
+    initial: mocks[version].datasetDefault,
+    expected: mocks[version].datasetAdded
   },
   {
     name: "adds entry with random uuid",
-    query: mocks.entryAdded,
-    initial: mocks.metadirDefault,
-    expected: mocks.metadirAdded
+    query: mocks[version].entryAdded,
+    initial: mocks[version].datasetDefault,
+    expected: mocks[version].datasetAdded
   },
   {
     name: "falls back to random UUID if callback is not specified",
-    query: mocks.entryAdded,
-    initial: mocks.metadirDefault,
-    expected: mocks.metadirAdded
+    query: mocks[version].entryAdded,
+    initial: mocks[version].datasetDefault,
+    expected: mocks[version].datasetAdded
   },
   {
     name: "adds entry with array",
-    query: mocks.entryArrayAdded,
-    initial: mocks.metadirArray,
-    expected: mocks.metadirArrayAdded
+    query: mocks[version].entryArrayAdded,
+    initial: mocks[version].datasetArray,
+    expected: mocks[version].datasetArrayAdded
   },
   {
-    name: "adds entry with array to empty metadir",
-    query: mocks.entryArray,
-    initial: mocks.metadirArrayEmpty,
-    expected: mocks.metadirArray
+    name: "adds entry with array to empty dataset",
+    query: mocks[version].entryArray,
+    initial: mocks[version].datasetArrayEmpty,
+    expected: mocks[version].datasetArray
   },
   {
     name: "adds array item to entry",
-    query: mocks.entryAddedArrayItem,
-    initial: mocks.metadirArray,
-    expected: mocks.metadirAddedArrayItem
+    query: mocks[version].entryAddedArrayItem,
+    initial: mocks[version].datasetArray,
+    expected: mocks[version].datasetAddedArrayItem
   },
   {
     name: "edits array item",
-    query: mocks.entryEditedArrayItem,
-    initial: mocks.metadirArray,
-    expected: mocks.metadirEditedArrayItem
+    query: mocks[version].entryEditedArrayItem,
+    initial: mocks[version].datasetArray,
+    expected: mocks[version].datasetEditedArrayItem
   },
   {
     name: "removes array item",
-    query: mocks.entryDeletedArrayItem,
-    initial: mocks.metadirArray,
-    expected: mocks.metadirDeletedArrayItem
+    query: mocks[version].entryDeletedArrayItem,
+    initial: mocks[version].datasetArray,
+    expected: mocks[version].datasetDeletedArrayItem
   },
   {
     name: "edits array item of type object",
-    query: mocks.entryEditedArrayItemObject,
-    initial: mocks.metadirArray,
-    expected: mocks.metadirEditedArrayItemObject
+    query: mocks[version].entryEditedArrayItemObject,
+    initial: mocks[version].datasetArray,
+    expected: mocks[version].datasetEditedArrayItemObject
   }
 ]
 
-export const testCasesDelete = [
+export const testCasesDelete = (version) => [
   {
     name: "deletes entry",
-    query: mocks.entry2003Unedited,
-    initial: mocks.metadirDefault,
-    expected: mocks.metadirDeleted
+    query: mocks[version].entry2003Unedited,
+    initial: mocks[version].datasetDefault,
+    expected: mocks[version].datasetDeleted
   }
 ]

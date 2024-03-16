@@ -3,8 +3,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 /* eslint-disable import/extensions */
 // .js extensions are required for wasm tests
-import records from './0.0.1/records.js';
-import options from './0.0.1/options.js';
+import records1 from './0.0.1/records.js';
+import options1 from './0.0.1/options.js';
+import records2 from './0.0.2/records.js';
+import options2 from './0.0.2/options.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -46,21 +48,41 @@ function loadContents(loadname) {
 
 export function loadMocks() {
   return {
-    metadirDefault: loadContents("0.0.1/default"),
-    metadirEmpty: loadContents("0.0.1/empty"),
-    metadirEdited: loadContents("0.0.1/edited"),
-    metadirAdded: loadContents("0.0.1/added"),
-    metadirDeleted: loadContents("0.0.1/deleted"),
-    metadirEmptyAdded: loadContents("0.0.1/empty_added"),
-    metadirUnordered: loadContents("0.0.1/unordered"),
-    metadirArray: loadContents("0.0.1/array"),
-    metadirArrayEmpty: loadContents("0.0.1/array_empty"),
-    metadirArrayAdded: loadContents("0.0.1/array_added"),
-    metadirAddedArrayItem: loadContents("0.0.1/added_array_item"),
-    metadirEditedArrayItem: loadContents("0.0.1/edited_array_item"),
-    metadirDeletedArrayItem: loadContents("0.0.1/deleted_array_item"),
-    metadirEditedArrayItemObject: loadContents("0.0.1/edited_array_item_object"),
-    ...options,
-    ...records
+    "0.0.1": {
+      datasetDefault: loadContents("0.0.1/default"),
+      datasetEmpty: loadContents("0.0.1/empty"),
+      datasetEdited: loadContents("0.0.1/edited"),
+      datasetAdded: loadContents("0.0.1/added"),
+      datasetDeleted: loadContents("0.0.1/deleted"),
+      datasetEmptyAdded: loadContents("0.0.1/empty_added"),
+      datasetUnordered: loadContents("0.0.1/unordered"),
+      datasetArray: loadContents("0.0.1/array"),
+      datasetArrayEmpty: loadContents("0.0.1/array_empty"),
+      datasetArrayAdded: loadContents("0.0.1/array_added"),
+      datasetAddedArrayItem: loadContents("0.0.1/added_array_item"),
+      datasetEditedArrayItem: loadContents("0.0.1/edited_array_item"),
+      datasetDeletedArrayItem: loadContents("0.0.1/deleted_array_item"),
+      datasetEditedArrayItemObject: loadContents("0.0.1/edited_array_item_object"),
+      ...options1,
+      ...records1
+    },
+    "0.0.2": {
+      datasetDefault: loadContents("0.0.2/default"),
+      datasetEmpty: loadContents("0.0.2/empty"),
+      datasetEdited: loadContents("0.0.2/edited"),
+      datasetAdded: loadContents("0.0.2/added"),
+      datasetDeleted: loadContents("0.0.2/deleted"),
+      datasetEmptyAdded: loadContents("0.0.2/empty_added"),
+      datasetUnordered: loadContents("0.0.2/unordered"),
+      datasetArray: loadContents("0.0.2/array"),
+      datasetArrayEmpty: loadContents("0.0.2/array_empty"),
+      datasetArrayAdded: loadContents("0.0.2/array_added"),
+      datasetAddedArrayItem: loadContents("0.0.2/added_array_item"),
+      datasetEditedArrayItem: loadContents("0.0.2/edited_array_item"),
+      datasetDeletedArrayItem: loadContents("0.0.2/deleted_array_item"),
+      datasetEditedArrayItemObject: loadContents("0.0.2/edited_array_item_object"),
+      ...options2,
+      ...records2
+    },
   }
 }
