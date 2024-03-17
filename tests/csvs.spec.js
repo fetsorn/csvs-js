@@ -117,17 +117,14 @@ describe('Query.select() no ripgrep 0.0.2', () => {
       const client = new CSVS(callback)
 
       return client.select(searchParams).then((data) => {
-        if (data[0].export_tags) {
-          data[0].export_tags.items.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
-        }
-
-        data.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
+        const dataSorted = data.map(sortObject)
+                               .sort((a, b) => (a['|'] < b['|'] ? -1 : 1))
 
         const expected = testCase.expected
                                  .map(sortObject)
-                                 .sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
+                                 .sort((a, b) => (a['|'] < b['|'] ? -1 : 1));
 
-        expect(data).toStrictEqual(expected)
+        expect(dataSorted).toStrictEqual(expected)
       })
     })
   })
@@ -180,17 +177,14 @@ describe('Query.select() ripgrep 0.0.2', () => {
       const client = new CSVS(callback)
 
       return client.select(searchParams).then((data) => {
-        if (data[0].export_tags) {
-          data[0].export_tags.items.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
-        }
-
-        data.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
+        const dataSorted = data.map(sortObject)
+                               .sort((a, b) => (a['|'] < b['|'] ? -1 : 1))
 
         const expected = testCase.expected
                                  .map(sortObject)
-                                 .sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
+                                 .sort((a, b) => (a['|'] < b['|'] ? -1 : 1));
 
-        expect(data).toStrictEqual(expected)
+        expect(dataSorted).toStrictEqual(expected)
       })
     })
   })

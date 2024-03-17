@@ -99,8 +99,7 @@ export default class Entry {
       .filter((b) => this.#store.schema[b].trunk === branch);
 
     // for each leaf branch
-    // await Promise.all(leaves.map(async (leaf) => {
-    for (const leaf of leaves) {
+    await Promise.all(leaves.map(async (leaf) => {
       const hasLeaf = Object.prototype.hasOwnProperty.call(entry, leaf)
 
       if (hasLeaf) {
@@ -113,8 +112,7 @@ export default class Entry {
           await this.#linkTrunk(branchValue, item);
         }))
       }
-    // }));
-    }
+    }));
   }
 
   /**
@@ -133,6 +131,8 @@ export default class Entry {
     const { '|': branchValue } = await this.#save(entry);
 
     // add to pairs
+    // TODO: use csv serializer
+    // TODO: escape values
     const pairLine = `${trunkValue},${branchValue}\n`;
 
     const pairPath = `${trunk}-${branch}.csv`;

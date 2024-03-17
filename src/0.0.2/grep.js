@@ -1,12 +1,15 @@
 /* eslint-disable import/extensions */
 import { splitLines, takeUUID } from './metadir.js';
 
-function binarySearch(list, uuid) {
+function binarySearch(listUnsorted, uuid) {
+  // TODO: sort once elsewhere or grep instead of binary search
+  const list = listUnsorted.sort((a, b) => takeUUID(a).localeCompare(takeUUID(b)))
+
   let indexLow = 0;
 
   let indexHigh = list.length - 1;
 
-  while (indexLow = indexHigh) {
+  while (indexLow <= indexHigh) {
     const mid = Math.floor((indexLow + indexHigh) / 2);
 
     const line = list[mid];
@@ -43,7 +46,7 @@ export function lookup(contentFile, uuid, isBulk = false) {
     let indexLow = index;
 
     for (let i = index; i >= 0; i -= 1) {
-      if ((new RegExp(`^${uuid}`)).test(lines[i])) {
+      if ((new RegExp(`^${uuid},`)).test(lines[i])) {
         indexLow = i;
       } else {
         break;
@@ -53,7 +56,7 @@ export function lookup(contentFile, uuid, isBulk = false) {
     let indexHigh = index;
 
     for (let i = index; i < lines.length; i += 1) {
-      if ((new RegExp(`^${uuid}`)).test(lines[i])) {
+      if ((new RegExp(`^${uuid},`)).test(lines[i])) {
         indexHigh = i;
       } else {
         break;

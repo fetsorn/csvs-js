@@ -1,23 +1,21 @@
 const record2001 = {
   _: 'datum',
   '|': 'value1',
-  filepath: 'path/to/1',
+  filepath: { _: 'filepath', '|': 'path/to/1', moddate: '2001-01-01'},
   saydate: '2001-01-01',
   sayname: 'name1',
   actdate: '2001-01-01',
   actname: 'name1',
-  moddate: '2001-01-01',
 };
 
 const record2002 = {
   _: 'datum',
   '|': 'value2',
-  filepath: 'path/to/2',
+  filepath: { _: 'filepath', '|': 'path/to/2', moddate: '2002-01-01'},
   saydate: '2002-01-01',
   sayname: 'name2',
   actdate: '2002-01-01',
   actname: 'name2',
-  moddate: '2002-01-01',
 };
 
 const record2003Unedited = {

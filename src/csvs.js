@@ -2,7 +2,7 @@
 import Query1 from './0.0.1/query.js';
 import Entry1 from './0.0.1/entry.js';
 import { grep as grepPolyfill1 } from './0.0.1/grep.js';
-// import Query2 from './0.0.2/query.js';
+import Query2 from './0.0.2/query.js';
 import Entry2 from './0.0.2/entry.js';
 import { grep as grepPolyfill2 } from './0.0.2/grep.js';
 import { randomUUID as randomUUIDPolyfill } from './random.js';
@@ -88,19 +88,40 @@ export default class CSVS {
   async select(urlSearchParams) {
     const { readFile, grep } = this;
 
-    return (new Query1({ readFile, grep })).select(urlSearchParams);
+    // detect dataset version
+    const version = await detectVersion(readFile);
+
+    if (version === "0.0.1") {
+      return (new Query1({ readFile, grep })).select(urlSearchParams);
+    } else if (version === "0.0.2") {
+      return (new Query2({ readFile, grep })).select(urlSearchParams);
+    }
   }
 
   async selectBaseUUIDs(urlSearchParams) {
     const { readFile, grep } = this;
 
-    return (new Query1({ readFile, grep })).selectBaseUUIDs(urlSearchParams);
+    // detect dataset version
+    const version = await detectVersion(readFile);
+
+    if (version === "0.0.1") {
+      return (new Query1({ readFile, grep })).selectBaseUUIDs(urlSearchParams);
+    } else if (version === "0.0.2") {
+      return (new Query2({ readFile, grep })).selectBaseUUIDs(urlSearchParams);
+    }
   }
 
   async buildEntry(base, baseUUID) {
     const { readFile, grep } = this;
 
-    return (new Query1({ readFile, grep })).buildEntry(base, baseUUID);
+    // detect dataset version
+    const version = await detectVersion(readFile);
+
+    if (version === "0.0.1") {
+      return (new Query1({ readFile, grep })).buildEntry(base, baseUUID);
+    } else if (version === "0.0.2") {
+      return (new Query2({ readFile, grep })).buildEntry(base, baseUUID);
+    }
   }
 
   /**
