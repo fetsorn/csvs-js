@@ -144,12 +144,12 @@ export const testCasesUpdate = (version) => [
     initial: mocks[version].datasetDefault,
     expected: mocks[version].datasetAdded
   },
-   {
-     name: "adds record with array",
-     query: mocks[version].recordArrayAdded,
-     initial: mocks[version].datasetArray,
-     expected: mocks[version].datasetArrayAdded
-   },
+  {
+    name: "adds record with array",
+    query: mocks[version].recordArrayAdded,
+    initial: mocks[version].datasetArray,
+    expected: mocks[version].datasetArrayAdded
+  },
   {
     name: "adds record with array to empty dataset",
     query: mocks[version].recordArray,
@@ -191,8 +191,8 @@ export const testCasesDelete = (version) => [
   },
   {
     name: "deletes a record with a trunk",
-    query: "not implemented",
-    initial: "not implemented",
-    expected: "not implemented"
+    query: mocks[version].recordExport1Tag,
+    initial: mocks[version].datasetArray,
+    expected: mocks[version].datasetDeletedLeaf
   }
 ]

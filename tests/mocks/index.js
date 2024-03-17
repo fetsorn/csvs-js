@@ -63,6 +63,7 @@ export function loadMocks() {
       datasetEditedArrayItem: loadContents("0.0.1/edited_array_item"),
       datasetDeletedArrayItem: loadContents("0.0.1/deleted_array_item"),
       datasetEditedArrayItemObject: loadContents("0.0.1/edited_array_item_object"),
+      datasetDeletedLeaf: loadContents("0.0.1/deleted_leaf"),
       ...options1,
       ...records1
     },
@@ -81,6 +82,7 @@ export function loadMocks() {
       datasetEditedArrayItem: loadContents("0.0.2/edited_array_item"),
       datasetDeletedArrayItem: loadContents("0.0.2/deleted_array_item"),
       datasetEditedArrayItemObject: loadContents("0.0.2/edited_array_item_object"),
+      datasetDeletedLeaf: loadContents("0.0.2/deleted_leaf"),
       ...options2,
       ...records2
     },

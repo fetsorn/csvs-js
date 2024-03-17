@@ -24,16 +24,12 @@ function isConnected(schema, base, branch) {
   const { trunk } = schema[branch];
 
   if (trunk === undefined) {
-    // if schema root is reached, leaf is connected to base
+    // if schema root is reached, leaf is not connected to base
     return false;
-  } if (trunk === base) {
+  } else if (trunk === base) {
     // if trunk is base, leaf is connected to base
     return true;
-  } if (schema[trunk].type === 'object' || schema[trunk].type === 'array') {
-    // if trunk is object or array, leaf is not connected to base
-    // because objects and arrays have their own leaves
-    return false;
-  } if (isConnected(schema, base, trunk)) {
+  } else if (isConnected(schema, base, trunk)) {
     // if trunk is connected to base, leaf is also connected to base
     return true;
   }

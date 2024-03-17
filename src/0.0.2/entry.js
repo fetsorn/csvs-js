@@ -1,11 +1,11 @@
 /* eslint-disable import/extensions */
 import { takeUUIDs } from './metadir.js';
-import { grep, prune } from './grep.js';
+import { grep, pruneValue, pruneUUID } from './grep.js';
 import Store from './store.js';
 import { digestMessage } from '../random.js';
 
-/** Class representing a database entry. */
-export default class Entry {
+/** Class representing a dataset record. */
+export default class Record {
   /**
    * .
    * @type {Object}
@@ -19,7 +19,7 @@ export default class Entry {
   #store;
 
   /**
-   * Create a database instance.
+   * Create a dataset instance.
    * @param {Object} callback - The callback that returns a UUID.
    * @param {CSVS~readFileCallback} callback.readFile - The callback that reads db.
    * @param {CSVS~writeFileCallback} callback.writeFile - The callback that writes db.
@@ -32,18 +32,18 @@ export default class Entry {
   }
 
   /**
-   * This updates the database entry.
+   * This updates the dataset record.
    * @name update
    * @function
-   * @param {object} entry - A database entry.
-   * @returns {object} - A database entry.
+   * @param {object} record - A dataset record.
+   * @returns {object} - A dataset record.
    */
-  async update(entry) {
+  async update(record) {
     await this.#store.readSchema();
 
-    await this.#store.read(entry._);
+    await this.#store.read(record._);
 
-    const value = await this.#save(entry);
+    const value = await this.#save(record);
 
     await this.#store.write();
 
@@ -51,62 +51,67 @@ export default class Entry {
   }
 
   /**
-   * This deletes the database entry.
+   * This deletes the dataset record.
    * @name delete
-   * @param {object} entry - A database entry.
+   * @param {object} record - A dataset record.
    * @function
    */
-  async delete(entry) {
+  async delete(record) {
     await this.#store.readSchema();
 
-    await this.#store.read(entry._);
+    await this.#store.read(record._);
 
-    await this.#unlinkTrunks(entry._, entry['|']);
+    // prune `,value$` in the `trunk-branch.csv` file
+    await this.#unlinkTrunks(record._, record['|']);
 
-    await this.#unlinkLeaves(entry._, entry['|']);
+    // prune `^value,` in all `branch-{leaf}.csv` files
+    await this.#unlinkLeaves(record._, record['|']);
 
     await this.#store.write();
   }
 
   /**
-   * This saves an entry to the database.
+   * This saves an record to the dataset.
    * @name save
-   * @param {object} entry - A database entry.
+   * @param {object} record - A dataset record.
    * @function
-   * @returns {object} - A database entry with new UUID.
+   * @returns {object} - A dataset record, value added if there was none.
    */
-  async #save(entry) {
-    const branch = entry._;
+  async #save(record) {
+    const branch = record._;
 
-    const branchValue = entry['|'] ?? await digestMessage(await this.#callback.randomUUID());
+    const branchValue = record['|'] ?? await digestMessage(await this.#callback.randomUUID());
 
-    await this.#linkLeaves(entry, branchValue);
+    await this.#linkLeaves(record, branchValue);
 
-    return { '|': branchValue, ...entry };
+    return { '|': branchValue, ...record };
   }
 
   /**
    * This links all leaves to the branch.
    * @name linkLeaves
-   * @param {object} entry - A database entry.
+   * @param {object} record - A dataset record.
    * @param {object} branchUUID - The branch UUID.
    * @function
    */
-  async #linkLeaves(entry, branchValue) {
-    const branch = entry._;
+  async #linkLeaves(record, branchValue) {
+    const branch = record._;
 
     const leaves = Object.keys(this.#store.schema)
       .filter((b) => this.#store.schema[b].trunk === branch);
 
     // for each leaf branch
     await Promise.all(leaves.map(async (leaf) => {
-      const hasLeaf = Object.prototype.hasOwnProperty.call(entry, leaf)
+      // unlink leaf values
+      await this.#unlinkLeaf(branch, branchValue, leaf)
+
+      const hasLeaf = Object.prototype.hasOwnProperty.call(record, leaf)
 
       if (hasLeaf) {
-        // move this normalization of data structure elsewhere
-        const leafValue = typeof entry[leaf] === "string"
-              ? [ { _: leaf, "|": entry[leaf] } ]
-              : [ entry[leaf] ].flat()
+        // TODO: move this normalization of data structure elsewhere
+        const leafValue = typeof record[leaf] === "string"
+              ? [ { _: leaf, "|": record[leaf] } ]
+              : [ record[leaf] ].flat()
 
         await Promise.all(leafValue.map(async (item) => {
           await this.#linkTrunk(branchValue, item);
@@ -116,22 +121,22 @@ export default class Entry {
   }
 
   /**
-   * This links an entry to a trunk UUID.
+   * This links a record to a trunk value.
    * @name linkTrunk
    * @param {object} trunkValue - The trunk value.
-   * @param {object} entry - A database entry.
+   * @param {object} record - A dataset record.
    * @function
    */
-  async #linkTrunk(trunkValue, entry) {
-    const branch = entry._;
+  async #linkTrunk(trunkValue, record) {
+    const branch = record._;
 
     const { trunk } = this.#store.schema[branch];
 
     // save if needed
-    const { '|': branchValue } = await this.#save(entry);
+    const { '|': branchValue } = await this.#save(record);
 
     // add to pairs
-    // TODO: use csv serializer
+    // TODO: serialize csv with a third-party library
     // TODO: escape values
     const pairLine = `${trunkValue},${branchValue}\n`;
 
@@ -147,33 +152,7 @@ export default class Entry {
   }
 
   /**
-   * This unlinks an entry from a trunk UUID.
-   * @name unlinkTrunk
-   * @param {string} trunkValue - The trunk value.
-   * @param {object} entry - A database entry.
-   * @function
-   */
-  async #unlinkTrunk(trunkValue, branch) {
-    const { trunk } = this.#store.schema[branch];
-
-    // prune pairs file for trunk UUID
-    const pairPath = `${trunk}-${branch}.csv`;
-
-    // if file, prune it for trunk UUID
-    const pairFile = this.#store.getCache(pairPath);
-    // const pairFile = this.#store.getOutput(pairPath) ?? this.#store.getCache(pairPath);
-
-    if (pairFile === '\n' || pairFile === '' || pairFile === undefined) {
-      return;
-    }
-
-    const pairPruned = prune(pairFile, trunkValue);
-
-    this.#store.setOutput(pairPath, `${pairPruned}\n`);
-  }
-
-  /**
-   * This unlinks a branch UUID from all trunk UUIDs.
+   * This unlinks a branch value from all trunk values.
    * @name unlinkTrunks
    * @param {string} branch - A branch name.
    * @param {string} branchValue - A branch value.
@@ -185,22 +164,45 @@ export default class Entry {
     // unlink trunk if it exists
     if (trunk !== undefined) {
       // find trunkUUIDs
-      const trunkLines = grep(
-        `${trunk}-${branch}.csv`,
-        `,${branchValue}$`,
-      );
+      const pairPath = `${trunk}-${branch}.csv`;
 
-      const trunkUUIDs = takeUUIDs(trunkLines);
+      const pairFile = this.#store.getCache(pairPath);
 
-      // unlink trunk
-      await Promise.all(trunkUUIDs.map(async (trunkUUID) => {
-        await this.#unlinkTrunk(trunkUUID, branch);
-      }));
+      if (pairFile === '\n' || pairFile === '' || pairFile === undefined) {
+        return;
+      }
+
+      const pairPruned = pruneValue(pairFile, branchValue);
+
+      this.#store.setOutput(pairPath, `${pairPruned}\n`);
     }
   }
 
   /**
-   * This unlinks a branch UUID from all leaf UUIDs.
+   * This unlinks a branch value from all values of a leaf branch.
+   * @name unlinkLeaf
+   * @param {string} branch - A branch name.
+   * @param {string} branchValue - A branch value.
+   * @param {string} leaf - A leaf branch.
+   * @function
+   */
+  async #unlinkLeaf(branch, branchValue, leaf) {
+      const pairPath = `${branch}-${leaf}.csv`;
+
+      const pairFile = this.#store.getCache(pairPath);
+      // const pairFile = this.#store.getOutput(pairPath) ?? this.#store.getCache(pairPath);
+
+      if (pairFile === '\n' || pairFile === '' || pairFile === undefined) {
+        return;
+      }
+
+      const pairPruned = pruneUUID(pairFile, branchValue);
+
+      this.#store.setOutput(pairPath, `${pairPruned}\n`);
+  }
+
+  /**
+   * This unlinks a branch value from all leaf values.
    * @name unlinkLeaves
    * @param {string} branch - A branch name.
    * @param {string} branchValue - A branch value.
@@ -211,8 +213,8 @@ export default class Entry {
     const leaves = Object.keys(this.#store.schema)
       .filter((b) => this.#store.schema[b].trunk === branch);
 
-    await Promise.all(leaves.map(async (leaf) => {
-      await this.#unlinkTrunk(branchValue, leaf);
-    }));
+    await Promise.all(leaves.map(
+      async (leaf) => this.#unlinkLeaf(branch, branchValue, leaf)
+    ));
   }
 }

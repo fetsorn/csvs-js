@@ -1,6 +1,6 @@
 /* eslint-disable import/extensions */
 import { takeUUIDs } from './metadir.js';
-import { grep, prune } from './grep.js';
+import { grep, prune, pruneValue } from './grep.js';
 import Store from './store.js';
 import { digestMessage } from '../random.js';
 
@@ -305,17 +305,17 @@ export default class Entry {
     // unlink trunk if it exists
     if (trunk !== undefined) {
       // find trunkUUIDs
-      const trunkLines = grep(
-        `metadir/pairs/${trunk}-${branch}.csv`,
-        `,${branchUUID}$`,
-      );
+      const pairPath = `metadir/pairs/${trunk}-${branch}.csv`;
 
-      const trunkUUIDs = takeUUIDs(trunkLines);
+      const pairFile = this.#store.getCache(pairPath);
 
-      // unlink trunk
-      await Promise.all(trunkUUIDs.map(async (trunkUUID) => {
-        await this.#unlinkTrunk(trunkUUID, branch);
-      }));
+      if (pairFile === '\n' || pairFile === '' || pairFile === undefined) {
+        return;
+      }
+
+      const pairPruned = pruneValue(pairFile, branchUUID);
+
+      this.#store.setOutput(pairPath, `${pairPruned}\n`);
     }
   }
 

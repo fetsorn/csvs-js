@@ -49,7 +49,7 @@ export default class Store {
 
     const parser = await parse(schemaString)
 
-    for await (const [trunk,leaf] of parser) {
+    for await (const [trunk, leaf] of parser) {
       this.schema[trunk] = { ...this.schema[trunk] }
       // Work with each record
       this.schema[leaf] = { trunk, ...this.schema[leaf] }
@@ -109,17 +109,17 @@ export default class Store {
    */
   async write() {
     await Promise.all(Object.entries(this.output).map(async ([filePath, contents]) => {
-      // const contentsSorted = `${contents.split('\n')
-      //   .filter((line) => line !== '')
-      //   .sort((a, b) => a.localeCompare(b))
-      //   .join('\n')
-      // }\n`;
-      const contentsJoined = `${contents.split('\n')
-        .filter((line) => line !== '') // TODO: preserve empty lines
+      const contentsSorted = `${contents.split('\n')
+        .filter((line) => line !== '')
+        .sort((a, b) => a.localeCompare(b))
         .join('\n')
       }\n`;
+      // const contentsJoined = `${contents.split('\n')
+      //   .filter((line) => line !== '') // TODO: preserve empty lines
+      //   .join('\n')
+      // }\n`;
 
-      await this.#callback.writeFile(filePath, contentsJoined);
+      await this.#callback.writeFile(filePath, contentsSorted);
     }));
 
     this.output = {};
