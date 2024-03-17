@@ -10,21 +10,21 @@ export function splitLines(str) {
 }
 
 /**
- * This takes a UUID from a database entry.
- * @name takeUUID
+ * This takes a key from a dataset record.
+ * @name takeKey
  * @export function
- * @param {string} line - Entry line.
- * @returns {string} - UUID.
+ * @param {string} line - Record line.
+ * @returns {string} - key.
  */
-export function takeUUID(line) {
+export function takeKey(line) {
   return line.slice(0, 64);
 }
 
 /**
- * This takes a value from a database entry.
+ * This takes a value from a dataset record.
  * @name takeValue
  * @export function
- * @param {string} line - Entry line.
+ * @param {string} line - Record line.
  * @returns {string} - Value.
  */
 export function takeValue(line) {
@@ -32,31 +32,31 @@ export function takeValue(line) {
 }
 
 /**
- * This takes UUIDs from database entries.
- * @name takeUUIDs
+ * This takes keys from dataset records.
+ * @name takeKeys
  * @export function
- * @param {string} line - Newline separated entry lines.
- * @returns {string[]} - UUIDs.
+ * @param {string} line - Newline separated record lines.
+ * @returns {string[]} - Keys.
  */
-export function takeUUIDs(str) {
+export function takeKeys(str) {
   const lines = splitLines(str.replace(/\n*$/, ''));
 
-  const uuids = lines.map((line) => takeUUID(line));
+  const keys = lines.map((line) => takeKey(line));
 
-  return uuids;
+  return keys;
 }
 
 /**
- * This takes values from database entries.
+ * This takes values from dataset records.
  * @name takeValues
  * @export function
- * @param {string} line - Newline separated entry lines.
+ * @param {string} line - Newline separated record lines.
  * @returns {string[]} - Values.
  */
 export function takeValues(str) {
   const lines = splitLines(str.replace(/\n*$/, ''));
 
-  const uuids = lines.map((line) => takeValue(line));
+  const keys = lines.map((line) => takeValue(line));
 
-  return uuids;
+  return keys;
 }

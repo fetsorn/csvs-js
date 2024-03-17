@@ -1,7 +1,7 @@
 /* eslint-disable import/extensions */
-import { splitLines, takeUUID, takeValue } from './metadir.js';
+import { splitLines, takeKey, takeValue } from './metadir.js';
 
-function binarySearch(list, uuid) {
+function binarySearch(list, key) {
   let indexLow = 0;
 
   let indexHigh = list.length - 1;
@@ -11,15 +11,15 @@ function binarySearch(list, uuid) {
 
     const line = list[mid];
 
-    const isMatch = (new RegExp(`^${uuid}`)).test(line);
+    const isMatch = (new RegExp(`^${key}`)).test(line);
 
     if (isMatch) {
       return mid;
     }
 
-    const lineUUID = takeUUID(line);
+    const lineKey = takeKey(line);
 
-    if (lineUUID.localeCompare(uuid) > 0) {
+    if (lineKey.localeCompare(key) > 0) {
       indexHigh = mid - 1;
     } else {
       indexLow = mid + 1;
@@ -29,21 +29,21 @@ function binarySearch(list, uuid) {
   return -1;
 }
 
-export function lookup(contentFile, uuid, isBulk = false) {
+export function lookup(contentFile, key, isBulk = false) {
   const lines = splitLines(contentFile);
 
-  const index = binarySearch(lines, uuid);
+  const index = binarySearch(lines, key);
 
   if (index === -1) {
     return '';
   }
 
-  // find neigbouring lines with the same uuid
+  // find neigbouring lines with the same key
   if (isBulk) {
     let indexLow = index;
 
     for (let i = index; i >= 0; i -= 1) {
-      if ((new RegExp(`^${uuid}`)).test(lines[i])) {
+      if ((new RegExp(`^${key}`)).test(lines[i])) {
         indexLow = i;
       } else {
         break;
@@ -53,7 +53,7 @@ export function lookup(contentFile, uuid, isBulk = false) {
     let indexHigh = index;
 
     for (let i = index; i < lines.length; i += 1) {
-      if ((new RegExp(`^${uuid}`)).test(lines[i])) {
+      if ((new RegExp(`^${key}`)).test(lines[i])) {
         indexHigh = i;
       } else {
         break;
@@ -74,10 +74,10 @@ export function lookup(contentFile, uuid, isBulk = false) {
   return line;
 }
 
-export function prune(contentFile, uuid) {
+export function prune(contentFile, key) {
   const lines = splitLines(contentFile);
 
-  const index = binarySearch(lines, uuid);
+  const index = binarySearch(lines, key);
 
   if (index === -1) {
     return contentFile;
@@ -86,7 +86,7 @@ export function prune(contentFile, uuid) {
   let indexLow = index;
 
   for (let i = index; i >= 0; i -= 1) {
-    if ((new RegExp(`^${uuid}`)).test(lines[i])) {
+    if ((new RegExp(`^${key}`)).test(lines[i])) {
       indexLow = i;
     } else {
       break;
@@ -96,7 +96,7 @@ export function prune(contentFile, uuid) {
   let indexHigh = index;
 
   for (let i = index; i < lines.length; i += 1) {
-    if ((new RegExp(`^${uuid}`)).test(lines[i])) {
+    if ((new RegExp(`^${key}`)).test(lines[i])) {
       indexHigh = i;
     } else {
       break;

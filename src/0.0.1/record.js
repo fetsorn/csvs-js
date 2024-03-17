@@ -1,11 +1,11 @@
 /* eslint-disable import/extensions */
-import { takeUUIDs } from './metadir.js';
+import { takeKeys } from './metadir.js';
 import { grep, prune, pruneValue } from './grep.js';
 import Store from './store.js';
 import { digestMessage } from '../random.js';
 
-/** Class representing a database entry. */
-export default class Entry {
+/** Class representing a dataset record. */
+export default class Record {
   /**
    * .
    * @type {Object}
@@ -19,11 +19,11 @@ export default class Entry {
   #store;
 
   /**
-   * Create a database instance.
-   * @param {Object} callback - The callback that returns a UUID.
+   * Create a dataset instance.
+   * @param {Object} callback - The callback that returns a key.
    * @param {CSVS~readFileCallback} callback.readFile - The callback that reads db.
    * @param {CSVS~writeFileCallback} callback.writeFile - The callback that writes db.
-   * @param {CSVS~randomUUIDCallback} callback.randomUUID - The callback that returns a UUID.
+   * @param {CSVS~randomUUIDCallback} callback.randomUUID - The callback that returns a key.
    */
   constructor(callback) {
     this.#callback = callback;
@@ -32,18 +32,18 @@ export default class Entry {
   }
 
   /**
-   * This updates the database entry.
+   * This updates the dataset record.
    * @name update
    * @function
-   * @param {object} entry - A database entry.
-   * @returns {object} - A database entry.
+   * @param {object} record - A dataset record.
+   * @returns {object} - A dataset record.
    */
-  async update(entry) {
+  async update(record) {
     await this.#store.readSchema();
 
-    await this.#store.read(entry._);
+    await this.#store.read(record._);
 
-    const value = await this.#save(entry);
+    const value = await this.#save(record);
 
     await this.#store.write();
 
@@ -51,53 +51,53 @@ export default class Entry {
   }
 
   /**
-   * This deletes the database entry.
+   * This deletes the dataset record.
    * @name delete
-   * @param {object} entry - A database entry.
+   * @param {object} record - A dataset record.
    * @function
    */
-  async delete(entry) {
+  async delete(record) {
     await this.#store.readSchema();
 
-    await this.#store.read(entry._);
+    await this.#store.read(record._);
 
-    const branchUUID = await this.#remove(entry);
+    const branchKey = await this.#remove(record);
 
-    await this.#unlinkTrunks(entry._, entry.UUID ?? branchUUID);
+    await this.#unlinkTrunks(record._, record.UUID ?? branchKey);
 
-    await this.#unlinkLeaves(entry._, entry.UUID ?? branchUUID);
+    await this.#unlinkLeaves(record._, record.UUID ?? branchKey);
 
     await this.#store.write();
   }
 
   /**
-   * This saves an entry to the database.
+   * This saves an record to the dataset.
    * @name save
-   * @param {object} entry - A database entry.
+   * @param {object} record - A dataset record.
    * @function
-   * @returns {object} - A database entry with new UUID.
+   * @returns {object} - A dataset record with new key.
    */
-  async #save(entry) {
-    const branch = entry._;
+  async #save(record) {
+    const branch = record._;
 
     const branchType = this.#store.schema[branch].type;
 
     const branchValue = branchType === 'array' || branchType === 'object'
-      ? entry
-      : entry[branch];
+      ? record
+      : record[branch];
 
-    let branchUUID;
+    let branchKey;
 
-    if (entry.UUID) {
-      branchUUID = entry.UUID;
+    if (record.UUID) {
+      branchKey = record.UUID;
     } else if (this.#store.schema[branch].trunk === undefined
                || branchType === 'array'
                || branchType === 'object') {
-      branchUUID = await digestMessage(await this.#callback.randomUUID());
+      branchKey = await digestMessage(await this.#callback.randomUUID());
     } else if (branchType === 'hash') {
-      branchUUID = branchValue;
+      branchKey = branchValue;
     } else {
-      branchUUID = await digestMessage(branchValue);
+      branchKey = await digestMessage(branchValue);
     }
 
     // add to props if needed
@@ -107,16 +107,16 @@ export default class Entry {
       ? JSON.stringify(branchValue)
       : branchValue;
 
-    const isUUID = branchType === 'hash' || branchType === 'object' || branchType === 'array';
+    const isKey = branchType === 'hash' || branchType === 'object' || branchType === 'array';
 
-    const indexLine = isUUID ? `${branchUUID}\n` : `${branchUUID},${branchValueEscaped}\n`;
+    const indexLine = isKey ? `${branchKey}\n` : `${branchKey},${branchValueEscaped}\n`;
 
     const indexFile = this.#store.getOutput(indexPath) ?? this.#store.getCache(indexPath);
 
     if (indexFile === '\n') {
       this.#store.setOutput(indexPath, indexLine);
     } else if (!indexFile.includes(indexLine)) {
-      const indexPruned = prune(indexFile, branchUUID);
+      const indexPruned = prune(indexFile, branchKey);
 
       if (indexPruned === '\n') {
         this.#store.setOutput(indexPath, indexLine);
@@ -125,41 +125,41 @@ export default class Entry {
       }
     }
 
-    await this.#linkLeaves(entry, branchUUID);
+    await this.#linkLeaves(record, branchKey);
 
-    return { UUID: branchUUID, ...entry };
+    return { UUID: branchKey, ...record };
   }
 
   /**
-   * This removes an entry from the database.
+   * This removes an record from the dataset.
    * @name remove
-   * @param {object} entry - A database entry.
+   * @param {object} record - A dataset record.
    * @function
    */
-  async #remove(entry) {
-    const branch = entry._;
+  async #remove(record) {
+    const branch = record._;
 
     const branchType = this.#store.schema[branch].type;
 
     if (branchType === 'hash'
         || branchType === 'object'
         || branchType === 'array') {
-      if (entry.UUID === undefined) {
-        throw Error(`failed to remove ${branchType} branch ${branch} entry without UUID`);
+      if (record.UUID === undefined) {
+        throw Error(`failed to remove ${branchType} branch ${branch} record without key`);
       }
       return undefined;
     }
 
-    const branchValue = entry[branch];
+    const branchValue = record[branch];
 
-    let branchUUID;
+    let branchKey;
 
-    if (entry.UUID) {
-      branchUUID = entry.UUID;
+    if (record.UUID) {
+      branchKey = record.UUID;
     } else if (this.#store.schema[branch].trunk === undefined) {
-      throw Error(`failed to remove root branch ${branch} entry without UUID`);
+      throw Error(`failed to remove root branch ${branch} record without key`);
     } else {
-      branchUUID = await digestMessage(branchValue);
+      branchKey = await digestMessage(branchValue);
     }
 
     // prune props if exist
@@ -167,22 +167,22 @@ export default class Entry {
 
     const indexFile = this.#store.getOutput(indexPath) ?? this.#store.getCache(indexPath);
 
-    const indexPruned = prune(indexFile, branchUUID);
+    const indexPruned = prune(indexFile, branchKey);
 
     this.#store.setOutput(indexPath, indexPruned);
 
-    return branchUUID;
+    return branchKey;
   }
 
   /**
    * This links all leaves to the branch.
    * @name linkLeaves
-   * @param {object} entry - A database entry.
-   * @param {object} branchUUID - The branch UUID.
+   * @param {object} record - A dataset record.
+   * @param {object} branchKey - The branch key.
    * @function
    */
-  async #linkLeaves(entry, branchUUID) {
-    const branch = entry._;
+  async #linkLeaves(record, branchKey) {
+    const branch = record._;
 
     const branchType = this.#store.schema[branch].type;
 
@@ -192,61 +192,61 @@ export default class Entry {
 
     if (this.#store.schema[branch].type === 'array') {
       // unlink all items from branch for refresh
-      await this.#unlinkLeaves(branch, branchUUID);
+      await this.#unlinkLeaves(branch, branchKey);
     }
 
     // map leaves
     await Promise.all(leaves.map(async (leaf) => {
     // for (const leaf of leaves) {
-      const entryLeaves = branchType === 'array'
-        ? entry.items.map((item) => item._)
-        : Object.keys(entry);
+      const recordLeaves = branchType === 'array'
+        ? record.items.map((item) => item._)
+        : Object.keys(record);
 
-      if (entryLeaves.includes(leaf)) {
-        // link if in the entry
+      if (recordLeaves.includes(leaf)) {
+        // link if in the record
         if (this.#store.schema[branch].type === 'array') {
-          const leafItems = entry.items.filter((item) => item._ === leaf);
+          const leafItems = record.items.filter((item) => item._ === leaf);
 
           await Promise.all(leafItems.map(async (item) => {
           // for (const item of leafItems) {
-            await this.#linkTrunk(branchUUID, item);
+            await this.#linkTrunk(branchKey, item);
           }));
         } else {
-          const leafEntry = this.#store.schema[leaf].type === 'array' || this.#store.schema[leaf].type === 'object'
-            ? entry[leaf]
-            : Object.keys(entry)
+          const leafRecord = this.#store.schema[leaf].type === 'array' || this.#store.schema[leaf].type === 'object'
+            ? record[leaf]
+            : Object.keys(record)
               .filter((b) => this.#store.schema[b]?.trunk === leaf)
               .reduce(
-                (acc, key) => ({ [key]: entry[key], ...acc }),
-                { _: leaf, [leaf]: entry[leaf] },
+                (acc, key) => ({ [key]: record[key], ...acc }),
+                { _: leaf, [leaf]: record[leaf] },
               );
 
-          await this.#linkTrunk(branchUUID, leafEntry);
+          await this.#linkTrunk(branchKey, leafRecord);
         }
       } else {
-        /// unlink if not in the entry
-        await this.#unlinkTrunk(branchUUID, leaf);
+        /// unlink if not in the record
+        await this.#unlinkTrunk(branchKey, leaf);
       }
     }));
     // }
   }
 
   /**
-   * This links an entry to a trunk UUID.
+   * This links an record to a trunk key.
    * @name linkTrunk
-   * @param {object} trunkUUID - The trunk UUID.
-   * @param {object} entry - A database entry.
+   * @param {object} trunkKey - The trunk key.
+   * @param {object} record - A dataset record.
    * @function
    */
-  async #linkTrunk(trunkUUID, entry) {
-    const branch = entry._;
+  async #linkTrunk(trunkKey, record) {
+    const branch = record._;
 
     const { trunk } = this.#store.schema[branch];
     // save if needed
-    const { UUID: branchUUID } = await this.#save(entry);
+    const { UUID: branchKey } = await this.#save(record);
 
     // add to pairs
-    const pairLine = `${trunkUUID},${branchUUID}\n`;
+    const pairLine = `${trunkKey},${branchKey}\n`;
 
     const pairPath = `metadir/pairs/${trunk}-${branch}.csv`;
 
@@ -258,7 +258,7 @@ export default class Entry {
       if (this.#store.schema[trunk].type === 'array') {
         this.#store.setOutput(pairPath, pairFile + pairLine);
       } else {
-        const pairPruned = prune(pairFile, trunkUUID);
+        const pairPruned = prune(pairFile, trunkKey);
 
         if (pairPruned === '\n') {
           this.#store.setOutput(pairPath, pairLine);
@@ -270,41 +270,41 @@ export default class Entry {
   }
 
   /**
-   * This unlinks an entry from a trunk UUID.
+   * This unlinks an record from a trunk key.
    * @name unlinkTrunk
-   * @param {object} trunkUUID - The trunk UUID.
-   * @param {object} entry - A database entry.
+   * @param {object} trunkKey - The trunk key.
+   * @param {object} record - A dataset record.
    * @function
    */
-  async #unlinkTrunk(trunkUUID, branch) {
-    // prune pairs file for trunk UUID
+  async #unlinkTrunk(trunkKey, branch) {
+    // prune pairs file for trunk key
     const pairPath = `metadir/pairs/${this.#store.schema[branch].trunk}-${branch}.csv`;
 
-    // if file, prune it for trunk UUID
+    // if file, prune it for trunk key
     const pairFile = this.#store.getCache(pairPath);
 
     if (pairFile === '\n' || pairFile === '') {
       return;
     }
 
-    const pairPruned = prune(pairFile, trunkUUID);
+    const pairPruned = prune(pairFile, trunkKey);
 
     this.#store.setOutput(pairPath, `${pairPruned}\n`);
   }
 
   /**
-   * This unlinks a branch UUID from all trunk UUIDs.
+   * This unlinks a branch key from all trunk keys.
    * @name unlinkTrunks
    * @param {string} branch - A branch name.
-   * @param {string} branchUUID - A branch UUID.
+   * @param {string} branchKey - A branch key.
    * @function
    */
-  async #unlinkTrunks(branch, branchUUID) {
+  async #unlinkTrunks(branch, branchKey) {
     const { trunk } = this.#store.schema[branch];
 
     // unlink trunk if it exists
     if (trunk !== undefined) {
-      // find trunkUUIDs
+      // find trunkKeys
       const pairPath = `metadir/pairs/${trunk}-${branch}.csv`;
 
       const pairFile = this.#store.getCache(pairPath);
@@ -313,27 +313,27 @@ export default class Entry {
         return;
       }
 
-      const pairPruned = pruneValue(pairFile, branchUUID);
+      const pairPruned = pruneValue(pairFile, branchKey);
 
       this.#store.setOutput(pairPath, `${pairPruned}\n`);
     }
   }
 
   /**
-   * This unlinks a branch UUID from all leaf UUIDs.
+   * This unlinks a branch key from all leaf keys.
    * @name unlinkLeaves
    * @param {string} branch - A branch name.
-   * @param {string} branchUUID - A branch UUID.
+   * @param {string} branchKey - A branch key.
    * @function
    */
-  async #unlinkLeaves(branch, branchUUID) {
+  async #unlinkLeaves(branch, branchKey) {
     // find all leaves
     const leaves = Object.keys(this.#store.schema)
       .filter((b) => this.#store.schema[b].trunk === branch
               && this.#store.schema[b].type !== 'regex');
 
     await Promise.all(leaves.map(async (leaf) => {
-      await this.#unlinkTrunk(branchUUID, leaf);
+      await this.#unlinkTrunk(branchKey, leaf);
     }));
   }
 }

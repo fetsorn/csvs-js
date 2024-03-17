@@ -1,6 +1,6 @@
 /* eslint-disable import/extensions */
-import { takeUUIDs } from './metadir.js';
-import { grep, pruneValue, pruneUUID } from './grep.js';
+import { takeKeys } from './metadir.js';
+import { grep, pruneValue, pruneKey } from './grep.js';
 import Store from './store.js';
 import { digestMessage } from '../random.js';
 
@@ -20,10 +20,10 @@ export default class Record {
 
   /**
    * Create a dataset instance.
-   * @param {Object} callback - The callback that returns a UUID.
+   * @param {Object} callback - The callback that returns a Key.
    * @param {CSVS~readFileCallback} callback.readFile - The callback that reads db.
    * @param {CSVS~writeFileCallback} callback.writeFile - The callback that writes db.
-   * @param {CSVS~randomUUIDCallback} callback.randomUUID - The callback that returns a UUID.
+   * @param {CSVS~randomUUIDCallback} callback.randomUUID - The callback that returns a Key.
    */
   constructor(callback) {
     this.#callback = callback;
@@ -91,7 +91,7 @@ export default class Record {
    * This links all leaves to the branch.
    * @name linkLeaves
    * @param {object} record - A dataset record.
-   * @param {object} branchUUID - The branch UUID.
+   * @param {object} branchKey - The branch Key.
    * @function
    */
   async #linkLeaves(record, branchValue) {
@@ -163,7 +163,7 @@ export default class Record {
 
     // unlink trunk if it exists
     if (trunk !== undefined) {
-      // find trunkUUIDs
+      // find trunkKeys
       const pairPath = `${trunk}-${branch}.csv`;
 
       const pairFile = this.#store.getCache(pairPath);
@@ -196,7 +196,7 @@ export default class Record {
         return;
       }
 
-      const pairPruned = pruneUUID(pairFile, branchValue);
+      const pairPruned = pruneKey(pairFile, branchValue);
 
       this.#store.setOutput(pairPath, `${pairPruned}\n`);
   }

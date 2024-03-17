@@ -1,6 +1,6 @@
 /* eslint-disable import/extensions */
 import { findCrownPaths } from './schema.js';
-import { takeUUID } from './metadir.js';
+import { takeKey } from './metadir.js';
 import { parse } from 'csv-parse';
 
 export default class Store {
@@ -11,7 +11,7 @@ export default class Store {
   #callback;
 
   /**
-   * schema is the database schema.
+   * schema is the dataset schema.
    * @type {object}
    */
   schema = {};
@@ -29,7 +29,7 @@ export default class Store {
   output = {};
 
   /**
-   * Create a database instance.
+   * Create a dataset instance.
    * @param {Object} callback - Object with callbacks.
    * @param {readFileCallback} callback.readFile - The callback that reads db.
    * @param {writeFileCallback} callback.writeFile - The callback that writes db.
@@ -39,10 +39,10 @@ export default class Store {
   }
 
   /**
-   * This returns the database schema.
+   * This returns the dataset schema.
    * @name readSchema
    * @function
-   * @returns {object} - database schema.
+   * @returns {object} - dataset schema.
    */
   async readSchema() {
     const schemaString = await this.#callback.readFile('_-_.csv');
@@ -57,7 +57,7 @@ export default class Store {
   }
 
   /**
-   * This returns a map of database file contents.
+   * This returns a map of dataset file contents.
    * @name read
    * @function
    * @param {string} base - Base branch.
@@ -75,7 +75,7 @@ export default class Store {
 
         // const contentsSorted = contents.split('\n')
         //   .filter((line) => line !== '')
-        //   .sort((a, b) => takeUUID(a).localeCompare(takeUUID(b)))
+        //   .sort((a, b) => takeKey(a).localeCompare(takeKey(b)))
         //   .join('\n');
 
         // cache[filePath] = contentsSorted;
@@ -103,7 +103,7 @@ export default class Store {
   }
 
   /**
-   * This writes new file contents to the database.
+   * This writes new file contents to the dataset.
    * @name write
    * @function
    */
@@ -114,10 +114,6 @@ export default class Store {
         .sort((a, b) => a.localeCompare(b))
         .join('\n')
       }\n`;
-      // const contentsJoined = `${contents.split('\n')
-      //   .filter((line) => line !== '') // TODO: preserve empty lines
-      //   .join('\n')
-      // }\n`;
 
       await this.#callback.writeFile(filePath, contentsSorted);
     }));

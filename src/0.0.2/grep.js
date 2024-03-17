@@ -1,31 +1,31 @@
 /* eslint-disable import/extensions */
-import { splitLines, takeUUID, takeValue } from './metadir.js';
+import { splitLines, takeKey, takeValue } from './metadir.js';
 
-function binarySearchUUID(listUnsorted, uuid) {
+function binarySearchKey(listUnsorted, key) {
   // TODO: sort once elsewhere or grep instead of binary search
-  const list = listUnsorted.sort((a, b) => takeUUID(a).localeCompare(takeUUID(b)))
+  const list = listUnsorted.sort((a, b) => takeKey(a).localeCompare(takeKey(b)))
 
   let indexLow = 0;
 
   let indexHigh = list.length - 1;
 
   while (indexLow <= indexHigh) {
-    const mid = Math.floor((indexLow + indexHigh) / 2);
+    const mkey = Math.floor((indexLow + indexHigh) / 2);
 
-    const line = list[mid];
+    const line = list[mkey];
 
-    const isMatch = (new RegExp(`^${uuid},`)).test(line);
+    const isMatch = (new RegExp(`^${key},`)).test(line);
 
     if (isMatch) {
-      return mid;
+      return mkey;
     }
 
-    const lineUUID = takeUUID(line);
+    const lineKey = takeKey(line);
 
-    if (lineUUID.localeCompare(uuid) > 0) {
-      indexHigh = mid - 1;
+    if (lineKey.localeCompare(key) > 0) {
+      indexHigh = mkey - 1;
     } else {
-      indexLow = mid + 1;
+      indexLow = mkey + 1;
     }
   }
 
@@ -41,43 +41,43 @@ function binarySearchValue(listUnsorted, value) {
   let indexHigh = list.length - 1;
 
   while (indexLow <= indexHigh) {
-    const mid = Math.floor((indexLow + indexHigh) / 2);
+    const mkey = Math.floor((indexLow + indexHigh) / 2);
 
-    const line = list[mid];
+    const line = list[mkey];
 
     const isMatch = (new RegExp(`,${value}$`)).test(line);
 
     if (isMatch) {
-      return mid;
+      return mkey;
     }
 
     const lineValue = takeValue(line);
 
     if (lineValue.localeCompare(value) > 0) {
-      indexHigh = mid - 1;
+      indexHigh = mkey - 1;
     } else {
-      indexLow = mid + 1;
+      indexLow = mkey + 1;
     }
   }
 
   return -1;
 }
 
-export function lookup(contentFile, uuid, isBulk = false) {
+export function lookup(contentFile, key, isBulk = false) {
   const lines = splitLines(contentFile);
 
-  const index = binarySearchUUID(lines, uuid);
+  const index = binarySearchKey(lines, key);
 
   if (index === -1) {
     return '';
   }
 
-  // find neigbouring lines with the same uuid
+  // find neigbouring lines with the same key
   if (isBulk) {
     let indexLow = index;
 
     for (let i = index; i >= 0; i -= 1) {
-      if ((new RegExp(`^${uuid},`)).test(lines[i])) {
+      if ((new RegExp(`^${key},`)).test(lines[i])) {
         indexLow = i;
       } else {
         break;
@@ -87,7 +87,7 @@ export function lookup(contentFile, uuid, isBulk = false) {
     let indexHigh = index;
 
     for (let i = index; i < lines.length; i += 1) {
-      if ((new RegExp(`^${uuid},`)).test(lines[i])) {
+      if ((new RegExp(`^${key},`)).test(lines[i])) {
         indexHigh = i;
       } else {
         break;
@@ -148,10 +148,10 @@ export function pruneValue(contentFile, value) {
   return contentFilePruned;
 }
 
-export function pruneUUID(contentFile, uuid) {
+export function pruneKey(contentFile, key) {
   const lines = splitLines(contentFile);
 
-  const index = binarySearchUUID(lines, uuid);
+  const index = binarySearchKey(lines, key);
 
   if (index === -1) {
     return contentFile;
@@ -160,7 +160,7 @@ export function pruneUUID(contentFile, uuid) {
   let indexLow = index;
 
   for (let i = index; i >= 0; i -= 1) {
-    if ((new RegExp(`^${uuid},`)).test(lines[i])) {
+    if ((new RegExp(`^${key},`)).test(lines[i])) {
       indexLow = i;
     } else {
       break;
@@ -170,7 +170,7 @@ export function pruneUUID(contentFile, uuid) {
   let indexHigh = index;
 
   for (let i = index; i < lines.length; i += 1) {
-    if ((new RegExp(`^${uuid},`)).test(lines[i])) {
+    if ((new RegExp(`^${key},`)).test(lines[i])) {
       indexHigh = i;
     } else {
       break;

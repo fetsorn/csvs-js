@@ -1,9 +1,9 @@
 /* eslint-disable import/extensions */
 import Query1 from './0.0.1/query.js';
-import Entry1 from './0.0.1/entry.js';
+import Record1 from './0.0.1/record.js';
 import { grep as grepPolyfill1 } from './0.0.1/grep.js';
 import Query2 from './0.0.2/query.js';
-import Entry2 from './0.0.2/entry.js';
+import Record2 from './0.0.2/record.js';
 import { grep as grepPolyfill2 } from './0.0.2/grep.js';
 import { randomUUID as randomUUIDPolyfill } from './random.js';
 import { detectVersion } from './version.js';
@@ -62,7 +62,7 @@ export default class CSVS {
   randomUUID;
 
   /**
-   * Create a database instance.
+   * Create a dataset instance.
    * @param {Object} args - Object with callbacks.
    * @param {readFileCallback} args.readFile - The callback that reads db.
    * @param {writeFileCallback} args.writeFile - The callback that writes db.
@@ -79,7 +79,7 @@ export default class CSVS {
   }
 
   /**
-   * This returns an array of entries from the database.
+   * This returns an array of records from the dataset.
    * @name select
    * @function
    * @param {URLSearchParams} urlSearchParams - The search parameters.
@@ -111,27 +111,27 @@ export default class CSVS {
     }
   }
 
-  async buildEntry(base, baseUUID) {
+  async buildRecord(base, baseUUID) {
     const { readFile, grep } = this;
 
     // detect dataset version
     const version = await detectVersion(readFile);
 
     if (version === "0.0.1") {
-      return (new Query1({ readFile, grep })).buildEntry(base, baseUUID);
+      return (new Query1({ readFile, grep })).buildRecord(base, baseUUID);
     } else if (version === "0.0.2") {
-      return (new Query2({ readFile, grep })).buildEntry(base, baseUUID);
+      return (new Query2({ readFile, grep })).buildRecord(base, baseUUID);
     }
   }
 
   /**
-   * This updates the database entry.
+   * This updates the dataset record.
    * @name update
    * @function
-   * @param {object} entry - A database entry.
-   * @returns {object} - A database entry.
+   * @param {object} record - A dataset record.
+   * @returns {object} - A dataset record.
    */
-  async update(entry) {
+  async update(record) {
     const {
       readFile, writeFile, randomUUID,
     } = this;
@@ -140,23 +140,23 @@ export default class CSVS {
     const version = await detectVersion(readFile);
 
     if (version === "0.0.1") {
-      return (new Entry1({
+      return (new Record1({
         readFile, writeFile, randomUUID,
-      }).update(entry));
+      }).update(record));
     } else if (version === "0.0.2") {
-      return (new Entry2({
+      return (new Record2({
         readFile, writeFile, randomUUID,
-      }).update(entry));
+      }).update(record));
     }
   }
 
   /**
-   * This deletes the database entry.
+   * This deletes the dataset record.
    * @name delete
-   * @param {object} entry - A database entry.
+   * @param {object} record - A dataset record.
    * @function
    */
-  async delete(entry) {
+  async delete(record) {
     const {
       readFile, writeFile, randomUUID,
     } = this;
@@ -165,13 +165,13 @@ export default class CSVS {
     const version = await detectVersion(readFile);
 
     if (version === "0.0.1") {
-      return (new Entry1({
+      return (new Record1({
         readFile, writeFile, randomUUID,
-      }).delete(entry));
+      }).delete(record));
     } else if (version === "0.0.2") {
-      return (new Entry2({
+      return (new Record2({
         readFile, writeFile, randomUUID,
-      }).delete(entry));
+      }).delete(record));
     }
   }
 }

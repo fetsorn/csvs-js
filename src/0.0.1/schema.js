@@ -1,8 +1,8 @@
 /**
- * This finds the root branch of a database schema.
+ * This finds the root branch of a dataset schema.
  * @name findSchemaRoot
  * @function
- * @param {object} schema - Database schema.
+ * @param {object} schema - Dataset schema.
  * @returns {string} - Root branch.
  */
 export function findSchemaRoot(schema) {
@@ -15,7 +15,7 @@ export function findSchemaRoot(schema) {
  * This tells if a branch is connected to base branch.
  * @name isConnected
  * @function
- * @param {object} schema - Database schema.
+ * @param {object} schema - Dataset schema.
  * @param {string} base - Base branch name.
  * @param {string} branch - Branch name.
  * @returns {Boolean}
@@ -46,7 +46,7 @@ function isConnected(schema, base, branch) {
  * This finds all branches that are connected to the base branch.
  * @name findCrown
  * @function
- * @param {object} schema - Database schema.
+ * @param {object} schema - Dataset schema.
  * @param {string} base - Base branch name.
  * @returns {string[]} - Array of leaf branches connected to the base branch.
  */
@@ -58,7 +58,7 @@ export function findCrown(schema, base) {
  * This finds paths to all files required to search for base branch.
  * @name findStorePaths
  * @function
- * @param {object} schema - Database schema.
+ * @param {object} schema - Dataset schema.
  * @param {string} base - Base branch name.
  * @returns {string[]} - Array of file paths.
  */

@@ -1,40 +1,38 @@
 /* eslint-disable import/extensions */
 import { findSchemaRoot, findCrown } from './schema.js';
 import {
-  takeValue, takeUUIDs, takeValues,
+  takeValue, takeKeys, takeValues,
 } from './metadir.js';
 import Store from './store.js';
 import { grep, lookup } from './grep.js';
 
 /**
- * This finds all UUIDs of the branch.
- * @name findAllUUIDs
+ * This finds all Keys of the branch.
+ * @name findAllKeys
  * @function
  * @param {object} store - Map of file paths to file contents.
- * @param {object} schema - Database schema.
+ * @param {object} schema - Dataset schema.
  * @param {string} branch - Branch name.
  * @returns {string[]} - Array of leaf branches connected to the base branch.
  */
-export function findAllUUIDs(store, schema, branch) {
+export function findAllKeys(store, schema, branch) {
   const { trunk } = schema[branch];
 
-  const trunkUUIDs = trunk !== undefined
+  const trunkKeys = trunk !== undefined
         ? takeValues(store[`${trunk}-${branch}.csv`])
         : [];
 
   const leaves = Object.keys(schema)
                        .filter((leaf) => schema[leaf].trunk === branch);
 
-  const leafUUIDs = leaves.map((leaf) => {
-    return takeUUIDs(store[`${branch}-${leaf}.csv`])
+  const leafKeys = leaves.map((leaf) => {
+    return takeKeys(store[`${branch}-${leaf}.csv`])
   })
 
-  const uuids = [...new Set([...trunkUUIDs, ...leafUUIDs].flat())];
-
-  return uuids
+  return [...new Set([...trunkKeys, ...leafKeys].flat())]
 }
 
-/** Class representing a database query. */
+/** Class representing a dataset query. */
 export default class Query {
   /**
    * .
@@ -55,7 +53,7 @@ export default class Query {
   #crowns = {};
 
   /**
-   * Create a database instance.
+   * Create a dataset instance.
    * @param {Object} callback - Object with callbacks.
    * @param {readFileCallback} callback.readFile - The callback that reads db.
    * @param {grepCallback} callback.grep - The callback that searches files.
@@ -67,7 +65,7 @@ export default class Query {
   }
 
   /**
-   * This returns an array of entries from the database.
+   * This returns an array of records from the dataset.
    * @name select
    * @function
    * @param {URLSearchParams} urlSearchParams - The search parameters.
@@ -81,19 +79,19 @@ export default class Query {
     // if no base is provided, find first schema root
     const base = searchParams.has('_') ? searchParams.get('_') : findSchemaRoot(this.#store.schema);
 
-    // get a map of database file contents
+    // get a map of dataset file contents
     await this.#store.read(base);
 
-    // get an array of base UUIDs
-    const baseUUIDs = await this.#searchUUIDs(base, searchParams);
+    // get an array of base Keys
+    const baseKeys = await this.#searchKeys(base, searchParams);
 
-    // get an array of entries
-    const entries = await this.#buildRecords(base, baseUUIDs);
+    // get an array of records
+    const records = await this.#buildRecords(base, baseKeys);
 
-    return entries;
+    return records;
   }
 
-  async selectBaseUUIDs(urlSearchParams) {
+  async selectBaseKeys(urlSearchParams) {
     await this.#store.readSchema();
 
     const searchParams = urlSearchParams ?? new URLSearchParams();
@@ -101,39 +99,39 @@ export default class Query {
     // if no base is provided, find first schema root
     const base = searchParams.has('_') ? searchParams.get('_') : findSchemaRoot(this.#store.schema);
 
-    // get a map of database file contents
+    // get a map of dataset file contents
     await this.#store.read(base);
 
-    // get an array of base UUIDs
-    const baseUUIDs = await this.#searchUUIDs(base, searchParams);
+    // get an array of base Keys
+    const baseKeys = await this.#searchKeys(base, searchParams);
 
-    return {base, baseUUIDs}
+    return {base, baseKeys}
   }
 
-  async buildEntries(base, baseUUID) {
+  async buildRecords(base, baseKey) {
     await this.#store.readSchema();
 
     await this.#store.read(base);
 
-    return this.#buildRecords(base, baseUUID);
+    return this.#buildRecords(base, baseKey);
   }
 
   /**
-   * This returns an array of base UUIDs.
-   * @name searchUUIDs
+   * This returns an array of base Keys.
+   * @name searchKeys
    * @function
    * @param {string} base - Base branch.
    * @param {URLSearchParams} searchParams - The search parameters.
-   * @returns {string[]} - Array of base UUIDs.
+   * @returns {string[]} - Array of base Keys.
    */
-  async #searchUUIDs(base, searchParams) {
+  async #searchKeys(base, searchParams) {
     const searchEntries = Array.from(searchParams.entries()).filter(
       ([key]) => key !== '.' && key !== '~' && key !== '-' && key !== '_',
     );
 
     // if no queries, return all values
     if (searchEntries.length === 0) {
-      const baseValues = findAllUUIDs(this.#store.cache, this.#store.schema, base);
+      const baseValues = findAllKeys(this.#store.cache, this.#store.schema, base);
 
       return baseValues
     }
@@ -150,7 +148,7 @@ export default class Query {
             `^${value},`
           )
 
-          const baseValues = takeUUIDs(baseLines)
+          const baseValues = takeKeys(baseLines)
 
           return baseValues
         }))
@@ -167,7 +165,7 @@ export default class Query {
 
         const branchValues = takeValues(branchLines);
 
-        const baseValues = await this.#findBaseUUIDs(base, branch, branchValues)
+        const baseValues = await this.#findBaseKeys(base, branch, branchValues)
 
         return baseValues;
       }
@@ -180,62 +178,62 @@ export default class Query {
   }
 
   /**
-   * This returns an array of base UUIDs related to branch UUIDs.
-   * @name findBaseUUIDs
+   * This returns an array of base Keys related to branch Keys.
+   * @name findBaseKeys
    * @function
    * @param {string} base - Base branch.
    * @param {string} branch - Branch name.
-   * @param {string[]} branchUUIDs - Array of branch UUIDs.
-   * @returns {string[]} - Array of base UUIDs.
+   * @param {string[]} branchKeys - Array of branch Keys.
+   * @returns {string[]} - Array of base Keys.
    */
-  async #findBaseUUIDs(base, branch, branchUUIDs) {
-    if (branchUUIDs.length === 0) { return []; }
+  async #findBaseKeys(base, branch, branchKeys) {
+    if (branchKeys.length === 0) { return []; }
 
     const { trunk } = this.#store.schema[branch];
 
     const pairLines = grep(
       this.#store.cache[`${trunk}-${branch}.csv`],
-      branchUUIDs.join('\n'),
+      branchKeys.join('\n'),
     );
 
-    const trunkUUIDs = takeUUIDs(pairLines);
+    const trunkKeys = takeKeys(pairLines);
 
     if (trunk === base) {
-      return trunkUUIDs;
+      return trunkKeys;
     }
 
-    return this.#findBaseUUIDs(base, trunk, trunkUUIDs);
+    return this.#findBaseKeys(base, trunk, trunkKeys);
   }
 
   /**
-   * This returns an array of entries.
+   * This returns an array of records.
    * @name buildRecords
    * @function
    * @param {string} base - Base branch.
-   * @param {string[]} baseUUIDs - Array of base UUIDs.
-   * @returns {object[]} - Array of entries.
+   * @param {string[]} baseKeys - Array of base Keys.
+   * @returns {object[]} - Array of records.
    */
-  async #buildRecords(base, baseUUIDs) {
+  async #buildRecords(base, baseKeys) {
 
     const records = await Promise.all(
-      baseUUIDs.map(async (baseUUID) => this.#buildRecord(base, baseUUID))
+      baseKeys.map(async (baseKey) => this.#buildRecord(base, baseKey))
     );
 
     return records;
   }
 
   /**
-   * This returns an entry.
+   * This returns a record.
    * @name buildRecord
    * @function
    * @param {string} base - Base branch.
    * @param {string} baseValue - Base value.
-   * @returns {object} - Entry.
+   * @returns {object} - Record.
    */
   async #buildRecord(base, baseValue) {
-    let entry = { _: base };
+    let record = { _: base };
 
-    entry['|'] = baseValue;
+    record['|'] = baseValue;
 
     const leaves = Object.keys(this.#store.schema)
                          .filter((leaf) => this.#store.schema[leaf].trunk === base);
@@ -253,17 +251,17 @@ export default class Query {
           const leafRecord = leafRecords[0];
 
           if (Object.keys(leafRecord).length === 2) {
-            entry[leaf] = leafRecord["|"];
+            record[leaf] = leafRecord["|"];
           } else {
-            entry[leaf] = leafRecord;
+            record[leaf] = leafRecord;
           }
         } else {
-          entry[leaf] = leafRecords;
+          record[leaf] = leafRecords;
         }
       }
     }));
 
-    return entry;
+    return record;
   }
 
   /**
