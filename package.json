@@ -1,7 +1,7 @@
 {
   "name": "@fetsorn/csvs-js",
   "description": "csvs: comma-separated value store, js bindings",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "author": "Anton Davydov <fetsorn@gmail.com>",
   "license": "MIT",
   "exports": "./src/index.js",
@@ -14,6 +14,11 @@
     "test": "yarn test:node && yarn test:wasm",
     "test:node": "yarn node --experimental-vm-modules $(yarn bin jest)",
     "test:wasm": "serve"
+  },
+  "jest": {
+    "moduleNameMapper": {
+      "^csv-parse/sync": "<rootDir>/node_modules/csv-parse/dist/cjs/sync.cjs"
+    }
   },
   "devDependencies": {
     "@fetsorn/wasm-grep": "0.2.0",

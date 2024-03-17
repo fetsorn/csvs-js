@@ -1,4 +1,4 @@
-import { parse } from 'csv-parse/lib/sync';
+import { parse } from 'csv-parse/sync';
 
 /**
  * This splits string on newlines and filters empty lines.
