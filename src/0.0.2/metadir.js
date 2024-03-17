@@ -12,7 +12,7 @@ export function splitLines(str) {
 }
 
 /**
- * This takes a Key from a dataset record.
+ * This takes a key from a dataset record.
  * @name takeKey
  * @export function
  * @param {string} line - Record line.
@@ -42,7 +42,7 @@ export function takeValue(line) {
 }
 
 /**
- * This takes Keys from dataset records.
+ * This takes keys from dataset records.
  * @name takeKeys
  * @export function
  * @param {string} str - Newline separated record lines.

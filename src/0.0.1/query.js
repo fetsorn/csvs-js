@@ -5,6 +5,7 @@ import {
 } from './metadir.js';
 import Store from './store.js';
 import { grep, lookup } from './grep.js';
+import stream from 'stream';
 
 /**
  * This finds all keys of the branch.
@@ -105,6 +106,43 @@ export default class Query {
     await this.#store.read(base);
 
     return this.#buildRecord(base, baseKey);
+  }
+
+  async selectStream(urlSearchParams) {
+    await this.#store.readSchema();
+
+    const searchParams = urlSearchParams ?? new URLSearchParams();
+
+    // if no base is provided, find first schema root
+    const base = searchParams.has('_') ? searchParams.get('_') : findSchemaRoot(this.#store.schema);
+
+    // get a map of database file contents
+    await this.#store.read(base);
+
+    // get an array of base keyss
+    const baseKeys = await this.#searchKeys(base, searchParams);
+
+    const query = this;
+
+    return new stream.Readable({
+      objectMode: true,
+
+      async read(controller) {
+        if (this._buffer === undefined) {
+          this._buffer = baseKeys;
+        }
+
+        const baseKey = this._buffer.pop();
+
+        const record = await query.#buildRecord(base, baseKey);
+
+        this.push(record);
+
+        if (this._buffer.length === 0) {
+          this.push(null)
+        }
+      },
+    })
   }
 
   /**

@@ -5,9 +5,10 @@ import {
 } from './metadir.js';
 import Store from './store.js';
 import { grep, lookup } from './grep.js';
+import stream from 'stream';
 
 /**
- * This finds all Keys of the branch.
+ * This finds all keys of the branch.
  * @name findAllKeys
  * @function
  * @param {object} store - Map of file paths to file contents.
@@ -82,7 +83,7 @@ export default class Query {
     // get a map of dataset file contents
     await this.#store.read(base);
 
-    // get an array of base Keys
+    // get an array of base keys
     const baseKeys = await this.#searchKeys(base, searchParams);
 
     // get an array of records
@@ -102,7 +103,7 @@ export default class Query {
     // get a map of dataset file contents
     await this.#store.read(base);
 
-    // get an array of base Keys
+    // get an array of base keys
     const baseKeys = await this.#searchKeys(base, searchParams);
 
     return {base, baseKeys}
@@ -116,13 +117,50 @@ export default class Query {
     return this.#buildRecords(base, baseKey);
   }
 
+  async selectStream(urlSearchParams) {
+    await this.#store.readSchema();
+
+    const searchParams = urlSearchParams ?? new URLSearchParams();
+
+    // if no base is provided, find first schema root
+    const base = searchParams.has('_') ? searchParams.get('_') : findSchemaRoot(this.#store.schema);
+
+    // get a map of database file contents
+    await this.#store.read(base);
+
+    // get an array of base keys
+    const baseKeys = await this.#searchKeys(base, searchParams);
+
+    const query = this;
+
+    return new stream.Readable({
+      objectMode: true,
+
+      async read(controller) {
+        if (this._buffer === undefined) {
+          this._buffer = baseKeys;
+        }
+
+        const baseKey = this._buffer.pop();
+
+        const record = await query.#buildRecord(base, baseKey);
+
+        this.push(record);
+
+        if (this._buffer.length === 0) {
+          this.push(null)
+        }
+      },
+    })
+  }
+
   /**
-   * This returns an array of base Keys.
+   * This returns an array of base keys.
    * @name searchKeys
    * @function
    * @param {string} base - Base branch.
    * @param {URLSearchParams} searchParams - The search parameters.
-   * @returns {string[]} - Array of base Keys.
+   * @returns {string[]} - Array of base keys.
    */
   async #searchKeys(base, searchParams) {
     const searchEntries = Array.from(searchParams.entries()).filter(
@@ -178,13 +216,13 @@ export default class Query {
   }
 
   /**
-   * This returns an array of base Keys related to branch Keys.
+   * This returns an array of base keys related to branch keys.
    * @name findBaseKeys
    * @function
    * @param {string} base - Base branch.
    * @param {string} branch - Branch name.
-   * @param {string[]} branchKeys - Array of branch Keys.
-   * @returns {string[]} - Array of base Keys.
+   * @param {string[]} branchKeys - Array of branch keys.
+   * @returns {string[]} - Array of base keys.
    */
   async #findBaseKeys(base, branch, branchKeys) {
     if (branchKeys.length === 0) { return []; }
@@ -210,7 +248,7 @@ export default class Query {
    * @name buildRecords
    * @function
    * @param {string} base - Base branch.
-   * @param {string[]} baseKeys - Array of base Keys.
+   * @param {string[]} baseKeys - Array of base keys.
    * @returns {object[]} - Array of records.
    */
   async #buildRecords(base, baseKeys) {

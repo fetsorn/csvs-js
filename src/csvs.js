@@ -124,6 +124,20 @@ export default class CSVS {
     }
   }
 
+  async selectStream(urlSearchParams) {
+    const { readFile, grep } = this;
+
+    // detect dataset version
+    const version = await detectVersion(readFile);
+
+    if (version === "0.0.1") {
+      return (new Query1({ readFile, grep })).selectStream(urlSearchParams);
+    } else if (version === "0.0.2") {
+      return (new Query2({ readFile, grep })).selectStream(urlSearchParams);
+    }
+  }
+
+
   /**
    * This updates the dataset record.
    * @name update

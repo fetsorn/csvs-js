@@ -20,10 +20,10 @@ export default class Record {
 
   /**
    * Create a dataset instance.
-   * @param {Object} callback - The callback that returns a Key.
+   * @param {Object} callback - The callback that returns a key.
    * @param {CSVS~readFileCallback} callback.readFile - The callback that reads db.
    * @param {CSVS~writeFileCallback} callback.writeFile - The callback that writes db.
-   * @param {CSVS~randomUUIDCallback} callback.randomUUID - The callback that returns a Key.
+   * @param {CSVS~randomUUIDCallback} callback.randomUUID - The callback that returns a key.
    */
   constructor(callback) {
     this.#callback = callback;
@@ -91,7 +91,7 @@ export default class Record {
    * This links all leaves to the branch.
    * @name linkLeaves
    * @param {object} record - A dataset record.
-   * @param {object} branchKey - The branch Key.
+   * @param {object} branchKey - The branch key.
    * @function
    */
   async #linkLeaves(record, branchValue) {
