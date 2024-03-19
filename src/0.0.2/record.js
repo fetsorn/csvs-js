@@ -62,10 +62,10 @@ export default class Record {
     await this.#store.read(record._);
 
     // prune `,value$` in the `trunk-branch.csv` file
-    await this.#unlinkTrunks(record._, record['|']);
+    await this.#unlinkTrunks(record._, record[record._]);
 
     // prune `^value,` in all `branch-{leaf}.csv` files
-    await this.#unlinkLeaves(record._, record['|']);
+    await this.#unlinkLeaves(record._, record[record._]);
 
     await this.#store.write();
   }
@@ -80,11 +80,11 @@ export default class Record {
   async #save(record) {
     const branch = record._;
 
-    const branchValue = record['|'] ?? await digestMessage(await this.#callback.randomUUID());
+    const branchValue = record[branch] ?? await digestMessage(await this.#callback.randomUUID());
 
     await this.#linkLeaves(record, branchValue);
 
-    return { '|': branchValue, ...record };
+    return { [branch]: branchValue, ...record };
   }
 
   /**
@@ -110,7 +110,7 @@ export default class Record {
       if (hasLeaf) {
         // TODO: move this normalization of data structure elsewhere
         const leafValue = typeof record[leaf] === "string"
-              ? [ { _: leaf, "|": record[leaf] } ]
+              ? [ { _: leaf, [leaf]: record[leaf] } ]
               : [ record[leaf] ].flat()
 
         await Promise.all(leafValue.map(async (item) => {
@@ -133,7 +133,7 @@ export default class Record {
     const { trunk } = this.#store.schema[branch];
 
     // save if needed
-    const { '|': branchValue } = await this.#save(record);
+    const { [branch]: branchValue } = await this.#save(record);
 
     // add to pairs
     // TODO: serialize csv with a third-party library

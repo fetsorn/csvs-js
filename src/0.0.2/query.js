@@ -271,7 +271,7 @@ export default class Query {
   async #buildRecord(base, baseValue) {
     let record = { _: base };
 
-    record['|'] = baseValue;
+    record[base] = baseValue;
 
     const leaves = Object.keys(this.#store.schema)
                          .filter((leaf) => this.#store.schema[leaf].trunk === base);
@@ -289,7 +289,7 @@ export default class Query {
           const leafRecord = leafRecords[0];
 
           if (Object.keys(leafRecord).length === 2) {
-            record[leaf] = leafRecord["|"];
+            record[leaf] = leafRecord[leaf];
           } else {
             record[leaf] = leafRecord;
           }

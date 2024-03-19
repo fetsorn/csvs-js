@@ -1,7 +1,7 @@
 const record2001 = {
   _: 'datum',
-  '|': 'value1',
-  filepath: { _: 'filepath', '|': 'path/to/1', moddate: '2001-01-01'},
+  datum: 'value1',
+  filepath: { _: 'filepath', filepath: 'path/to/1', moddate: '2001-01-01'},
   saydate: '2001-01-01',
   sayname: 'name1',
   actdate: '2001-01-01',
@@ -10,8 +10,8 @@ const record2001 = {
 
 const record2002 = {
   _: 'datum',
-  '|': 'value2',
-  filepath: { _: 'filepath', '|': 'path/to/2', moddate: '2002-01-01'},
+  datum: 'value2',
+  filepath: { _: 'filepath', filepath: 'path/to/2', moddate: '2002-01-01'},
   saydate: '2002-01-01',
   sayname: 'name2',
   actdate: '2002-01-01',
@@ -20,7 +20,7 @@ const record2002 = {
 
 const record2003Unedited = {
   _: 'datum',
-  '|': '',
+  datum: '',
   saydate: '2003-01-01',
   sayname: 'name3',
   actdate: '2003-01-01',
@@ -29,7 +29,7 @@ const record2003Unedited = {
 
 const record2003Edited = {
   _: 'datum',
-  '|': 'value3',
+  datum: 'value3',
   filepath: 'path/to/3',
   saydate: '2003-03-01',
   sayname: 'name3',
@@ -39,7 +39,7 @@ const record2003Edited = {
 
 const recordAdded = {
   _: 'datum',
-  '|': 'value4',
+  datum: 'value4',
   saydate: '2004-01-01',
   sayname: 'name4',
   actdate: '2005-01-01',
@@ -48,29 +48,29 @@ const recordAdded = {
 
 const recordArray = {
   _: 'datum',
-  '|': 'value1',
+  datum: 'value1',
   actdate: '2001-01-01',
   actname: 'name1',
   export_tags: {
     _: 'export_tags',
-    '|': "9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f",
+    export_tags: "9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f",
     export1_tag: [
       {
         _: 'export1_tag',
-        '|': '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
+        export1_tag: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
         export1_channel: 'https://channel1.url',
         export1_key: 'longkey1',
       },
       {
         _: 'export1_tag',
-        '|': 'fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77',
+        export1_tag: 'fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77',
         export1_channel: 'https://channel2.url',
         export1_key: 'longkey2',
       }
     ],
     export2_tag: {
       _: 'export2_tag',
-      '|': 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
+      export2_tag: 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
       export2_username: 'username',
       export2_password: 'password',
     },
@@ -79,11 +79,10 @@ const recordArray = {
 
 const recordArrayAdded = {
   _: 'datum',
-  '|': 'value2',
+  datum: 'value2',
   actdate: '2002-01-01',
   actname: 'name2',
   export_tags: {
-    // TODO: no '|' value to create a new guid
     _: 'export_tags',
     export1_tag: [ {
       _: 'export1_tag',
@@ -95,22 +94,22 @@ const recordArrayAdded = {
 
 const recordAddedArrayItem = {
   _: 'datum',
-  '|': 'value1',
+  datum: 'value1',
   actdate: '2001-01-01',
   actname: 'name1',
   export_tags: {
     _: 'export_tags',
-    '|': "9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f",
+    export_tags: "9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f",
     export1_tag: [
       {
         _: 'export1_tag',
-        '|': '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
+        export1_tag: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
         export1_channel: 'https://channel1.url',
         export1_key: 'longkey1',
       },
       {
         _: 'export1_tag',
-        '|': 'fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77',
+        export1_tag: 'fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77',
         export1_channel: 'https://channel2.url',
         export1_key: 'longkey2',
       }
@@ -118,11 +117,10 @@ const recordAddedArrayItem = {
     export2_tag: [
       {
         _: 'export2_tag',
-        '|': 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
+        export2_tag: 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
         export2_username: 'username',
         export2_password: 'password',
       },
-      // TODO: no '|' value to create a new guid
       {
         _: 'export2_tag',
         export2_username: 'username2',
@@ -134,29 +132,29 @@ const recordAddedArrayItem = {
 
 const recordEditedArrayItem = {
   _: 'datum',
-  '|': 'value1',
+  datum: 'value1',
   actdate: '2001-01-01',
   actname: 'name1',
   export_tags: {
     _: 'export_tags',
-    '|': "9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f",
+    export_tags: "9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f",
     export1_tag: [
       {
         _: 'export1_tag',
-        '|': '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
+        export1_tag: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
         export1_channel: 'https://channel1.url',
         export1_key: 'longkey3',
       },
       {
         _: 'export1_tag',
-        '|': 'fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77',
+        export1_tag: 'fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77',
         export1_channel: 'https://channel2.url',
         export1_key: 'longkey2',
       }
     ],
     export2_tag: {
       _: 'export2_tag',
-      '|': 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
+      export2_tag: 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
       export2_username: 'username',
       export2_password: 'password',
     },
@@ -165,23 +163,23 @@ const recordEditedArrayItem = {
 
 const recordDeletedArrayItem = {
   _: 'datum',
-  '|': 'value1',
+  datum: 'value1',
   actdate: '2001-01-01',
   actname: 'name1',
   export_tags: {
     _: 'export_tags',
-    '|': "9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f",
+    export_tags: "9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f",
     export1_tag: [
       {
         _: 'export1_tag',
-        '|': '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
+        export1_tag: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
         export1_channel: 'https://channel1.url',
         export1_key: 'longkey1',
       },
     ],
     export2_tag: {
       _: 'export2_tag',
-      '|': 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
+      export2_tag: 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
       export2_username: 'username',
       export2_password: 'password',
     },
@@ -190,29 +188,29 @@ const recordDeletedArrayItem = {
 
 const recordEditedArrayItemObject = {
   _: 'datum',
-  '|': 'value1',
+  datum: 'value1',
   actdate: '2001-01-01',
   actname: 'name1',
   export_tags: {
     _: 'export_tags',
-    '|': "9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f",
+    export_tags: "9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f",
     export1_tag: [
       {
         _: 'export1_tag',
-        '|': '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
+        export1_tag: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
         export1_channel: 'https://channel1.url',
         export1_key: 'longkey1',
       },
       {
         _: 'export1_tag',
-        '|': 'fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77',
+        export1_tag: 'fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77',
         export1_channel: 'https://channel2.url',
         export1_key: 'longkey2',
       }
     ],
     export2_tag: {
       _: 'export2_tag',
-      '|': 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
+      export2_tag: 'de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579',
       export2_username: 'username',
       export2_password: 'password',
       export2_tag_description: {
@@ -226,7 +224,7 @@ const recordEditedArrayItemObject = {
 
 const recordExport1Tag = {
   _: 'export1_tag',
-  '|': '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
+  export1_tag: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
   export1_channel: 'https://channel1.url',
   export1_key: 'longkey1',
 };
