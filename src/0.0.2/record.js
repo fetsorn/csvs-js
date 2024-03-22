@@ -103,7 +103,10 @@ export default class Record {
 
       const recordHasLeaf = Object.prototype.hasOwnProperty.call(record, leaf)
 
-      if (recordHasLeaf) {
+      // omit the "_,_" line
+      const exception = leaf === "_" && record[leaf] === "_"
+
+      if (recordHasLeaf && !exception) {
         // expand condensed data structure into an array of objects
         const leafRecords = typeof record[leaf] === "string"
               ? [ { _: leaf, [leaf]: record[leaf] } ]
@@ -140,12 +143,13 @@ export default class Record {
           return { [leaf]: leafValue, ...leafRecord }
         }))
 
-        return { _: leaf, [leaf]: leafRecords }
+        return { _: leaf, [leaf]: leafRecordsNew.filter(Boolean) }
       }
     }));
 
     const recordNew = leafLists.filter(Boolean).reduce(
       (acc, {_: leaf, [leaf]: leafRecords}) => ({
+        // condensed expanded data structure
         [leaf]: condense(this.#store.schema, leaf, leafRecords), ...acc
       }),
       { _: base, [base]: baseValue }
