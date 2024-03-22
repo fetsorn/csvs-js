@@ -84,48 +84,21 @@ export function findCrownPaths(schema, base) {
  * @function
  * @param {object} schema - Dataset schema.
  * @param {string} branch - Branch name.
- * @param {string} records - expanded list of records.
- * @returns {string[]} - Array of leaf branches connected to the base branch.
+ * @param {object[]} records - List of expanded records.
+ * @returns {object[]} - List of condensed records.
  */
 export function condense(schema, branch, records) {
-  const hasLeaves = Object.keys(schema)
-                          .filter((b) => schema[b].trunk === branch)
-                          .length > 0;
-
-  // // if leaf has leaves, it's an object
-  // if (hasLeaves) {
-  //   // return the object
-  //   return values
-  // } else {
-  //   // if leaf has no leaves, it's a string
-  //   // return the string from object
-  //   return values[leaf]
-  // }
-
-  // if (values.length === 1) {
-  //   // if value is length 1, it's one
-  //   return { [leaf]: value, ...acc }
-  // } else {
-
-  // }
-
   if (records !== undefined && records.length > 0) {
-    if (records.length === 1) {
-      const record = records[0];
+    const hasLeaves = Object.keys(schema)
+                            .filter((b) => schema[b].trunk === branch)
+                            .length > 0;
 
-      // TODO: replace with check if branch has leaves in the schema, not just the record
-      // if (Object.keys(record).length === 2) {
-      //   return record[branch];
-      // } else {
-      //   return record;
-      if (hasLeaves) {
-        return record;
-      } else {
-        return record[branch];
-      }
-    } else {
-      return records;
+    if (records.length === 1) {
+      return hasLeaves ? records[0] : records[0][branch]
     }
+
+    return records.map((record) => hasLeaves ? record : record[branch])
   }
-  // TODO proper handling of all cases
+
+  return []
 }
