@@ -73,3 +73,56 @@ export function findCrownPaths(schema, base) {
 
   return filePaths.filter(Boolean).flat();
 }
+
+/**
+ * This function condenses the data structure where possible
+ * @name condense
+ * @function
+ * @param {object} schema - Dataset schema.
+ * @param {string} branch - Branch name.
+ * @param {string} records - expanded list of records.
+ * @returns {string[]} - Array of leaf branches connected to the base branch.
+ */
+export function condense(schema, branch, records) {
+  console.log("condense", branch, records)
+  const hasLeaves = Object.keys(schema)
+                          .filter((b) => schema[b].trunk === branch)
+                          .length > 0;
+
+  // // if leaf has leaves, it's an object
+  // if (hasLeaves) {
+  //   // return the object
+  //   return values
+  // } else {
+  //   // if leaf has no leaves, it's a string
+  //   // return the string from object
+  //   return values[leaf]
+  // }
+
+  // if (values.length === 1) {
+  //   // if value is length 1, it's one
+  //   return { [leaf]: value, ...acc }
+  // } else {
+
+  // }
+
+  if (records !== undefined && records.length > 0) {
+    if (records.length === 1) {
+      const record = records[0];
+
+      // TODO: replace with check if branch has leaves in the schema, not just the record
+      // if (Object.keys(record).length === 2) {
+      //   return record[branch];
+      // } else {
+      //   return record;
+      if (hasLeaves) {
+        return record;
+      } else {
+        return record[branch];
+      }
+    } else {
+      return records;
+    }
+  }
+  // TODO proper handling of all cases
+}

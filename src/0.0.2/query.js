@@ -1,5 +1,5 @@
 /* eslint-disable import/extensions */
-import { findSchemaRoot, findCrown } from './schema.js';
+import { findSchemaRoot, findCrown, condense } from './schema.js';
 import {
   takeValue, takeKeys, takeValues,
 } from './metadir.js';
@@ -269,14 +269,10 @@ export default class Query {
    * @returns {object} - Record.
    */
   async #buildRecord(base, baseValue) {
-    let record = { _: base };
-
-    record[base] = baseValue;
-
     const leaves = Object.keys(this.#store.schema)
                          .filter((leaf) => this.#store.schema[leaf].trunk === base);
 
-    await Promise.all(leaves.map(async (leaf) => {
+    const leafLists = await Promise.all(leaves.map(async (leaf) => {
       // get all values of leaves
       const leafValues = await this.#findBranchValues(base, baseValue, leaf);
 
@@ -284,20 +280,17 @@ export default class Query {
         (leafValue) => this.#buildRecord(leaf, leafValue)
       ))
 
-      if (leafRecords !== undefined && leafRecords.length > 0) {
-        if (leafRecords.length === 1) {
-          const leafRecord = leafRecords[0];
-
-          if (Object.keys(leafRecord).length === 2) {
-            record[leaf] = leafRecord[leaf];
-          } else {
-            record[leaf] = leafRecord;
-          }
-        } else {
-          record[leaf] = leafRecords;
-        }
+      if (leafRecords.length > 0) {
+        return { _: leaf, [leaf]: leafRecords }
       }
     }));
+
+    const record = leafLists.filter(Boolean).reduce(
+      (acc, {_: leaf, [leaf]: leafRecords}) => ({
+        [leaf]: condense(this.#store.schema, leaf, leafRecords), ...acc
+      }),
+      { _: base, [base]: baseValue }
+    )
 
     return record;
   }
