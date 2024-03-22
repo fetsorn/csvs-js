@@ -113,6 +113,7 @@ export default class Store {
    */
   async write() {
     await Promise.all(Object.entries(this.output).map(async ([filePath, contents]) => {
+      // sort to guarantee that sorted files remain unchanged after update
       const contentsSorted = `${contents.split('\n')
         .filter((line) => line !== '')
         .sort((a, b) => a.localeCompare(b))

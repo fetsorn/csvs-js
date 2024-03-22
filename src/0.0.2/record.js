@@ -104,9 +104,9 @@ export default class Record {
       const recordHasLeaf = Object.prototype.hasOwnProperty.call(record, leaf)
 
       // omit the "_,_" line
-      const exception = leaf === "_" && record[leaf] === "_"
+      const omittedCase = leaf === "_" && record[leaf] === "_"
 
-      if (recordHasLeaf && !exception) {
+      if (recordHasLeaf && !omittedCase) {
         // expand condensed data structure into an array of objects
         const leafRecords = typeof record[leaf] === "string"
               ? [ { _: leaf, [leaf]: record[leaf] } ]
@@ -125,8 +125,10 @@ export default class Record {
 
           // add to pairs
           const pairLine = base === "_"
-                ? stringify([[leaf, leafValue]])
-                : stringify([[baseValue, leafValue]])
+                ? stringify([[leaf, leafValue]], {eof: false})
+                : stringify([[baseValue, leafValue]], {eof: false})
+
+          const pairLineEscaped = pairLine.replace(/\n/g, "\\n")
 
           const pairPath = base === "_"
                 ? "_-_.csv"
@@ -135,9 +137,9 @@ export default class Record {
           const pairFile = this.#store.getOutput(pairPath) ?? this.#store.getCache(pairPath);
 
           if (pairFile === undefined || pairFile === '\n') {
-            this.#store.setOutput(pairPath, pairLine);
+            this.#store.setOutput(pairPath, pairLineEscaped);
           } else if (!pairFile.includes(pairLine)) {
-            this.#store.setOutput(pairPath, `${pairFile}\n${pairLine}`);
+            this.#store.setOutput(pairPath, `${pairFile}\n${pairLineEscaped}`);
           }
 
           return { [leaf]: leafValue, ...leafRecord }
