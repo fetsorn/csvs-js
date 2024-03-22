@@ -4,6 +4,7 @@ import { grep, pruneValue, pruneKey } from './grep.js';
 import Store from './store.js';
 import { condense } from './schema.js';
 import { digestMessage } from '../random.js';
+import { stringify } from 'csv-stringify/sync';
 
 /** Class representing a dataset record. */
 export default class Record {
@@ -90,35 +91,47 @@ export default class Record {
   async #save(base, record) {
     const baseValue = record[base] ?? await digestMessage(await this.#callback.randomUUID());
 
-    const leaves = Object.keys(this.#store.schema)
-      .filter((b) => this.#store.schema[b].trunk === base);
+    const leaves = base === "_"
+          ? [...new Set([...Object.keys(record), ...Object.keys(this.#store.schema)])]
+          : Object.keys(this.#store.schema)
+                  .filter((b) => this.#store.schema[b].trunk === base);
 
     // for each leaf branch
     const leafLists = await Promise.all(leaves.map(async (leaf) => {
       // unlink leaf values
       await this.#unlinkLeaf(base, baseValue, leaf)
 
-      const hasLeaf = Object.prototype.hasOwnProperty.call(record, leaf)
+      const recordHasLeaf = Object.prototype.hasOwnProperty.call(record, leaf)
 
-      if (hasLeaf) {
+      if (recordHasLeaf) {
+        // expand condensed data structure into an array of objects
         const leafRecords = typeof record[leaf] === "string"
               ? [ { _: leaf, [leaf]: record[leaf] } ]
               : [ record[leaf] ].flat()
 
-        const leafRecordsNew = await Promise.all(leafRecords.map(async (leafRecord) => {
+        const leafRecordsNew = await Promise.all(leafRecords.map(async (leafRecordRaw) => {
+          // expand condensed data structure into an object
+          const leafRecord = typeof leafRecordRaw === "string"
+                ? { _: leaf, [leaf]: leafRecordRaw }
+                : leafRecordRaw;
+
           // save if needed
-          const { [leaf]: leafValue } = await this.#save(leaf, leafRecord);
+          const { [leaf]: leafValue } = base === "_"
+                ? leafRecord
+                : await this.#save(leaf, leafRecord);
 
           // add to pairs
-          // TODO: serialize csv with a third-party library
-          // TODO: escape values
-          const pairLine = `${baseValue},${leafValue}\n`;
+          const pairLine = base === "_"
+                ? stringify([[leaf, leafValue]])
+                : stringify([[baseValue, leafValue]])
 
-          const pairPath = `${base}-${leaf}.csv`;
+          const pairPath = base === "_"
+                ? "_-_.csv"
+                : `${base}-${leaf}.csv`;
 
           const pairFile = this.#store.getOutput(pairPath) ?? this.#store.getCache(pairPath);
 
-          if (pairFile === '\n') {
+          if (pairFile === undefined || pairFile === '\n') {
             this.#store.setOutput(pairPath, pairLine);
           } else if (!pairFile.includes(pairLine)) {
             this.#store.setOutput(pairPath, `${pairFile}\n${pairLine}`);
@@ -177,7 +190,9 @@ export default class Record {
    * @function
    */
   async #unlinkLeaf(branch, value, leaf) {
-      const pairPath = `${branch}-${leaf}.csv`;
+      const pairPath = branch === "_"
+            ? "_-_.csv"
+            : `${branch}-${leaf}.csv`;
 
       const pairFile = this.#store.getCache(pairPath);
       // const pairFile = this.#store.getOutput(pairPath) ?? this.#store.getCache(pairPath);

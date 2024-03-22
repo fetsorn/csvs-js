@@ -45,14 +45,18 @@ export default class Store {
    * @returns {object} - dataset schema.
    */
   async readSchema() {
-    const schemaString = await this.#callback.readFile('_-_.csv');
+    try {
+      const schemaString = await this.#callback.readFile('_-_.csv');
 
-    const parser = await parse(schemaString)
+      const parser = await parse(schemaString)
 
-    for await (const [trunk, leaf] of parser) {
-      this.schema[trunk] = { ...this.schema[trunk] }
-      // Work with each record
-      this.schema[leaf] = { trunk, ...this.schema[leaf] }
+      for await (const [trunk, leaf] of parser) {
+        this.schema[trunk] = { ...this.schema[trunk] }
+        // Work with each record
+        this.schema[leaf] = { trunk, ...this.schema[leaf] }
+      }
+    } catch {
+      // do nothing if there is no schema
     }
   }
 

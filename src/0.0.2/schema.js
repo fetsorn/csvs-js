@@ -59,15 +59,19 @@ export function findCrown(schema, base) {
  * @returns {string[]} - Array of file paths.
  */
 export function findCrownPaths(schema, base) {
-  let filePaths = [];
-
   const crown = findCrown(schema, base);
 
-  crown.concat([base]).forEach((branch) => {
-    const { trunk } = schema[branch];
+  const filePaths = crown.concat([base]).map((branch) => {
+    const schemaHasBranch = Object.prototype.hasOwnProperty.call(schema, branch)
 
-    if (trunk !== undefined) {
-      filePaths.push(`${trunk}-${branch}.csv`);
+    if (schemaHasBranch) {
+      const branchHasTrunk = Object.prototype.hasOwnProperty.call(schema[branch], "trunk")
+
+      if (branchHasTrunk) {
+        const { trunk } = schema[branch];
+
+        return `${trunk}-${branch}.csv`;
+      }
     }
   });
 
@@ -84,7 +88,6 @@ export function findCrownPaths(schema, base) {
  * @returns {string[]} - Array of leaf branches connected to the base branch.
  */
 export function condense(schema, branch, records) {
-  console.log("condense", branch, records)
   const hasLeaves = Object.keys(schema)
                           .filter((b) => schema[b].trunk === branch)
                           .length > 0;

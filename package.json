@@ -17,7 +17,8 @@
   },
   "jest": {
     "moduleNameMapper": {
-      "^csv-parse/sync": "<rootDir>/node_modules/csv-parse/dist/cjs/sync.cjs"
+      "^csv-parse/sync": "<rootDir>/node_modules/csv-parse/dist/cjs/sync.cjs",
+      "^csv-stringify/sync": "<rootDir>/node_modules/csv-stringify/dist/cjs/sync.cjs"
     }
   },
   "devDependencies": {
@@ -31,6 +32,7 @@
     "yarn": "^1.22.17"
   },
   "dependencies": {
-    "csv-parse": "^5.5.5"
+    "csv-parse": "^5.5.5",
+    "csv-stringify": "^6.4.6"
   }
 }
