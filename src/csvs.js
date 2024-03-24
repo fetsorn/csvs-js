@@ -98,29 +98,29 @@ export default class CSVS {
     }
   }
 
-  async selectBaseUUIDs(urlSearchParams) {
+  async selectBaseKeys(urlSearchParams) {
     const { readFile, grep } = this;
 
     // detect dataset version
     const version = await detectVersion(readFile);
 
     if (version === "0.0.1") {
-      return (new Query1({ readFile, grep })).selectBaseUUIDs(urlSearchParams);
+      return (new Query1({ readFile, grep })).selectBaseKeys(urlSearchParams);
     } else if (version === "0.0.2") {
-      return (new Query2({ readFile, grep })).selectBaseUUIDs(urlSearchParams);
+      return (new Query2({ readFile, grep })).selectBaseKeys(urlSearchParams);
     }
   }
 
-  async buildRecord(base, baseUUID) {
+  async buildRecord(base, baseKey) {
     const { readFile, grep } = this;
 
     // detect dataset version
     const version = await detectVersion(readFile);
 
     if (version === "0.0.1") {
-      return (new Query1({ readFile, grep })).buildRecord(base, baseUUID);
+      return (new Query1({ readFile, grep })).buildRecord(base, baseKey);
     } else if (version === "0.0.2") {
-      return (new Query2({ readFile, grep })).buildRecord(base, baseUUID);
+      return (new Query2({ readFile, grep })).buildRecord(base, baseKey);
     }
   }
 

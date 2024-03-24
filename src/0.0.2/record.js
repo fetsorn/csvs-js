@@ -80,6 +80,69 @@ export default class Record {
     await this.#store.write();
   }
 
+  async #saveSchema(base, record) {
+    const baseValue = record[base]
+
+    const leaves = [...new Set([...Object.keys(record), ...Object.keys(this.#store.schema)])]
+
+    // for each leaf branch
+    const leafLists = await Promise.all(leaves.map(async (leaf) => {
+      // unlink leaf values
+      await this.#unlinkLeaf(base, baseValue, leaf)
+
+      const recordHasLeaf = Object.prototype.hasOwnProperty.call(record, leaf)
+
+      // omit the "_,_" line
+      const omittedCase = leaf === "_" && record[leaf] === "_"
+
+      if (recordHasLeaf && !omittedCase) {
+        // expand condensed data structure into an array of objects
+        const leafRecords = typeof record[leaf] === "string"
+              ? [ { _: leaf, [leaf]: record[leaf] } ]
+              : [ record[leaf] ].flat()
+
+        const leafRecordsNew = await Promise.all(leafRecords.map(async (leafRecordRaw) => {
+          // expand condensed data structure into an object
+          const leafRecord = typeof leafRecordRaw === "string"
+                ? { _: leaf, [leaf]: leafRecordRaw }
+                : leafRecordRaw;
+
+          // save if needed
+          const { [leaf]: leafValue } = leafRecord
+
+          // add to pairs
+          const pairLine = stringify([[leaf, leafValue]], {eof: false})
+
+          const pairLineEscaped = pairLine.replace(/\n/g, "\\n")
+
+          const pairPath = "_-_.csv"
+
+          const pairFile = this.#store.getOutput(pairPath) ?? this.#store.getCache(pairPath);
+
+          if (pairFile === undefined || pairFile === '\n') {
+            this.#store.setOutput(pairPath, pairLineEscaped);
+          } else if (!pairFile.includes(pairLine)) {
+            this.#store.setOutput(pairPath, `${pairFile}\n${pairLineEscaped}`);
+          }
+
+          return { [leaf]: leafValue, ...leafRecord }
+        }))
+
+        return { _: leaf, [leaf]: leafRecordsNew.filter(Boolean) }
+      }
+    }));
+
+    const recordNew = leafLists.filter(Boolean).reduce(
+      (acc, {_: leaf, [leaf]: leafRecords}) => ({
+        // condensed expanded data structure
+        [leaf]: condense(this.#store.schema, leaf, leafRecords), ...acc
+      }),
+      { _: base, [base]: baseValue }
+    )
+
+    return recordNew;
+  }
+
   /**
    * This saves a record to the dataset.
    * @name save

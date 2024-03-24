@@ -1,7 +1,17 @@
 /* eslint-disable import/extensions */
 import { splitLines, takeKey, takeValue } from './metadir.js';
 
+function escape(value) {
+  return value.replace(/\//g, '\\/')
+              .replace(/\+/g, '\\+')
+              .replace(/\[/g, '\\[')
+              .replace(/\)/g, '\\)')
+              .replace(/\(/g, '\\(')
+}
+
 function binarySearchKey(listUnsorted, key) {
+  const keyEscaped = escape(key)
+
   // TODO: sort once elsewhere or grep instead of binary search
   const list = listUnsorted.sort((a, b) => takeKey(a).localeCompare(takeKey(b)))
 
@@ -14,7 +24,7 @@ function binarySearchKey(listUnsorted, key) {
 
     const line = list[mkey];
 
-    const isMatch = (new RegExp(`^${key},`)).test(line);
+    const isMatch = (new RegExp(`^${keyEscaped},`)).test(line);
 
     if (isMatch) {
       return mkey;
@@ -33,6 +43,8 @@ function binarySearchKey(listUnsorted, key) {
 }
 
 function binarySearchValue(listUnsorted, value) {
+  const valueEscaped = escape(value)
+
   // TODO: sort once elsewhere or grep instead of binary search
   const list = listUnsorted.sort((a, b) => takeValue(a).localeCompare(takeValue(b)))
 
@@ -45,7 +57,7 @@ function binarySearchValue(listUnsorted, value) {
 
     const line = list[mkey];
 
-    const isMatch = (new RegExp(`,${value}$`)).test(line);
+    const isMatch = (new RegExp(`,${valueEscaped}$`)).test(line);
 
     if (isMatch) {
       return mkey;
@@ -64,6 +76,8 @@ function binarySearchValue(listUnsorted, value) {
 }
 
 export function lookup(contentFile, key, isBulk = false) {
+  const keyEscaped = escape(key)
+
   const lines = splitLines(contentFile);
 
   const index = binarySearchKey(lines, key);
@@ -77,7 +91,7 @@ export function lookup(contentFile, key, isBulk = false) {
     let indexLow = index;
 
     for (let i = index; i >= 0; i -= 1) {
-      if ((new RegExp(`^${key},`)).test(lines[i])) {
+      if ((new RegExp(`^${keyEscaped},`)).test(lines[i])) {
         indexLow = i;
       } else {
         break;
@@ -87,7 +101,7 @@ export function lookup(contentFile, key, isBulk = false) {
     let indexHigh = index;
 
     for (let i = index; i < lines.length; i += 1) {
-      if ((new RegExp(`^${key},`)).test(lines[i])) {
+      if ((new RegExp(`^${keyEscaped},`)).test(lines[i])) {
         indexHigh = i;
       } else {
         break;
@@ -109,6 +123,8 @@ export function lookup(contentFile, key, isBulk = false) {
 }
 
 export function pruneValue(contentFile, value) {
+  const valueEscaped = escape(value)
+
   const lines = splitLines(contentFile);
 
   const index = binarySearchValue(lines, value);
@@ -120,7 +136,7 @@ export function pruneValue(contentFile, value) {
   let indexLow = index;
 
   for (let i = index; i >= 0; i -= 1) {
-    if ((new RegExp(`,${value}$`)).test(lines[i])) {
+    if ((new RegExp(`,${valueEscaped}$`)).test(lines[i])) {
       indexLow = i;
     } else {
       break;
@@ -130,7 +146,7 @@ export function pruneValue(contentFile, value) {
   let indexHigh = index;
 
   for (let i = index; i < lines.length; i += 1) {
-    if ((new RegExp(`,${value}$`)).test(lines[i])) {
+    if ((new RegExp(`,${valueEscaped}$`)).test(lines[i])) {
       indexHigh = i;
     } else {
       break;
@@ -149,6 +165,8 @@ export function pruneValue(contentFile, value) {
 }
 
 export function pruneKey(contentFile, key) {
+  const keyEscaped = escape(key)
+
   const lines = splitLines(contentFile);
 
   const index = binarySearchKey(lines, key);
@@ -160,7 +178,7 @@ export function pruneKey(contentFile, key) {
   let indexLow = index;
 
   for (let i = index; i >= 0; i -= 1) {
-    if ((new RegExp(`^${key},`)).test(lines[i])) {
+    if ((new RegExp(`^${keyEscaped},`)).test(lines[i])) {
       indexLow = i;
     } else {
       break;
@@ -170,7 +188,7 @@ export function pruneKey(contentFile, key) {
   let indexHigh = index;
 
   for (let i = index; i < lines.length; i += 1) {
-    if ((new RegExp(`^${key},`)).test(lines[i])) {
+    if ((new RegExp(`^${keyEscaped},`)).test(lines[i])) {
       indexHigh = i;
     } else {
       break;
