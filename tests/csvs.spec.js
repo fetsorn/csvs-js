@@ -103,6 +103,7 @@ describe('Query.select() no ripgrep 0.0.1', () => {
     })
   })
 })
+
 describe('Query.select() no ripgrep 0.0.2', () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };

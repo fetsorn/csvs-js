@@ -287,12 +287,14 @@ export default class Query {
 
     const record = leafLists.filter(Boolean).reduce(
       (acc, {_: leaf, [leaf]: leafRecords}) => ({
-        [leaf]: condense(this.#store.schema, leaf, leafRecords), ...acc
+        [leaf]: leafRecords, ...acc
       }),
       { _: base, [base]: baseValue }
-    )
+    );
 
-    return record;
+    const recordCondensed = condense(this.#store.schema, record);
+
+    return recordCondensed;
   }
 
   /**

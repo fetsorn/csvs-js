@@ -134,13 +134,14 @@ export default class Record {
 
     const recordNew = leafLists.filter(Boolean).reduce(
       (acc, {_: leaf, [leaf]: leafRecords}) => ({
-        // condensed expanded data structure
-        [leaf]: condense(this.#store.schema, leaf, leafRecords), ...acc
+        [leaf]: leafRecords, ...acc
       }),
       { _: base, [base]: baseValue }
-    )
+    );
 
-    return recordNew;
+    const recordCondensed = condense(this.#store.schema, recordNew);
+
+    return recordCondensed;
   }
 
   /**
@@ -215,12 +216,14 @@ export default class Record {
     const recordNew = leafLists.filter(Boolean).reduce(
       (acc, {_: leaf, [leaf]: leafRecords}) => ({
         // condensed expanded data structure
-        [leaf]: condense(this.#store.schema, leaf, leafRecords), ...acc
+        [leaf]: leafRecords, ...acc
       }),
       { _: base, [base]: baseValue }
-    )
+    );
 
-    return recordNew;
+    const recordCondensed = condense(this.#store.schema, recordNew);
+
+    return recordCondensed;
   }
 
   /**

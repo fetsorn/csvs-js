@@ -83,22 +83,86 @@ export function findCrownPaths(schema, base) {
  * @name condense
  * @function
  * @param {object} schema - Dataset schema.
- * @param {string} branch - Branch name.
- * @param {object[]} records - List of expanded records.
- * @returns {object[]} - List of condensed records.
+ * @param {object} record - An expanded record.
+ * @returns {object} - A condensed record.
  */
-export function condense(schema, branch, records) {
-  if (records !== undefined && records.length > 0) {
-    const hasLeaves = Object.keys(schema)
+export function condense(schema, record) {
+  const base = record._;
+
+  const entries = Object.entries(record);
+
+  const entriesCondensed = entries.filter(
+    ([key, value]) => key !== "_" && key !== record._
+  ).map(([branch, value]) => {
+    const isTwig = Object.keys(schema)
                             .filter((b) => schema[b].trunk === branch)
-                            .length > 0;
+                            .length === 0;
 
-    if (records.length === 1) {
-      return hasLeaves ? records[0] : records[0][branch]
-    }
+      if (Array.isArray(value)) {
+        const itemsCondensed = isTwig
+              ? value.map((item) => typeof value === "string" ? value : item[branch])
+              : value.map((item) => condense(schema, item));
 
-    return records.map((record) => hasLeaves ? record : record[branch])
-  }
+        if (itemsCondensed.length === 0) {
+          return undefined
+        }
 
-  return []
+        if (itemsCondensed.length === 1) {
+          const valueCondensed = itemsCondensed[0];
+
+          return [branch, valueCondensed]
+        }
+
+        return [branch, itemsCondensed]
+      }
+
+      if (typeof value === "object") {
+        const valueCondensed = isTwig
+              ? value[branch]
+              : condense(schema, value);
+
+        return [branch, valueCondensed]
+      }
+
+      if (typeof value === "string") {
+        const valueCondensed = isTwig
+              ? value
+              : { _: branch, [branch]: value };
+
+        return [branch, valueCondensed]
+      }
+
+      return undefined
+  });
+
+  const recordCondensed = Object.fromEntries(entriesCondensed.filter(Boolean));
+
+  return { _: base, [base]: record[base], ...recordCondensed }
+}
+
+/**
+ * This function expands the data structure
+ * @name expand
+ * @function
+ * @param {object} record - A condensed record.
+ * @returns {object} - An expanded record.
+ */
+export function expand(record) {
+  const base = record._;
+
+  const entries = Object.entries(record);
+
+  const entriesExpanded = entries.filter(
+    ([key, value]) => key !== "_" && key !== record._
+  ).map(([key, value]) => {
+    const valueExpanded = typeof value === "string"
+          ? [ { _: key, [key]: value } ]
+          : [ value ].flat().map(expand);
+
+    return [key, valueExpanded]
+  });
+
+  const recordExpanded = Object.fromEntries(entriesExpanded);
+
+  return { _: base, [base]: record[base], ...recordExpanded }
 }
