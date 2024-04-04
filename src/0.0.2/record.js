@@ -202,7 +202,7 @@ export default class Record {
     // build a relation map of the record. tablet -> key -> list of values
     let relationMap = this.#recordToRelationMap(record);
 
-    // TODO: iterate over leaves of leaves as well, the whole crown
+    // iterate over leaves of leaves, the whole crown
     const crown = findCrown(this.#store.schema, base);
 
     crown.forEach((branch) => {
@@ -213,7 +213,6 @@ export default class Record {
       const tablet = this.#store.getCache(pair);
 
       let isWrite = false;
-      // TODO why export_tags-export1_tag is removed?
 
       // for each line of tablet
       csv.parse(tablet, {
@@ -228,44 +227,8 @@ export default class Record {
 
           const lineMatchesKey = keys.includes(key);
 
-          // TODO we prune AND pop and lose value from both relation map and the output
-          // TODO instead we should only prune, but not pop
-          // TODO but then we need a second map to test for notPopped?
-          // prune if line matches a key from relationMap
           if (lineMatchesKey) {
-            // here we check if relation map has the match
-            // for two reasons
-            // - remove the match from relation map
-            // - remember to overwrite tablet if match is not in relation map
-            // and should be removed from dataset
-
-            // find value in relation map, try to pop, otherwise set flag
-            const values = relationMap[pair][key];
-
-            const index = values.indexOf(value);
-
-            const recordHasExistingValue = index > -1;
-
-            // TODO: remove popping from here because it loses existing values
-
-            // TODO: find other way to track that match in dataset should be removed
-
-            // TODO: instead of popping here we must count the matches somewhere else
-            // to track that the dataset has values not in relationMap
-            // if (recordHasExistingValue) {
-            //   const valuesWithoutMatch = values.splice(index, 1);
-
-            //   const noMoreValues = valuesWithoutMatch.length === 0;
-
-            //   if (noMoreValues) {
-            //     delete relationMap[pair][key];
-            //   } else {
-            //     relationMap[pair][key] = valuesWithoutMatch;
-            //   }
-            // } else {
-            //   // remember to overwrite tablet if match is not in relation map
-            //   isWrite = true;
-            // }
+            // prune if line matches a key from relationMap
           } else {
             const line = csv.unparse([row.data], { newline: "\n" });
 
@@ -284,7 +247,7 @@ export default class Record {
             }
           }
 
-          // TODO: don't write tablet if changeset doesn't have anything on it
+          // don't write tablet if changeset doesn't have anything on it
           // if flag set, append relation map to pruned
           if (isWrite) {
             // for each key in the changeset
