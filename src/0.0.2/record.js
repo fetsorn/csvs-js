@@ -228,7 +228,9 @@ export default class Record {
           if (lineMatchesKey) {
             // prune if line matches a key from relationMap
           } else {
-            const line = csv.unparse([row.data], { newline: "\n" });
+            const dataEscaped = row.data.map((str) => str.replace(/\n/g, "\\n"))
+
+            const line = csv.unparse([dataEscaped], { newline: "\n" });
 
             // append line to output
             this.#store.appendOutput(pair, line);
@@ -257,7 +259,9 @@ export default class Record {
 
               const keyRelations = values.map((value) => [key, value])
 
-              return [...keyRelations, ...acc]
+              const keyRelationsEscaped = keyRelations.map((strings) => strings.map((str) => str.replace(/\n/g, "\\n")))
+
+              return [...keyRelationsEscaped, ...acc]
             }, []);
 
             const lines = csv.unparse(relations, { newline: "\n" });
