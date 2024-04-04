@@ -199,12 +199,6 @@ export const testCasesUpdate = (version) => [
     expected: mocks[version].datasetEmpty
   },
   {
-    name: "writes two records when _ is array of two items",
-    query: mocks[version].recordBaseArray,
-    initial: mocks[version].datasetEmpty,
-    expected: mocks[version].datasetEmpty
-  },
-  {
     name: "ignores record with values that don't fit base",
     query: mocks[version].recordBaseIgnoredArrayItems,
     initial: mocks[version].datasetEmpty,

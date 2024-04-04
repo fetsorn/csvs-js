@@ -41,6 +41,9 @@ export default class Record {
   async update(record) {
     await this.#store.readSchema();
 
+    // exit if record is undefined
+    if (record === undefined) return
+
     // TODO find base value if _ is object or array
     // TODO exit if no base field or invalid base value
     const base = record._;
@@ -89,7 +92,7 @@ export default class Record {
    */
   #saveSchema(record) {
     // for each field, for each value
-    const trunk = Object.keys(record).filter((key) => key !== "_")
+    const trunks = Object.keys(record).filter((key) => key !== "_")
 
     // list of
     const relations = trunks.reduce(
