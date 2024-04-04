@@ -1,4 +1,4 @@
-import { parse } from 'csv-parse/sync';
+import csv from 'papaparse';
 
 /**
  * This splits string on newlines and filters empty lines.
@@ -19,9 +19,9 @@ export function splitLines(str) {
  * @returns {string} - Key.
  */
 export function takeKey(line) {
-  const parser = parse(line)
+  const { data } = csv.parse(line)
 
-  for (const [trunk,leaf] of parser) {
+  for (const [trunk,leaf] of data) {
     return trunk
   }
 }
@@ -34,9 +34,9 @@ export function takeKey(line) {
  * @returns {string} - Value.
  */
 export function takeValue(line) {
-  const parser = parse(line)
+  const { data } = csv.parse(line)
 
-  for (const [trunk,leaf] of parser) {
+  for (const [trunk,leaf] of data) {
     return leaf.replace(/\n*$/, '')
   }
 }

@@ -111,6 +111,12 @@ export const testCasesSelect = (version) => [
     initial: mocks[version].datasetArray,
     expected: mocks[version].optionsExport1Tag
   },
+  {
+    name: "query schema relations",
+    query: "_=_",
+    initial: mocks[version].datasetDefault,
+    expected: mocks[version].optionsSchema
+  },
 ]
 
 export const testCasesUpdate = (version) => [
@@ -179,7 +185,31 @@ export const testCasesUpdate = (version) => [
     query: mocks[version].recordEditedArrayItemObject,
     initial: mocks[version].datasetArray,
     expected: mocks[version].datasetEditedArrayItemObject
-  }
+  },
+  {
+    name: "adds relation between two schema entities",
+    query: mocks[version].recordSchema,
+    initial: mocks[version].datasetSchemaNone,
+    expected: mocks[version].datasetSchema
+  },
+  {
+    name: "ignores record without base field",
+    query: mocks[version].recordBaseNone,
+    initial: mocks[version].datasetEmpty,
+    expected: mocks[version].datasetEmpty
+  },
+  {
+    name: "writes two records when _ is array of two items",
+    query: mocks[version].recordBaseArray,
+    initial: mocks[version].datasetEmpty,
+    expected: mocks[version].datasetEmpty
+  },
+  {
+    name: "ignores record with values that don't fit base",
+    query: mocks[version].recordBaseIgnoredArrayItems,
+    initial: mocks[version].datasetEmpty,
+    expected: mocks[version].datasetEmpty
+  },
 ]
 
 export const testCasesDelete = (version) => [

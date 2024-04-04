@@ -1,7 +1,7 @@
 /* eslint-disable import/extensions */
 import { findCrownPaths } from './schema.js';
 import { takeKey } from './metadir.js';
-import { parse } from 'csv-parse';
+import csv from 'papaparse';
 
 export default class Store {
   /**
@@ -48,9 +48,9 @@ export default class Store {
     try {
       const schemaString = await this.#callback.readFile('_-_.csv');
 
-      const parser = await parse(schemaString)
+      const { data } = csv.parse(schemaString)
 
-      for await (const [trunk, leaf] of parser) {
+      for await (const [trunk, leaf] of data) {
         this.schema[trunk] = { ...this.schema[trunk] }
         // Work with each record
         this.schema[leaf] = { trunk, ...this.schema[leaf] }
@@ -100,6 +100,12 @@ export default class Store {
 
   getOutput(filePath) {
     return this.output[filePath];
+  }
+
+  appendOutput(filePath, lines) {
+    const output = this.output[filePath] ?? "";
+
+    this.output[filePath] = output + '\n' + lines;
   }
 
   setOutput(filePath, fileContents) {

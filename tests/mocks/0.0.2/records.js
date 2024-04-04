@@ -229,6 +229,12 @@ const recordExport1Tag = {
   export1_key: 'longkey1',
 };
 
+const recordSchema = {
+  _: '_',
+  datum: [ "saydate", "sayname", "actdate", "actname", "filepath", "privacy", "tag" ],
+  filepath: [ "moddate", "filetype", "filehash", "filesize", "pathrule" ]
+};
+
 export default {
   record2001,
   record2002,
@@ -242,4 +248,5 @@ export default {
   recordDeletedArrayItem,
   recordEditedArrayItemObject,
   recordExport1Tag,
+  recordSchema
 };

@@ -1,10 +1,7 @@
 /* eslint-disable import/extensions */
-import { takeKeys } from './metadir.js';
 import { grep, pruneValue, pruneKey } from './grep.js';
 import Store from './store.js';
-import { condense } from './schema.js';
-import { digestMessage } from '../random.js';
-import { stringify } from 'csv-stringify/sync';
+import csv from 'papaparse';
 
 /** Class representing a dataset record. */
 export default class Record {
@@ -43,17 +40,21 @@ export default class Record {
   async update(record) {
     await this.#store.readSchema();
 
-    const base = (typeof record._ === "object" || Array.isArray(record._))
-          ? "_"
-          : record._;
+    // TODO find base value if _ is object or array
+    // TODO exit if no base field or invalid base value
+    const base = record._;
 
     await this.#store.read(base);
 
-    const recordNew = await this.#save(base, record);
+    if (base === "_") {
+      this.#saveSchema(record)
+    } else {
+      this.#save(record);
+    }
 
+    // TODO if query result equals record skip
+    // otherwise write output
     await this.#store.write();
-
-    return recordNew;
   }
 
   /**
@@ -65,9 +66,7 @@ export default class Record {
   async delete(record) {
     await this.#store.readSchema();
 
-    const base = (typeof record._ === "object" || Array.isArray(record._))
-          ? "_"
-          : record._;
+    const base = record._;
 
     await this.#store.read(base);
 
@@ -80,150 +79,217 @@ export default class Record {
     await this.#store.write();
   }
 
-  async #saveSchema(base, record) {
-    const baseValue = record[base]
+  /**
+   * This saves a record to the dataset.
+   * @name saveSchema
+   * @param {object} record - A dataset record.
+   * @function
+   * @returns {object} - A dataset record, value added if there was none.
+   */
+  #saveSchema(record) {
+    // for each field, for each value
+    const trunk = Object.keys(record).filter((key) => key !== "_")
 
-    const leaves = [...new Set([...Object.keys(record), ...Object.keys(this.#store.schema)])]
+    // list of
+    const relations = trunks.reduce(
+      (acc, trunk) => {
+        const values = record[trunk]
 
-    // for each leaf branch
-    const leafLists = await Promise.all(leaves.map(async (leaf) => {
-      // unlink leaf values
-      await this.#unlinkLeaf(base, baseValue, leaf)
+        // TODO: handle if value is literal, expand?
+        // TODO: handle if value is object, expand?
+        // TODO: handle if value is array of objects?
+        // assume value is array of literals
+        const relations = values.map((branch) => `${trunk},${branch}`)
 
-      const recordHasLeaf = Object.prototype.hasOwnProperty.call(record, leaf)
+        return acc.concat(relations)
+      }, []);
 
-      // omit the "_,_" line
-      const omittedCase = leaf === "_" && record[leaf] === "_"
+    const contents = relations.sort().join('\n');
 
-      if (recordHasLeaf && !omittedCase) {
-        // expand condensed data structure into an array of objects
-        const leafRecords = typeof record[leaf] === "string"
-              ? [ { _: leaf, [leaf]: record[leaf] } ]
-              : [ record[leaf] ].flat()
+    // overwrite the .csvs.csv file with field,value
+    this.#store.setOutput("_-_.csv", contents);
+  }
 
-        const leafRecordsNew = await Promise.all(leafRecords.map(async (leafRecordRaw) => {
-          // expand condensed data structure into an object
-          const leafRecord = typeof leafRecordRaw === "string"
-                ? { _: leaf, [leaf]: leafRecordRaw }
-                : leafRecordRaw;
+  /**
+   * This collapses a nested record into a list of key-value relations
+   * @name recordToRelations
+   * @param {object} record - A dataset record.
+   * @function
+   * @returns {string[3][]} - A list of tuples (relation, key, value)
+   */
+  #recordToRelations(record) {
+    // { _: trunk, trunk: key, leaf: value, leaf: [ value ], leaf: { _: leaf, leaf: value } }
 
-          // save if needed
-          const { [leaf]: leafValue } = leafRecord
+    const base = record._;
 
-          // add to pairs
-          const pairLine = stringify([[leaf, leafValue]], {eof: false})
+    // skip if record doesn't have the base
+    if (record._ === undefined) return [];
 
-          const pairLineEscaped = pairLine.replace(/\n/g, "\\n")
+    const key = record[base] ?? "";
 
-          const pairPath = "_-_.csv"
+    const leaves = Object.keys(this.#store.schema)
+                         .filter((branch) => this.#store.schema[branch].trunk === base);
 
-          const pairFile = this.#store.getOutput(pairPath) ?? this.#store.getCache(pairPath);
+    // build a relation map of the record.
+    // [tablet, key, value]
+    return leaves.reduce((acc, leaf) => {
+      // skip if record doesn't have the leaf
+      if (record[leaf] === undefined) return acc;
 
-          if (pairFile === undefined || pairFile === '\n') {
-            this.#store.setOutput(pairPath, pairLineEscaped);
-          } else if (!pairFile.includes(pairLine)) {
-            this.#store.setOutput(pairPath, `${pairFile}\n${pairLineEscaped}`);
-          }
+      const values = Array.isArray(record[leaf])
+            ? record[leaf]
+            : [record[leaf]];
 
-          return { [leaf]: leafValue, ...leafRecord }
-        }))
+      const pair = `${base}-${leaf}.csv`;
 
-        return { _: leaf, [leaf]: leafRecordsNew.filter(Boolean) }
-      }
-    }));
+      const relations = values.map((value) => {
+        return typeof value === "string"
+          ? [[pair, key, value]]
+          : this.#recordToRelations(value)
+      }).flat();
 
-    const recordNew = leafLists.filter(Boolean).reduce(
-      (acc, {_: leaf, [leaf]: leafRecords}) => ({
-        [leaf]: leafRecords, ...acc
-      }),
-      { _: base, [base]: baseValue }
-    );
+      return [...relations, ...acc]
+    }, [])
+  }
 
-    const recordCondensed = condense(this.#store.schema, recordNew);
+  /**
+   * This collapses a nested record into a map of key-value relations
+   * @name recordToRelations
+   * @param {object} record - A dataset record.
+   * @function
+   * @returns {object} - A map of key-value relations
+   */
+  #recordToRelationMap(record) {
+    const relations = this.#recordToRelations(record);
 
-    return recordCondensed;
+    const relationMap = relations.reduce((acc, [pair, key, value]) => {
+      const pairMap = acc[pair] ?? {};
+
+      const values = pairMap[key] ?? [];
+
+      return { [pair]: { [key]: [...values, value], ...pairMap }, ...acc }
+    }, {});
+
+    return relationMap
   }
 
   /**
    * This saves a record to the dataset.
    * @name save
-   * @param {string} base - A branch.
    * @param {object} record - A dataset record.
    * @function
    * @returns {object} - A dataset record, value added if there was none.
    */
-  async #save(base, record) {
-    const baseValue = record[base] ?? await digestMessage(await this.#callback.randomUUID());
+  #save(record) {
+    // TODO if base is array, map array to multiple records
 
-    const leaves = base === "_"
-          ? [...new Set([...Object.keys(record), ...Object.keys(this.#store.schema)])]
-          : Object.keys(this.#store.schema)
-                  .filter((b) => this.#store.schema[b].trunk === base);
+    const base = record._;
 
-    // for each leaf branch
-    const leafLists = await Promise.all(leaves.map(async (leaf) => {
-      // unlink leaf values
-      await this.#unlinkLeaf(base, baseValue, leaf)
+    // build a relation map of the record. tablet -> key -> list of values
+    let relationMap = this.#recordToRelationMap(record);
 
-      const recordHasLeaf = Object.prototype.hasOwnProperty.call(record, leaf)
+    const leaves = Object.keys(this.#store.schema)
+                         .filter((branch) => this.#store.schema[branch].trunk === base);
 
-      // omit the "_,_" line
-      const omittedCase = leaf === "_" && record[leaf] === "_"
+    // for each leaf
+    leaves.forEach((leaf) => {
+      const pair = `${base}-${leaf}.csv`;
 
-      if (recordHasLeaf && !omittedCase) {
-        // expand condensed data structure into an array of objects
-        const leafRecords = typeof record[leaf] === "string"
-              ? [ { _: leaf, [leaf]: record[leaf] } ]
-              : [ record[leaf] ].flat()
+      const tablet = this.#store.getCache(pair);
 
-        const leafRecordsNew = await Promise.all(leafRecords.map(async (leafRecordRaw) => {
-          // expand condensed data structure into an object
-          const leafRecord = typeof leafRecordRaw === "string"
-                ? { _: leaf, [leaf]: leafRecordRaw }
-                : leafRecordRaw;
+      let isWrite = false;
 
-          // save if needed
-          const { [leaf]: leafValue } = base === "_"
-                ? leafRecord
-                : await this.#save(leaf, leafRecord);
+      // for each line of tablet
+      csv.parse(tablet, {
+        step: (row) => {
+          // TODO: if tag is empty, step should not step
+          // TODO: remove this check
+          if (row.data.length === 1 && row.data[0] === '' ) return
+          // console.log("Row:", pair, row.data);
 
-          // add to pairs
-          const pairLine = base === "_"
-                ? stringify([[leaf, leafValue]], {eof: false})
-                : stringify([[baseValue, leafValue]], {eof: false})
+          const [key, value] = row.data;
 
-          const pairLineEscaped = pairLine.replace(/\n/g, "\\n")
+          const keys = Object.keys(relationMap[pair] ?? {});
 
-          const pairPath = base === "_"
-                ? "_-_.csv"
-                : `${base}-${leaf}.csv`;
+          const lineMatchesKey = keys.includes(key);
 
-          const pairFile = this.#store.getOutput(pairPath) ?? this.#store.getCache(pairPath);
+          // prune if line matches a key from relationMap
+          if (lineMatchesKey) {
+            // here we check if relation map has the match
+            // for two reasons
+            // - remove the match from relation map
+            // - remember to overwrite tablet if match is not in relation map
+            // and should be removed from dataset
 
-          if (pairFile === undefined || pairFile === '\n') {
-            this.#store.setOutput(pairPath, pairLineEscaped);
-          } else if (!pairFile.includes(pairLine)) {
-            this.#store.setOutput(pairPath, `${pairFile}\n${pairLineEscaped}`);
+            // find value in relation map, try to pop, otherwise set flag
+            const values = relationMap[pair][key];
+
+            const index = values.indexOf(value);
+
+            const recordHasExistingValue = index > -1;
+
+            if (recordHasExistingValue) {
+              const valuesWithoutMatch = values.splice(index, 1);
+
+              const noMoreValues = valuesWithoutMatch.length === 0;
+
+              if (noMoreValues) {
+                delete relationMap[pair][key];
+              } else {
+                relationMap[pair][key] = valuesWithoutMatch;
+              }
+            } else {
+              // remember to overwrite tablet if match is not in relation map
+              isWrite = true;
+            }
+          } else {
+            const line = csv.unparse([row.data]);
+
+            // append line to output
+            this.#store.appendOutput(pair, line);
+          }
+        },
+        complete: () => {
+          // console.log("All done!");
+
+          // if flag unset and relation map not fully popped, set flag
+          if (!isWrite) {
+            const recordHasNewValues = Object.keys(relationMap[pair] ?? {}).length > 0;
+
+            if (recordHasNewValues) {
+              isWrite = true;
+            }
           }
 
-          return { [leaf]: leafValue, ...leafRecord }
-        }))
+          // TODO: don't write tablet if changeset doesn't have anything on it
+          // if flag set, append relation map to pruned
+          if (isWrite) {
+            // for each key in the changeset
+            const keys = Object.keys(relationMap[pair]);
 
-        return { _: leaf, [leaf]: leafRecordsNew.filter(Boolean) }
-      }
-    }));
+            const relations = keys.reduce((acc, key) => {
+              // for each key value in the changeset
+              const values = relationMap[pair][key];
 
-    const recordNew = leafLists.filter(Boolean).reduce(
-      (acc, {_: leaf, [leaf]: leafRecords}) => ({
-        // condensed expanded data structure
-        [leaf]: leafRecords, ...acc
-      }),
-      { _: base, [base]: baseValue }
-    );
+              const keyRelations = values.map((value) => [key, value])
 
-    const recordCondensed = condense(this.#store.schema, recordNew);
+              return [...keyRelations, ...acc]
+            }, []);
 
-    return recordCondensed;
+            const lines = csv.unparse(relations);
+
+            // append remaining relations to output
+            this.#store.appendOutput(pair, lines);
+          } else {
+            // TODO: remove this check
+            if (tablet !== '' && tablet !== undefined && tablet !== '\n') {
+              // otherwise reset output to not change it
+              this.#store.setOutput(pair, tablet)
+            }
+          }
+        }
+      })
+    })
   }
 
   /**
