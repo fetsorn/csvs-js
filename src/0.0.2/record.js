@@ -88,7 +88,6 @@ export default class Record {
    * @name saveSchema
    * @param {object} record - A dataset record.
    * @function
-   * @returns {object} - A dataset record, value added if there was none.
    */
   #saveSchema(record) {
     // for each field, for each value
@@ -192,7 +191,6 @@ export default class Record {
    * @name save
    * @param {object} record - A dataset record.
    * @function
-   * @returns {object} - A dataset record, value added if there was none.
    */
   #save(record) {
     // TODO if base is array, map array to multiple records
