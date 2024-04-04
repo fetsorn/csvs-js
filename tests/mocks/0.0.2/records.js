@@ -84,8 +84,10 @@ const recordArrayAdded = {
   actname: 'name2',
   export_tags: {
     _: 'export_tags',
+    export_tags: '20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49',
     export1_tag: [ {
       _: 'export1_tag',
+      export1_tag: 'd4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35',
       export1_channel: 'https://channel2.url',
       export1_key: 'longkey2',
     } ],
@@ -123,6 +125,7 @@ const recordAddedArrayItem = {
       },
       {
         _: 'export2_tag',
+        export2_tag: '20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49',
         export2_username: 'username2',
         export2_password: 'password2',
       },
@@ -215,6 +218,7 @@ const recordEditedArrayItemObject = {
       export2_password: 'password',
       export2_tag_description: {
         _: 'export2_tag_description',
+        export2_tag_description: '20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49',
         export2_tag_description_text1: 'text1',
         export2_tag_description_text2: 'text2',
       },

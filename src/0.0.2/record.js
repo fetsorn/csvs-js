@@ -1,5 +1,6 @@
 /* eslint-disable import/extensions */
 import { grep, pruneValue, pruneKey } from './grep.js';
+import { findCrown } from './schema.js';
 import Store from './store.js';
 import csv from 'papaparse';
 
@@ -132,9 +133,9 @@ export default class Record {
 
     // build a relation map of the record.
     // [tablet, key, value]
-    return leaves.reduce((acc, leaf) => {
+    return leaves.reduce((leafQueue, leaf) => {
       // skip if record doesn't have the leaf
-      if (record[leaf] === undefined) return acc;
+      if (record[leaf] === undefined) return leafQueue;
 
       const values = Array.isArray(record[leaf])
             ? record[leaf]
@@ -142,13 +143,21 @@ export default class Record {
 
       const pair = `${base}-${leaf}.csv`;
 
-      const relations = values.map((value) => {
-        return typeof value === "string"
-          ? [[pair, key, value]]
-          : this.#recordToRelations(value)
-      }).flat();
+      const relations = values.reduce((relationQueue, value) => {
+        if (typeof value === "string") {
+          return [[pair, key, value], ...relationQueue]
+        }
 
-      return [...relations, ...acc]
+        const valueNested = value[leaf] ?? "";
+
+        return [
+          [pair, key, valueNested],
+          ...this.#recordToRelations(value),
+          ...relationQueue
+        ]
+      }, []);
+
+      return [...relations, ...leafQueue]
     }, [])
   }
 
@@ -167,7 +176,9 @@ export default class Record {
 
       const values = pairMap[key] ?? [];
 
-      return { [pair]: { [key]: [...values, value], ...pairMap }, ...acc }
+      const n = {  ...acc, [pair]: { ...pairMap, [key]: [value, ...values] } }
+
+      return n
     }, {});
 
     return relationMap
@@ -188,16 +199,18 @@ export default class Record {
     // build a relation map of the record. tablet -> key -> list of values
     let relationMap = this.#recordToRelationMap(record);
 
-    const leaves = Object.keys(this.#store.schema)
-                         .filter((branch) => this.#store.schema[branch].trunk === base);
+    // TODO: iterate over leaves of leaves as well, the whole crown
+    const crown = findCrown(this.#store.schema, base);
 
-    // for each leaf
-    leaves.forEach((leaf) => {
-      const pair = `${base}-${leaf}.csv`;
+    crown.forEach((branch) => {
+      const { trunk } = this.#store.schema[branch];
+
+      const pair = `${trunk}-${branch}.csv`;
 
       const tablet = this.#store.getCache(pair);
 
       let isWrite = false;
+      // TODO why export_tags-export1_tag is removed?
 
       // for each line of tablet
       csv.parse(tablet, {
@@ -205,7 +218,6 @@ export default class Record {
           // TODO: if tag is empty, step should not step
           // TODO: remove this check
           if (row.data.length === 1 && row.data[0] === '' ) return
-          // console.log("Row:", pair, row.data);
 
           const [key, value] = row.data;
 
@@ -213,6 +225,9 @@ export default class Record {
 
           const lineMatchesKey = keys.includes(key);
 
+          // TODO we prune AND pop and lose value from both relation map and the output
+          // TODO instead we should only prune, but not pop
+          // TODO but then we need a second map to test for notPopped?
           // prune if line matches a key from relationMap
           if (lineMatchesKey) {
             // here we check if relation map has the match
@@ -228,29 +243,34 @@ export default class Record {
 
             const recordHasExistingValue = index > -1;
 
-            if (recordHasExistingValue) {
-              const valuesWithoutMatch = values.splice(index, 1);
+            // TODO: remove popping from here because it loses existing values
 
-              const noMoreValues = valuesWithoutMatch.length === 0;
+            // TODO: find other way to track that match in dataset should be removed
 
-              if (noMoreValues) {
-                delete relationMap[pair][key];
-              } else {
-                relationMap[pair][key] = valuesWithoutMatch;
-              }
-            } else {
-              // remember to overwrite tablet if match is not in relation map
-              isWrite = true;
-            }
+            // TODO: instead of popping here we must count the matches somewhere else
+            // to track that the dataset has values not in relationMap
+            // if (recordHasExistingValue) {
+            //   const valuesWithoutMatch = values.splice(index, 1);
+
+            //   const noMoreValues = valuesWithoutMatch.length === 0;
+
+            //   if (noMoreValues) {
+            //     delete relationMap[pair][key];
+            //   } else {
+            //     relationMap[pair][key] = valuesWithoutMatch;
+            //   }
+            // } else {
+            //   // remember to overwrite tablet if match is not in relation map
+            //   isWrite = true;
+            // }
           } else {
-            const line = csv.unparse([row.data]);
+            const line = csv.unparse([row.data], { newline: "\n" });
 
             // append line to output
             this.#store.appendOutput(pair, line);
           }
         },
         complete: () => {
-          // console.log("All done!");
 
           // if flag unset and relation map not fully popped, set flag
           if (!isWrite) {
@@ -276,7 +296,7 @@ export default class Record {
               return [...keyRelations, ...acc]
             }, []);
 
-            const lines = csv.unparse(relations);
+            const lines = csv.unparse(relations, { newline: "\n" });
 
             // append remaining relations to output
             this.#store.appendOutput(pair, lines);
