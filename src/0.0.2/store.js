@@ -119,6 +119,7 @@ export default class Store {
    */
   async write() {
     await Promise.all(Object.entries(this.output).map(async ([filePath, contents]) => {
+      // TODO: remove this and guarantee idempotence by diffing changeset in update()
       // sort to guarantee that sorted files remain unchanged after update
       const contentsSorted = `${contents.split('\n')
         .filter((line) => line !== '')
