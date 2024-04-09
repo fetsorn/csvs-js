@@ -381,6 +381,15 @@ export default class Query {
         return undefined
       }
 
+      // skip parsing if branch won't be used to build a record
+      const noKeys = keyMap[trunk] === undefined || keyMap[trunk] === [];
+
+      const skipCache = !isQueriedMap && noKeys;
+
+      if (skipCache) {
+        return undefined
+      }
+
       const pair = `${trunk}-${branch}.csv`;
 
       const tablet = this.#store.getCache(pair);
