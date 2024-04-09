@@ -22,7 +22,9 @@ function merge(valueMap, pair, key, value) {
 
   const valuesByKeyNew = { ...valuesByKey, [key]: valuesNew };
 
-  return { ...valueMap, [pair]: valuesByKeyNew };
+  const valueMapNew = { ...valueMap, [pair]: valuesByKeyNew };
+
+  return valueMapNew
 }
 
 /**
@@ -98,17 +100,17 @@ export default class Query {
       return []
     }
 
-    const record = searchParams.entries().reduce((acc, [key, value]) => ({[key]: value}), {});
+    const query = Array.from(searchParams.entries()).reduce(
+      (acc, [key, value]) => ({...acc, [key]: value}), {}
+    );
 
-    console.log(record);
-
-    const base = record._;
+    const base = query._;
 
     // get a map of dataset file contents
     await this.#store.read(base);
 
     // get an array of records
-    const records = await this.#foo(record);
+    const records = await this.#foo(query);
 
     return records;
   }
@@ -129,13 +131,13 @@ export default class Query {
 
   /**
    * sort by level of nesting, twigs and leaves come first
-   * @name sortByNesting
+   * @name sortNestingAscending
    * @function
    * @param {string} a - dataset entity.
    * @param {string} b - dataset entity.
    * @returns {number} - sorting index, a<b -1, a>b 1, a==b 0
    */
-  #sortByNesting(a, b) {
+  #sortNestingAscending(a, b) {
     const { trunk: trunkA } = this.#store.schema[a];
 
     const { trunk: trunkB } = this.#store.schema[b];
@@ -148,7 +150,47 @@ export default class Query {
       return 1
     }
 
-    return this.#countLeaves(a) < this.#countLeaves(b)
+    if (this.#countLeaves(a) < this.#countLeaves(b)) {
+      return -1
+    }
+
+    if (this.#countLeaves(a) > this.#countLeaves(b)) {
+      return 1
+    }
+
+    return 0
+  }
+
+  /**
+   * sort by level of nesting, trunks come first
+   * @name sortNestingDescending
+   * @function
+   * @param {string} a - dataset entity.
+   * @param {string} b - dataset entity.
+   * @returns {number} - sorting index, a<b -1, a>b 1, a==b 0
+   */
+  #sortNestingDescending(a, b) {
+    const { trunk: trunkA } = this.#store.schema[a];
+
+    const { trunk: trunkB } = this.#store.schema[b];
+
+    if (trunkB === a) {
+      return -1
+    }
+
+    if (trunkA === b) {
+      return 1
+    }
+
+    if (this.#countLeaves(a) > this.#countLeaves(b)) {
+      return -1
+    }
+
+    if (this.#countLeaves(a) < this.#countLeaves(b)) {
+      return 1
+    }
+
+    return 0
   }
 
   /**
@@ -247,7 +289,7 @@ export default class Query {
 
       const partial = values === undefined
             ? {}
-            : { [leaf]: values.map((value) => buildRecord(valueMap, leaf, value)) };
+            : { [leaf]: values.map((value) => this.#buildRecord(valueMap, leaf, value)) };
 
       return { ...acc, ...partial }
     }, { _:base, [base]: key })
@@ -273,25 +315,33 @@ export default class Query {
     const crown = findCrown(this.#store.schema, base);
 
     const isQueriedMap = crown.reduce((acc, branch) => {
-      const queries = Object.keys(queryMap);
-
       const { trunk } = this.#store.schema[branch];
 
       const pair = `${trunk}-${branch}.csv`;
 
-      const isQueried = queries[pair] !== undefined;
+      const queries = queryMap[pair];
 
-      return { ...acc, [branch]: isQueried }
+      const isQueried = queries !== undefined;
+
+      const partial = isQueried ? { [branch]: isQueried } : {};
+
+      return { ...acc, ...partial };
     }, {});
 
     const queriedBranches = Object.keys(isQueriedMap)
-                                  .sort(this.#sortByNesting);
+                                  .sort(this.#sortNestingAscending.bind(this));
 
-    const restBranches = crown.filter((branch) => !isQueriedMap(branch))
-                              .sort(this.#sortByNesting);
+    const restBranchesUnsorted = crown.filter((branch) => !isQueriedMap[branch])
 
-    // in order of query, queried branches go first
-    const branches = queriedBranches.concat(restBranches);
+    const restBranches = restBranchesUnsorted.sort(this.#sortNestingDescending.bind(this));
+
+    // in order of query,
+    // queried twigs go first
+    // then queried trunks
+    // then base (either last queried or first unqueried),
+    // then unqueried trunks,
+    // then unqueried leaves and twigs
+    const branches = queriedBranches.concat([base]).concat(restBranches);
 
     let keyMap = {};
 
@@ -307,18 +357,24 @@ export default class Query {
       // there can be only one root base in search query
       if (trunk === undefined) {
         // TODO if there were no regexes, then all values are assigned to "" in queryMap, check that instead
-        const regexes = record[base];
+        const regexes = query[base] ?? [ "" ];
 
-        // TODO: if base is undefined in keyMap at this point, must return all keys?
+        // if query has exact base regexes
 
-        // if record has exact base regexes
-        if (regexes !== undefined) {
-          // TODO: bring out to general matchRegexes function
-          const values = keyMap[branch]
+        // TODO: bring out to general matchRegexes function
+        const values = keyMap[branch]
 
+        // TODO: if base is undefined in keyMap at this point, match all keys
+        // TODO: "option" case, move inside csv.parse
+        // TODO: this should not happen, relation map should collapse to "": "" and match all base keys before reaching base
+        if (values === undefined) {
+          const allBaseKeys = ""
+
+          keyMap[branch] = allBaseKeys
+        } else {
           const keysNew = matchRegexes(regexes, values)
 
-          // find all that intersect with keysMap[branch]
+          // find all that intersect with keyMap[branch]
           keyMap[branch] = intersect(keyMap[branch], keysNew)
         }
 
@@ -336,11 +392,19 @@ export default class Query {
           const [key, value] = row.data;
 
           // if branch is queried
-          if (isQueriedMap) {
-            // TODO: bring out to general matchRegexes function
-            const regexes = queryMap[pair][key]
+          if (isQueriedMap[branch]) {
+            // TODO here we must find branch regexes for each of the trunk regexes that match key
+            const trunkRegexes = Object.keys(queryMap[pair]);
 
-            const isMatch = regexes.some((regex) => new RegExp(regex).test(value))
+            // TODO validate trunkRegexes are not undefined
+
+            const trunkRegexesMatchKey = trunkRegexes.filter((trunkRegex) => new RegExp(trunkRegex).test(key))
+
+            const branchRegexes = trunkRegexes.map((trunkRegex) => queryMap[pair][trunkRegex]).flat();
+
+            // TODO; validate branchRegexes are not undefined
+
+            const isMatch = matchRegexes(branchRegexes, [value]).length > 0;
 
             // if row matches at least one regex
             if (isMatch) {
@@ -353,31 +417,43 @@ export default class Query {
             }
           } else {
             // at this point all queried branches must be cached
-            // and all leaves of this branch must be cached
-            // and keysMap should have a list of trunk keys for this branch
-            const keysTrunk = keysMap[trunk] ?? [];
+            // and leaves of this branch are not cached
+            // if keyMap has a list of trunk keys for this branch, cache all values for matching key
+            // if keyMap does not have a list of trunk keys, none of the values are needed to build search result records
+            // this will set
+            const keysTrunkOld = keyMap[trunk] ?? [];
 
-            // if key is in keysMap[trunk]
-            const searchResultHasKey = keysTrunk.includes(key)
+            // if key is in keyMap[trunk]
+            const searchResultHasKey = keysTrunkOld.includes(key);
 
             if (searchResultHasKey) {
               // cache value
               valueMap = merge(valueMap, pair, key, value)
+              // push to keyMap here if branch has leaves
+              const keysBranchOld = keyMap[branch] ?? [];
+
+              const keysBranch = [ ...keysBranchOld, value ];
+
+              keyMap[branch] = keysBranch;
             }
           }
         },
         complete: () => {
           // diff keys into keyMap
-          const keysSet = new Set(keysTrunk);
+          const keysSet = Array.from(new Set(keysTrunk));
 
           const keysTrunkMatched = keyMap[trunk];
 
           // save keys to map if trunk keys are undefined
           if (keysTrunkMatched === undefined) {
-            keyMap[trunk] = keysSet
+            keyMap[trunk] = keysSet;
           } else {
-            // intersection here if trunk is undefined?
-            keyMap[trunk] = intersect(keysTrunkMatched, keysSet)
+            // if queried less trunk keys, intersect
+            if (isQueriedMap[branch]) {
+              keyMap[trunk] = intersect(keysTrunkMatched, keysSet)
+            }
+            // if not queried, leave trunk keys unchanged
+            // TODO: we must save keyMap[branch] here for unqueried trunk like filepath
           }
 
         }
@@ -386,7 +462,8 @@ export default class Query {
       return undefined
     })
 
-    const records = keyMap(base).map((key) => this.#buildRecord(valueMap, base, key))
+    const records = keyMap[base].map((key) => this.#buildRecord(valueMap, base, key))
+                                .map((record) => condense(this.#store.schema, record))
 
     return records
   }
