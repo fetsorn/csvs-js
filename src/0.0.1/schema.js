@@ -6,7 +6,9 @@
  * @returns {string} - Root branch.
  */
 export function findSchemaRoot(schema) {
-  const firstRoot = Object.keys(schema).find((branch) => !Object.prototype.hasOwnProperty.call(schema[branch], 'trunk'));
+  const firstRoot = Object.keys(schema).find(
+    (branch) => !Object.prototype.hasOwnProperty.call(schema[branch], "trunk"),
+  );
 
   return firstRoot;
 }
@@ -26,14 +28,17 @@ function isConnected(schema, base, branch) {
   if (trunk === undefined) {
     // if schema root is reached, leaf is connected to base
     return false;
-  } if (trunk === base) {
+  }
+  if (trunk === base) {
     // if trunk is base, leaf is connected to base
     return true;
-  } if (schema[trunk].type === 'object' || schema[trunk].type === 'array') {
+  }
+  if (schema[trunk].type === "object" || schema[trunk].type === "array") {
     // if trunk is object or array, leaf is not connected to base
     // because objects and arrays have their own leaves
     return false;
-  } if (isConnected(schema, base, trunk)) {
+  }
+  if (isConnected(schema, base, trunk)) {
     // if trunk is connected to base, leaf is also connected to base
     return true;
   }
@@ -51,7 +56,9 @@ function isConnected(schema, base, branch) {
  * @returns {string[]} - Array of leaf branches connected to the base branch.
  */
 export function findCrown(schema, base) {
-  return Object.keys(schema).filter((branch) => isConnected(schema, base, branch));
+  return Object.keys(schema).filter((branch) =>
+    isConnected(schema, base, branch),
+  );
 }
 
 /**
@@ -70,17 +77,19 @@ export function findCrownPaths(schema, base) {
   crown.concat([base]).forEach((branch) => {
     const { trunk } = schema[branch];
 
-    if (trunk !== undefined && schema[branch].type !== 'regex') {
+    if (trunk !== undefined && schema[branch].type !== "regex") {
       filePaths.push(`metadir/pairs/${trunk}-${branch}.csv`);
     }
 
     switch (schema[branch].type) {
-      case 'regex':
+      case "regex":
         break;
 
-      case 'object':
-      case 'array':
-        filePaths.push(`metadir/props/${schema[branch].dir ?? branch}/index.csv`);
+      case "object":
+      case "array":
+        filePaths.push(
+          `metadir/props/${schema[branch].dir ?? branch}/index.csv`,
+        );
 
         if (branch !== base) {
           filePaths = filePaths.concat(findCrownPaths(schema, branch));
@@ -89,7 +98,9 @@ export function findCrownPaths(schema, base) {
         break;
 
       default:
-        filePaths.push(`metadir/props/${schema[branch].dir ?? branch}/index.csv`);
+        filePaths.push(
+          `metadir/props/${schema[branch].dir ?? branch}/index.csv`,
+        );
     }
   });
 

@@ -1,12 +1,11 @@
-/* eslint-disable import/extensions */
-import Query1 from './0.0.1/query.js';
-import Record1 from './0.0.1/record.js';
-import { grep as grepPolyfill1 } from './0.0.1/grep.js';
-import Query2 from './0.0.2/query.js';
-import Record2 from './0.0.2/record.js';
-import { grep as grepPolyfill2 } from './0.0.2/grep.js';
-import { randomUUID as randomUUIDPolyfill } from './random.js';
-import { detectVersion } from './version.js';
+import Select1 from "./0.0.1/select.js";
+import Update1 from "./0.0.1/update.js";
+import { grep as grepPolyfill1 } from "./0.0.1/grep.js";
+import Select2 from "./0.0.2/select.js";
+import Update2 from "./0.0.2/update.js";
+import Delete2 from "./0.0.2/delete.js";
+import { randomUUID as randomUUIDPolyfill } from "./random.js";
+import { detectVersion } from "./version.js";
 
 export default class CSVS {
   /**
@@ -69,9 +68,7 @@ export default class CSVS {
    * @param {grepCallback} args.grep - The callback that searches files.
    * @param {randomUUIDCallback} args.randomUUID - The callback that returns a UUID.
    */
-  constructor({
-    readFile, writeFile, grep, randomUUID,
-  }) {
+  constructor({ readFile, writeFile, grep, randomUUID }) {
     this.readFile = readFile;
     this.writeFile = writeFile;
     this.grep = grep ?? grepPolyfill1;
@@ -92,9 +89,10 @@ export default class CSVS {
     const version = await detectVersion(readFile);
 
     if (version === "0.0.1") {
-      return (new Query1({ readFile, grep })).select(urlSearchParams);
-    } else if (version === "0.0.2") {
-      return (new Query2({ readFile, grep })).select(urlSearchParams);
+      return new Select1({ readFile, grep }).select(urlSearchParams);
+    }
+    if (version === "0.0.2") {
+      return new Select2({ readFile, grep }).select(urlSearchParams);
     }
   }
 
@@ -105,9 +103,10 @@ export default class CSVS {
     const version = await detectVersion(readFile);
 
     if (version === "0.0.1") {
-      return (new Query1({ readFile, grep })).selectBaseKeys(urlSearchParams);
-    } else if (version === "0.0.2") {
-      return (new Query2({ readFile, grep })).selectBaseKeys(urlSearchParams);
+      return new Select1({ readFile, grep }).selectBaseKeys(urlSearchParams);
+    }
+    if (version === "0.0.2") {
+      return new Select2({ readFile, grep }).selectBaseKeys(urlSearchParams);
     }
   }
 
@@ -118,9 +117,10 @@ export default class CSVS {
     const version = await detectVersion(readFile);
 
     if (version === "0.0.1") {
-      return (new Query1({ readFile, grep })).buildRecord(base, baseKey);
-    } else if (version === "0.0.2") {
-      return (new Query2({ readFile, grep })).buildRecord(base, baseKey);
+      return new Select1({ readFile, grep }).buildRecord(base, baseKey);
+    }
+    if (version === "0.0.2") {
+      return new Select2({ readFile, grep }).buildRecord(base, baseKey);
     }
   }
 
@@ -131,12 +131,12 @@ export default class CSVS {
     const version = await detectVersion(readFile);
 
     if (version === "0.0.1") {
-      return (new Query1({ readFile, grep })).selectStream(urlSearchParams);
-    } else if (version === "0.0.2") {
-      return (new Query2({ readFile, grep })).selectStream(urlSearchParams);
+      return new Query1({ readFile, grep }).selectStream(urlSearchParams);
+    }
+    if (version === "0.0.2") {
+      return new Query2({ readFile, grep }).selectStream(urlSearchParams);
     }
   }
-
 
   /**
    * This updates the dataset record.
@@ -146,21 +146,24 @@ export default class CSVS {
    * @returns {object} - A dataset record.
    */
   async update(record) {
-    const {
-      readFile, writeFile, randomUUID,
-    } = this;
+    const { readFile, writeFile, randomUUID } = this;
 
     // detect dataset version
     const version = await detectVersion(readFile);
 
     if (version === "0.0.1") {
-      return (new Record1({
-        readFile, writeFile, randomUUID,
-      }).update(record));
-    } else if (version === "0.0.2") {
-      return (new Record2({
-        readFile, writeFile, randomUUID,
-      }).update(record));
+      return new Update1({
+        readFile,
+        writeFile,
+        randomUUID,
+      }).update(record);
+    }
+    if (version === "0.0.2") {
+      return new Update2({
+        readFile,
+        writeFile,
+        randomUUID,
+      }).update(record);
     }
   }
 
@@ -171,21 +174,24 @@ export default class CSVS {
    * @function
    */
   async delete(record) {
-    const {
-      readFile, writeFile, randomUUID,
-    } = this;
+    const { readFile, writeFile, randomUUID } = this;
 
     // detect dataset version
     const version = await detectVersion(readFile);
 
     if (version === "0.0.1") {
-      return (new Record1({
-        readFile, writeFile, randomUUID,
-      }).delete(record));
-    } else if (version === "0.0.2") {
-      return (new Record2({
-        readFile, writeFile, randomUUID,
-      }).delete(record));
+      return new Update1({
+        readFile,
+        writeFile,
+        randomUUID,
+      }).delete(record);
+    }
+    if (version === "0.0.2") {
+      return new Delete2({
+        readFile,
+        writeFile,
+        randomUUID,
+      }).delete(record);
     }
   }
 }

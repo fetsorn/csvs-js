@@ -1,11 +1,8 @@
-/* eslint-disable import/extensions */
-import { findSchemaRoot, findCrown } from './schema.js';
-import {
-  takeValue, takeKeys, takeValues,
-} from './metadir.js';
-import Store from './store.js';
-import { grep, lookup } from './grep.js';
-import stream from 'stream';
+import stream from "stream";
+import { findSchemaRoot, findCrown } from "./schema.js";
+import { takeValue, takeKeys, takeValues } from "./metadir.js";
+import Store from "./store.js";
+import { grep, lookup } from "./grep.js";
 
 /**
  * This finds all keys of the branch.
@@ -69,7 +66,9 @@ export default class Query {
     const searchParams = urlSearchParams ?? new URLSearchParams();
 
     // if no base is provided, find first schema root
-    const base = searchParams.has('_') ? searchParams.get('_') : findSchemaRoot(this.#store.schema);
+    const base = searchParams.has("_")
+      ? searchParams.get("_")
+      : findSchemaRoot(this.#store.schema);
 
     // get a map of dataset file contents
     await this.#store.read(base);
@@ -89,7 +88,9 @@ export default class Query {
     const searchParams = urlSearchParams ?? new URLSearchParams();
 
     // if no base is provided, find first schema root
-    const base = searchParams.has('_') ? searchParams.get('_') : findSchemaRoot(this.#store.schema);
+    const base = searchParams.has("_")
+      ? searchParams.get("_")
+      : findSchemaRoot(this.#store.schema);
 
     // get a map of dataset file contents
     await this.#store.read(base);
@@ -97,7 +98,7 @@ export default class Query {
     // get an array of base keys
     const baseKeys = await this.#searchKeys(base, searchParams);
 
-    return {base, baseKeys}
+    return { base, baseKeys };
   }
 
   async buildRecord(base, baseKey) {
@@ -114,7 +115,9 @@ export default class Query {
     const searchParams = urlSearchParams ?? new URLSearchParams();
 
     // if no base is provided, find first schema root
-    const base = searchParams.has('_') ? searchParams.get('_') : findSchemaRoot(this.#store.schema);
+    const base = searchParams.has("_")
+      ? searchParams.get("_")
+      : findSchemaRoot(this.#store.schema);
 
     // get a map of database file contents
     await this.#store.read(base);
@@ -127,7 +130,7 @@ export default class Query {
     return new stream.Readable({
       objectMode: true,
 
-      async read(controller) {
+      async read() {
         if (this._buffer === undefined) {
           this._buffer = baseKeys;
         }
@@ -139,10 +142,10 @@ export default class Query {
         this.push(record);
 
         if (this._buffer.length === 0) {
-          this.push(null)
+          this.push(null);
         }
       },
-    })
+    });
   }
 
   /**
@@ -155,62 +158,79 @@ export default class Query {
    */
   async #searchKeys(base, searchParams) {
     // get array of all keys of the base branch
-    const baseKeySets = [findAllKeys(this.#store.cache, this.#store.schema, base)];
+    const baseKeySets = [
+      findAllKeys(this.#store.cache, this.#store.schema, base),
+    ];
 
     const searchEntries = Array.from(searchParams.entries()).filter(
-      ([key]) => key !== '.' && key !== '~' && key !== '-' && key !== '_',
+      ([key]) => key !== "." && key !== "~" && key !== "-" && key !== "_",
     );
 
     // grep against every search result until reaching a common set of keys
-    await Promise.all(searchEntries.map(async ([branch, value]) => {
-      switch (this.#store.schema[branch].type) {
-        case 'regex': {
-          const { trunk } = this.#store.schema[branch];
+    await Promise.all(
+      searchEntries.map(async ([branch, value]) => {
+        switch (this.#store.schema[branch].type) {
+          case "regex": {
+            const { trunk } = this.#store.schema[branch];
 
-          const rulePath = `metadir/props/${this.#store.schema[branch].dir ?? branch}/rules/${value}.rule`;
+            const rulePath = `metadir/props/${this.#store.schema[branch].dir ?? branch}/rules/${value}.rule`;
 
-          const ruleFile = await this.#callback.readFile(rulePath) ?? '\n';
+            const ruleFile = (await this.#callback.readFile(rulePath)) ?? "\n";
 
-          const trunkLines = await this.#callback.grep(
-            this.#store.cache[`metadir/props/${this.#store.schema[trunk].dir ?? trunk}/index.csv`],
-            ruleFile,
-          );
+            const trunkLines = await this.#callback.grep(
+              this.#store.cache[
+                `metadir/props/${this.#store.schema[trunk].dir ?? trunk}/index.csv`
+              ],
+              ruleFile,
+            );
 
-          const trunkKeys = takeKeys(trunkLines);
+            const trunkKeys = takeKeys(trunkLines);
 
-          if (trunk === base) {
-            baseKeySets.push(trunkKeys);
-          } else {
-            baseKeySets.push(await this.#findBaseKeys(base, trunk, trunkKeys));
+            if (trunk === base) {
+              baseKeySets.push(trunkKeys);
+            } else {
+              baseKeySets.push(
+                await this.#findBaseKeys(base, trunk, trunkKeys),
+              );
+            }
+
+            break;
           }
 
-          break;
-        }
+          default: {
+            const branchValue =
+              this.#store.schema[branch].type === "string"
+                ? JSON.stringify(value)
+                : value;
 
-        default: {
-          const branchValue = this.#store.schema[branch].type === 'string'
-            ? JSON.stringify(value)
-            : value;
+            const branchLines = await this.#callback.grep(
+              this.#store.cache[
+                `metadir/props/${this.#store.schema[branch].dir ?? branch}/index.csv`
+              ],
+              `(^${value},)|(,${branchValue}$)`,
+            );
 
-          const branchLines = await this.#callback.grep(
-            this.#store.cache[`metadir/props/${this.#store.schema[branch].dir ?? branch}/index.csv`],
-            `(^${value},)|(,${branchValue}$)`,
-          );
+            const branchKeys = takeKeys(branchLines);
 
-          const branchKeys = takeKeys(branchLines);
+            if (branch === base) {
+              baseKeySets.push(branchKeys);
+            } else {
+              const baseKeys = await this.#findBaseKeys(
+                base,
+                branch,
+                branchKeys,
+              );
 
-          if (branch === base) {
-            baseKeySets.push(branchKeys);
-          } else {
-            const baseKeys = await this.#findBaseKeys(base, branch, branchKeys);
-
-            baseKeySets.push(baseKeys);
+              baseKeySets.push(baseKeys);
+            }
           }
         }
-      }
-    }));
+      }),
+    );
 
-    const baseKeys = baseKeySets.reduce((a, b) => a.filter((c) => b.includes(c)));
+    const baseKeys = baseKeySets.reduce((a, b) =>
+      a.filter((c) => b.includes(c)),
+    );
 
     return baseKeys;
   }
@@ -225,13 +245,15 @@ export default class Query {
    * @returns {string[]} - Array of base keys.
    */
   async #findBaseKeys(base, branch, branchKeys) {
-    if (branchKeys.length === 0) { return []; }
+    if (branchKeys.length === 0) {
+      return [];
+    }
 
     const { trunk } = this.#store.schema[branch];
 
     const pairLines = grep(
       this.#store.cache[`metadir/pairs/${trunk}-${branch}.csv`],
-      branchKeys.join('\n'),
+      branchKeys.join("\n"),
     );
 
     const trunkKeys = takeKeys(pairLines);
@@ -254,13 +276,14 @@ export default class Query {
   async #buildRecords(base, baseKeys) {
     const records = [];
 
-    await Promise.all(baseKeys.map(async (baseKey) => {
-    // for (let i = 0; i < baseKeys.length; i += 1) {
-      // const baseKey = baseKeys[i];
+    await Promise.all(
+      baseKeys.map(async (baseKey) => {
+        // for (let i = 0; i < baseKeys.length; i += 1) {
+        // const baseKey = baseKeys[i];
 
-      // eslint-disable-next-line
-      records.push(await this.#buildRecord(base, baseKey));
-    }));
+        records.push(await this.#buildRecord(base, baseKey));
+      }),
+    );
     // }
 
     return records;
@@ -278,10 +301,10 @@ export default class Query {
     const record = { _: base, UUID: baseKey };
 
     switch (this.#store.schema[base].type) {
-      case 'object':
+      case "object":
         break;
 
-      case 'array':
+      case "array":
         record.items = [];
         break;
 
@@ -290,29 +313,32 @@ export default class Query {
     }
 
     if (this.#crowns[base] === undefined) {
-      this.#crowns[base] = findCrown(this.#store.schema, base)
-        .filter((branch) => this.#store.schema[branch].type !== 'regex');
+      this.#crowns[base] = findCrown(this.#store.schema, base).filter(
+        (branch) => this.#store.schema[branch].type !== "regex",
+      );
     }
 
     const crown = this.#crowns[base];
     // find all branches connected to base
 
-    await Promise.all(crown.map(async (branch) => {
-      // for (const branch of leaves) {
-      // get value of branch
-      const branchValue = await this.#buildBranchValue(base, baseKey, branch);
+    await Promise.all(
+      crown.map(async (branch) => {
+        // for (const branch of leaves) {
+        // get value of branch
+        const branchValue = await this.#buildBranchValue(base, baseKey, branch);
 
-      if (branchValue !== undefined) {
-        if (this.#store.schema[base].type === 'array') {
-          record.items.push(branchValue);
+        if (branchValue !== undefined) {
+          if (this.#store.schema[base].type === "array") {
+            record.items.push(branchValue);
 
-          record.items = record.items.flat();
-        } else {
-          // assign value to record
-          record[branch] = branchValue;
+            record.items = record.items.flat();
+          } else {
+            // assign value to record
+            record[branch] = branchValue;
+          }
         }
-      }
-    }));
+      }),
+    );
 
     return record;
   }
@@ -337,12 +363,14 @@ export default class Query {
     if (Array.isArray(branchKey)) {
       const branchValues = [];
 
-      await Promise.all(branchKey.map(async (key) => {
-        // get value of branch
-        const branchValue = await this.#findBranchValue(branch, key);
+      await Promise.all(
+        branchKey.map(async (key) => {
+          // get value of branch
+          const branchValue = await this.#findBranchValue(branch, key);
 
-        branchValues.push(branchValue);
-      }));
+          branchValues.push(branchValue);
+        }),
+      );
 
       return branchValues;
     }
@@ -365,9 +393,10 @@ export default class Query {
   async #findBranchKey(base, baseKey, branch) {
     const { trunk } = this.#store.schema[branch];
 
-    const trunkKey = trunk === base
-      ? baseKey
-      : await this.#findBranchKey(base, baseKey, trunk);
+    const trunkKey =
+      trunk === base
+        ? baseKey
+        : await this.#findBranchKey(base, baseKey, trunk);
 
     const pairLines = await lookup(
       this.#store.cache[`metadir/pairs/${trunk}-${branch}.csv`],
@@ -375,11 +404,11 @@ export default class Query {
       true,
     );
 
-    if (pairLines === '') {
+    if (pairLines === "") {
       return undefined;
     }
 
-    if (this.#store.schema[base].type === 'array') {
+    if (this.#store.schema[base].type === "array") {
       const branchKeys = takeValues(pairLines);
 
       return branchKeys;
@@ -400,22 +429,24 @@ export default class Query {
    */
   async #findBranchValue(branch, branchKey) {
     switch (this.#store.schema[branch].type) {
-      case 'array':
+      case "array":
         return this.#buildRecord(branch, branchKey);
 
-      case 'object':
+      case "object":
         return this.#buildRecord(branch, branchKey);
 
-      case 'hash':
+      case "hash":
         return branchKey;
 
-      case 'string': {
+      case "string": {
         const branchLine = lookup(
-          this.#store.cache[`metadir/props/${this.#store.schema[branch].dir ?? branch}/index.csv`],
+          this.#store.cache[
+            `metadir/props/${this.#store.schema[branch].dir ?? branch}/index.csv`
+          ],
           branchKey,
         );
 
-        if (branchLine !== '') {
+        if (branchLine !== "") {
           const branchValue = JSON.parse(takeValue(branchLine));
 
           return branchValue;
@@ -426,11 +457,13 @@ export default class Query {
 
       default: {
         const branchLine = lookup(
-          this.#store.cache[`metadir/props/${this.#store.schema[branch].dir ?? branch}/index.csv`],
+          this.#store.cache[
+            `metadir/props/${this.#store.schema[branch].dir ?? branch}/index.csv`
+          ],
           branchKey,
         );
 
-        if (branchLine !== '') {
+        if (branchLine !== "") {
           const branchValue = takeValue(branchLine);
 
           return branchValue;

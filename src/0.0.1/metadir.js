@@ -6,7 +6,7 @@
  * @returns {string[]} - Array of lines.
  */
 export function splitLines(str) {
-  return str.split('\n').filter((line) => line !== '');
+  return str.split("\n").filter((line) => line !== "");
 }
 
 /**
@@ -28,7 +28,7 @@ export function takeKey(line) {
  * @returns {string} - Value.
  */
 export function takeValue(line) {
-  return line.slice(65).replace(/\n*$/, '');
+  return line.slice(65).replace(/\n*$/, "");
 }
 
 /**
@@ -39,7 +39,7 @@ export function takeValue(line) {
  * @returns {string[]} - Keys.
  */
 export function takeKeys(str) {
-  const lines = splitLines(str.replace(/\n*$/, ''));
+  const lines = splitLines(str.replace(/\n*$/, ""));
 
   const keys = lines.map((line) => takeKey(line));
 
@@ -54,7 +54,7 @@ export function takeKeys(str) {
  * @returns {string[]} - Values.
  */
 export function takeValues(str) {
-  const lines = splitLines(str.replace(/\n*$/, ''));
+  const lines = splitLines(str.replace(/\n*$/, ""));
 
   const keys = lines.map((line) => takeValue(line));
 

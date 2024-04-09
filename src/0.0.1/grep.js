@@ -1,5 +1,4 @@
-/* eslint-disable import/extensions */
-import { splitLines, takeKey, takeValue } from './metadir.js';
+import { splitLines, takeKey, takeValue } from "./metadir.js";
 
 function binarySearch(list, key) {
   let indexLow = 0;
@@ -11,7 +10,7 @@ function binarySearch(list, key) {
 
     const line = list[mid];
 
-    const isMatch = (new RegExp(`^${key}`)).test(line);
+    const isMatch = new RegExp(`^${key}`).test(line);
 
     if (isMatch) {
       return mid;
@@ -35,7 +34,7 @@ export function lookup(contentFile, key, isBulk = false) {
   const index = binarySearch(lines, key);
 
   if (index === -1) {
-    return '';
+    return "";
   }
 
   // find neigbouring lines with the same key
@@ -43,7 +42,7 @@ export function lookup(contentFile, key, isBulk = false) {
     let indexLow = index;
 
     for (let i = index; i >= 0; i -= 1) {
-      if ((new RegExp(`^${key}`)).test(lines[i])) {
+      if (new RegExp(`^${key}`).test(lines[i])) {
         indexLow = i;
       } else {
         break;
@@ -53,7 +52,7 @@ export function lookup(contentFile, key, isBulk = false) {
     let indexHigh = index;
 
     for (let i = index; i < lines.length; i += 1) {
-      if ((new RegExp(`^${key}`)).test(lines[i])) {
+      if (new RegExp(`^${key}`).test(lines[i])) {
         indexHigh = i;
       } else {
         break;
@@ -64,7 +63,7 @@ export function lookup(contentFile, key, isBulk = false) {
       return lines[index];
     }
 
-    const matches = `${lines.slice(indexLow, indexHigh + 1).join('\n')}\n`;
+    const matches = `${lines.slice(indexLow, indexHigh + 1).join("\n")}\n`;
 
     return matches;
   }
@@ -86,7 +85,7 @@ export function prune(contentFile, key) {
   let indexLow = index;
 
   for (let i = index; i >= 0; i -= 1) {
-    if ((new RegExp(`^${key}`)).test(lines[i])) {
+    if (new RegExp(`^${key}`).test(lines[i])) {
       indexLow = i;
     } else {
       break;
@@ -96,7 +95,7 @@ export function prune(contentFile, key) {
   let indexHigh = index;
 
   for (let i = index; i < lines.length; i += 1) {
-    if ((new RegExp(`^${key}`)).test(lines[i])) {
+    if (new RegExp(`^${key}`).test(lines[i])) {
       indexHigh = i;
     } else {
       break;
@@ -109,7 +108,7 @@ export function prune(contentFile, key) {
     lines.splice(indexLow, indexHigh - indexLow + 1);
   }
 
-  const contentFilePruned = lines.join('\n');
+  const contentFilePruned = lines.join("\n");
 
   return contentFilePruned;
 }
@@ -124,10 +123,10 @@ export function prune(contentFile, key) {
  * @returns {string} - Search results.
  */
 export function grep(contentFile, patternFile, isInverse) {
-  if (contentFile === undefined || contentFile === '') {
-    return '';
+  if (contentFile === undefined || contentFile === "") {
+    return "";
   }
-  if (patternFile === undefined || patternFile === '') {
+  if (patternFile === undefined || patternFile === "") {
     return contentFile;
   }
 
@@ -136,24 +135,20 @@ export function grep(contentFile, patternFile, isInverse) {
   const patternLines = splitLines(patternFile);
 
   if (isInverse) {
-    const prunedLines = contentLines.filter(
-      (line) => patternLines.every(
-        (pattern) => !(new RegExp(pattern)).test(line),
-      ),
+    const prunedLines = contentLines.filter((line) =>
+      patternLines.every((pattern) => !new RegExp(pattern).test(line)),
     );
 
-    return `${prunedLines.join('\n')}\n`;
+    return `${prunedLines.join("\n")}\n`;
   }
 
-  const matchedSets = patternLines.map(
-    (pattern) => contentLines.filter(
-      (line) => new RegExp(pattern).test(line),
-    ),
+  const matchedSets = patternLines.map((pattern) =>
+    contentLines.filter((line) => new RegExp(pattern).test(line)),
   );
 
   const matchedLines = [...new Set(matchedSets.flat())];
 
-  return `${matchedLines.join('\n')}\n`;
+  return `${matchedLines.join("\n")}\n`;
 }
 
 export function pruneValue(contentFile, value) {
@@ -168,7 +163,7 @@ export function pruneValue(contentFile, value) {
   let indexLow = index;
 
   for (let i = index; i >= 0; i -= 1) {
-    if ((new RegExp(`,${value}$`)).test(lines[i])) {
+    if (new RegExp(`,${value}$`).test(lines[i])) {
       indexLow = i;
     } else {
       break;
@@ -178,7 +173,7 @@ export function pruneValue(contentFile, value) {
   let indexHigh = index;
 
   for (let i = index; i < lines.length; i += 1) {
-    if ((new RegExp(`,${value}$`)).test(lines[i])) {
+    if (new RegExp(`,${value}$`).test(lines[i])) {
       indexHigh = i;
     } else {
       break;
@@ -191,14 +186,16 @@ export function pruneValue(contentFile, value) {
     lines.splice(indexLow, indexHigh - indexLow + 1);
   }
 
-  const contentFilePruned = lines.join('\n');
+  const contentFilePruned = lines.join("\n");
 
   return contentFilePruned;
 }
 
 function binarySearchValue(listUnsorted, value) {
   // TODO: sort once elsewhere or grep instead of binary search
-  const list = listUnsorted.sort((a, b) => takeValue(a).localeCompare(takeValue(b)))
+  const list = listUnsorted.sort((a, b) =>
+    takeValue(a).localeCompare(takeValue(b)),
+  );
 
   let indexLow = 0;
 
@@ -209,7 +206,7 @@ function binarySearchValue(listUnsorted, value) {
 
     const line = list[mid];
 
-    const isMatch = (new RegExp(`,${value}$`)).test(line);
+    const isMatch = new RegExp(`,${value}$`).test(line);
 
     if (isMatch) {
       return mid;

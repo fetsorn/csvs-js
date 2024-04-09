@@ -6,7 +6,9 @@
  * @returns {string} - Root branch.
  */
 export function findSchemaRoot(schema) {
-  const firstRoot = Object.keys(schema).find((branch) => !Object.prototype.hasOwnProperty.call(schema[branch], 'trunk'));
+  const firstRoot = Object.keys(schema).find(
+    (branch) => !Object.prototype.hasOwnProperty.call(schema[branch], "trunk"),
+  );
 
   return firstRoot;
 }
@@ -26,10 +28,12 @@ function isConnected(schema, base, branch) {
   if (trunk === undefined) {
     // if schema root is reached, leaf is not connected to base
     return false;
-  } else if (trunk === base) {
+  }
+  if (trunk === base) {
     // if trunk is base, leaf is connected to base
     return true;
-  } else if (isConnected(schema, base, trunk)) {
+  }
+  if (isConnected(schema, base, trunk)) {
     // if trunk is connected to base, leaf is also connected to base
     return true;
   }
@@ -47,7 +51,9 @@ function isConnected(schema, base, branch) {
  * @returns {string[]} - Array of leaf branches connected to the base branch.
  */
 export function findCrown(schema, base) {
-  return Object.keys(schema).filter((branch) => isConnected(schema, base, branch));
+  return Object.keys(schema).filter((branch) =>
+    isConnected(schema, base, branch),
+  );
 }
 
 /**
@@ -62,10 +68,16 @@ export function findCrownPaths(schema, base) {
   const crown = findCrown(schema, base);
 
   const filePaths = crown.concat([base]).map((branch) => {
-    const schemaHasBranch = Object.prototype.hasOwnProperty.call(schema, branch)
+    const schemaHasBranch = Object.prototype.hasOwnProperty.call(
+      schema,
+      branch,
+    );
 
     if (schemaHasBranch) {
-      const branchHasTrunk = Object.prototype.hasOwnProperty.call(schema[branch], "trunk")
+      const branchHasTrunk = Object.prototype.hasOwnProperty.call(
+        schema[branch],
+        "trunk",
+      );
 
       if (branchHasTrunk) {
         const { trunk } = schema[branch];
@@ -91,53 +103,51 @@ export function condense(schema, record) {
 
   const entries = Object.entries(record);
 
-  const entriesCondensed = entries.filter(
-    ([key, value]) => key !== "_" && key !== record._
-  ).map(([branch, value]) => {
-    const isTwig = Object.keys(schema)
-                            .filter((b) => schema[b].trunk === branch)
-                            .length === 0;
+  const entriesCondensed = entries
+    .filter(([key]) => key !== "_" && key !== record._)
+    .map(([branch, value]) => {
+      const isTwig =
+        Object.keys(schema).filter((b) => schema[b].trunk === branch).length ===
+        0;
 
       if (Array.isArray(value)) {
         const itemsCondensed = isTwig
-              ? value.map((item) => typeof value === "string" ? value : item[branch])
-              : value.map((item) => condense(schema, item));
+          ? value.map((item) =>
+              typeof value === "string" ? value : item[branch],
+            )
+          : value.map((item) => condense(schema, item));
 
         if (itemsCondensed.length === 0) {
-          return undefined
+          return undefined;
         }
 
         if (itemsCondensed.length === 1) {
           const valueCondensed = itemsCondensed[0];
 
-          return [branch, valueCondensed]
+          return [branch, valueCondensed];
         }
 
-        return [branch, itemsCondensed]
+        return [branch, itemsCondensed];
       }
 
       if (typeof value === "object") {
-        const valueCondensed = isTwig
-              ? value[branch]
-              : condense(schema, value);
+        const valueCondensed = isTwig ? value[branch] : condense(schema, value);
 
-        return [branch, valueCondensed]
+        return [branch, valueCondensed];
       }
 
       if (typeof value === "string") {
-        const valueCondensed = isTwig
-              ? value
-              : { _: branch, [branch]: value };
+        const valueCondensed = isTwig ? value : { _: branch, [branch]: value };
 
-        return [branch, valueCondensed]
+        return [branch, valueCondensed];
       }
 
-      return undefined
-  });
+      return undefined;
+    });
 
   const recordCondensed = Object.fromEntries(entriesCondensed.filter(Boolean));
 
-  return { _: base, [base]: record[base], ...recordCondensed }
+  return { _: base, [base]: record[base], ...recordCondensed };
 }
 
 /**
@@ -152,17 +162,18 @@ export function expand(record) {
 
   const entries = Object.entries(record);
 
-  const entriesExpanded = entries.filter(
-    ([key, value]) => key !== "_" && key !== record._
-  ).map(([key, value]) => {
-    const valueExpanded = typeof value === "string"
-          ? [ { _: key, [key]: value } ]
-          : [ value ].flat().map(expand);
+  const entriesExpanded = entries
+    .filter(([key]) => key !== "_" && key !== record._)
+    .map(([key, value]) => {
+      const valueExpanded =
+        typeof value === "string"
+          ? [{ _: key, [key]: value }]
+          : [value].flat().map(expand);
 
-    return [key, valueExpanded]
-  });
+      return [key, valueExpanded];
+    });
 
   const recordExpanded = Object.fromEntries(entriesExpanded);
 
-  return { _: base, [base]: record[base], ...recordExpanded }
+  return { _: base, [base]: record[base], ...recordExpanded };
 }

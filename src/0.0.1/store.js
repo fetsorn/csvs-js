@@ -1,6 +1,5 @@
-/* eslint-disable import/extensions */
-import { findCrownPaths } from './schema.js';
-import { takeKey } from './metadir.js';
+import { findCrownPaths } from "./schema.js";
+import { takeKey } from "./metadir.js";
 
 export default class Store {
   /**
@@ -44,7 +43,7 @@ export default class Store {
    * @returns {object} - dataset schema.
    */
   async readSchema() {
-    const schemaString = await this.#callback.readFile('metadir.json');
+    const schemaString = await this.#callback.readFile("metadir.json");
 
     this.schema = JSON.parse(schemaString);
   }
@@ -62,21 +61,24 @@ export default class Store {
 
     const cache = {};
 
-    await Promise.all(filePaths.map(async (filePath) => {
-      try {
-        const contents = (await this.#callback.readFile(filePath)) ?? '\n';
+    await Promise.all(
+      filePaths.map(async (filePath) => {
+        try {
+          const contents = (await this.#callback.readFile(filePath)) ?? "\n";
 
-        const contentsSorted = contents.split('\n')
-          .filter((line) => line !== '')
-          .sort((a, b) => takeKey(a).localeCompare(takeKey(b)))
-          .join('\n');
+          const contentsSorted = contents
+            .split("\n")
+            .filter((line) => line !== "")
+            .sort((a, b) => takeKey(a).localeCompare(takeKey(b)))
+            .join("\n");
 
-        cache[filePath] = contentsSorted;
-      } catch (e) {
-        // console.log(e);
-        cache[filePath] = '\n';
-      }
-    }));
+          cache[filePath] = contentsSorted;
+        } catch {
+          // console.log(e);
+          cache[filePath] = "\n";
+        }
+      }),
+    );
 
     this.cache = cache;
   }
@@ -99,15 +101,17 @@ export default class Store {
    * @function
    */
   async write() {
-    await Promise.all(Object.entries(this.output).map(async ([filePath, contents]) => {
-      const contentsSorted = `${contents.split('\n')
-        .filter((line) => line !== '')
-        .sort((a, b) => a.localeCompare(b))
-        .join('\n')
-      }\n`;
+    await Promise.all(
+      Object.entries(this.output).map(async ([filePath, contents]) => {
+        const contentsSorted = `${contents
+          .split("\n")
+          .filter((line) => line !== "")
+          .sort((a, b) => a.localeCompare(b))
+          .join("\n")}\n`;
 
-      await this.#callback.writeFile(filePath, contentsSorted);
-    }));
+        await this.#callback.writeFile(filePath, contentsSorted);
+      }),
+    );
 
     this.output = {};
   }

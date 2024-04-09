@@ -5,31 +5,31 @@ const mocks = loadMocks()
 export const testCasesSelect = (version) => [
   {
     name: "queries name1",
-    query: "actname=name1",
+    query: "?_=datum&actname=name1",
     initial: mocks[version].datasetDefault,
     expected: [mocks[version].record2001]
   },
   {
     name: "queries name2",
-    query: "actname=name2",
+    query: "?_=datum&actname=name2",
     initial: mocks[version].datasetDefault,
     expected: [mocks[version].record2002]
   },
   {
     name: "queries name3",
-    query: "actname=name3",
+    query: "?_=datum&actname=name3",
     initial: mocks[version].datasetDefault,
     expected: [mocks[version].record2003Unedited]
   },
   {
     name: "queries name2 with out-of-order schema",
-    query: "actname=name2",
+    query: "?_=datum&actname=name2",
     initial: mocks[version].datasetUnordered,
     expected: [mocks[version].record2002]
   },
   {
     name: "queries name1 with array of tags",
-    query: "actname=name1",
+    query: "?_=datum&actname=name1",
     initial: mocks[version].datasetArray,
     expected: [mocks[version].recordArray]
   },
@@ -41,49 +41,49 @@ export const testCasesSelect = (version) => [
   // },
   {
     name: "queries value2 with array of tags",
-    query: "datum=value1",
+    query: "?_=datum&datum=value1",
     initial: mocks[version].datasetArrayAdded,
     expected: [mocks[version].recordArray]
   },
   {
     name: "queries export1_key with array of tags",
-    query: "export1_key=longkey1",
+    query: "?_=datum&export1_key=longkey1",
     initial: mocks[version].datasetArrayAdded,
     expected: [mocks[version].recordArray]
   },
   {
     name: "queries name1 with regexp",
-    query: "actname=name.*",
+    query: "?_=datum&actname=name.*",
     initial: mocks[version].datasetDefault,
     expected: [mocks[version].record2001,mocks[version].record2002,mocks[version].record2003Unedited]
   },
   {
     name: "queries moddate regex",
-    query: "moddate=.*-01-01",
+    query: "?_=datum&moddate=.*-01-01",
     initial: mocks[version].datasetDefault,
     expected: [mocks[version].record2001,mocks[version].record2002]
   },
   {
     name: "queries two queries",
-    query: "actname=name.*&actdate=2001-01-01",
+    query: "?_=datum&actname=name.*&actdate=2001-01-01",
     initial: mocks[version].datasetDefault,
     expected: [mocks[version].record2001]
   },
   {
     name: "queries export1_tag with export1_key",
-    query: "_=export1_tag&export1_key=longkey1",
+    query: "?_=export1_tag&export1_key=longkey1",
     initial: mocks[version].datasetArrayAdded,
     expected: [mocks[version].recordExport1Tag]
   },
   {
     name: "queries unlinked export1_tag with export1_key",
-    query: "_=export1_tag&export1_key=longkey1",
+    query: "?_=export1_tag&export1_key=longkey1",
     initial: mocks[version].datasetDeletedArrayItem,
     expected: [mocks[version].recordExport1Tag]
   },
   {
     name: "queries name",
-    query: "_=actname",
+    query: "?_=actname",
     initial: mocks[version].datasetAdded,
     expected: mocks[version].optionsActname
   },

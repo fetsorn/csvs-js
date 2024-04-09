@@ -1,7 +1,5 @@
-/* eslint-disable import/extensions */
-import { findCrownPaths } from './schema.js';
-import { takeKey } from './metadir.js';
-import csv from 'papaparse';
+import csv from "papaparse";
+import { findCrownPaths } from "./schema.js";
 
 export default class Store {
   /**
@@ -46,14 +44,14 @@ export default class Store {
    */
   async readSchema() {
     try {
-      const schemaString = await this.#callback.readFile('_-_.csv');
+      const schemaString = await this.#callback.readFile("_-_.csv");
 
-      const { data } = csv.parse(schemaString)
+      const { data } = csv.parse(schemaString);
 
       for await (const [trunk, leaf] of data) {
-        this.schema[trunk] = { ...this.schema[trunk] }
+        this.schema[trunk] = { ...this.schema[trunk] };
         // Work with each record
-        this.schema[leaf] = { trunk, ...this.schema[leaf] }
+        this.schema[leaf] = { trunk, ...this.schema[leaf] };
       }
     } catch {
       // do nothing if there is no schema
@@ -73,23 +71,25 @@ export default class Store {
 
     const cache = {};
 
-    await Promise.all(filePaths.map(async (filePath) => {
-      try {
-        const contents = (await this.#callback.readFile(filePath)) ?? '\n';
+    await Promise.all(
+      filePaths.map(async (filePath) => {
+        try {
+          const contents = (await this.#callback.readFile(filePath)) ?? "\n";
 
-        // const contentsSorted = contents.split('\n')
-        //   .filter((line) => line !== '')
-        //   .sort((a, b) => takeKey(a).localeCompare(takeKey(b)))
-        //   .join('\n');
+          // const contentsSorted = contents.split('\n')
+          //   .filter((line) => line !== '')
+          //   .sort((a, b) => takeKey(a).localeCompare(takeKey(b)))
+          //   .join('\n');
 
-        // cache[filePath] = contentsSorted;
+          // cache[filePath] = contentsSorted;
 
-        cache[filePath] = contents;
-      } catch (e) {
-        // console.log(e);
-        cache[filePath] = '\n';
-      }
-    }));
+          cache[filePath] = contents;
+        } catch {
+          // console.log(e);
+          cache[filePath] = "\n";
+        }
+      }),
+    );
 
     this.cache = cache;
   }
@@ -105,7 +105,7 @@ export default class Store {
   appendOutput(filePath, lines) {
     const output = this.output[filePath] ?? "";
 
-    this.output[filePath] = output + '\n' + lines;
+    this.output[filePath] = `${output}\n${lines}`;
   }
 
   setOutput(filePath, fileContents) {
@@ -118,17 +118,19 @@ export default class Store {
    * @function
    */
   async write() {
-    await Promise.all(Object.entries(this.output).map(async ([filePath, contents]) => {
-      // TODO: remove this and guarantee idempotence by diffing changeset in update()
-      // sort to guarantee that sorted files remain unchanged after update
-      const contentsSorted = `${contents.split('\n')
-        .filter((line) => line !== '')
-        .sort((a, b) => a.localeCompare(b))
-        .join('\n')
-      }\n`;
+    await Promise.all(
+      Object.entries(this.output).map(async ([filePath, contents]) => {
+        // TODO: remove this and guarantee idempotence by diffing changeset in update()
+        // sort to guarantee that sorted files remain unchanged after update
+        const contentsSorted = `${contents
+          .split("\n")
+          .filter((line) => line !== "")
+          .sort((a, b) => a.localeCompare(b))
+          .join("\n")}\n`;
 
-      await this.#callback.writeFile(filePath, contentsSorted);
-    }));
+        await this.#callback.writeFile(filePath, contentsSorted);
+      }),
+    );
 
     this.output = {};
   }
