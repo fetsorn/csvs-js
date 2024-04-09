@@ -33,12 +33,12 @@ export const testCasesSelect = (version) => [
     initial: mocks[version].datasetArray,
     expected: [mocks[version].recordArray]
   },
-  // {
-  //   name: "queries name1 by UUID",
-  //   query: "actname=9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1",
-  //   initial: mocks[version].datasetDefault,
-  //   expected: [mocks[version].record2001]
-  // },
+  //{
+  //  name: "queries name1 by UUID",
+  //  query: "actname=9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1",
+  //  initial: mocks[version].datasetDefault,
+  //  expected: [mocks[version].record2001]
+  //},
   {
     name: "queries value2 with array of tags",
     query: "?_=datum&datum=value1",
@@ -115,7 +115,7 @@ export const testCasesSelect = (version) => [
     name: "query schema relations",
     query: "_=_",
     initial: mocks[version].datasetDefault,
-    expected: mocks[version].optionsSchema
+    expected: [mocks[version].recordSchema]
   },
 ]
 

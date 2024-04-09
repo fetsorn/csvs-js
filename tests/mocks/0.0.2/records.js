@@ -235,8 +235,8 @@ const recordExport1Tag = {
 
 const recordSchema = {
   _: '_',
-  datum: [ "saydate", "sayname", "actdate", "actname", "filepath", "privacy", "tag" ],
-  filepath: [ "moddate", "filetype", "filehash", "filesize", "pathrule" ]
+  datum: [ "actdate", "actname", "saydate", "sayname", "privacy", "tag", "filepath" ],
+  filepath: [ "moddate", "filehash", "filetype", "filesize", "pathrule" ]
 };
 
 export default {

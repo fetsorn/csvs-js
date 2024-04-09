@@ -1,4 +1,4 @@
-import { condense } from "./schema.js";
+import csv from "papaparse";
 import Store from "./store.js";
 import {
   searchParamsToQuery,
@@ -7,6 +7,7 @@ import {
   findValues,
   findQueries,
   findKeys,
+  condense
 } from "./bin.js";
 
 /** Class representing a dataset query. */
@@ -46,6 +47,8 @@ export default class Query {
     // if no base is provided, return empty
     if (base === undefined) return [];
 
+    if (base === "_") return this.#selectSchema(query);
+
     // get a map of dataset file contents
     await this.#store.read(base);
 
@@ -79,5 +82,27 @@ export default class Query {
     );
 
     return records;
+  }
+
+  async #selectSchema(query) {
+    let recordSchema = { _:"_" };
+
+    const tablet = this.#store.cache["_-_.csv"];
+
+    csv.parse(tablet, {
+      step: (row) => {
+        if (row.data.length === 1 && row.data[0] === "") return;
+
+        const [key, value] = row.data;
+
+        const values = recordSchema[key] ?? [];
+
+        const valuesNew = [ ...values, value ];
+
+        recordSchema[key] = valuesNew;
+      }
+    })
+
+    return [ recordSchema ]
   }
 }

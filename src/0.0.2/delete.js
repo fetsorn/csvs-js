@@ -1,7 +1,5 @@
 import csv from "papaparse";
-import { findCrown } from "./schema.js";
 import Store from "./store.js";
-import { recordToRelationMap } from "./bin.js";
 
 /** Class representing a dataset record. */
 export default class Delete {

@@ -1,5 +1,5 @@
 import csv from "papaparse";
-import { findCrownPaths } from "./schema.js";
+import { findCrownPaths } from "./bin.js";
 
 export default class Store {
   /**
@@ -45,6 +45,8 @@ export default class Store {
   async readSchema() {
     try {
       const schemaString = await this.#callback.readFile("_-_.csv");
+
+      this.cache["_-_.csv"] = schemaString;
 
       const { data } = csv.parse(schemaString);
 

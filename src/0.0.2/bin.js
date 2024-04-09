@@ -1,5 +1,170 @@
 import csv from "papaparse";
-import { findCrown } from "./schema.js";
+
+/**
+ * This tells if a branch is connected to base branch.
+ * @name isConnected
+ * @function
+ * @param {object} schema - Dataset schema.
+ * @param {string} base - Base branch name.
+ * @param {string} branch - Branch name.
+ * @returns {Boolean}
+ */
+function isConnected(schema, base, branch) {
+  const { trunk } = schema[branch];
+
+  if (trunk === undefined) {
+    // if schema root is reached, leaf is not connected to base
+    return false;
+  }
+  if (trunk === base) {
+    // if trunk is base, leaf is connected to base
+    return true;
+  }
+  if (isConnected(schema, base, trunk)) {
+    // if trunk is connected to base, leaf is also connected to base
+    return true;
+  }
+
+  // if trunk is not connected to base, leaf is also not connected to base
+  return false;
+}
+
+/**
+ * This finds all branches that are connected to the base branch.
+ * @name findCrown
+ * @function
+ * @param {object} schema - Dataset schema.
+ * @param {string} base - Base branch name.
+ * @returns {string[]} - Array of leaf branches connected to the base branch.
+ */
+export function findCrown(schema, base) {
+  return Object.keys(schema).filter((branch) =>
+    isConnected(schema, base, branch),
+  );
+}
+
+/**
+ * This finds paths to all files required to search for base branch.
+ * @name findStorePaths
+ * @function
+ * @param {object} schema - Dataset schema.
+ * @param {string} base - Base branch name.
+ * @returns {string[]} - Array of file paths.
+ */
+export function findCrownPaths(schema, base) {
+  const crown = findCrown(schema, base);
+
+  const filePaths = crown.concat([base]).map((branch) => {
+    const schemaHasBranch = Object.prototype.hasOwnProperty.call(
+      schema,
+      branch,
+    );
+
+    if (schemaHasBranch) {
+      const branchHasTrunk = Object.prototype.hasOwnProperty.call(
+        schema[branch],
+        "trunk",
+      );
+
+      if (branchHasTrunk) {
+        const { trunk } = schema[branch];
+
+        return `${trunk}-${branch}.csv`;
+      }
+    }
+  });
+
+  return filePaths.filter(Boolean).flat();
+}
+
+/**
+ * This function condenses the data structure where possible
+ * @name condense
+ * @function
+ * @param {object} schema - Dataset schema.
+ * @param {object} record - An expanded record.
+ * @returns {object} - A condensed record.
+ */
+export function condense(schema, record) {
+  const base = record._;
+
+  const entries = Object.entries(record);
+
+  const entriesCondensed = entries
+    .filter(([key]) => key !== "_" && key !== record._)
+    .map(([branch, value]) => {
+      const isTwig =
+        Object.keys(schema).filter((b) => schema[b].trunk === branch).length ===
+        0;
+
+      if (Array.isArray(value)) {
+        const itemsCondensed = isTwig
+          ? value.map((item) =>
+              typeof value === "string" ? value : item[branch],
+            )
+          : value.map((item) => condense(schema, item));
+
+        if (itemsCondensed.length === 0) {
+          return undefined;
+        }
+
+        if (itemsCondensed.length === 1) {
+          const valueCondensed = itemsCondensed[0];
+
+          return [branch, valueCondensed];
+        }
+
+        return [branch, itemsCondensed];
+      }
+
+      if (typeof value === "object") {
+        const valueCondensed = isTwig ? value[branch] : condense(schema, value);
+
+        return [branch, valueCondensed];
+      }
+
+      if (typeof value === "string") {
+        const valueCondensed = isTwig ? value : { _: branch, [branch]: value };
+
+        return [branch, valueCondensed];
+      }
+
+      return undefined;
+    });
+
+  const recordCondensed = Object.fromEntries(entriesCondensed.filter(Boolean));
+
+  return { _: base, [base]: record[base], ...recordCondensed };
+}
+
+/**
+ * This function expands the data structure
+ * @name expand
+ * @function
+ * @param {object} record - A condensed record.
+ * @returns {object} - An expanded record.
+ */
+export function expand(record) {
+  const base = record._;
+
+  const entries = Object.entries(record);
+
+  const entriesExpanded = entries
+    .filter(([key]) => key !== "_" && key !== record._)
+    .map(([key, value]) => {
+      const valueExpanded =
+        typeof value === "string"
+          ? [{ _: key, [key]: value }]
+          : [value].flat().map(expand);
+
+      return [key, valueExpanded];
+    });
+
+  const recordExpanded = Object.fromEntries(entriesExpanded);
+
+  return { _: base, [base]: record[base], ...recordExpanded };
+}
+
 /**
  * This returns an array of records from the dataset.
  * @name searchParamsToQuery
@@ -128,44 +293,6 @@ export function recordToRelationMap(schema, record) {
   }, {});
 
   return relationMap;
-}
-
-/**
- * This returns an array of records from the dataset.
- * @name buildRecord
- * @export function
- * // TODO: replace HashSet type with a common tablet->key->value type docstring
- * @param {HashSet} valueMap - hashset of all relevant key-value relations.
- * @param {string} base - base branch.
- * @param {string} key - base key.
- * @returns {Object[]}
- */
-export function buildRecord(schema, valueMap, base, key) {
-  const leaves = Object.keys(schema).filter((b) => schema[b].trunk === base);
-
-  const record = leaves.reduce(
-    (acc, leaf) => {
-      const pair = `${base}-${leaf}.csv`;
-
-      const valuesByKey = valueMap[pair] ?? {};
-
-      const values = valuesByKey[key];
-
-      const partial =
-        values === undefined
-          ? {}
-          : {
-              [leaf]: values.map((value) =>
-                buildRecord(schema, valueMap, leaf, value),
-              ),
-            };
-
-      return { ...acc, ...partial };
-    },
-    { _: base, [base]: key },
-  );
-
-  return record;
 }
 
 /**
@@ -329,6 +456,8 @@ export function findQueries(schema, queryMap, base) {
   return isQueriedMap;
 }
 
+// TODO: remove keys of queryMap from keyMap
+// "?_=datum&datum=notInDataset" returns [ { _: datum, datum: notInDataset } ]
 /**
  *
  * @name findKeys
@@ -341,17 +470,16 @@ export function findQueries(schema, queryMap, base) {
  * @returns {object} -
  */
 export function findKeys(schema, cache, query, queryMap, isQueriedMap, base) {
+  const keyMap = {};
+
   // in order of query,
-  // queried twigs go first
+  // first queried twigs
   // then queried trunks
+  // then trunk of base
   // then base (either last queried or first unqueried),
-  // then unqueried trunks,
-  // then unqueried leaves and twigs
-  // const branches = queriedBranches.concat([base]).concat(restBranches);
   const queriedBranches = Object.keys(isQueriedMap).sort(
     sortNestingAscending(schema),
   );
-  const keyMap = {};
 
   // parse queried branches
   queriedBranches.forEach((branch) => {
@@ -432,11 +560,87 @@ export function findKeys(schema, cache, query, queryMap, isQueriedMap, base) {
     return undefined;
   });
 
-  // keyMap[export_tags] here must be [20b08f6b4c89ed92fa865b00b4ab8b8d4d09ae8ae8e2a400ddff841da8137e49]
-  const isQueriedBase = query[base];
+  // TODO: handle if query[base] is object, list of objects
+  const regexesBase = [ query[base] ] ?? [ "" ];
 
-  if (isQueriedBase) {
-    keyMap[base] = [query[base]];
+  const { trunk } = schema[base];
+
+  if (trunk !== undefined) {
+    const pair = `${trunk}-${base}.csv`;
+
+    const tablet = cache[pair];
+
+    let keysBase = [];
+
+    csv.parse(tablet, {
+      step: (row) => {
+        if (row.data.length === 1 && row.data[0] === "") return;
+
+        const [key, value] = row.data;
+
+        // push value to keyMap
+        const isMatch = matchRegexes(regexesBase, [value]).length > 0;
+
+        if (isMatch) {
+          keysBase.push(value);
+        }
+      },
+      complete: () => {
+        // diff keys into keyMap
+        const keysSet = Array.from(new Set(keysBase));
+
+        const keysBaseMatched = keyMap[base];
+
+        // save keys to map if trunk keys are undefined
+        if (keysBaseMatched === undefined) {
+          keyMap[base] = keysSet;
+        } else {
+          // if queried less trunk keys, intersect
+          keyMap[base] = intersect(keysBaseMatched, keysSet);
+          // if not queried, leave trunk keys unchanged
+        }
+      }
+    })
+  } else {
+    const valuesBase = keyMap[base]
+
+    if (valuesBase !== undefined) {
+      const keysBase = matchRegexes(regexesBase, valuesBase)
+
+      keyMap[base] = keysBase;
+    } else {
+      // TODO: if only datum is queried, (keyMap is undefined at the end of leaves)
+      // we need to query all leaves for the datum regexes, defaulting to [ "" ]
+      const leaves = Object.keys(schema).filter((b) => schema[b].trunk === base);
+
+      leaves.forEach((leaf) => {
+        const pair = `${base}-${leaf}.csv`;
+
+        const tablet = cache[pair];
+
+        const keysBase = [];
+
+        csv.parse(tablet, {
+          step: (row) => {
+            if (row.data.length === 1 && row.data[0] === "") return;
+
+            const [key, ] = row.data;
+            // match
+            const isMatch = matchRegexes(regexesBase, [key]).length > 0;
+
+            if (isMatch) {
+              keysBase.push(key);
+            }
+          },
+          complete: () => {
+            const keysSet = Array.from(new Set(keysBase));
+
+            // we know that keyMap is undefined
+            keyMap[base] = keysSet;
+          }
+        })
+      })
+    }
   }
 
   // if base is not queried,
@@ -455,6 +659,8 @@ export function findKeys(schema, cache, query, queryMap, isQueriedMap, base) {
  */
 export function findValues(schema, cache, keyMap, base) {
   let valueMap = {};
+
+  // TODO find values for leaves of trunk
 
   const crown = findCrown(schema, base).sort(sortNestingAscending(schema));
 
@@ -481,6 +687,7 @@ export function findValues(schema, cache, keyMap, base) {
 
     const tablet = cache[pair];
 
+    // TODO: comment all keysTrunk here
     const keysTrunk = [];
 
     csv.parse(tablet, {
@@ -532,4 +739,42 @@ export function findValues(schema, cache, keyMap, base) {
   });
 
   return valueMap;
+}
+
+/**
+ * This returns an array of records from the dataset.
+ * @name buildRecord
+ * @export function
+ * // TODO: replace HashSet type with a common tablet->key->value type docstring
+ * @param {HashSet} valueMap - hashset of all relevant key-value relations.
+ * @param {string} base - base branch.
+ * @param {string} key - base key.
+ * @returns {Object[]}
+ */
+export function buildRecord(schema, valueMap, base, key) {
+  const leaves = Object.keys(schema).filter((b) => schema[b].trunk === base);
+
+  const record = leaves.reduce(
+    (acc, leaf) => {
+      const pair = `${base}-${leaf}.csv`;
+
+      const valuesByKey = valueMap[pair] ?? {};
+
+      const values = valuesByKey[key];
+
+      const partial =
+        values === undefined
+          ? {}
+          : {
+              [leaf]: values.map((value) =>
+                buildRecord(schema, valueMap, leaf, value),
+              ),
+            };
+
+      return { ...acc, ...partial };
+    },
+    { _: base, [base]: key },
+  );
+
+  return record;
 }
