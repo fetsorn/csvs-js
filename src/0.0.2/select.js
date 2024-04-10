@@ -19,6 +19,12 @@ export default class Query {
   #store;
 
   /**
+   * .
+   * @type {HashSet}
+   */
+  #valueMap;
+
+  /**
    * Create a dataset instance.
    * @param {Object} callback - Object with callbacks.
    * @param {readFileCallback} callback.readFile - The callback that reads db.
@@ -56,7 +62,7 @@ export default class Query {
 
     const isQueriedMap = findQueries(this.#store.schema, queryMap, base);
 
-    const keyMap = findKeys(
+    const keyMap = await findKeys(
       this.#store.schema,
       this.#store.cache,
       query,
@@ -65,7 +71,7 @@ export default class Query {
       base,
     );
 
-    const valueMap = findValues(
+    const valueMap = await findValues(
       this.#store.schema,
       this.#store.cache,
       keyMap,
@@ -104,5 +110,57 @@ export default class Query {
     })
 
     return [ recordSchema ]
+  }
+
+  async selectBaseKeys(urlSearchParams) {
+    await this.#store.readSchema();
+
+    const query = searchParamsToQuery(this.#store.schema, urlSearchParams);
+
+    // there can be only one root base in search query
+    // TODO: validate against arrays of multiple bases, do not return [], throw error
+    const base = query._;
+
+    // if no base is provided, return empty
+    if (base === undefined) return [];
+
+    if (base === "_") return this.#selectSchema(query);
+
+    // get a map of dataset file contents
+    await this.#store.read(base);
+
+    const queryMap = recordToRelationMap(this.#store.schema, query);
+
+    const isQueriedMap = findQueries(this.#store.schema, queryMap, base);
+
+    const keyMap = await findKeys(
+      this.#store.schema,
+      this.#store.cache,
+      query,
+      queryMap,
+      isQueriedMap,
+      base,
+    );
+
+    const valueMap = await findValues(
+      this.#store.schema,
+      this.#store.cache,
+      keyMap,
+      base,
+    );
+
+    this.#valueMap = valueMap;
+
+    const baseKeys = keyMap[base] ?? [];
+
+    return { base, baseKeys };
+  }
+
+  buildRecord(base, baseKey) {
+    const record = buildRecord(this.#store.schema, this.#valueMap, base, baseKey);
+
+    const recordCondensed = condense(this.#store.schema, record);
+
+    return recordCondensed
   }
 }

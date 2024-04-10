@@ -469,7 +469,7 @@ export function findQueries(schema, queryMap, base) {
  * @param {string} base -
  * @returns {object} -
  */
-export function findKeys(schema, cache, query, queryMap, isQueriedMap, base) {
+export async function findKeys(schema, cache, query, queryMap, isQueriedMap, base) {
   const keyMap = {};
 
   // in order of query,
@@ -482,7 +482,7 @@ export function findKeys(schema, cache, query, queryMap, isQueriedMap, base) {
   );
 
   // parse queried branches
-  queriedBranches.forEach((branch) => {
+  for (const branch of queriedBranches) {
     // TODO: what if multiple trunks?
     const { trunk } = schema[branch];
 
@@ -492,73 +492,74 @@ export function findKeys(schema, cache, query, queryMap, isQueriedMap, base) {
 
     const keysTrunk = [];
 
-    csv.parse(tablet, {
-      step: (row) => {
-        // TODO: if tag is empty, step should not step
-        // TODO: remove this check
-        if (row.data.length === 1 && row.data[0] === "") return;
+    await new Promise((res, rej) => {
+      csv.parse(tablet, {
+        step: (row) => {
+          // TODO: if tag is empty, step should not step
+          // TODO: remove this check
+          if (row.data.length === 1 && row.data[0] === "") return;
 
-        const [key, value] = row.data;
+          const [key, value] = row.data;
 
-        // if branch is queried
-        const keysBranch = keyMap[branch];
+          // if branch is queried
+          const keysBranch = keyMap[branch];
 
-        // not constrained by leaves
-        const branchNotConstrained = keysBranch === undefined;
+          // not constrained by leaves
+          const branchNotConstrained = keysBranch === undefined;
 
-        const valueFitsConstraints =
-          keysBranch !== undefined && keysBranch.includes(value);
+          const valueFitsConstraints =
+                keysBranch !== undefined && keysBranch.includes(value);
 
-        const keyCanMatch = branchNotConstrained || valueFitsConstraints;
+          const keyCanMatch = branchNotConstrained || valueFitsConstraints;
 
-        if (keyCanMatch) {
-          // TODO here we must find branch regexes for each of the trunk regexes that match key
-          const trunkRegexes = Object.keys(queryMap[pair]);
+          if (keyCanMatch) {
+            // TODO here we must find branch regexes for each of the trunk regexes that match key
+            const trunkRegexes = Object.keys(queryMap[pair]);
 
-          // TODO validate trunkRegexes are not undefined
+            // TODO validate trunkRegexes are not undefined
 
-          // const trunkRegexesMatchKey = trunkRegexes.filter((trunkRegex) =>
-          //   new RegExp(trunkRegex).test(key),
-          // );
+            // const trunkRegexesMatchKey = trunkRegexes.filter((trunkRegex) =>
+            //   new RegExp(trunkRegex).test(key),
+            // );
 
-          const branchRegexes = trunkRegexes
-            .map((trunkRegex) => queryMap[pair][trunkRegex])
-            .flat();
+            const branchRegexes = trunkRegexes
+                  .map((trunkRegex) => queryMap[pair][trunkRegex])
+                  .flat();
 
-          // TODO; validate branchRegexes are not undefined
+            // TODO; validate branchRegexes are not undefined
 
-          const isMatch = matchRegexes(branchRegexes, [value]).length > 0;
+            const isMatch = matchRegexes(branchRegexes, [value]).length > 0;
 
-          // if row matches at least one regex
-          if (isMatch) {
-            // push key to list of trunk keys
-            keysTrunk.push(key);
+            // if row matches at least one regex
+            if (isMatch) {
+              // push key to list of trunk keys
+              keysTrunk.push(key);
 
-            // TODO what if one key is pushed multiple times?
-            // cache key value relation to valueMap
-            // valueMap = merge(valueMap, pair, key, value)
+              // TODO what if one key is pushed multiple times?
+              // cache key value relation to valueMap
+              // valueMap = merge(valueMap, pair, key, value)
+            }
           }
-        }
-      },
-      complete: () => {
-        // diff keys into keyMap
-        const keysSet = Array.from(new Set(keysTrunk));
+        },
+        complete: () => {
+          // diff keys into keyMap
+          const keysSet = Array.from(new Set(keysTrunk));
 
-        const keysTrunkMatched = keyMap[trunk];
+          const keysTrunkMatched = keyMap[trunk];
 
-        // save keys to map if trunk keys are undefined
-        if (keysTrunkMatched === undefined) {
-          keyMap[trunk] = keysSet;
-        } else {
-          // if queried less trunk keys, intersect
-          keyMap[trunk] = intersect(keysTrunkMatched, keysSet);
-          // if not queried, leave trunk keys unchanged
-        }
-      },
-    });
-
-    return undefined;
-  });
+          // save keys to map if trunk keys are undefined
+          if (keysTrunkMatched === undefined) {
+            keyMap[trunk] = keysSet;
+          } else {
+            // if queried less trunk keys, intersect
+            keyMap[trunk] = intersect(keysTrunkMatched, keysSet);
+            // if not queried, leave trunk keys unchanged
+          }
+          res()
+        },
+      });
+    })
+  }
 
   // TODO: handle if query[base] is object, list of objects
   const regexesBase = [ query[base] ] ?? [ "" ];
@@ -572,36 +573,40 @@ export function findKeys(schema, cache, query, queryMap, isQueriedMap, base) {
 
     let keysBase = [];
 
-    csv.parse(tablet, {
-      step: (row) => {
-        if (row.data.length === 1 && row.data[0] === "") return;
+    await new Promise((res, rej) => {
+      csv.parse(tablet, {
+        step: (row) => {
+          if (row.data.length === 1 && row.data[0] === "") return;
 
-        const [key, value] = row.data;
+          const [key, value] = row.data;
 
-        // push value to keyMap
-        const isMatch = matchRegexes(regexesBase, [value]).length > 0;
+          // push value to keyMap
+          const isMatch = matchRegexes(regexesBase, [value]).length > 0;
 
-        if (isMatch) {
-          keysBase.push(value);
+          if (isMatch) {
+            keysBase.push(value);
+          }
+        },
+        complete: () => {
+          // diff keys into keyMap
+          const keysSet = Array.from(new Set(keysBase));
+
+          const keysBaseMatched = keyMap[base];
+
+          // save keys to map if trunk keys are undefined
+          if (keysBaseMatched === undefined) {
+            keyMap[base] = keysSet;
+          } else {
+            // if queried less trunk keys, intersect
+            keyMap[base] = intersect(keysBaseMatched, keysSet);
+            // if not queried, leave trunk keys unchanged
+          }
+          res()
         }
-      },
-      complete: () => {
-        // diff keys into keyMap
-        const keysSet = Array.from(new Set(keysBase));
-
-        const keysBaseMatched = keyMap[base];
-
-        // save keys to map if trunk keys are undefined
-        if (keysBaseMatched === undefined) {
-          keyMap[base] = keysSet;
-        } else {
-          // if queried less trunk keys, intersect
-          keyMap[base] = intersect(keysBaseMatched, keysSet);
-          // if not queried, leave trunk keys unchanged
-        }
-      }
+      })
     })
   } else {
+    // base is root
     const valuesBase = keyMap[base]
 
     if (valuesBase !== undefined) {
@@ -609,37 +614,42 @@ export function findKeys(schema, cache, query, queryMap, isQueriedMap, base) {
 
       keyMap[base] = keysBase;
     } else {
-      // TODO: if only datum is queried, (keyMap is undefined at the end of leaves)
+      // TODO: if only datum is queried, keyMap is undefined at the end of leaves
       // we need to query all leaves for the datum regexes, defaulting to [ "" ]
       const leaves = Object.keys(schema).filter((b) => schema[b].trunk === base);
 
-      leaves.forEach((leaf) => {
+      for (const leaf of leaves) {
         const pair = `${base}-${leaf}.csv`;
 
         const tablet = cache[pair];
 
         const keysBase = [];
 
-        csv.parse(tablet, {
-          step: (row) => {
-            if (row.data.length === 1 && row.data[0] === "") return;
+        await new Promise((res, rej) => {
+          csv.parse(tablet, {
+            step: (row) => {
+              if (row.data.length === 1 && row.data[0] === "") return;
 
-            const [key, ] = row.data;
-            // match
-            const isMatch = matchRegexes(regexesBase, [key]).length > 0;
+              const [key, ] = row.data;
+              // match
+              const isMatch = matchRegexes(regexesBase, [key]).length > 0;
 
-            if (isMatch) {
-              keysBase.push(key);
+              if (isMatch) {
+                keysBase.push(key);
+              }
+            },
+            complete: () => {
+              // TODO: intersect or append here
+              const oldKeys = keyMap[base] ?? []
+
+              // we know that keyMap is undefined
+              keyMap[base] = Array.from(new Set([ ...keysBase, ...oldKeys ]));
+
+              res()
             }
-          },
-          complete: () => {
-            const keysSet = Array.from(new Set(keysBase));
-
-            // we know that keyMap is undefined
-            keyMap[base] = keysSet;
-          }
+          })
         })
-      })
+      }
     }
   }
 
@@ -657,7 +667,7 @@ export function findKeys(schema, cache, query, queryMap, isQueriedMap, base) {
  * @param {string} base -
  * @returns {object} -
  */
-export function findValues(schema, cache, keyMap, base) {
+export async function findValues(schema, cache, keyMap, base) {
   let valueMap = {};
 
   // TODO find values for leaves of trunk
@@ -667,7 +677,7 @@ export function findValues(schema, cache, keyMap, base) {
   const crownDescending = crown.sort(sortNestingDescending(schema));
 
   // TODO: does forEach work well with streaming csv parse?
-  crownDescending.forEach((branch) => {
+  for (const branch of crownDescending) {
     // TODO: what if multiple trunks?
     const { trunk } = schema[branch];
 
@@ -690,53 +700,54 @@ export function findValues(schema, cache, keyMap, base) {
     // TODO: comment all keysTrunk here
     const keysTrunk = [];
 
-    csv.parse(tablet, {
-      step: (row) => {
-        // TODO: if tag is empty, step should not step
-        // TODO: remove this check
-        if (row.data.length === 1 && row.data[0] === "") return;
+    await new Promise((res, rej) => {
+      csv.parse(tablet, {
+        step: (row) => {
+          // TODO: if tag is empty, step should not step
+          // TODO: remove this check
+          if (row.data.length === 1 && row.data[0] === "") return;
 
-        const [key, value] = row.data;
+          const [key, value] = row.data;
 
-        // if branch is queried
-        // at this point all queried branches must be cached
-        // and leaves of this branch are not cached
-        // if keyMap has a list of trunk keys for this branch, cache all values for matching key
-        // if keyMap does not have a list of trunk keys, none of the values are needed to build search result records
-        // this will set
-        const keysTrunkOld = keyMap[trunk] ?? [];
+          // if branch is queried
+          // at this point all queried branches must be cached
+          // and leaves of this branch are not cached
+          // if keyMap has a list of trunk keys for this branch, cache all values for matching key
+          // if keyMap does not have a list of trunk keys, none of the values are needed to build search result records
+          // this will set
+          const keysTrunkOld = keyMap[trunk] ?? [];
 
-        // if key is in keyMap[trunk]
-        const searchResultHasKey = keysTrunkOld.includes(key);
+          // if key is in keyMap[trunk]
+          const searchResultHasKey = keysTrunkOld.includes(key);
 
-        if (searchResultHasKey) {
-          // cache value
-          valueMap = merge(valueMap, pair, key, value);
-          // push to keyMap here if branch has leaves
-          const keysBranchOld = keyMap[branch] ?? [];
+          if (searchResultHasKey) {
+            // cache value
+            valueMap = merge(valueMap, pair, key, value);
+            // push to keyMap here if branch has leaves
+            const keysBranchOld = keyMap[branch] ?? [];
 
-          const keysBranch = [...keysBranchOld, value];
+            const keysBranch = [...keysBranchOld, value];
 
-          keyMap[branch] = keysBranch;
-        }
-      },
-      complete: () => {
-        // diff keys into keyMap
-        const keysSet = Array.from(new Set(keysTrunk));
+            keyMap[branch] = keysBranch;
+          }
+        },
+        complete: () => {
+          // diff keys into keyMap
+          const keysSet = Array.from(new Set(keysTrunk));
 
-        const keysTrunkMatched = keyMap[trunk];
+          const keysTrunkMatched = keyMap[trunk];
 
-        // save keys to map if trunk keys are undefined
-        if (keysTrunkMatched === undefined) {
-          keyMap[trunk] = keysSet;
-        } else {
-          // if not queried, leave trunk keys unchanged
-        }
-      },
-    });
-
-    return undefined;
-  });
+          // save keys to map if trunk keys are undefined
+          if (keysTrunkMatched === undefined) {
+            keyMap[trunk] = keysSet;
+          } else {
+            // if not queried, leave trunk keys unchanged
+          }
+          res()
+        },
+      });
+    })
+  }
 
   return valueMap;
 }

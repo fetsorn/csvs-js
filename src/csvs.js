@@ -68,11 +68,17 @@ export default class CSVS {
    * @param {grepCallback} args.grep - The callback that searches files.
    * @param {randomUUIDCallback} args.randomUUID - The callback that returns a UUID.
    */
-  constructor({ readFile, writeFile, grep, randomUUID }) {
+  constructor({ readFile, writeFile, grep: grepCallback, randomUUID: randomUUIDCallback }) {
     this.readFile = readFile;
     this.writeFile = writeFile;
-    this.grep = grep ?? grepPolyfill1;
-    this.randomUUID = randomUUID ?? randomUUIDPolyfill;
+    const grep = grepCallback ?? grepPolyfill1;
+    const randomUUID = randomUUIDCallback ?? randomUUIDPolyfill;
+
+    this.select1 = new Select1({ readFile, grep })
+    this.select2 = new Select2({ readFile, grep })
+    this.update1 = new Update1({ readFile, writeFile, randomUUID })
+    this.update2 = new Update2({ readFile, writeFile, randomUUID })
+    this.delete2 = new Delete2({ readFile, writeFile, randomUUID })
   }
 
   /**
@@ -83,58 +89,50 @@ export default class CSVS {
    * @returns {Object[]}
    */
   async select(urlSearchParams) {
-    const { readFile, grep } = this;
-
     // detect dataset version
-    const version = await detectVersion(readFile);
+    const version = await detectVersion(this.readFile);
 
     if (version === "0.0.1") {
-      return new Select1({ readFile, grep }).select(urlSearchParams);
+      return this.select1.select(urlSearchParams);
     }
     if (version === "0.0.2") {
-      return new Select2({ readFile, grep }).select(urlSearchParams);
+      return this.select2.select(urlSearchParams);
     }
   }
 
   async selectBaseKeys(urlSearchParams) {
-    const { readFile, grep } = this;
-
     // detect dataset version
-    const version = await detectVersion(readFile);
+    const version = await detectVersion(this.readFile);
 
     if (version === "0.0.1") {
-      return new Select1({ readFile, grep }).selectBaseKeys(urlSearchParams);
+      return this.select1.selectBaseKeys(urlSearchParams);
     }
     if (version === "0.0.2") {
-      return new Select2({ readFile, grep }).selectBaseKeys(urlSearchParams);
+      return this.select2.selectBaseKeys(urlSearchParams);
     }
   }
 
   async buildRecord(base, baseKey) {
-    const { readFile, grep } = this;
-
     // detect dataset version
-    const version = await detectVersion(readFile);
+    const version = await detectVersion(this.readFile);
 
     if (version === "0.0.1") {
-      return new Select1({ readFile, grep }).buildRecord(base, baseKey);
+      return this.select1.buildRecord(base, baseKey);
     }
     if (version === "0.0.2") {
-      return new Select2({ readFile, grep }).buildRecord(base, baseKey);
+      return this.select2.buildRecord(base, baseKey);
     }
   }
 
   async selectStream(urlSearchParams) {
-    const { readFile, grep } = this;
-
     // detect dataset version
-    const version = await detectVersion(readFile);
+    const version = await detectVersion(this.readFile);
 
     if (version === "0.0.1") {
-      return new Query1({ readFile, grep }).selectStream(urlSearchParams);
+      return this.select1.selectStream(urlSearchParams);
     }
     if (version === "0.0.2") {
-      return new Query2({ readFile, grep }).selectStream(urlSearchParams);
+      return this.select2.selectStream(urlSearchParams);
     }
   }
 
@@ -146,24 +144,14 @@ export default class CSVS {
    * @returns {object} - A dataset record.
    */
   async update(record) {
-    const { readFile, writeFile, randomUUID } = this;
-
     // detect dataset version
-    const version = await detectVersion(readFile);
+    const version = await detectVersion(this.readFile);
 
     if (version === "0.0.1") {
-      return new Update1({
-        readFile,
-        writeFile,
-        randomUUID,
-      }).update(record);
+      return this.update1.update(record);
     }
     if (version === "0.0.2") {
-      return new Update2({
-        readFile,
-        writeFile,
-        randomUUID,
-      }).update(record);
+      return this.update2.update(record);
     }
   }
 
@@ -174,24 +162,14 @@ export default class CSVS {
    * @function
    */
   async delete(record) {
-    const { readFile, writeFile, randomUUID } = this;
-
     // detect dataset version
-    const version = await detectVersion(readFile);
+    const version = await detectVersion(this.readFile);
 
     if (version === "0.0.1") {
-      return new Update1({
-        readFile,
-        writeFile,
-        randomUUID,
-      }).delete(record);
+      return this.update1.delete(record);
     }
     if (version === "0.0.2") {
-      return new Delete2({
-        readFile,
-        writeFile,
-        randomUUID,
-      }).delete(record);
+      return this.delete2.delete(record);
     }
   }
 }
