@@ -13,7 +13,8 @@
     "lint": "eslint --fix src",
     "test": "yarn test:node && yarn test:wasm",
     "test:node": "yarn node --experimental-vm-modules $(yarn bin jest)",
-    "test:wasm": "serve"
+    "test:wasm": "serve",
+    "coverage": "yarn node --experimental-vm-modules ./node_modules/.bin/jest --coverage"
   },
   "devDependencies": {
     "@fetsorn/wasm-grep": "0.2.0",
