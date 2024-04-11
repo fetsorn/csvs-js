@@ -11,7 +11,7 @@ import {
 } from "./bin.js";
 
 /** Class representing a dataset query. */
-export default class Query {
+export default class Select {
   /**
    * .
    * @type {Store}
@@ -149,6 +149,7 @@ export default class Query {
       base,
     );
 
+    // save valueMap for later reuse by buildRecord
     this.#valueMap = valueMap;
 
     const baseKeys = keyMap[base] ?? [];
@@ -157,6 +158,7 @@ export default class Query {
   }
 
   buildRecord(base, baseKey) {
+    // reuse valueeMap from selectBaseKeys
     const record = buildRecord(this.#store.schema, this.#valueMap, base, baseKey);
 
     const recordCondensed = condense(this.#store.schema, record);
