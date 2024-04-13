@@ -77,6 +77,10 @@ export function findCrownPaths(schema, base) {
   return filePaths.filter(Boolean).flat();
 }
 
+export function isTwig(schema, branch) {
+  return Object.keys(schema).filter((b) => schema[b].trunk === branch).length === 0;
+}
+
 /**
  * This function condenses the data structure where possible
  * @name condense
@@ -93,14 +97,10 @@ export function condense(schema, record) {
   const entriesCondensed = entries
     .filter(([key]) => key !== "_" && key !== record._)
     .map(([branch, value]) => {
-      const isTwig =
-        Object.keys(schema).filter((b) => schema[b].trunk === branch).length ===
-        0;
-
       if (Array.isArray(value)) {
-        const itemsCondensed = isTwig
+        const itemsCondensed = isTwig(schema, branch)
           ? value.map((item) =>
-              typeof value === "string" ? value : item[branch],
+              typeof item === "string" ? item : item[branch],
             )
           : value.map((item) => condense(schema, item));
 
@@ -134,7 +134,7 @@ export function condense(schema, record) {
 
   const recordCondensed = Object.fromEntries(entriesCondensed.filter(Boolean));
 
-  return { _: base, [base]: record[base], ...recordCondensed };
+  return { ...recordCondensed, _: base, [base]: record[base] };
 }
 
 /**
@@ -149,6 +149,7 @@ export function expand(record) {
 
   const entries = Object.entries(record);
 
+  // TODO: this is borked, fix
   const entriesExpanded = entries
     .filter(([key]) => key !== "_" && key !== record._)
     .map(([key, value]) => {
