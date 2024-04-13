@@ -274,7 +274,6 @@ describe('Entry.delete() 0.0.1', () => {
   })
 })
 
-
 describe('Entry.delete() 0.0.2', () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };

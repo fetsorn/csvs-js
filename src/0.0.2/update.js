@@ -109,8 +109,7 @@ export default class Update {
       // for each line of tablet
       csv.parse(tablet, {
         step: (row) => {
-          // TODO: if tag is empty, step should not step
-          // TODO: remove this check
+          // ignore empty newline
           if (row.data.length === 1 && row.data[0] === "") return;
 
           const [key] = row.data;

@@ -33,81 +33,88 @@ export default class Delete {
 
     await this.#store.read(base);
 
-    // prune `,value$` in the `trunk-branch.csv` file
-    // await this.#unlinkTrunks(base, record[base]);
-
-    // prune `^value,` in all `branch-{leaf}.csv` files
-    // await this.#unlinkLeaves(base, record[base]);
+    this.#deleteRecord(record);
 
     await this.#store.write();
   }
 
-  // /**
-  //  * This unlinks a branch value from all trunk values.
-  //  * @name unlinkTrunks
-  //  * @param {string} branch - A branch name.
-  //  * @param {string} value - A branch value.
-  //  * @function
-  //  */
-  // async #unlinkTrunks(branch, value) {
-  //   const { trunk } = this.#store.schema[branch];
+  /**
+   * This deletes a record from the dataset.
+   * @name updateRecord
+   * @param {object} record - A dataset record.
+   * @function
+   */
+  #deleteRecord(record) {
+    // TODO: handle weird case when value is array
+    // { _: a, a: [ { _: a, a: a1 }, { _: a, a: a1 } ] }
+    const base = record._;
 
-  //   // unlink trunk if it exists
-  //   if (trunk !== undefined) {
-  //     // find trunkKeys
-  //     const pairPath = `${trunk}-${branch}.csv`;
+    const baseValue = record[base];
 
-  //     const pairFile = this.#store.getCache(pairPath);
+    const { trunk } = this.#store.schema[base];
+    if (trunk !== undefined) {
+      const pair = `${trunk}-${base}.csv`;
 
-  //     if (pairFile === '\n' || pairFile === '' || pairFile === undefined) {
-  //       return;
-  //     }
+      const tablet = this.#store.getCache(pair);
 
-  //     const pairPruned = pruneValue(pairFile, value);
+      csv.parse(tablet, {
+        step: (row) => {
+          // ignore empty newline
+          if (row.data.length === 1 && row.data[0] === "") return;
 
-  //     this.#store.setOutput(pairPath, `${pairPruned}\n`);
-  //   }
-  // }
+          const [key, value] = row.data;
 
-  // /**
-  //  * This unlinks a branch value from all values of a leaf branch.
-  //  * @name unlinkLeaf
-  //  * @param {string} branch - A branch name.
-  //  * @param {string} value - A branch value.
-  //  * @param {string} leaf - A leaf branch.
-  //  * @function
-  //  */
-  // async #unlinkLeaf(branch, value, leaf) {
-  //   const pairPath = branch === '_'
-  //     ? '_-_.csv'
-  //     : `${branch}-${leaf}.csv`;
+          const isMatch = value === baseValue;
 
-  //   const pairFile = this.#store.getCache(pairPath);
-  //   // const pairFile = this.#store.getOutput(pairPath) ?? this.#store.getCache(pairPath);
+          if (isMatch) {
+            // prune if line matches a key from relationMap
+          } else {
+            const dataEscaped = row.data.map((str) =>
+              str.replace(/\n/g, "\\n"),
+            );
 
-  //   if (pairFile === '\n' || pairFile === '' || pairFile === undefined) {
-  //     return;
-  //   }
+            const line = csv.unparse([dataEscaped], { newline: "\n" });
 
-  //   const pairPruned = pruneKey(pairFile, value);
+            // append line to output
+            this.#store.appendOutput(pair, line);
+          }
+        },
+      });
+    }
 
-  //   this.#store.setOutput(pairPath, `${pairPruned}\n`);
-  // }
+    const leaves = Object.keys(this.#store.schema).filter(
+      (branch) => this.#store.schema[branch].trunk === base,
+    );
 
-  // /**
-  //  * This unlinks a branch value from all leaf values.
-  //  * @name unlinkLeaves
-  //  * @param {string} branch - A branch name.
-  //  * @param {string} value - A branch value.
-  //  * @function
-  //  */
-  // async #unlinkLeaves(branch, value) {
-  //   // find all leaves
-  //   const leaves = Object.keys(this.#store.schema)
-  //     .filter((b) => this.#store.schema[b].trunk === branch);
+    // csv.parse each base-leaf, prune all matches
+    for (const leaf of leaves) {
+      const pair = `${base}-${leaf}.csv`;
 
-  //   await Promise.all(leaves.map(
-  //     async (leaf) => this.#unlinkLeaf(branch, value, leaf),
-  //   ));
-  // }
+      const tablet = this.#store.getCache(pair);
+
+      csv.parse(tablet, {
+        step: (row) => {
+          // ignore empty newline
+          if (row.data.length === 1 && row.data[0] === "") return;
+
+          const [key] = row.data;
+
+          const isMatch = key === baseValue;
+
+          if (isMatch) {
+            // prune if line matches a key from relationMap
+          } else {
+            const dataEscaped = row.data.map((str) =>
+              str.replace(/\n/g, "\\n"),
+            );
+
+            const line = csv.unparse([dataEscaped], { newline: "\n" });
+
+            // append line to output
+            this.#store.appendOutput(pair, line);
+          }
+        },
+      });
+    }
+  }
 }

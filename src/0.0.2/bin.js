@@ -496,8 +496,7 @@ export async function findKeys(schema, cache, query, queryMap, isQueriedMap, bas
     await new Promise((res, rej) => {
       csv.parse(tablet, {
         step: (row) => {
-          // TODO: if tag is empty, step should not step
-          // TODO: remove this check
+          // ignore empty newline
           if (row.data.length === 1 && row.data[0] === "") return;
 
           const [key, value] = row.data;
@@ -704,8 +703,7 @@ export async function findValues(schema, cache, keyMap, base) {
     await new Promise((res, rej) => {
       csv.parse(tablet, {
         step: (row) => {
-          // TODO: if tag is empty, step should not step
-          // TODO: remove this check
+          // ignore empty newline
           if (row.data.length === 1 && row.data[0] === "") return;
 
           const [key, value] = row.data;
