@@ -76,7 +76,7 @@ export default class Store {
     await Promise.all(
       filePaths.map(async (filePath) => {
         try {
-          const contents = (await this.#callback.readFile(filePath)) ?? "\n";
+          const contents = (await this.#callback.readFile(filePath)) ?? "";
 
           // const contentsSorted = contents.split('\n')
           //   .filter((line) => line !== '')
@@ -88,7 +88,7 @@ export default class Store {
           cache[filePath] = contents;
         } catch {
           // console.log(e);
-          cache[filePath] = "\n";
+          cache[filePath] = "";
         }
       }),
     );

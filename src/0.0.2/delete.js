@@ -52,6 +52,7 @@ export default class Delete {
     const baseValue = record[base];
 
     const { trunk } = this.#store.schema[base];
+
     if (trunk !== undefined) {
       const pair = `${trunk}-${base}.csv`;
 
@@ -91,6 +92,10 @@ export default class Delete {
       const pair = `${base}-${leaf}.csv`;
 
       const tablet = this.#store.getCache(pair);
+
+      if (tablet) {
+        this.#store.appendOutput(pair, "");
+      }
 
       csv.parse(tablet, {
         step: (row) => {
