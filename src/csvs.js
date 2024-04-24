@@ -100,6 +100,13 @@ export default class CSVS {
     }
   }
 
+  /**
+   * This returns a list of values for base branch
+   * @name selectBaseKeys
+   * @function
+   * @param {URLSearchParams} urlSearchParams - The search parameters.
+   * @returns {string[]} - A dataset record.
+   */
   async selectBaseKeys(urlSearchParams) {
     // detect dataset version
     const version = await detectVersion(this.readFile);
@@ -112,6 +119,14 @@ export default class CSVS {
     }
   }
 
+  /**
+   * This returns a dataset record for a given value of base branch
+   * @name buildRecord
+   * @function
+   * @param {string} base - name of base branch
+   * @param {string} baseKey - value of base branch
+   * @returns {object} - A dataset record.
+   */
   async buildRecord(base, baseKey) {
     // detect dataset version
     const version = await detectVersion(this.readFile);
@@ -124,6 +139,13 @@ export default class CSVS {
     }
   }
 
+  /**
+   * This returns a readable stream that yields record objects
+   * @name update
+   * @function
+   * @param {URLSearchParams} urlSearchParams - The search parameters.
+   * @returns {ReadableStream} - A dataset record.
+   */
   async selectStream(urlSearchParams) {
     // detect dataset version
     const version = await detectVersion(this.readFile);
@@ -137,7 +159,7 @@ export default class CSVS {
   }
 
   /**
-   * This updates the dataset record.
+   * This updates a dataset record.
    * @name update
    * @function
    * @param {object} record - A dataset record.
@@ -156,7 +178,7 @@ export default class CSVS {
   }
 
   /**
-   * This deletes the dataset record.
+   * This deletes a dataset record.
    * @name delete
    * @param {object} record - A dataset record.
    * @function

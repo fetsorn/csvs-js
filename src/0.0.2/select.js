@@ -90,6 +90,13 @@ export default class Select {
     return records;
   }
 
+  /**
+   * This returns the schema record for the dataset
+   * @name selectSchema
+   * @function
+   * @param {Object} query - search query object
+   * @returns {Object[]}
+   */
   async #selectSchema(query) {
     let recordSchema = { _:"_" };
 
@@ -112,6 +119,13 @@ export default class Select {
     return [ recordSchema ]
   }
 
+  /**
+   * This returns a list of values for base branch
+   * @name selectBaseKeys
+   * @function
+   * @param {URLSearchParams} urlSearchParams - The search parameters.
+   * @returns {string[]} - A dataset record.
+   */
   async selectBaseKeys(urlSearchParams) {
     await this.#store.readSchema();
 
@@ -157,6 +171,14 @@ export default class Select {
     return { base, baseKeys };
   }
 
+  /**
+   * This returns a dataset record for a given value of base branch
+   * @name buildRecord
+   * @function
+   * @param {string} base - name of base branch
+   * @param {string} baseKey - value of base branch
+   * @returns {object} - A dataset record.
+   */
   buildRecord(base, baseKey) {
     // reuse valueeMap from selectBaseKeys
     const record = buildRecord(this.#store.schema, this.#valueMap, base, baseKey);

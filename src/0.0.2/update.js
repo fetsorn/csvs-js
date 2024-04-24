@@ -52,7 +52,7 @@ export default class Update {
   }
 
   /**
-   * This saves a record to the dataset.
+   * This saves the schema to the dataset.
    * @name updateSchema
    * @param {object} record - A dataset record.
    * @function

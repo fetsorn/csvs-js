@@ -1,3 +1,10 @@
+  /**
+   * This determines the version of a csvs dataset
+   * @name detectVersion
+   * @function
+   * @param {readFileCallback} readFile - The callback that reads db.
+   * @returns {string} - A dataset record.
+   */
 export async function detectVersion(readFile) {
   try {
     const is2 = await readFile(".csvs.csv");

@@ -77,6 +77,14 @@ export function findCrownPaths(schema, base) {
   return filePaths.filter(Boolean).flat();
 }
 
+/**
+ * This function is true when branch has no leaves
+ * @name isTwig
+ * @function
+ * @param {object} schema - Dataset schema.
+ * @param {object} record - An expanded record.
+ * @returns {object} - A condensed record.
+ */
 export function isTwig(schema, branch) {
   return Object.keys(schema).filter((b) => schema[b].trunk === branch).length === 0;
 }
@@ -231,7 +239,7 @@ export function searchParamsToQuery(schema, urlSearchParams) {
  * @name recordToRelations
  * @param {object} record - A dataset record.
  * @export function
- * @returns {string[3][]} - A list of tuples (relation, key, value)
+ * @returns {string[]} - A list of tuples (relation, key, value)
  */
 export function recordToRelations(schema, record) {
   // { _: trunk, trunk: key, leaf: value, leaf: [ value ], leaf: { _: leaf, leaf: value } }
@@ -457,6 +465,7 @@ export function findQueries(schema, queryMap, base) {
   return isQueriedMap;
 }
 
+// TODO: split findKeys into search strategies
 // TODO: remove keys of queryMap from keyMap
 // "?_=datum&datum=notInDataset" returns [ { _: datum, datum: notInDataset } ]
 /**
@@ -681,6 +690,7 @@ export async function findValues(schema, cache, keyMap, base) {
     // TODO: what if multiple trunks?
     const { trunk } = schema[branch];
 
+    // TODO: cache unsearched branches last, only for found base keys, to cut cache size
     // TODO: determine if branch already cached all needed keys
     // parse all branches, skip queried if already cached all needed keys
 

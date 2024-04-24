@@ -69,26 +69,26 @@ export default class Store {
    */
   async read(base) {
     // get array of all filepaths required to search for base branch
-    const filePaths = findCrownPaths(this.schema, base);
+    const filepaths = findCrownPaths(this.schema, base);
 
     const cache = {};
 
     await Promise.all(
-      filePaths.map(async (filePath) => {
+      filepaths.map(async (filepath) => {
         try {
-          const contents = (await this.#callback.readFile(filePath)) ?? "";
+          const contents = (await this.#callback.readFile(filepath)) ?? "";
 
           // const contentsSorted = contents.split('\n')
           //   .filter((line) => line !== '')
           //   .sort((a, b) => takeKey(a).localeCompare(takeKey(b)))
           //   .join('\n');
 
-          // cache[filePath] = contentsSorted;
+          // cache[filepath] = contentsSorted;
 
-          cache[filePath] = contents;
+          cache[filepath] = contents;
         } catch {
           // console.log(e);
-          cache[filePath] = "";
+          cache[filepath] = "";
         }
       }),
     );
@@ -96,22 +96,50 @@ export default class Store {
     this.cache = cache;
   }
 
-  getCache(filePath) {
-    return this.cache[filePath];
+  /**
+   * This returns the contents of a filepath
+   * @name getCache
+   * @function
+   * @param {string} filepath - Path to the file
+   * @returns {string} - Contents of the file.
+   */
+  getCache(filepath) {
+    return this.cache[filepath];
   }
 
-  getOutput(filePath) {
-    return this.output[filePath];
+  /**
+   * This returns the contents of a filepath that will be written
+   * @name getOutput
+   * @function
+   * @param {string} filepath - Path to the file
+   * @returns {string} - Contents of the file.
+   */
+  getOutput(filepath) {
+    return this.output[filepath];
   }
 
-  appendOutput(filePath, lines) {
-    const output = this.output[filePath] ?? "";
+  /**
+   * This appends a line to the a filepath that will be written
+   * @name appendOutput
+   * @function
+   * @param {string} filepath - Path to the file
+   * @param {string} lines - Newline-separated strings
+   */
+  appendOutput(filepath, lines) {
+    const output = this.output[filepath] ?? "";
 
-    this.output[filePath] = `${output}\n${lines}`;
+    this.output[filepath] = `${output}\n${lines}`;
   }
 
-  setOutput(filePath, fileContents) {
-    this.output[filePath] = fileContents;
+  /**
+   * This sets contents of a filepath that will be written
+   * @name setOutput
+   * @function
+   * @param {string} filepath - Path to the file
+   * @param {string} contents - Newline-separated strings
+   */
+  setOutput(filepath, contents) {
+    this.output[filepath] = contents;
   }
 
   /**
@@ -121,7 +149,7 @@ export default class Store {
    */
   async write() {
     await Promise.all(
-      Object.entries(this.output).map(async ([filePath, contents]) => {
+      Object.entries(this.output).map(async ([filepath, contents]) => {
         // TODO: remove this and guarantee idempotence by diffing changeset in update()
         // sort to guarantee that sorted files remain unchanged after update
         const contentsSorted = `${contents
@@ -130,7 +158,7 @@ export default class Store {
           .sort((a, b) => a.localeCompare(b))
           .join("\n")}\n`;
 
-        await this.#callback.writeFile(filePath, contentsSorted);
+        await this.#callback.writeFile(filepath, contentsSorted);
       }),
     );
 
