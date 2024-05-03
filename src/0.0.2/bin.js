@@ -716,7 +716,7 @@ export async function findValues(schema, cache, keyMap, base) {
           // ignore empty newline
           if (row.data.length === 1 && row.data[0] === "") return;
 
-          const [key, value] = row.data;
+          const [key, value] = row.data.map((str) => str.replace(/\\n/g, "\n"));
 
           // if branch is queried
           // at this point all queried branches must be cached
@@ -732,6 +732,7 @@ export async function findValues(schema, cache, keyMap, base) {
           if (searchResultHasKey) {
             // cache value
             valueMap = merge(valueMap, pair, key, value);
+
             // push to keyMap here if branch has leaves
             const keysBranchOld = keyMap[branch] ?? [];
 

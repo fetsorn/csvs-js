@@ -90,6 +90,43 @@ export default class Select {
     return records;
   }
 
+  async selectStream(urlSearchParams) {
+    await this.#store.readSchema();
+
+    const searchParams = urlSearchParams ?? new URLSearchParams();
+
+    // if no base is provided, find first schema root
+    const base = searchParams.has('_') ? searchParams.get('_') : findSchemaRoot(this.#store.schema);
+
+    // get a map of database file contents
+    await this.#store.read(base);
+
+    // get an array of base keys
+    const baseKeys = await this.selectBaseKeys(searchParams);
+
+    const query = this;
+
+    return new stream.Readable({
+      objectMode: true,
+
+      async read(controller) {
+        if (this._buffer === undefined) {
+          this._buffer = baseKeys;
+        }
+
+        const baseKey = this._buffer.pop();
+
+        const record = await query.buildRecord(base, baseKey);
+
+        this.push(record);
+
+        if (this._buffer.length === 0) {
+          this.push(null)
+        }
+      },
+    })
+  }
+
   /**
    * This returns the schema record for the dataset
    * @name selectSchema
