@@ -1,7 +1,7 @@
 {
   "name": "@fetsorn/csvs-js",
   "description": "csvs: comma-separated value store, js bindings",
-  "version": "0.16.3",
+  "version": "0.16.4",
   "author": "Anton Davydov <fetsorn@gmail.com>",
   "license": "MIT",
   "exports": "./src/index.js",
@@ -19,8 +19,8 @@
   "devDependencies": {
     "@fetsorn/wasm-grep": "0.2.0",
     "@jest/globals": "^29.0.3",
-    "eslint": "^9.0.0",
     "@stylistic/eslint-plugin": "^1.7.0",
+    "eslint": "^9.0.0",
     "eslint-config-prettier": "^9.1.0",
     "jest": "^27.5.1",
     "serve": "^14.0.1",
