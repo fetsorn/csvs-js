@@ -1,3 +1,4 @@
+import stream from "stream";
 import csv from "papaparse";
 import Store from "./store.js";
 import {
@@ -93,18 +94,20 @@ export default class Select {
   async selectStream(urlSearchParams) {
     await this.#store.readSchema();
 
-    const searchParams = urlSearchParams ?? new URLSearchParams();
+    const base = urlSearchParams.get("_");
 
     // if no base is provided, find first schema root
-    const base = searchParams.has('_') ? searchParams.get('_') : findSchemaRoot(this.#store.schema);
+    if (base === null) throw new Error("base is not defined");
+
+    if (base === "_") return new stream.Readable.from(this.#selectSchema(query));
 
     // get a map of database file contents
     await this.#store.read(base);
 
     // get an array of base keys
-    const baseKeys = await this.selectBaseKeys(searchParams);
+    const { baseKeys } = await this.selectBaseKeys(urlSearchParams);
 
-    const query = this;
+    const selectInstance = this;
 
     return new stream.Readable({
       objectMode: true,
@@ -116,7 +119,7 @@ export default class Select {
 
         const baseKey = this._buffer.pop();
 
-        const record = await query.buildRecord(base, baseKey);
+        const record = await selectInstance.buildRecord(base, baseKey);
 
         this.push(record);
 

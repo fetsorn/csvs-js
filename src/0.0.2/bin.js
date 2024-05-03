@@ -183,6 +183,8 @@ export function expand(record) {
  * @returns {Object}
  */
 export function searchParamsToQuery(schema, urlSearchParams) {
+  if (!urlSearchParams.has("_")) return {};
+
   const base = urlSearchParams.get("_");
 
   urlSearchParams.delete("_");

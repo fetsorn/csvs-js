@@ -50,7 +50,11 @@ export default class Store {
 
       const { data } = csv.parse(schemaString);
 
-      for await (const [trunk, leaf] of data) {
+      for await (const relation of data) {
+        if (relation.length === 1 && relation[0] === "") continue;
+
+        const [trunk, leaf] = relation;
+
         this.schema[trunk] = { ...this.schema[trunk] };
         // Work with each record
         this.schema[leaf] = { trunk, ...this.schema[leaf] };
