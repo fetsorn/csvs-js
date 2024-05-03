@@ -81,6 +81,10 @@ export default class CSVS {
     this.delete2 = new Delete2({ readFile, writeFile, randomUUID })
   }
 
+  async detectVersion() {
+    return detectVersion(this.readFile)
+  }
+
   /**
    * This returns an array of records from the dataset.
    * @name select
