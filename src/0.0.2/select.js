@@ -158,7 +158,7 @@ export default class Select {
    * @name selectBaseKeys
    * @function
    * @param {URLSearchParams} urlSearchParams - The search parameters.
-   * @returns {string[]} - A dataset record.
+   * @returns {object} - A dataset record.
    */
   async selectBaseKeys(urlSearchParams) {
     await this.#store.readSchema();
@@ -170,7 +170,7 @@ export default class Select {
     const base = query._;
 
     // if no base is provided, return empty
-    if (base === undefined) return [];
+    if (base === undefined) return {};
 
     if (base === "_") return this.#selectSchema(query);
 
@@ -209,7 +209,6 @@ export default class Select {
       [baseKey],
     );
 
-    // reuse valueeMap from selectBaseKeys
     const record = buildRecord(this.#store.schema, valueMap, base, baseKey);
 
     const recordCondensed = condense(this.#store.schema, record);

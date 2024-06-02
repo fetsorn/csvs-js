@@ -184,7 +184,9 @@ export function expand(record) {
  * @param {URLSearchParams} urlSearchParams - search params from a query string.
  * @returns {Object}
  */
-export function searchParamsToQuery(schema, urlSearchParams) {
+export function searchParamsToQuery(schema, searchParams) {
+  const urlSearchParams = new URLSearchParams(searchParams.toString());
+
   if (!urlSearchParams.has("_")) return {};
 
   const base = urlSearchParams.get("_");
