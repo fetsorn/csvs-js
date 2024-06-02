@@ -20,12 +20,6 @@ export default class Select {
   #store;
 
   /**
-   * .
-   * @type {HashSet}
-   */
-  #valueMap;
-
-  /**
    * Create a dataset instance.
    * @param {Object} callback - Object with callbacks.
    * @param {readFileCallback} callback.readFile - The callback that reads db.
@@ -63,7 +57,7 @@ export default class Select {
 
     const isQueriedMap = findQueries(this.#store.schema, queryMap, base);
 
-    const keyMap = await findKeys(
+    const baseKeys = await findKeys(
       this.#store.schema,
       this.#store.cache,
       query,
@@ -75,13 +69,11 @@ export default class Select {
     const valueMap = await findValues(
       this.#store.schema,
       this.#store.cache,
-      keyMap,
       base,
+      baseKeys,
     );
 
-    const keysBase = keyMap[base] ?? [];
-
-    const records = keysBase.map((key) =>
+    const records = baseKeys.map((key) =>
       condense(
         this.#store.schema,
         buildRecord(this.#store.schema, valueMap, base, key),
@@ -98,6 +90,8 @@ export default class Select {
 
     // if no base is provided, find first schema root
     if (base === null) throw new Error("base is not defined");
+
+    const query = searchParamsToQuery(this.#store.schema, urlSearchParams);
 
     if (base === "_") return new stream.Readable.from(this.#selectSchema(query));
 
@@ -187,7 +181,7 @@ export default class Select {
 
     const isQueriedMap = findQueries(this.#store.schema, queryMap, base);
 
-    const keyMap = await findKeys(
+    const baseKeys = await findKeys(
       this.#store.schema,
       this.#store.cache,
       query,
@@ -195,18 +189,6 @@ export default class Select {
       isQueriedMap,
       base,
     );
-
-    const valueMap = await findValues(
-      this.#store.schema,
-      this.#store.cache,
-      keyMap,
-      base,
-    );
-
-    // save valueMap for later reuse by buildRecord
-    this.#valueMap = valueMap;
-
-    const baseKeys = keyMap[base] ?? [];
 
     return { base, baseKeys };
   }
@@ -219,9 +201,16 @@ export default class Select {
    * @param {string} baseKey - value of base branch
    * @returns {object} - A dataset record.
    */
-  buildRecord(base, baseKey) {
+  async buildRecord(base, baseKey) {
+    const valueMap = await findValues(
+      this.#store.schema,
+      this.#store.cache,
+      base,
+      [baseKey],
+    );
+
     // reuse valueeMap from selectBaseKeys
-    const record = buildRecord(this.#store.schema, this.#valueMap, base, baseKey);
+    const record = buildRecord(this.#store.schema, valueMap, base, baseKey);
 
     const recordCondensed = condense(this.#store.schema, record);
 

@@ -479,7 +479,7 @@ export function findQueries(schema, queryMap, base) {
  * @param {object} queryMap -
  * @param {object} isQueriedMap -
  * @param {string} base -
- * @returns {object} -
+ * @returns {string[]} -
  */
 export async function findKeys(schema, cache, query, queryMap, isQueriedMap, base) {
   const keyMap = {};
@@ -573,7 +573,7 @@ export async function findKeys(schema, cache, query, queryMap, isQueriedMap, bas
   }
 
   // TODO: handle if query[base] is object, list of objects
-  const regexesBase = [ query[base] ] ?? [ "" ];
+  const regexesBase = [ query[base] ?? "" ];
 
   const { trunk } = schema[base];
 
@@ -665,26 +665,57 @@ export async function findKeys(schema, cache, query, queryMap, isQueriedMap, bas
   }
 
   // if base is not queried,
-  return keyMap;
+  return keyMap[base] ?? [];
 }
 
 /**
- *
+ * lookup all values of branch in valueMap
+ * @name lookupBranchValues
+ * @export function
+ * @param {object} schema -
+ * @param {object} valueMap -
+ * @param {string} branch -
+ * @returns {string[]} -
+ */
+function lookupBranchValues(schema, valueMap, branch) {
+  // TODO handle if trunk is undefined for some reason, shouldn't happen
+  const { trunk } = schema[branch];
+
+  // if there's no trunk pair in valueMap and trunk is root, return empty list
+  if (trunk === undefined) return [];
+
+  const pair = `${trunk}-${branch}.csv`;
+
+  const pairValues = valueMap[pair];
+
+  // if there's no trunk pair yet in valueMap call foo recursively until base
+  if (pairValues === undefined) {
+    return lookupBranchValues(schema, valueMap, trunk);
+  }
+
+  const branchValues = Object.entries(pairValues).reduce((acc, [, values]) => {
+    return Array.from(new Set([...acc, ...values]));
+  }, []);
+
+  return branchValues;
+}
+
+/**
+ * build a hashset of pair to key to values
  * @name findValues
  * @export function
  * @param {object} schema -
  * @param {object} cache -
- * @param {object} queryMap -
  * @param {string} base -
+ * @param {string[]} baseKeys -
  * @returns {object} -
  */
-export async function findValues(schema, cache, keyMap, base) {
+export async function findValues(schema, cache, base, baseKeys) {
   let valueMap = {};
 
-  // TODO find values for leaves of trunk
+  const crown = findCrown(schema, base);
 
-  const crown = findCrown(schema, base).sort(sortNestingAscending(schema));
-
+  // first trunks, then leaves
   const crownDescending = crown.sort(sortNestingDescending(schema));
 
   // TODO: does forEach work well with streaming csv parse?
@@ -695,22 +726,13 @@ export async function findValues(schema, cache, keyMap, base) {
     // TODO: cache unsearched branches last, only for found base keys, to cut cache size
     // TODO: determine if branch already cached all needed keys
     // parse all branches, skip queried if already cached all needed keys
-
     // skip parsing if branch won't be used to build a record
-    // const noTrunkKeys = keyMap[trunk] === undefined || keyMap[trunk] === [];
-
-    // const skipCache = !isQueriedMap[branch] && noTrunkKeys;
-
-    // if (skipCache) {
-    //   return undefined
-    // }
 
     const pair = `${trunk}-${branch}.csv`;
 
     const tablet = cache[pair];
 
-    // TODO: comment all keysTrunk here
-    const keysTrunk = [];
+    const keysTrunk = trunk === base ? baseKeys : lookupBranchValues(schema, valueMap, trunk);
 
     await new Promise((res, rej) => {
       csv.parse(tablet, {
@@ -720,41 +742,15 @@ export async function findValues(schema, cache, keyMap, base) {
 
           const [key, value] = row.data.map((str) => str.replace(/\\n/g, "\n"));
 
-          // if branch is queried
-          // at this point all queried branches must be cached
-          // and leaves of this branch are not cached
-          // if keyMap has a list of trunk keys for this branch, cache all values for matching key
-          // if keyMap does not have a list of trunk keys, none of the values are needed to build search result records
-          // this will set
-          const keysTrunkOld = keyMap[trunk] ?? [];
-
-          // if key is in keyMap[trunk]
-          const searchResultHasKey = keysTrunkOld.includes(key);
+          // if key is in trunk keys
+          const searchResultHasKey = keysTrunk.includes(key);
 
           if (searchResultHasKey) {
             // cache value
             valueMap = merge(valueMap, pair, key, value);
-
-            // push to keyMap here if branch has leaves
-            const keysBranchOld = keyMap[branch] ?? [];
-
-            const keysBranch = [...keysBranchOld, value];
-
-            keyMap[branch] = keysBranch;
           }
         },
         complete: () => {
-          // diff keys into keyMap
-          const keysSet = Array.from(new Set(keysTrunk));
-
-          const keysTrunkMatched = keyMap[trunk];
-
-          // save keys to map if trunk keys are undefined
-          if (keysTrunkMatched === undefined) {
-            keyMap[trunk] = keysSet;
-          } else {
-            // if not queried, leave trunk keys unchanged
-          }
           res()
         },
       });
