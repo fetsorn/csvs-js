@@ -8,7 +8,7 @@ import {
   findValues,
   findQueries,
   findKeys,
-  condense
+  condense,
 } from "./bin.js";
 
 /** Class representing a dataset query. */
@@ -93,7 +93,8 @@ export default class Select {
 
     const query = searchParamsToQuery(this.#store.schema, urlSearchParams);
 
-    if (base === "_") return new stream.Readable.from(this.#selectSchema(query));
+    if (base === "_")
+      return new stream.Readable.from(this.#selectSchema(query));
 
     // get a map of database file contents
     await this.#store.read(base);
@@ -106,7 +107,7 @@ export default class Select {
     return new stream.Readable({
       objectMode: true,
 
-      async read(controller) {
+      async read() {
         if (this._buffer === undefined) {
           this._buffer = baseKeys;
         }
@@ -118,21 +119,20 @@ export default class Select {
         this.push(record);
 
         if (this._buffer.length === 0) {
-          this.push(null)
+          this.push(null);
         }
       },
-    })
+    });
   }
 
   /**
    * This returns the schema record for the dataset
    * @name selectSchema
    * @function
-   * @param {Object} query - search query object
    * @returns {Object[]}
    */
-  async #selectSchema(query) {
-    let recordSchema = { _:"_" };
+  async #selectSchema() {
+    let recordSchema = { _: "_" };
 
     const tablet = this.#store.cache["_-_.csv"];
 
@@ -144,13 +144,13 @@ export default class Select {
 
         const values = recordSchema[key] ?? [];
 
-        const valuesNew = [ ...values, value ];
+        const valuesNew = [...values, value];
 
         recordSchema[key] = valuesNew;
-      }
-    })
+      },
+    });
 
-    return [ recordSchema ]
+    return [recordSchema];
   }
 
   /**
@@ -214,6 +214,6 @@ export default class Select {
 
     const recordCondensed = condense(this.#store.schema, record);
 
-    return recordCondensed
+    return recordCondensed;
   }
 }

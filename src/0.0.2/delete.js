@@ -63,7 +63,7 @@ export default class Delete {
           // ignore empty newline
           if (row.data.length === 1 && row.data[0] === "") return;
 
-          const [key, value] = row.data;
+          const [, value] = row.data;
 
           const isMatch = value === baseValue;
 

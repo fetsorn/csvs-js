@@ -86,7 +86,9 @@ export function findCrownPaths(schema, base) {
  * @returns {object} - A condensed record.
  */
 export function isTwig(schema, branch) {
-  return Object.keys(schema).filter((b) => schema[b].trunk === branch).length === 0;
+  return (
+    Object.keys(schema).filter((b) => schema[b].trunk === branch).length === 0
+  );
 }
 
 /**
@@ -481,7 +483,14 @@ export function findQueries(schema, queryMap, base) {
  * @param {string} base -
  * @returns {string[]} -
  */
-export async function findKeys(schema, cache, query, queryMap, isQueriedMap, base) {
+export async function findKeys(
+  schema,
+  cache,
+  query,
+  queryMap,
+  isQueriedMap,
+  base,
+) {
   const keyMap = {};
 
   // in order of query,
@@ -504,7 +513,7 @@ export async function findKeys(schema, cache, query, queryMap, isQueriedMap, bas
 
     const keysTrunk = [];
 
-    await new Promise((res, rej) => {
+    await new Promise((res) => {
       csv.parse(tablet, {
         step: (row) => {
           // ignore empty newline
@@ -519,7 +528,7 @@ export async function findKeys(schema, cache, query, queryMap, isQueriedMap, bas
           const branchNotConstrained = keysBranch === undefined;
 
           const valueFitsConstraints =
-                keysBranch !== undefined && keysBranch.includes(value);
+            keysBranch !== undefined && keysBranch.includes(value);
 
           const keyCanMatch = branchNotConstrained || valueFitsConstraints;
 
@@ -534,8 +543,8 @@ export async function findKeys(schema, cache, query, queryMap, isQueriedMap, bas
             // );
 
             const branchRegexes = trunkRegexes
-                  .map((trunkRegex) => queryMap[pair][trunkRegex])
-                  .flat();
+              .map((trunkRegex) => queryMap[pair][trunkRegex])
+              .flat();
 
             // TODO; validate branchRegexes are not undefined
 
@@ -566,14 +575,14 @@ export async function findKeys(schema, cache, query, queryMap, isQueriedMap, bas
             keyMap[trunk] = intersect(keysTrunkMatched, keysSet);
             // if not queried, leave trunk keys unchanged
           }
-          res()
+          res();
         },
       });
-    })
+    });
   }
 
   // TODO: handle if query[base] is object, list of objects
-  const regexesBase = [ query[base] ?? "" ];
+  const regexesBase = [query[base] ?? ""];
 
   const { trunk } = schema[base];
 
@@ -584,12 +593,12 @@ export async function findKeys(schema, cache, query, queryMap, isQueriedMap, bas
 
     let keysBase = [];
 
-    await new Promise((res, rej) => {
+    await new Promise((res) => {
       csv.parse(tablet, {
         step: (row) => {
           if (row.data.length === 1 && row.data[0] === "") return;
 
-          const [key, value] = row.data;
+          const [, value] = row.data;
 
           // push value to keyMap
           const isMatch = matchRegexes(regexesBase, [value]).length > 0;
@@ -612,22 +621,24 @@ export async function findKeys(schema, cache, query, queryMap, isQueriedMap, bas
             keyMap[base] = intersect(keysBaseMatched, keysSet);
             // if not queried, leave trunk keys unchanged
           }
-          res()
-        }
-      })
-    })
+          res();
+        },
+      });
+    });
   } else {
     // base is root
-    const valuesBase = keyMap[base]
+    const valuesBase = keyMap[base];
 
     if (valuesBase !== undefined) {
-      const keysBase = matchRegexes(regexesBase, valuesBase)
+      const keysBase = matchRegexes(regexesBase, valuesBase);
 
       keyMap[base] = keysBase;
     } else {
       // TODO: if only datum is queried, keyMap is undefined at the end of leaves
       // we need to query all leaves for the datum regexes, defaulting to [ "" ]
-      const leaves = Object.keys(schema).filter((b) => schema[b].trunk === base);
+      const leaves = Object.keys(schema).filter(
+        (b) => schema[b].trunk === base,
+      );
 
       for (const leaf of leaves) {
         const pair = `${base}-${leaf}.csv`;
@@ -636,12 +647,12 @@ export async function findKeys(schema, cache, query, queryMap, isQueriedMap, bas
 
         const keysBase = [];
 
-        await new Promise((res, rej) => {
+        await new Promise((res) => {
           csv.parse(tablet, {
             step: (row) => {
               if (row.data.length === 1 && row.data[0] === "") return;
 
-              const [key, ] = row.data;
+              const [key] = row.data;
               // match
               const isMatch = matchRegexes(regexesBase, [key]).length > 0;
 
@@ -651,15 +662,15 @@ export async function findKeys(schema, cache, query, queryMap, isQueriedMap, bas
             },
             complete: () => {
               // TODO: intersect or append here
-              const oldKeys = keyMap[base] ?? []
+              const oldKeys = keyMap[base] ?? [];
 
               // we know that keyMap is undefined
-              keyMap[base] = Array.from(new Set([ ...keysBase, ...oldKeys ]));
+              keyMap[base] = Array.from(new Set([...keysBase, ...oldKeys]));
 
-              res()
-            }
-          })
-        })
+              res();
+            },
+          });
+        });
       }
     }
   }
@@ -732,9 +743,10 @@ export async function findValues(schema, cache, base, baseKeys) {
 
     const tablet = cache[pair];
 
-    const keysTrunk = trunk === base ? baseKeys : lookupBranchValues(schema, valueMap, trunk);
+    const keysTrunk =
+      trunk === base ? baseKeys : lookupBranchValues(schema, valueMap, trunk);
 
-    await new Promise((res, rej) => {
+    await new Promise((res) => {
       csv.parse(tablet, {
         step: (row) => {
           // ignore empty newline
@@ -751,10 +763,10 @@ export async function findValues(schema, cache, base, baseKeys) {
           }
         },
         complete: () => {
-          res()
+          res();
         },
       });
-    })
+    });
   }
 
   return valueMap;

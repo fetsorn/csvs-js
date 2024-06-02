@@ -68,21 +68,26 @@ export default class CSVS {
    * @param {grepCallback} args.grep - The callback that searches files.
    * @param {randomUUIDCallback} args.randomUUID - The callback that returns a UUID.
    */
-  constructor({ readFile, writeFile, grep: grepCallback, randomUUID: randomUUIDCallback }) {
+  constructor({
+    readFile,
+    writeFile,
+    grep: grepCallback,
+    randomUUID: randomUUIDCallback,
+  }) {
     this.readFile = readFile;
     this.writeFile = writeFile;
     const grep = grepCallback ?? grepPolyfill1;
     const randomUUID = randomUUIDCallback ?? randomUUIDPolyfill;
 
-    this.select1 = new Select1({ readFile, grep })
-    this.select2 = new Select2({ readFile, grep })
-    this.update1 = new Update1({ readFile, writeFile, randomUUID })
-    this.update2 = new Update2({ readFile, writeFile, randomUUID })
-    this.delete2 = new Delete2({ readFile, writeFile, randomUUID })
+    this.select1 = new Select1({ readFile, grep });
+    this.select2 = new Select2({ readFile, grep });
+    this.update1 = new Update1({ readFile, writeFile, randomUUID });
+    this.update2 = new Update2({ readFile, writeFile, randomUUID });
+    this.delete2 = new Delete2({ readFile, writeFile, randomUUID });
   }
 
   async detectVersion() {
-    return detectVersion(this.readFile)
+    return detectVersion(this.readFile);
   }
 
   /**
