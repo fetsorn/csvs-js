@@ -471,6 +471,101 @@ export function findQueries(schema, queryMap, base) {
   return isQueriedMap;
 }
 
+/**
+ *
+ * @name findStrategy
+ * @export function
+ * @param {object} schema -
+ * @param {object} query -
+ * @param {object} queryMap -
+ * @param {object} isQueriedMap -
+ * @param {string} base -
+ * @returns {object[]} -
+ */
+function findStrategy(schema, query, queryMap, isQueriedMap, base) {
+  // console.log("findStrategy", schema, queryMap, base)
+  // in order of query,
+  // first queried twigs
+  // then queried trunks
+  // then trunk of base
+  // then base (either last queried or first unqueried),
+  const queriedBranches = Object.keys(isQueriedMap).sort(
+    sortNestingAscending(schema),
+  );
+
+  const queriedTablets = queriedBranches.map(
+    (branch) => ({
+      // what branch to set?
+      thing: schema[branch].trunk,
+      // what branch to match?
+      trait: branch,
+      // do we set first column?
+      thingIsFirst: true,
+      // do we match first column?
+      traitIsFirst: false,
+      tablet: `${schema[branch].trunk}-${branch}.csv`,
+      regexes: Object.keys(queryMap[`${schema[branch].trunk}-${branch}.csv`])
+                     .map((trunkRegex) => queryMap[`${schema[branch].trunk}-${branch}.csv`][trunkRegex])
+                     .flat(),
+      hasConstraints: true
+    }),
+  );
+
+  // console.log("queriedTablets", queriedTablets)
+
+  const isBaseLeaf = schema[base].trunk !== undefined;
+
+  // if base is leaf, parse the trunk relationship
+  const trunkTablet = {
+    // what branch to set?
+    thing: base,
+    // what branch to match?
+    trait: schema[base].trunk,
+    // do we set first column?
+    thingIsFirst: false,
+    // do we match first column?
+    traitIsFirst: false,
+    tablet: `${schema[base].trunk}-${base}.csv`,
+    regexes: [query[base] ?? ""]
+  };
+
+  const leaves = Object.keys(schema).filter(
+    (b) => schema[b].trunk === base,
+  );
+
+  const isLeafQueried = queriedBranches.some((branch)=> leaves.includes(branch))
+
+  // console.log("isLeafQueried", isLeafQueried)
+
+  const leafTablets = isLeafQueried ? [] : leaves.map(
+    (leaf) => ({
+      // what branch to set?
+      thing: leaf,
+      // what branch to match?
+      trait: base,
+      // do we set first column?
+      thingIsFirst: true,
+      // do we match first column?
+      traitIsFirst: true,
+      tablet: `${base}-${leaf}.csv`,
+      regexes: [query[base] ?? ""],
+      isAppend: true
+    }),
+  );
+
+  // console.log("leafTablets", leafTablets)
+
+  const baseTablets = isBaseLeaf ? [trunkTablet] : leafTablets;
+
+  // if at least one leaf is queried, don't parse other leaves
+  // if only datum is queried query all leaves
+  const strategy = queriedTablets.concat(baseTablets);
+
+  // console.log("findStrategy =", strategy)
+
+  return strategy
+}
+
 // TODO: split findKeys into search strategies
 // TODO: remove keys of queryMap from keyMap
 // "?_=datum&datum=notInDataset" returns [ { _: datum, datum: notInDataset } ]
@@ -480,6 +575,7 @@ export function findQueries(schema, queryMap, base) {
  * @export function
  * @param {object} schema -
  * @param {object} cache -
+ * @param {object} query -
  * @param {object} queryMap -
  * @param {object} isQueriedMap -
  * @param {string} base -
@@ -495,189 +591,68 @@ export async function findKeys(
 ) {
   const keyMap = {};
 
-  // in order of query,
-  // first queried twigs
-  // then queried trunks
-  // then trunk of base
-  // then base (either last queried or first unqueried),
-  const queriedBranches = Object.keys(isQueriedMap).sort(
-    sortNestingAscending(schema),
-  );
+  const stages = findStrategy(schema, query, queryMap, isQueriedMap, base)
 
-  // parse queried branches
-  for (const branch of queriedBranches) {
-    // TODO: what if multiple trunks?
-    const { trunk } = schema[branch];
-
-    const pair = `${trunk}-${branch}.csv`;
-
-    const tablet = cache[pair];
-
-    const keysTrunk = [];
+  for (const stage of stages) {
+    console.log(stage, keyMap)
+    // TODO: rename keys to something else
+    const keys = [];
 
     await new Promise((res) => {
-      csv.parse(tablet, {
+      csv.parse(cache[stage.tablet], {
         step: (row) => {
           // ignore empty newline
           if (row.data.length === 1 && row.data[0] === "") return;
 
-          const [key, value] = row.data;
+          const [fst, snd] = row.data;
 
-          // if branch is queried
-          const keysBranch = keyMap[branch];
+          if (stage.hasConstraints) {
+            const failsConstraints =
+                  keyMap[stage.trait] !== undefined &&
+                  !keyMap[stage.trait].includes(stage.traitIsFirst ? fst : snd);
 
-          // not constrained by leaves
-          const branchNotConstrained = keysBranch === undefined;
-
-          const valueFitsConstraints =
-            keysBranch !== undefined && keysBranch.includes(value);
-
-          const keyCanMatch = branchNotConstrained || valueFitsConstraints;
-
-          if (keyCanMatch) {
-            // TODO here we must find branch regexes for each of the trunk regexes that match key
-            const trunkRegexes = Object.keys(queryMap[pair]);
-
-            // TODO validate trunkRegexes are not undefined
-
-            // const trunkRegexesMatchKey = trunkRegexes.filter((trunkRegex) =>
-            //   new RegExp(trunkRegex).test(key),
-            // );
-
-            const branchRegexes = trunkRegexes
-              .map((trunkRegex) => queryMap[pair][trunkRegex])
-              .flat();
-
-            // TODO; validate branchRegexes are not undefined
-
-            const isMatch = matchRegexes(branchRegexes, [value]).length > 0;
-
-            // if row matches at least one regex
-            if (isMatch) {
-              // push key to list of trunk keys
-              keysTrunk.push(key);
-
-              // TODO what if one key is pushed multiple times?
-              // cache key value relation to valueMap
-              // valueMap = merge(valueMap, pair, key, value)
-            }
+            if (failsConstraints) return;
           }
-        },
-        complete: () => {
-          // diff keys into keyMap
-          const keysSet = Array.from(new Set(keysTrunk));
 
-          const keysTrunkMatched = keyMap[trunk];
-
-          // save keys to map if trunk keys are undefined
-          if (keysTrunkMatched === undefined) {
-            keyMap[trunk] = keysSet;
-          } else {
-            // if queried less trunk keys, intersect
-            keyMap[trunk] = intersect(keysTrunkMatched, keysSet);
-            // if not queried, leave trunk keys unchanged
-          }
-          res();
-        },
-      });
-    });
-  }
-
-  // TODO: handle if query[base] is object, list of objects
-  const regexesBase = [query[base] ?? ""];
-
-  const { trunk } = schema[base];
-
-  if (trunk !== undefined) {
-    const pair = `${trunk}-${base}.csv`;
-
-    const tablet = cache[pair];
-
-    let keysBase = [];
-
-    await new Promise((res) => {
-      csv.parse(tablet, {
-        step: (row) => {
-          if (row.data.length === 1 && row.data[0] === "") return;
-
-          const [, value] = row.data;
-
-          // push value to keyMap
-          const isMatch = matchRegexes(regexesBase, [value]).length > 0;
+          // does key match regex?
+          const isMatch = matchRegexes(
+            stage.regexes,
+            // TODO replace this with .some()
+            [stage.traitIsFirst ? fst : snd]
+          ).length > 0;
 
           if (isMatch) {
-            keysBase.push(value);
+            // push to keys
+            keys.push(stage.thingIsFirst ? fst : snd);
           }
         },
         complete: () => {
-          // diff keys into keyMap
-          const keysSet = Array.from(new Set(keysBase));
-
-          const keysBaseMatched = keyMap[base];
-
-          // save keys to map if trunk keys are undefined
-          if (keysBaseMatched === undefined) {
-            keyMap[base] = keysSet;
+          console.log(keys)
+          // set in keyMap
+          if (stage.isAppend) {
+            keyMap[base] = Array.from(new Set([...keys, ...(keyMap[stage.thing] ?? [])]));
+          } else if (keyMap[stage.thing] === undefined) {
+            keyMap[stage.thing] = Array.from(new Set(keys));
           } else {
-            // if queried less trunk keys, intersect
-            keyMap[base] = intersect(keysBaseMatched, keysSet);
-            // if not queried, leave trunk keys unchanged
+            keyMap[stage.thing] = intersect(
+              keyMap[stage.thing],
+              Array.from(new Set(keys))
+            );
           }
+
           res();
         },
       });
     });
-  } else {
-    // base is root
-    const valuesBase = keyMap[base];
-
-    if (valuesBase !== undefined) {
-      const keysBase = matchRegexes(regexesBase, valuesBase);
-
-      keyMap[base] = keysBase;
-    } else {
-      // TODO: if only datum is queried, keyMap is undefined at the end of leaves
-      // we need to query all leaves for the datum regexes, defaulting to [ "" ]
-      const leaves = Object.keys(schema).filter(
-        (b) => schema[b].trunk === base,
-      );
-
-      for (const leaf of leaves) {
-        const pair = `${base}-${leaf}.csv`;
-
-        const tablet = cache[pair];
-
-        const keysBase = [];
-
-        await new Promise((res) => {
-          csv.parse(tablet, {
-            step: (row) => {
-              if (row.data.length === 1 && row.data[0] === "") return;
-
-              const [key] = row.data;
-              // match
-              const isMatch = matchRegexes(regexesBase, [key]).length > 0;
-
-              if (isMatch) {
-                keysBase.push(key);
-              }
-            },
-            complete: () => {
-              // TODO: intersect or append here
-              const oldKeys = keyMap[base] ?? [];
-
-              // we know that keyMap is undefined
-              keyMap[base] = Array.from(new Set([...keysBase, ...oldKeys]));
-
-              res();
-            },
-          });
-        });
-      }
-    }
   }
 
-  // if base is not queried,
+  // TODO skip this when isLeafQueried
+  if (keyMap[base] !== undefined) {
+    const regexesBase = [query[base] ?? ""];
+
+    keyMap[base] = matchRegexes(regexesBase, keyMap[base]);
+  }
+
   return keyMap[base] ?? [];
 }
 
