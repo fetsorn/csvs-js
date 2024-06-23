@@ -40,7 +40,7 @@ export const testCasesSelect = (version) => [
   //  expected: [mocks[version].record2001]
   //},
   {
-    name: "queries value2 with array of tags",
+    name: "queries value1 with array of tags",
     query: "?_=datum&datum=value1",
     initial: mocks[version].datasetArrayAdded,
     expected: [mocks[version].recordArray]
