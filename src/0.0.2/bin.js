@@ -503,7 +503,7 @@ function findStrategy(schema, query, queryMap, isQueriedMap, base) {
       thingIsFirst: true,
       // do we match first column?
       traitIsFirst: false,
-      tablet: `${schema[branch].trunk}-${branch}.csv`,
+      filename: `${schema[branch].trunk}-${branch}.csv`,
       regexes: Object.keys(queryMap[`${schema[branch].trunk}-${branch}.csv`])
                      .map((trunkRegex) => queryMap[`${schema[branch].trunk}-${branch}.csv`][trunkRegex])
                      .flat(),
@@ -511,7 +511,29 @@ function findStrategy(schema, query, queryMap, isQueriedMap, base) {
     }),
   );
 
-  // console.log("queriedTablets", queriedTablets)
+  const queriedGroups = queriedTablets.reduce((acc, tablet) => {
+    const leavesNumber = countLeaves(schema, tablet.trait);
+
+    if (leavesNumber < acc.nestingLevel) {
+      throw "unexpected sorting order of branches"
+    }
+
+    const nestingLevel = leavesNumber === acc.nestingLevel
+          ? acc.nestingLevel
+          : acc.nestingLevel + 1;
+
+    const rest = acc.groups.slice(0, -1);
+
+    const current = (acc.groups.slice(-1) ?? [])[0] ?? [];
+
+    const groups = leavesNumber === acc.nestingLevel
+          ? rest.concat([current.concat([tablet])])
+          : acc.groups.concat([ [tablet] ]);
+
+    return { nestingLevel, groups }
+  }, { nestingLevel: 0, groups: [] }).groups;
+
+  // console.log("queriedGroups", queriedGroups)
 
   const isBaseLeaf = schema[base].trunk !== undefined;
 
@@ -525,7 +547,7 @@ function findStrategy(schema, query, queryMap, isQueriedMap, base) {
     thingIsFirst: false,
     // do we match first column?
     traitIsFirst: false,
-    tablet: `${schema[base].trunk}-${base}.csv`,
+    filename: `${schema[base].trunk}-${base}.csv`,
     regexes: [query[base] ?? ""]
   };
 
@@ -540,14 +562,14 @@ function findStrategy(schema, query, queryMap, isQueriedMap, base) {
   const leafTablets = isLeafQueried ? [] : leaves.map(
     (leaf) => ({
       // what branch to set?
-      thing: leaf,
+      thing: base,
       // what branch to match?
       trait: base,
       // do we set first column?
       thingIsFirst: true,
       // do we match first column?
       traitIsFirst: true,
-      tablet: `${base}-${leaf}.csv`,
+      filename: `${base}-${leaf}.csv`,
       regexes: [query[base] ?? ""],
       isAppend: true
     }),
@@ -555,15 +577,70 @@ function findStrategy(schema, query, queryMap, isQueriedMap, base) {
 
   // console.log("leafTablets", leafTablets)
 
-  const baseTablets = isBaseLeaf ? [trunkTablet] : leafTablets;
+  const baseGroups = isBaseLeaf ? [[trunkTablet]] : [leafTablets];
 
+  // console.log("queriedGroups", queriedGroups)
+  // console.log("baseGroups", baseGroups)
   // if at least one leaf is queried, don't parse other leaves
   // if only datum is queried query all leaves
-  const strategy = queriedTablets.concat(baseTablets);
+  const strategy = queriedGroups.concat(baseGroups);
 
   // console.log("findStrategy =", strategy)
 
   return strategy
+}
+
+/**
+ *
+ * @name foo
+ * @export function
+ * @param {object} stage -
+ * @param {object} keyMap -
+ * @param {string} line -
+ * @returns {string | undefined} -
+ */
+function foo(stage, keyMap, line) {
+  // ignore empty newline
+  if (line === "") return undefined;
+
+  const { data: [ row ] } = csv.parse(line);
+
+  const [fst, snd] = row;
+
+  if (stage.hasConstraints) {
+    const failsConstraints =
+          keyMap[stage.trait] !== undefined &&
+          !keyMap[stage.trait].includes(stage.traitIsFirst ? fst : snd);
+
+    if (failsConstraints) return undefined;
+  }
+
+  // does key match regex?
+  const isMatch = matchRegexes(
+    stage.regexes,
+    // TODO replace this with .some()
+    [stage.traitIsFirst ? fst : snd]
+  ).length > 0;
+
+  if (isMatch) {
+    // push to keys
+    return stage.thingIsFirst ? fst : snd;
+  }
+}
+
+function bar(keyMap, stage, keys) {
+  if (stage.isAppend) {
+    return Array.from(new Set([...keys, ...(keyMap[stage.thing] ?? [])]));
+  }
+
+  if (keyMap[stage.thing] === undefined) {
+    return Array.from(new Set(keys));
+  }
+
+  return intersect(
+    keyMap[stage.thing],
+    Array.from(new Set(keys))
+  );
 }
 
 // TODO: split findKeys into search strategies
@@ -591,59 +668,21 @@ export async function findKeys(
 ) {
   const keyMap = {};
 
-  const stages = findStrategy(schema, query, queryMap, isQueriedMap, base)
+  const groups = findStrategy(schema, query, queryMap, isQueriedMap, base)
 
-  for (const stage of stages) {
-    console.log(stage, keyMap)
-    // TODO: rename keys to something else
-    const keys = [];
+  // console.log(groups)
+  for (const group of groups) {
+    for (const stage of group) {
+      // console.log(stage, keyMap)
+      // TODO: rename keys to something else
 
-    await new Promise((res) => {
-      csv.parse(cache[stage.tablet], {
-        step: (row) => {
-          // ignore empty newline
-          if (row.data.length === 1 && row.data[0] === "") return;
+      const lines = cache[stage.filename].split('\n');
 
-          const [fst, snd] = row.data;
+      const keys = lines.map((line) => foo(stage, keyMap, line))
+                        .filter((key) => key !== undefined);
 
-          if (stage.hasConstraints) {
-            const failsConstraints =
-                  keyMap[stage.trait] !== undefined &&
-                  !keyMap[stage.trait].includes(stage.traitIsFirst ? fst : snd);
-
-            if (failsConstraints) return;
-          }
-
-          // does key match regex?
-          const isMatch = matchRegexes(
-            stage.regexes,
-            // TODO replace this with .some()
-            [stage.traitIsFirst ? fst : snd]
-          ).length > 0;
-
-          if (isMatch) {
-            // push to keys
-            keys.push(stage.thingIsFirst ? fst : snd);
-          }
-        },
-        complete: () => {
-          console.log(keys)
-          // set in keyMap
-          if (stage.isAppend) {
-            keyMap[base] = Array.from(new Set([...keys, ...(keyMap[stage.thing] ?? [])]));
-          } else if (keyMap[stage.thing] === undefined) {
-            keyMap[stage.thing] = Array.from(new Set(keys));
-          } else {
-            keyMap[stage.thing] = intersect(
-              keyMap[stage.thing],
-              Array.from(new Set(keys))
-            );
-          }
-
-          res();
-        },
-      });
-    });
+      keyMap[stage.thing] = bar(keyMap, stage, keys);
+    }
   }
 
   // TODO skip this when isLeafQueried
