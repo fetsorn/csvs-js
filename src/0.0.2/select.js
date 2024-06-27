@@ -9,6 +9,8 @@ import {
   findQueries,
   findKeys,
   condense,
+  foo,
+  findStrategy,
 } from "./bin.js";
 
 /** Class representing a dataset query. */
@@ -53,36 +55,61 @@ export default class Select {
     // get a map of dataset file contents
     await this.#store.read(base);
 
+    // TODO make sure store is sorted
+
     const queryMap = recordToRelationMap(this.#store.schema, query);
 
     const isQueriedMap = findQueries(this.#store.schema, queryMap, base);
 
-    const baseKeys = await findKeys(
+    const strategy = findStrategy(this.#store.schema, query, queryMap, isQueriedMap, base);
+
+    const records = await foo(
       this.#store.schema,
       this.#store.cache,
       query,
       queryMap,
       isQueriedMap,
       base,
+      strategy,
     );
 
-    const valueMap = await findValues(
-      this.#store.schema,
-      this.#store.cache,
-      base,
-      baseKeys,
-    );
+    // const queryMap = recordToRelationMap(this.#store.schema, query);
 
-    const records = baseKeys.map((key) =>
-      condense(
-        this.#store.schema,
-        buildRecord(this.#store.schema, valueMap, base, key),
-      ),
-    );
+    // const isQueriedMap = findQueries(this.#store.schema, queryMap, base);
+
+    // const baseKeys = await findKeys(
+    //   this.#store.schema,
+    //   this.#store.cache,
+    //   query,
+    //   queryMap,
+    //   isQueriedMap,
+    //   base,
+    // );
+
+    // const valueMap = await findValues(
+    //   this.#store.schema,
+    //   this.#store.cache,
+    //   base,
+    //   baseKeys,
+    // );
+
+    // const records = baseKeys.map((key) =>
+    //   condense(
+    //     this.#store.schema,
+    //     buildRecord(this.#store.schema, valueMap, base, key),
+    //   ),
+    // );
 
     return records;
   }
 
+  /**
+   * This returns an array of records from the dataset.
+   * @name selectStream
+   * @function
+   * @param {URLSearchParams} urlSearchParams - search params from a query string.
+   * @returns {ReadableStream}
+   */
   async selectStream(urlSearchParams) {
     await this.#store.readSchema();
 

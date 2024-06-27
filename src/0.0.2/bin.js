@@ -1,4 +1,6 @@
 import csv from "papaparse";
+import stream from "stream";
+import util from "util";
 
 /**
  * This tells if a branch is connected to base branch.
@@ -482,7 +484,7 @@ export function findQueries(schema, queryMap, base) {
  * @param {string} base -
  * @returns {object[]} -
  */
-function findStrategy(schema, query, queryMap, isQueriedMap, base) {
+export function findStrategy(schema, query, queryMap, isQueriedMap, base) {
   // in order of query,
   // first queried twigs
   // then queried trunks
@@ -538,7 +540,7 @@ function findStrategy(schema, query, queryMap, isQueriedMap, base) {
     { nestingLevel: 0, groups: [] },
   ).groups;
 
-  const isBaseLeaf = schema[base].trunk !== undefined;
+  const baseHasTrunk = schema[base].trunk !== undefined;
 
   // if base is leaf, parse the trunk relationship
   const trunkTablet = {
@@ -556,27 +558,25 @@ function findStrategy(schema, query, queryMap, isQueriedMap, base) {
 
   const leaves = Object.keys(schema).filter((b) => schema[b].trunk === base);
 
-  const isLeafQueried = queriedBranches.some((branch) =>
-    leaves.includes(branch),
-  );
+  // const isLeafQueried = queriedBranches.some((branch) =>
+  //   leaves.includes(branch),
+  // );
 
-  const leafTablets = isLeafQueried
-    ? []
-    : leaves.map((leaf) => ({
-        // what branch to set?
-        thing: base,
-        // what branch to match?
-        trait: base,
-        // do we set first column?
-        thingIsFirst: true,
-        // do we match first column?
-        traitIsFirst: true,
-        filename: `${base}-${leaf}.csv`,
-        regexes: [query[base] ?? ""],
-        isAppend: true,
-      }));
+  const leafTablets = leaves.map((leaf) => ({
+    // what branch to set?
+    thing: base,
+    // what branch to match?
+    trait: base,
+    // do we set first column?
+    thingIsFirst: true,
+    // do we match first column?
+    traitIsFirst: true,
+    filename: `${base}-${leaf}.csv`,
+    regexes: [query[base] ?? ""],
+    isAppend: true,
+  }));
 
-  const baseGroups = isBaseLeaf ? [[trunkTablet]] : [leafTablets];
+  const baseGroups = baseHasTrunk ? [[trunkTablet]] : [leafTablets];
 
   // if at least one leaf is queried, don't parse other leaves
   // if only datum is queried query all leaves
@@ -848,4 +848,207 @@ export function buildRecord(schema, valueMap, base, key) {
   );
 
   return record;
+}
+
+
+/**
+ * This returns an array of records from the dataset.
+ * @name
+ * @function
+ * @param {object} query
+ * @returns {Object[]}
+ */
+export async function foo(schema, cache, query, queryMap, isQueriedMap, base, strategy) {
+  const startStream = new stream.Readable({
+    objectMode: true,
+
+    read() {
+      console.log("start", query)
+      this.push(query);
+
+      this.push(null);
+    },
+  });
+
+  // console.log(strategy)
+
+  const streams = strategy.reduce(
+    // each tablet in a group can be parsed in parallel
+    // and keyMap partials merged on completion
+    (accSequential, group) => {
+      // console.log("group", accSequential, group)
+
+      const a = group.reduce(
+        (accParallel, stage) => {
+          // console.log("stage", accParallel, stage)
+
+          const lines = cache[stage.filename].split("\n");
+
+          const streamNew = new stream.Transform({
+            objectMode: true,
+
+            transform(chunk, encoding, callback) {
+              console.log("transform", chunk, stage.filename)
+              lines.reduce((acc, line) => {
+                const directive = core({ directive: acc, stage }, line);
+
+                // if (directive.next) {
+                this.push(directive)
+
+                // callback()
+                // }
+
+              }, chunk)
+
+              callback();
+            },
+
+            final(next) {
+              next();
+            },
+          });
+
+          return [ streamNew, ...accParallel ]
+        },
+        accSequential);
+
+      // console.log("a", a)
+
+      return [...a, ...accSequential]
+    },
+    [],
+  );
+
+  // console.log(streams)
+
+  // custom implementation of passthrough for object mode
+  // let pass = new stream.Transform({
+  //   objectMode: true,
+
+  //   write(record, encoding, next) {
+  //     // console.log("passthrough", record)
+  //     this.push(record);
+
+  //     next();
+  //   },
+
+  //   close() {},
+
+  //   abort(err) {
+  //     console.log("Sink error:", err);
+  //   },
+  // });
+
+  //pass = startStream.pipe(pass, { end: false });
+
+  // for (let s of streams) {
+  //   const end = s == streams.at(-1);
+
+  //   pass = s.pipe(pass, { end })
+  // }
+
+  var records = [];
+
+  // const collectStream = new stream.Writable({
+  //   objectMode: true,
+
+  //   write(entry) {
+  //     // console.log("write", entry)
+
+  //     records.push(entry)
+  //     console.log(records)
+  //     this.end()
+  //   },
+
+  //   close() {
+  //     // console.log("stream closed")
+  //   },
+
+  //   abort(err) {
+  //     console.log("Sink error:", err);
+  //   },
+  // });
+
+  const pipeline = util.promisify(stream.pipeline);
+
+  // try {
+  //   await pipeline(startStream, // streams,
+  //                  collectStream)
+  // } catch (e) {
+  //   console.error("pipeline error", e)
+  // }
+
+  await new Promise(async (res) => {
+    const collectStream = new stream.Writable({
+      objectMode: true,
+
+      write(entry) {
+        console.log("write", entry);
+
+        records.push(entry);
+
+        // console.log("stream closed");
+
+        // TODO I don't understand right now why stream never closes
+        // so I close all streams manually here on the first chunk for now
+        streams[0].destroy();
+        streams[1].destroy();
+        this.destroy();
+
+        res();
+      },
+
+      close() {},
+
+      abort(err) {
+        console.log("Sink error:", err);
+      },
+    });
+
+
+    // await pipeline([startStream, ...streams, collectStream])
+
+    // TODO I don't understand right now why streams in a loop never start
+    // so I pipe all streams manually here for now
+    // startStream.pipe(streams[0]).pipe(streams[1]).pipe(collectStream)
+
+    // console.log(streams.length) // 9
+    streams.reduce((acc, s) => acc.pipe(s), startStream).pipe(collectStream)
+
+    // console.log(streams)
+    //for (let s of streams) {
+    //  const end = s == streams.at(-1);
+
+    //  pass = s.pipe(pass, { end })
+    //}
+
+    // pass.pipe(collectStream)
+  })
+
+  console.log(records)
+
+  return records
+}
+
+/**
+ * This returns an array of records from the dataset.
+ * @name
+ * @function
+ * @param {object} query
+ * @returns {Object[]}
+ */
+function core(directive, line) {
+  console.log("core", directive, line)
+
+  const record2001 = {
+    _: 'datum',
+    datum: 'value1',
+    filepath: { _: 'filepath', filepath: 'path/to/1', moddate: '2001-01-01'},
+    saydate: '2001-01-01',
+    sayname: 'name1',
+    actdate: '2001-01-01',
+    actname: 'name1',
+  };
+
+  return record2001
 }
