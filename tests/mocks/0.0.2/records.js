@@ -226,6 +226,16 @@ const recordEditedArrayItemObject = {
   },
 };
 
+const recordArrayLiteral = {
+  _: 'datum',
+  datum: 'value1',
+  filepath: { _: 'filepath', filepath: 'path/to/1', moddate: '2001-01-01'},
+  saydate: '2001-01-01',
+  sayname: [ 'name1', 'name2' ],
+  actdate: '2001-01-01',
+  actname: 'name1',
+};
+
 const recordExport1Tag = {
   _: 'export1_tag',
   export1_tag: '1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42',
@@ -239,6 +249,8 @@ const recordSchema = {
   filepath: [ "moddate", "filehash", "filetype", "filesize", "pathrule" ]
 };
 
+const record2001Filepath = { _: 'filepath', filepath: 'path/to/1', moddate: '2001-01-01'};
+
 export default {
   record2001,
   record2002,
@@ -251,6 +263,8 @@ export default {
   recordEditedArrayItem,
   recordDeletedArrayItem,
   recordEditedArrayItemObject,
+  recordArrayLiteral,
   recordExport1Tag,
-  recordSchema
+  recordSchema,
+  record2001Filepath
 };

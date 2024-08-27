@@ -45,6 +45,8 @@ export default class Select {
     // TODO: validate against arrays of multiple bases, do not return [], throw error
     const base = query._;
 
+    const leader = urlSearchParams.get("__");
+
     // if no base is provided, return empty
     if (base === undefined) return [];
 
@@ -80,6 +82,10 @@ export default class Select {
       ),
     );
 
+    if (leader && leader !== base) {
+      return records.map((record) => record[leader]).filter(Boolean)
+    }
+
     return records;
   }
 
@@ -87,6 +93,8 @@ export default class Select {
     await this.#store.readSchema();
 
     const base = urlSearchParams.get("_");
+
+    const leader = urlSearchParams.get("__");
 
     // if no base is provided, find first schema root
     if (base === null) throw new Error("base is not defined");
@@ -116,7 +124,15 @@ export default class Select {
 
         const record = await selectInstance.buildRecord(base, baseKey);
 
-        this.push(record);
+        if (leader && leader !== base) {
+          const recordLeader = record[leader];
+
+          if (recordLeader) {
+            this.push(recordLeader);
+          }
+        } else {
+          this.push(record);
+        }
 
         if (this._buffer.length === 0) {
           this.push(null);

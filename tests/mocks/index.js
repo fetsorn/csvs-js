@@ -82,6 +82,8 @@ export function loadMocks() {
       datasetEditedArrayItem: loadContents("0.0.2/edited_array_item"),
       datasetDeletedArrayItem: loadContents("0.0.2/deleted_array_item"),
       datasetEditedArrayItemObject: loadContents("0.0.2/edited_array_item_object"),
+      datasetArrayLiteral: loadContents("0.0.2/array_literal"),
+      datasetArrayFree: loadContents("0.0.2/array_free"),
       datasetDeletedLeaf: loadContents("0.0.2/deleted_leaf"),
       datasetSchema: loadContents("0.0.2/schema"),
       datasetSchemaNone: loadContents("0.0.2/schema_none"),

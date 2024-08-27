@@ -112,10 +112,28 @@ export const testCasesSelect = (version) => [
     expected: mocks[version].optionsExport1Tag
   },
   {
+    name: "queries object free from trunk",
+    query: "_=export1_tag",
+    initial: mocks[version].datasetArrayFree,
+    expected: mocks[version].optionsExport1TagFree
+  },
+  {
     name: "query schema relations",
     query: "_=_",
     initial: mocks[version].datasetDefault,
     expected: [mocks[version].recordSchema]
+  },
+  {
+    name: "queries name1 with leader filepath",
+    query: "?_=datum&__=filepath&actname=name1",
+    initial: mocks[version].datasetDefault,
+    expected: [mocks[version].record2001Filepath]
+  },
+  {
+    name: "queries name1 with array of literal values",
+    query: "?_=datum&actname=name1",
+    initial: mocks[version].datasetArrayLiteral,
+    expected: [mocks[version].recordArrayLiteral]
   },
 ]
 
@@ -203,6 +221,12 @@ export const testCasesUpdate = (version) => [
     query: mocks[version].recordBaseIgnoredArrayItems,
     initial: mocks[version].datasetEmpty,
     expected: mocks[version].datasetEmpty
+  },
+  {
+    name: "adds record with array of literal values",
+    query: mocks[version].recordArrayLiteral,
+    initial: mocks[version].datasetDefault,
+    expected: mocks[version].datasetArrayLiteral
   },
 ]
 

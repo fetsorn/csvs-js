@@ -192,6 +192,37 @@ describe('Query.select() ripgrep 0.0.2', () => {
   })
 })
 
+describe('Query.selectBaseKeys() ripgrep 0.0.2', () => {
+  beforeEach(() => {
+    callback = { ...callbackOriginal };
+
+    callback.grep = grepCLI;
+  });
+
+  testCasesSelect("0.0.2").forEach((testCase) => {
+    test(testCase.name, async () => {
+      const searchParams = new URLSearchParams(testCase.query);
+
+      callback.readFile = (path) => testCase.initial[path];
+
+      const client = new CSVS(callback)
+
+      const { base, baseKeys } = await client.selectBaseKeys(searchParams)
+
+      const records = await Promise.all(baseKeys.map((baseKey) => client.buildRecord(base, baseKey)));
+
+      const dataSorted = records.map(sortObject)
+                                .sort((a, b) => (a[a._] < b[b._] ? -1 : 1))
+
+      const expected = testCase.expected
+                               .map(sortObject)
+                               .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
+
+      expect(dataSorted).toStrictEqual(expected)
+    })
+  })
+})
+
 describe('Entry.update() 0.0.1', () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
@@ -220,7 +251,7 @@ describe('Entry.update() 0.0.1', () => {
   })
 })
 
-describe('Entry.update() 0.0.2', () => {
+describe.only('Entry.update() 0.0.2', () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
   });

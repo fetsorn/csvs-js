@@ -193,6 +193,8 @@ export function searchParamsToQuery(schema, searchParams) {
 
   urlSearchParams.delete("_");
 
+  urlSearchParams.delete("__");
+
   const entries = Array.from(urlSearchParams.entries());
 
   // TODO: if key is leaf, add it to value of trunk
@@ -261,7 +263,8 @@ export function recordToRelations(schema, record) {
     (branch) => schema[branch].trunk === base,
   );
 
-  const bar = leaves.reduce((accLeaf, leaf) => {
+  // [ "base-leaf.csv", "key", "value" ]
+  const relations = leaves.reduce((accLeaf, leaf) => {
     // skip if record doesn't have the leaf
     if (record[leaf] === undefined) return accLeaf;
 
@@ -269,22 +272,22 @@ export function recordToRelations(schema, record) {
 
     const pair = `${base}-${leaf}.csv`;
 
-    const foo = values.reduce((accValue, value) => {
+    const relationsLeaf = values.reduce((accValue, value) => {
       if (typeof value === "string") {
-        return [[pair, key, value]];
+        return [...accValue, [pair, key, value]];
       }
 
       const valueNested = value[leaf] ?? "";
 
-      const qux = recordToRelations(schema, value);
+      const relationsNested = recordToRelations(schema, value);
 
-      return [...accValue, [pair, key, valueNested], ...qux];
+      return [...accValue, [pair, key, valueNested], ...relationsNested];
     }, []);
 
-    return [...accLeaf, ...foo];
+    return [...accLeaf, ...relationsLeaf];
   }, []);
 
-  return bar;
+  return relations;
 }
 
 /**
@@ -627,7 +630,50 @@ export async function findKeys(
         },
       });
     });
-  } else {
+  }
+
+  // TODO: if only base is queried, keyMap is undefined at the end of leaves
+  // we need to query all leaves for the datum regexes, defaulting to [ "" ]
+  if (queriedBranches.length === 0) {
+    const leaves = Object.keys(schema).filter(
+      (b) => schema[b].trunk === base,
+    );
+
+    for (const leaf of leaves) {
+      const pair = `${base}-${leaf}.csv`;
+
+      const tablet = cache[pair];
+
+      const keysBase = [];
+
+      await new Promise((res) => {
+        csv.parse(tablet, {
+          step: (row) => {
+            if (row.data.length === 1 && row.data[0] === "") return;
+
+            const [key] = row.data;
+            // match
+            const isMatch = matchRegexes(regexesBase, [key]).length > 0;
+
+            if (isMatch) {
+              keysBase.push(key);
+            }
+          },
+          complete: () => {
+            // TODO: intersect or append here
+            const oldKeys = keyMap[base] ?? [];
+
+            // we know that keyMap is undefined
+            keyMap[base] = Array.from(new Set([...keysBase, ...oldKeys]));
+
+            res();
+          },
+        });
+      });
+    }
+  }
+
+  if (trunk === undefined) {
     // base is root
     const valuesBase = keyMap[base];
 
@@ -635,45 +681,6 @@ export async function findKeys(
       const keysBase = matchRegexes(regexesBase, valuesBase);
 
       keyMap[base] = keysBase;
-    } else {
-      // TODO: if only datum is queried, keyMap is undefined at the end of leaves
-      // we need to query all leaves for the datum regexes, defaulting to [ "" ]
-      const leaves = Object.keys(schema).filter(
-        (b) => schema[b].trunk === base,
-      );
-
-      for (const leaf of leaves) {
-        const pair = `${base}-${leaf}.csv`;
-
-        const tablet = cache[pair];
-
-        const keysBase = [];
-
-        await new Promise((res) => {
-          csv.parse(tablet, {
-            step: (row) => {
-              if (row.data.length === 1 && row.data[0] === "") return;
-
-              const [key] = row.data;
-              // match
-              const isMatch = matchRegexes(regexesBase, [key]).length > 0;
-
-              if (isMatch) {
-                keysBase.push(key);
-              }
-            },
-            complete: () => {
-              // TODO: intersect or append here
-              const oldKeys = keyMap[base] ?? [];
-
-              // we know that keyMap is undefined
-              keyMap[base] = Array.from(new Set([...keysBase, ...oldKeys]));
-
-              res();
-            },
-          });
-        });
-      }
     }
   }
 
@@ -810,4 +817,74 @@ export function buildRecord(schema, valueMap, base, key) {
   );
 
   return record;
+}
+
+// add trunk field from schema record to branch records
+// turn { _: _, branch1: [ branch2 ] }, [{ _: branch, branch: "branch2", task: "date" }]
+// into [{ _: branch, branch: "branch2", trunk: "branch1", task: "date" }]
+export function enrichBranchRecords(schemaRecord, metaRecords) {
+  // [[branch1, [branch2]]]
+  const schemaRelations = Object.entries(schemaRecord).filter(
+    ([ key ]) => key !== "_",
+  );
+
+  // list of unique branches in the schema
+  const branches = [...new Set(schemaRelations.flat(Infinity))];
+
+  const branchRecords = branches.reduce((accBranch, branch) => {
+    // check each key of schemaRecord, if array has branch, push trunk to metaRecord.trunk
+    const trunkPartial = schemaRelations.reduce((accTrunk, [trunk, leaves]) => {
+      if (leaves.includes(branch)) {
+        // if old is array, [ ...old, new ]
+        // if old is string, [ old, new ]
+        // is old is undefined, [ new ]
+        const trunks = accTrunk.trunk ? [ accTrunk.trunk, trunk ].flat(Infinity) : trunk;
+
+        return { ...accTrunk, trunk: trunks }
+      }
+
+      return accTrunk
+    }, {})
+
+    const metaRecord = metaRecords.find((record) => record.branch === branch)
+
+    // if branch has no trunks, it's a trunk
+    if (trunkPartial.trunk === undefined) {
+      return [...accBranch, metaRecord]
+    }
+
+    const branchRecord = { _: "branch", branch, ...metaRecord, ...trunkPartial }
+
+    return [...accBranch, branchRecord]
+  }, [])
+
+  return branchRecords
+}
+
+// extract schema record with trunks from branch records
+// turn [{ _: branch, branch: "branch2", trunk: "branch1", task: "date" }]
+// into [{ _: _, branch1: branch2 }, { _: branch, branch: "branch2", task: "date" }]
+export function extractSchemaRecords(branchRecords) {
+  const records = branchRecords.reduce(
+    (acc, branchRecord) => {
+      const { trunk, ...branchRecordOmitted } = branchRecord;
+
+      const accLeaves = acc.schemaRecord[trunk] ?? [];
+
+      const schemaRecord =
+        trunk !== undefined
+          ? {
+              ...acc.schemaRecord,
+              [trunk]: [branchRecord.branch, ...accLeaves],
+            }
+          : acc.schemaRecord;
+
+      const metaRecords = [branchRecordOmitted, ...acc.metaRecords];
+
+      return { schemaRecord, metaRecords };
+    },
+    { schemaRecord: { _: "_" }, metaRecords: [] },
+  );
+
+  return [records.schemaRecord, ...records.metaRecords];
 }
