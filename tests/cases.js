@@ -58,6 +58,18 @@ export const testCasesSelect = (version) => [
     expected: [mocks[version].record2001,mocks[version].record2002,mocks[version].record2003Unedited]
   },
   {
+    name: "queries no names with literal regexp",
+    query: "?_=datum&actname=name$",
+    initial: mocks[version].datasetDefault,
+    expected: []
+  },
+  {
+    name: "queries no names with literal regexp",
+    query: "?_=datum&actname=^ame$",
+    initial: mocks[version].datasetDefault,
+    expected: []
+  },
+  {
     name: "queries moddate regex",
     query: "?_=datum&moddate=.*-01-01",
     initial: mocks[version].datasetDefault,

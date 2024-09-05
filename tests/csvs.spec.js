@@ -251,7 +251,7 @@ describe('Entry.update() 0.0.1', () => {
   })
 })
 
-describe.only('Entry.update() 0.0.2', () => {
+describe('Entry.update() 0.0.2', () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
   });
