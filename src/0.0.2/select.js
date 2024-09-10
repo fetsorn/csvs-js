@@ -102,7 +102,7 @@ export default class Select {
     const query = searchParamsToQuery(this.#store.schema, urlSearchParams);
 
     if (base === "_")
-      return new stream.Readable.from(this.#selectSchema(query));
+      return new stream.Readable.from(await this.#selectSchema(query));
 
     // get a map of database file contents
     await this.#store.read(base);
