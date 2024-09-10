@@ -223,6 +223,12 @@ export const testCasesUpdate = (version) => [
     expected: mocks[version].datasetSchema
   },
   {
+    name: "adds schema with literal value",
+    query: mocks[version].recordSchemaLiteral,
+    initial: mocks[version].datasetSchemaNone,
+    expected: mocks[version].datasetSchemaLiteral
+  },
+  {
     name: "ignores record without base field",
     query: mocks[version].recordBaseNone,
     initial: mocks[version].datasetEmpty,

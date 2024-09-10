@@ -249,6 +249,13 @@ const recordSchema = {
   filepath: [ "moddate", "filehash", "filetype", "filesize", "pathrule" ]
 };
 
+const recordSchemaLiteral = {
+  _: '_',
+  datum: [ "actdate", "actname", "saydate", "sayname", "privacy", "tag", "filepath" ],
+  filepath: [ "moddate", "filehash", "filetype", "filesize", "pathrule" ],
+  person: "parent"
+};
+
 const record2001Filepath = { _: 'filepath', filepath: 'path/to/1', moddate: '2001-01-01'};
 
 export default {
@@ -266,5 +273,6 @@ export default {
   recordArrayLiteral,
   recordExport1Tag,
   recordSchema,
+  recordSchemaLiteral,
   record2001Filepath
 };

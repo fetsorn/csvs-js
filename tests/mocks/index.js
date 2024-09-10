@@ -87,6 +87,7 @@ export function loadMocks() {
       datasetDeletedLeaf: loadContents("0.0.2/deleted_leaf"),
       datasetSchema: loadContents("0.0.2/schema"),
       datasetSchemaNone: loadContents("0.0.2/schema_none"),
+      datasetSchemaLiteral: loadContents("0.0.2/schema_literal"),
       ...options2,
       ...records2
     },

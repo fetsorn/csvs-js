@@ -63,11 +63,11 @@ export default class Update {
 
     // list of
     const relations = trunks.reduce((acc, trunk) => {
-      const values = record[trunk];
-
-      // TODO: handle if value is literal, expand?
+      // handle if value is literal, expand
       // TODO: handle if value is object, expand?
       // TODO: handle if value is array of objects?
+      const values = Array.isArray(record[trunk]) ? record[trunk] : [record[trunk]];
+
       // assume value is array of literals
       const relations = values.map((branch) => `${trunk},${branch}`);
 
