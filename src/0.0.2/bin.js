@@ -846,18 +846,23 @@ export function enrichBranchRecords(schemaRecord, metaRecords) {
       return accTrunk
     }, {})
 
-    const metaRecord = metaRecords.find((record) => record.branch === branch)
+    const branchPartial = { _: "branch", branch };
+
+    const metaPartial = metaRecords.find((record) => record.branch === branch) ?? {}
 
     // if branch has no trunks, it's a trunk
     if (trunkPartial.trunk === undefined) {
-      return [...accBranch, metaRecord]
+      const rootRecord = { ...branchPartial, ...metaPartial }
+
+      return [...accBranch, rootRecord]
     }
 
-    const branchRecord = { _: "branch", branch, ...metaRecord, ...trunkPartial }
+    const branchRecord = { ...branchPartial, ...metaPartial, ...trunkPartial }
 
     return [...accBranch, branchRecord]
   }, [])
 
+  console.log(branchRecords)
   return branchRecords
 }
 
