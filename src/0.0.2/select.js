@@ -10,7 +10,7 @@ import {
   findKeys,
   condense,
   shell,
-  findStrategy
+  findStrategyShell
 } from "./bin.js";
 
 /** Class representing a dataset query. */
@@ -61,7 +61,7 @@ export default class Select {
 
     const isQueriedMap = findQueries(this.#store.schema, queryMap, base);
 
-    const strategy = findStrategy(this.#store.schema, query, queryMap, isQueriedMap, base);
+    const strategy = findStrategyShell(this.#store.schema, query, queryMap, isQueriedMap, base);
 
     const records = await shell(
       this.#store.schema,

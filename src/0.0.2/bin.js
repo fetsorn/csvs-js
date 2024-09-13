@@ -489,6 +489,7 @@ export function findQueries(schema, queryMap, base) {
  * @returns {object[]} -
  */
 export function findStrategy(schema, query, queryMap, isQueriedMap, base) {
+  // console.log("findStrategy", query)
   // in order of query,
   // first queried twigs
   // then queried trunks
@@ -1131,6 +1132,167 @@ export function extractSchemaRecords(branchRecords) {
 }
 
 /**
+ *
+ * @name findStrategyShell
+ * @export function
+ * @param {object} schema -
+ * @param {object} query -
+ * @param {object} queryMap -
+ * @param {object} isQueriedMap -
+ * @param {string} base -
+ * @returns {object[]} -
+ */
+export function findStrategyShell(schema, query, queryMap, isQueriedMap, base) {
+  // in order of query,
+  // first queried twigs
+  // then queried trunks
+  // then trunk of base
+  // then base (either last queried or first unqueried),
+  const queriedBranches = Object.keys(isQueriedMap).sort(
+    sortNestingAscending(schema),
+  );
+
+  const queriedTablets = queriedBranches.map((branch) => ({
+    // what branch to set?
+    thing: schema[branch].trunk,
+    // what branch to match?
+    trait: branch,
+    // do we set first column?
+    thingIsFirst: true,
+    // do we match first column?
+    traitIsFirst: false,
+    filename: `${schema[branch].trunk}-${branch}.csv`,
+    regexes: Object.keys(queryMap[`${schema[branch].trunk}-${branch}.csv`])
+      .map(
+        (trunkRegex) =>
+          queryMap[`${schema[branch].trunk}-${branch}.csv`][trunkRegex],
+      )
+      .flat(),
+    hasConstraints: true,
+  }));
+
+  const queriedGroups = queriedTablets.reduce(
+    (acc, tablet) => {
+      const leavesNumber = countLeaves(schema, tablet.trait);
+
+      if (leavesNumber < acc.nestingLevel) {
+        throw "unexpected sorting order of branches";
+      }
+
+      const nestingLevel =
+        leavesNumber === acc.nestingLevel
+          ? acc.nestingLevel
+          : acc.nestingLevel + 1;
+
+      const rest = acc.groups.slice(0, -1);
+
+      const current = (acc.groups.slice(-1) ?? [])[0] ?? [];
+
+      const groups =
+        leavesNumber === acc.nestingLevel
+          ? rest.concat([current.concat([tablet])])
+          : acc.groups.concat([[tablet]]);
+
+      return { nestingLevel, groups };
+    },
+    { nestingLevel: 0, groups: [] },
+  ).groups;
+
+  const baseHasTrunk = schema[base].trunk !== undefined;
+
+  // if base is leaf, parse the trunk relationship
+  const trunkTablet = {
+    // what branch to set?
+    thing: base,
+    // what branch to match?
+    trait: schema[base].trunk,
+    // do we set first column?
+    thingIsFirst: false,
+    // do we match first column?
+    traitIsFirst: false,
+    filename: `${schema[base].trunk}-${base}.csv`,
+    regexes: [query[base] ?? ""],
+  };
+
+  const leaves = Object.keys(schema).filter((b) => schema[b].trunk === base);
+
+  // const isLeafQueried = queriedBranches.some((branch) =>
+  //   leaves.includes(branch),
+  // );
+  // TODO should be empty when queriedBranches has something
+  // TODO should be all leaves when queriedBranches is empty
+  // const leavesNotQueried = leaves.filter((leaf) => !queriedBranches.includes(leaf))
+
+  const leafTablets = leaves.map((leaf) => ({
+    // what branch to set?
+    thing: base,
+    // what branch to match?
+    trait: base,
+    // do we set first column?
+    thingIsFirst: true,
+    // do we match first column?
+    traitIsFirst: true,
+    filename: `${base}-${leaf}.csv`,
+    regexes: [query[base] ?? ""],
+    isAppend: true,
+  }));
+
+  // const baseGroups = baseHasTrunk ? [[trunkTablet]] : [leafTablets];
+  const basePartial = baseHasTrunk ? [[trunkTablet]] : [];
+
+  // if at least one leaf is queried, don't parse other leaves
+  // if only datum is queried query all leaves
+  // const leafPartial = queriedBranches.length === 0 ? [leafTablets] : [];
+  // always query cause we need to gather values
+  const leafPartial = queriedBranches.length === 0 ? [leafTablets] : [];
+
+  // TODO account for when there's no query and all leaves are already in leafTablets
+  // TODO account for nested crown when leaves of leaves also hold values
+  const valueBranches = leaves.filter((leaf) => !queriedBranches.includes(leaf))
+
+  // TODO account for nested crown when trunk is not base
+  const valueTablets = valueBranches.map((branch) => ({
+    // what branch to set?
+    thing: branch,
+    // what branch to match?
+    trait: base,
+    // do we set first column?
+    thingIsFirst: false,
+    // do we match first column?
+    traitIsFirst: true,
+    filename: `${base}-${branch}.csv`,
+    path: [branch],
+    isValue: true,
+  }));
+
+  // TODO general implementation for each nesting level
+
+  const valueTablets1 = valueBranches.map((branch) => {
+    const branchLeaves = Object.keys(schema).filter((b) => schema[b].trunk === branch);
+
+    return branchLeaves.map((leaf) => ({
+      // what branch to set?
+      thing: leaf,
+      // what branch to match?
+      trait: branch,
+      // do we set first column?
+      thingIsFirst: false,
+      // do we match first column?
+      traitIsFirst: true,
+      filename: `${branch}-${leaf}.csv`,
+      path: [branch, leaf],
+      isValue: true,
+    }))
+  }).flat();
+
+  const strategy = [...queriedGroups, ...basePartial, ...leafPartial, valueTablets, valueTablets1];
+
+  // console.log(strategy)
+
+  return strategy;
+}
+
+/**
  * This returns an array of records from the dataset.
  * @name
  * @function
@@ -1138,64 +1300,100 @@ export function extractSchemaRecords(branchRecords) {
  * @returns {Object[]}
  */
 export async function shell(schema, cache, query, queryMap, isQueriedMap, base, strategy) {
-  console.log("shell")
   const startStream = new stream.Readable({
     objectMode: true,
 
     read() {
-      console.log("start", query)
-      this.push(query);
+      // console.log("start", query)
+      if (this._toggle) {
+        // console.log("AA")
+        this.push(null);
+      } else {
+        this._toggle = true;
 
-      this.push(null);
+        this.push({ record: query });
+      }
+
     },
   });
 
-  const streams = strategy.reduce(
+  // user var for acc instead of .reduce
+  // because reducer steps need to wait for each other
+  // and there's no async reduce until tc39/proposal-async-context
+  var accSequential = []
+  for (const group of strategy) {
+    // const streams = strategy.reduce(
     // each tablet in a group can be parsed in parallel
     // and keyMap partials merged on completion
-    (accSequential, group) => {
-      // console.log("group", accSequential, group)
+    // (accSequential, group) => {
+    // console.log("group", accSequential, group)
 
-      const a = group.reduce(
-        (accParallel, stage) => {
-          // console.log("stage", accParallel, stage)
+    var accParallel = accSequential;
+    for (const stage of group) {
+      // const a = group.reduce(
+      //   (accParallel, stage) => {
+      // console.log("stage", accParallel, stage)
 
-          const lines = cache[stage.filename].split("\n");
+      // TODO replace with file stream
+      const lines = cache[stage.filename].split("\n");
 
-          const streamNew = new stream.Transform({
-            objectMode: true,
+      const streamNew = new stream.Transform({
+        objectMode: true,
 
-            transform(chunk, encoding, callback) {
-              console.log("transform", chunk, stage.filename)
-              for (const line of lines) {
-                const directive = core({ directive: chunk, stage }, line);
+        transform(chunk, encoding, callback) {
+          // console.log("transform", chunk, stage.filename)
+          // if (chunk === null) callback(null, chunk)
 
-                this.push(directive)
-              }
-              this.push(null);
+          var directive = chunk;
+          var hasMatch = false;
 
-              callback();
-            },
-          });
+          for (const line of lines) {
+            const directiveNew = core(directive, stage, line);
 
-          return [ streamNew, ...accParallel ]
+            directive = directiveNew;
+
+            // push if ready for the next tablet
+            // TODO or if no more lines
+            if (directiveNew.next) {
+              hasMatch = true;
+              this.push({ ...directiveNew, next: false })
+            }
+          }
+
+          if (hasMatch === false) {
+            this.push(directive)
+          }
+
+          // this.push(null);
+
+          callback();
         },
-        accSequential);
+      });
 
-      return [...a, ...accSequential]
-    },
-    [],
-  );
+      accParallel = [ ...accParallel, streamNew ]
+      // return [ streamNew, ...accParallel ]
+      // },
+      // accSequential);
+    }
+
+    accSequential = [ ...accParallel ]
+  }
+  // return [...a, ...accSequential]
+  // },
+  // [],
+  // );
+  const streams = accSequential;
+  // console.log(strategy, streams.length)
 
   var records = [];
 
   const collectStream = new stream.Writable({
     objectMode: true,
 
-    write(entry, encoding, callback) {
-      console.log("write", entry);
+    write(directive, encoding, callback) {
+      // console.log("write", directive);
 
-      records.push(entry);
+      records.push(directive.record);
 
       callback()
     },
@@ -1216,6 +1414,63 @@ export async function shell(schema, cache, query, queryMap, isQueriedMap, base, 
   return records
 }
 
+function getPath(object, path) {
+  var index = 0,
+      length = path.length;
+
+  while (object != null && index < length) {
+    // TODO handle
+    object = object[path[index++]];
+  }
+  return (index && index == length) ? object : undefined;
+}
+
+function isObject(value) {
+  var type = typeof value;
+  return value != null && (type == 'object' || type == 'function');
+}
+
+function isIndex(value, length) {
+  var type = typeof value,
+      MAX_SAFE_INTEGER = 9007199254740991;
+
+  length = length == null ? MAX_SAFE_INTEGER : length;
+
+  var reIsUint = /^(?:0|[1-9]\d*)$/;
+
+  return !!length &&
+    (type == 'number' ||
+     (type != 'symbol' && reIsUint.test(value))) &&
+    (value > -1 && value % 1 == 0 && value < length);
+}
+
+function setPath(object, path, value) {
+  // console.log("setPath", object, path, value)
+  var index = -1,
+      length = path.length,
+      lastIndex = length - 1,
+      nested = object;
+
+  while (nested != null && ++index < length) {
+    var key = path[index],
+        newValue = value;
+
+    if (index != lastIndex) {
+      var objValue = nested[key];
+
+      newValue = isObject(objValue)
+        ? objValue
+        : (isIndex(path[index + 1]) ? [] : {});
+    }
+
+    nested[key] = newValue;
+
+    nested = nested[key];
+  }
+
+  return object;
+}
+
 /**
  * This returns an array of records from the dataset.
  * @name
@@ -1223,18 +1478,104 @@ export async function shell(schema, cache, query, queryMap, isQueriedMap, base, 
  * @param {object} query
  * @returns {Object[]}
  */
-function core(directive, line) {
-  console.log("core", directive, line)
+function core(directive, stage, line) {
+  // console.log("core", directive, line)
 
-  const record2001 = {
-    _: 'datum',
-    datum: 'value1',
-    filepath: { _: 'filepath', filepath: 'path/to/1', moddate: '2001-01-01'},
-    saydate: '2001-01-01',
-    sayname: 'name1',
-    actdate: '2001-01-01',
-    actname: 'name1',
-  };
+  // ignore empty newline
+  if (line === "") return directive;
 
-  return record2001
+  const {
+    data: [row],
+  } = csv.parse(line);
+
+  const [fst, snd] = row;
+
+  // TODO match constraints
+  // if (stage.hasConstraints) {
+  //   const failsConstraints =
+  //     keyMap[stage.trait] !== undefined &&
+  //     !keyMap[stage.trait].includes(stage.traitIsFirst ? fst : snd);
+
+  //   if (failsConstraints) return undefined;
+  // }
+
+  if (stage.isValue) {
+    // TODO get nested values from record
+    // right now tries to get nested at first level,
+    // finds either undefined or object and matches all
+    // trunk keys from the record
+    // const regexes = directive.record[stage.trait];
+    const pathTrunk = stage.path.slice(0, -1);
+
+    const valueTrunk = pathTrunk.length > 0
+          ? getPath(directive.record, pathTrunk)
+          : directive.record;
+
+    const regexes = typeof valueTrunk === "object"
+          ? valueTrunk[stage.trait]
+          : valueTrunk;
+
+    // match value by key
+    const isMatch =
+          matchRegexes(
+            Array.isArray(regexes) ? regexes : [regexes],
+            // TODO replace this with .some()
+            [stage.traitIsFirst ? fst : snd],
+          ).length > 0;
+
+    if (isMatch) {
+      const value = stage.thingIsFirst ? fst : snd;
+
+      // const pathTrunk = stage.path.slice(0, -1);
+
+      // const valueTrunk = getPath(directive.record, pathTrunk)
+
+      if (valueTrunk !== undefined && typeof valueTrunk !== "object") {
+        const [trunk] = pathTrunk.slice(-1);
+
+        const objectTrunk = { _: trunk, [trunk]: valueTrunk };
+
+        const recordTrunk = setPath(directive.record, pathTrunk, objectTrunk);
+
+        const recordNew = setPath(recordTrunk, stage.path, value);
+
+        return { record: recordNew, next: true }
+      } else {
+        const recordNew = setPath(directive.record, stage.path, value);
+
+        return { record: recordNew, next: true }
+      }
+    } else {
+      return { record: directive.record };
+    }
+  } else {
+    // does key match regex?
+    const isMatch =
+          matchRegexes(
+            stage.regexes,
+            // TODO replace this with .some()
+            [stage.traitIsFirst ? fst : snd],
+          ).length > 0;
+
+    if (isMatch) {
+      // push to keys
+      const value = stage.thingIsFirst ? fst : snd;
+
+      return { record: { ...directive.record, [stage.thing]: value }, next: true }
+    } else {
+      return { record: directive.record };
+    }
+  }
+
+  // const record2001 = {
+  //   _: 'datum',
+  //   datum: 'value1',
+  //   filepath: { _: 'filepath', filepath: 'path/to/1', moddate: '2001-01-01'},
+  //   saydate: '2001-01-01',
+  //   sayname: 'name1',
+  //   actdate: '2001-01-01',
+  //   actname: 'name1',
+  // };
+
+  // return record2001
 }
