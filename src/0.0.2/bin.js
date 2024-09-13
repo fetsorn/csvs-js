@@ -1304,9 +1304,7 @@ export async function shell(schema, cache, query, queryMap, isQueriedMap, base, 
     objectMode: true,
 
     read() {
-      // console.log("start", query)
       if (this._toggle) {
-        // console.log("AA")
         this.push(null);
       } else {
         this._toggle = true;
@@ -1340,27 +1338,31 @@ export async function shell(schema, cache, query, queryMap, isQueriedMap, base, 
       const streamNew = new stream.Transform({
         objectMode: true,
 
-        transform(chunk, encoding, callback) {
-          // console.log("transform", chunk, stage.filename)
-          // if (chunk === null) callback(null, chunk)
+        transform(directive, encoding, callback) {
+          // if (stage.filename === "datum-actdate.csv") {
+            console.log("transform", directive, stage.filename)
+          // }
 
-          var directive = chunk;
           var hasMatch = false;
 
           for (const line of lines) {
-            const directiveNew = core(directive, stage, line);
+            // remove "next" here for checking lists, never pass "next = true" to push
+            const { next, ...directiveNew } = core(directive, stage, line);
 
             directive = directiveNew;
 
             // push if ready for the next tablet
             // TODO or if no more lines
-            if (directiveNew.next) {
+            if (next) {
               hasMatch = true;
-              this.push({ ...directiveNew, next: false })
+              this.push(directiveNew)
             }
           }
 
           if (hasMatch === false) {
+          // if (hasMatch === false && this._toggle !== true) {
+            // console.log("should it be called?", directive, stage)
+            this._toggle = true;
             this.push(directive)
           }
 
@@ -1391,7 +1393,7 @@ export async function shell(schema, cache, query, queryMap, isQueriedMap, base, 
     objectMode: true,
 
     write(directive, encoding, callback) {
-      // console.log("write", directive);
+      console.log("write", directive);
 
       records.push(directive.record);
 
