@@ -1340,33 +1340,37 @@ export async function shell(schema, cache, query, queryMap, isQueriedMap, base, 
       const streamNew = new stream.Transform({
         objectMode: true,
 
-        transform(directive, encoding, callback) {
-          // if (stage.filename === "datum-filepath.csv") {
-          //   console.log("transform", directive, stage.filename)
-          // }
+        transform(chunk, encoding, callback) {
+          let directive = chunk;
 
-          var hasMatch = false;
+          if (stage.filename === "filepath-moddate.csv") {
+            console.log("transform", directive, stage.filename)
+          }
+
+          // var hasMatch = false;
 
           for (const line of lines) {
             // remove "next" here for checking lists, never pass "next = true" to push
             const { next, ...directiveNew } = core(directive, stage, line);
 
+            // if this proved to be new, push previous
+            if (next) {
+              // hasMatch = true;
+              this.push({...directive, keyPrevious: undefined})
+            }
+
             directive = directiveNew;
 
-            // push if ready for the next tablet
-            // TODO or if no more lines
-            if (next) {
-              hasMatch = true;
-              this.push(directiveNew)
-            }
           }
 
-          if (hasMatch === false) {
+          // TODO don't push
+          // TODO push at the end
+          // if (hasMatch === false) {
           // if (hasMatch === false && this._toggle !== true) {
             // console.log("should it be called?", directive, stage)
-            this._toggle = true;
-            this.push(directive)
-          }
+            // this._toggle = true;
+          this.push({...directive, keyPrevious: undefined})
+          // }
 
           // this.push(null);
 
@@ -1484,7 +1488,7 @@ function setPath(object, path, value) {
  */
 function core(directive, stage, line) {
   if (stage.filename === "filepath-moddate.csv") {
-    console.log("core", directive, line)
+    // console.log("core", directive, line)
   }
 
   // ignore empty newline
@@ -1495,6 +1499,8 @@ function core(directive, stage, line) {
   } = csv.parse(line);
 
   const [fst, snd] = row;
+
+  const key = [stage.traitIsFirst ? fst : snd];
 
   // TODO match constraints
   if (stage.hasConstraints) {
@@ -1534,15 +1540,21 @@ function core(directive, stage, line) {
             [stage.traitIsFirst ? fst : snd],
           ).length > 0;
 
-    if (stage.filename === "filepath-moddate.csv") {
-      console.log("isMatch", directive, isMatch, valueTrunk, Array.isArray(regexes) ? regexes : [regexes], [stage.traitIsFirst ? fst : snd], matchRegexes(
-            Array.isArray(regexes) ? regexes : [regexes],
-            // TODO replace this with .some()
-            [stage.traitIsFirst ? fst : snd],
-          ))
-    }
+    //if (stage.filename === "filepath-moddate.csv") {
+    //  console.log("isMatch", directive, isMatch, valueTrunk, Array.isArray(regexes) ? regexes : [regexes], [stage.traitIsFirst ? fst : snd], matchRegexes(
+    //        Array.isArray(regexes) ? regexes : [regexes],
+    //        // TODO replace this with .some()
+    //        [stage.traitIsFirst ? fst : snd],
+    //      ))
+    //}
 
     if (isMatch) {
+      // if key is the same, keep adding to list
+      // if key is different, push previous record
+      const nextPartial = directive.keyPrevious === undefined || key === directive.keyPrevious
+            ? { keyPrevious: key }
+            : { keyPrevious: key, next: true };
+
       const value = stage.thingIsFirst ? fst : snd;
 
       // const pathTrunk = stage.path.slice(0, -1);
@@ -1558,11 +1570,15 @@ function core(directive, stage, line) {
 
         const recordNew = setPath(recordTrunk, stage.path, value);
 
-        return { record: recordNew, next: true }
+        // TODO append to list if key === directive.keyPrevious
+
+        return { record: recordNew, ...nextPartial }
       } else {
         const recordNew = setPath(directive.record, stage.path, value);
 
-        return { record: recordNew, next: true }
+        // TODO append to list if key === directive.keyPrevious
+
+        return { record: recordNew, ...nextPartial }
       }
     } else {
       return { record: directive.record };
@@ -1577,10 +1593,17 @@ function core(directive, stage, line) {
           ).length > 0;
 
     if (isMatch) {
+      // if key is the same, keep adding to list
+      // if key is different, push previous record
+      const nextPartial = directive.keyPrevious === undefined || key === directive.keyPrevious
+            ? { keyPrevious: key }
+            : { keyPrevious: key, next: true };
+
       // push to keys
       const value = stage.thingIsFirst ? fst : snd;
+        // TODO append to list if key === directive.keyPrevious
 
-      return { record: { ...directive.record, [stage.thing]: value }, next: true }
+      return { record: { ...directive.record, [stage.thing]: value }, ...nextPartial }
     } else {
       return { record: directive.record };
     }
