@@ -862,7 +862,6 @@ export function enrichBranchRecords(schemaRecord, metaRecords) {
     return [...accBranch, branchRecord]
   }, [])
 
-  console.log(branchRecords)
   return branchRecords
 }
 
