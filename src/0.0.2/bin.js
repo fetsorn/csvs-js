@@ -349,6 +349,7 @@ export function merge(valueMap, pair, key, value) {
  * @returns {string[]}
  */
 export function matchRegexes(regexes, values) {
+  if (regexes === undefined || values === undefined) return []
   return values.filter((value) =>
     regexes.some((regex) => new RegExp(regex).test(value)),
   );
@@ -1263,6 +1264,7 @@ export function findStrategyShell(schema, query, queryMap, isQueriedMap, base) {
     filename: `${base}-${branch}.csv`,
     path: [branch],
     isValue: true,
+    hasConstraints: true,
   }));
 
   // TODO general implementation for each nesting level
@@ -1339,8 +1341,8 @@ export async function shell(schema, cache, query, queryMap, isQueriedMap, base, 
         objectMode: true,
 
         transform(directive, encoding, callback) {
-          // if (stage.filename === "datum-actdate.csv") {
-            console.log("transform", directive, stage.filename)
+          // if (stage.filename === "datum-filepath.csv") {
+          //   console.log("transform", directive, stage.filename)
           // }
 
           var hasMatch = false;
@@ -1481,7 +1483,9 @@ function setPath(object, path, value) {
  * @returns {Object[]}
  */
 function core(directive, stage, line) {
-  // console.log("core", directive, line)
+  if (stage.filename === "filepath-moddate.csv") {
+    console.log("core", directive, line)
+  }
 
   // ignore empty newline
   if (line === "") return directive;
@@ -1493,13 +1497,13 @@ function core(directive, stage, line) {
   const [fst, snd] = row;
 
   // TODO match constraints
-  // if (stage.hasConstraints) {
-  //   const failsConstraints =
-  //     keyMap[stage.trait] !== undefined &&
-  //     !keyMap[stage.trait].includes(stage.traitIsFirst ? fst : snd);
+  if (stage.hasConstraints) {
+    const failsConstraints =
+          directive.record[stage.trait] !== undefined &&
+      !directive.record[stage.trait].includes(stage.traitIsFirst ? fst : snd);
 
-  //   if (failsConstraints) return undefined;
-  // }
+    if (failsConstraints) return directive;
+  }
 
   if (stage.isValue) {
     // TODO get nested values from record
@@ -1509,13 +1513,18 @@ function core(directive, stage, line) {
     // const regexes = directive.record[stage.trait];
     const pathTrunk = stage.path.slice(0, -1);
 
+    // TODO handle when pathTrunk is long but trunk is undefined
     const valueTrunk = pathTrunk.length > 0
           ? getPath(directive.record, pathTrunk)
           : directive.record;
 
-    const regexes = typeof valueTrunk === "object"
+    const foo = typeof valueTrunk === "object"
           ? valueTrunk[stage.trait]
           : valueTrunk;
+
+    const regexes = foo === undefined
+          ? []
+          : foo;
 
     // match value by key
     const isMatch =
@@ -1524,6 +1533,14 @@ function core(directive, stage, line) {
             // TODO replace this with .some()
             [stage.traitIsFirst ? fst : snd],
           ).length > 0;
+
+    if (stage.filename === "filepath-moddate.csv") {
+      console.log("isMatch", directive, isMatch, valueTrunk, Array.isArray(regexes) ? regexes : [regexes], [stage.traitIsFirst ? fst : snd], matchRegexes(
+            Array.isArray(regexes) ? regexes : [regexes],
+            // TODO replace this with .some()
+            [stage.traitIsFirst ? fst : snd],
+          ))
+    }
 
     if (isMatch) {
       const value = stage.thingIsFirst ? fst : snd;
