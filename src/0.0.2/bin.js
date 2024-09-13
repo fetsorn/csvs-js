@@ -474,6 +474,240 @@ export function findQueries(schema, queryMap, base) {
   return isQueriedMap;
 }
 
+/**
+ *
+ * @name findStrategy
+ * @export function
+ * @param {object} schema -
+ * @param {object} query -
+ * @param {object} queryMap -
+ * @param {object} isQueriedMap -
+ * @param {string} base -
+ * @returns {object[]} -
+ */
+export function findStrategy(schema, query, queryMap, isQueriedMap, base) {
+  // in order of query,
+  // first queried twigs
+  // then queried trunks
+  // then trunk of base
+  // then base (either last queried or first unqueried),
+  const queriedBranches = Object.keys(isQueriedMap).sort(
+    sortNestingAscending(schema),
+  );
+
+  const queriedTablets = queriedBranches.map((branch) => ({
+    // what branch to set?
+    thing: schema[branch].trunk,
+    // what branch to match?
+    trait: branch,
+    // do we set first column?
+    thingIsFirst: true,
+    // do we match first column?
+    traitIsFirst: false,
+    filename: `${schema[branch].trunk}-${branch}.csv`,
+    regexes: Object.keys(queryMap[`${schema[branch].trunk}-${branch}.csv`])
+      .map(
+        (trunkRegex) =>
+          queryMap[`${schema[branch].trunk}-${branch}.csv`][trunkRegex],
+      )
+      .flat(),
+    hasConstraints: true,
+  }));
+
+  const queriedGroups = queriedTablets.reduce(
+    (acc, tablet) => {
+      const leavesNumber = countLeaves(schema, tablet.trait);
+
+      if (leavesNumber < acc.nestingLevel) {
+        throw "unexpected sorting order of branches";
+      }
+
+      const nestingLevel =
+        leavesNumber === acc.nestingLevel
+          ? acc.nestingLevel
+          : acc.nestingLevel + 1;
+
+      const rest = acc.groups.slice(0, -1);
+
+      const current = (acc.groups.slice(-1) ?? [])[0] ?? [];
+
+      const groups =
+        leavesNumber === acc.nestingLevel
+          ? rest.concat([current.concat([tablet])])
+          : acc.groups.concat([[tablet]]);
+
+      return { nestingLevel, groups };
+    },
+    { nestingLevel: 0, groups: [] },
+  ).groups;
+
+  const baseHasTrunk = schema[base].trunk !== undefined;
+
+  // if base is leaf, parse the trunk relationship
+  const trunkTablet = {
+    // what branch to set?
+    thing: base,
+    // what branch to match?
+    trait: schema[base].trunk,
+    // do we set first column?
+    thingIsFirst: false,
+    // do we match first column?
+    traitIsFirst: false,
+    filename: `${schema[base].trunk}-${base}.csv`,
+    regexes: [query[base] ?? ""],
+  };
+
+  const leaves = Object.keys(schema).filter((b) => schema[b].trunk === base);
+
+  // const isLeafQueried = queriedBranches.some((branch) =>
+  //   leaves.includes(branch),
+  // );
+
+  const leafTablets = leaves.map((leaf) => ({
+    // what branch to set?
+    thing: base,
+    // what branch to match?
+    trait: base,
+    // do we set first column?
+    thingIsFirst: true,
+    // do we match first column?
+    traitIsFirst: true,
+    filename: `${base}-${leaf}.csv`,
+    regexes: [query[base] ?? ""],
+    isAppend: true,
+  }));
+
+  // const baseGroups = baseHasTrunk ? [[trunkTablet]] : [leafTablets];
+  const basePartial = baseHasTrunk ? [[trunkTablet]] : [];
+
+  // if at least one leaf is queried, don't parse other leaves
+  // if only datum is queried query all leaves
+  const leafPartial = queriedBranches.length === 0 ? [leafTablets] : [];
+
+  const strategy = [...queriedGroups, ...basePartial, ...leafPartial];
+
+  return strategy;
+}
+
+/**
+ *
+ * @name parseLine
+ * @export function
+ * @param {object} keyMap -
+ * @param {object} stage -
+ * @param {string} line -
+ * @returns {string | undefined} -
+ */
+function parseLine(keyMap, stage, line) {
+  // ignore empty newline
+  if (line === "") return undefined;
+
+  const {
+    data: [row],
+  } = csv.parse(line);
+
+  const [fst, snd] = row;
+
+  if (stage.hasConstraints) {
+    const failsConstraints =
+      keyMap[stage.trait] !== undefined &&
+      !keyMap[stage.trait].includes(stage.traitIsFirst ? fst : snd);
+
+    if (failsConstraints) return undefined;
+  }
+
+  // does key match regex?
+  const isMatch =
+    matchRegexes(
+      stage.regexes,
+      // TODO replace this with .some()
+      [stage.traitIsFirst ? fst : snd],
+    ).length > 0;
+
+  if (isMatch) {
+    // push to keys
+    return stage.thingIsFirst ? fst : snd;
+  }
+}
+
+/**
+ *
+ * @name parseTablet
+ * @export function
+ * @param {object} keyMap -
+ * @param {object} cache -
+ * @param {object} stage -
+ * @returns {object} -
+ */
+function parseTablet(keyMap, cache, stage) {
+  const lines = cache[stage.filename].split("\n");
+
+  // TODO: rename keys to something else
+  const keys = lines
+    .map((line) => parseLine(keyMap, stage, line))
+    .filter((key) => key !== undefined);
+
+  // const keyMapStage = completeTablet(keyMap, stage, keys);
+
+  if (stage.isAppend) {
+    const keyMapStage = Array.from(new Set([...keys, ...(keyMap[stage.thing] ?? [])]));
+
+    return { [stage.thing]: keyMapStage };
+  }
+
+  if (keyMap[stage.thing] === undefined) {
+    const keyMapStage = Array.from(new Set(keys));
+
+    return { [stage.thing]: keyMapStage };
+  }
+
+  const keyMapStage = intersect(keyMap[stage.thing], Array.from(new Set(keys)));
+
+  return { [stage.thing]: keyMapStage };
+}
+
+export async function findKeys(
+  schema,
+  cache,
+  query,
+  queryMap,
+  isQueriedMap,
+  base,
+) {
+  const groups = findStrategy(schema, query, queryMap, isQueriedMap, base);
+
+  // each group of tablets must be parsed in succession
+  const keyMap = groups.reduce(
+    // each tablet in a group can be parsed in parallel
+    // and keyMap partials merged on completion
+    (accGroup, group) => group.reduce(
+        (accStage, stage) =>  ({
+            ...accStage,
+            ...parseTablet(accStage, cache, stage),
+          }),
+        accGroup,
+      ),
+    {},
+  );
+
+  const { trunk } = schema[base];
+
+  if (trunk === undefined) {
+    // base is root
+    const valuesBase = keyMap[base];
+
+    const regexesBase = [query[base] ?? ""];
+
+    if (valuesBase !== undefined) {
+      const keysBase = matchRegexes(regexesBase, valuesBase);
+
+      keyMap[base] = keysBase;
+    }
+  }
+
+  return keyMap[base] ?? [];
+}
+
 // TODO: split findKeys into search strategies
 // TODO: remove keys of queryMap from keyMap
 // "?_=datum&datum=notInDataset" returns [ { _: datum, datum: notInDataset } ]
@@ -488,7 +722,7 @@ export function findQueries(schema, queryMap, base) {
  * @param {string} base -
  * @returns {string[]} -
  */
-export async function findKeys(
+export async function findKeysOld(
   schema,
   cache,
   query,
