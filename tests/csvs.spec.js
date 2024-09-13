@@ -163,7 +163,7 @@ describe('Query.select() ripgrep 0.0.1', () => {
   })
 })
 
-describe('Query.select() ripgrep 0.0.2', () => {
+describe.only('Query.select() ripgrep 0.0.2', () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
 

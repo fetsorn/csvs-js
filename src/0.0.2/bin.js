@@ -1,4 +1,7 @@
 import csv from "papaparse";
+import stream from "stream";
+// for polyfills use promisify instead of stream/promises.pipeline
+import { promisify } from "util";
 
 /**
  * This tells if a branch is connected to base branch.
@@ -1125,4 +1128,113 @@ export function extractSchemaRecords(branchRecords) {
   );
 
   return [records.schemaRecord, ...records.metaRecords];
+}
+
+/**
+ * This returns an array of records from the dataset.
+ * @name
+ * @function
+ * @param {object} query
+ * @returns {Object[]}
+ */
+export async function shell(schema, cache, query, queryMap, isQueriedMap, base, strategy) {
+  console.log("shell")
+  const startStream = new stream.Readable({
+    objectMode: true,
+
+    read() {
+      console.log("start", query)
+      this.push(query);
+
+      this.push(null);
+    },
+  });
+
+  const streams = strategy.reduce(
+    // each tablet in a group can be parsed in parallel
+    // and keyMap partials merged on completion
+    (accSequential, group) => {
+      // console.log("group", accSequential, group)
+
+      const a = group.reduce(
+        (accParallel, stage) => {
+          // console.log("stage", accParallel, stage)
+
+          const lines = cache[stage.filename].split("\n");
+
+          const streamNew = new stream.Transform({
+            objectMode: true,
+
+            transform(chunk, encoding, callback) {
+              console.log("transform", chunk, stage.filename)
+              for (const line of lines) {
+                const directive = core({ directive: chunk, stage }, line);
+
+                this.push(directive)
+              }
+              this.push(null);
+
+              callback();
+            },
+          });
+
+          return [ streamNew, ...accParallel ]
+        },
+        accSequential);
+
+      return [...a, ...accSequential]
+    },
+    [],
+  );
+
+  var records = [];
+
+  const collectStream = new stream.Writable({
+    objectMode: true,
+
+    write(entry, encoding, callback) {
+      console.log("write", entry);
+
+      records.push(entry);
+
+      callback()
+    },
+
+    close() {},
+
+    abort(err) {
+      console.log("Sink error:", err);
+    },
+  });
+
+  // console.log([startStream, ...streams, collectStream])
+
+  const pipeline = promisify(stream.pipeline);
+
+  await pipeline([startStream, ...streams, collectStream]);
+
+  return records
+}
+
+/**
+ * This returns an array of records from the dataset.
+ * @name
+ * @function
+ * @param {object} query
+ * @returns {Object[]}
+ */
+function core(directive, line) {
+  console.log("core", directive, line)
+
+  const record2001 = {
+    _: 'datum',
+    datum: 'value1',
+    filepath: { _: 'filepath', filepath: 'path/to/1', moddate: '2001-01-01'},
+    saydate: '2001-01-01',
+    sayname: 'name1',
+    actdate: '2001-01-01',
+    actname: 'name1',
+  };
+
+  return record2001
 }

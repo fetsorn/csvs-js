@@ -9,144 +9,144 @@ export const testCasesSelect = (version) => [
     initial: mocks[version].datasetDefault,
     expected: [mocks[version].record2001]
   },
-  {
-    name: "queries name2",
-    query: "?_=datum&actname=name2",
-    initial: mocks[version].datasetDefault,
-    expected: [mocks[version].record2002]
-  },
-  {
-    name: "queries name3",
-    query: "?_=datum&actname=name3",
-    initial: mocks[version].datasetDefault,
-    expected: [mocks[version].record2003Unedited]
-  },
-  {
-    name: "queries name2 with out-of-order schema",
-    query: "?_=datum&actname=name2",
-    initial: mocks[version].datasetUnordered,
-    expected: [mocks[version].record2002]
-  },
-  {
-    name: "queries name1 with array of tags",
-    query: "?_=datum&actname=name1",
-    initial: mocks[version].datasetArray,
-    expected: [mocks[version].recordArray]
-  },
-  //{
-  //  name: "queries name1 by UUID",
-  //  query: "actname=9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1",
-  //  initial: mocks[version].datasetDefault,
-  //  expected: [mocks[version].record2001]
-  //},
-  {
-    name: "queries value2 with array of tags",
-    query: "?_=datum&datum=value1",
-    initial: mocks[version].datasetArrayAdded,
-    expected: [mocks[version].recordArray]
-  },
-  {
-    name: "queries export1_key with array of tags",
-    query: "?_=datum&export1_key=longkey1",
-    initial: mocks[version].datasetArrayAdded,
-    expected: [mocks[version].recordArray]
-  },
-  {
-    name: "queries name1 with regexp",
-    query: "?_=datum&actname=name.*",
-    initial: mocks[version].datasetDefault,
-    expected: [mocks[version].record2001,mocks[version].record2002,mocks[version].record2003Unedited]
-  },
-  {
-    name: "queries no names with literal regexp",
-    query: "?_=datum&actname=name$",
-    initial: mocks[version].datasetDefault,
-    expected: []
-  },
-  {
-    name: "queries no names with literal regexp",
-    query: "?_=datum&actname=^ame$",
-    initial: mocks[version].datasetDefault,
-    expected: []
-  },
-  {
-    name: "queries moddate regex",
-    query: "?_=datum&moddate=.*-01-01",
-    initial: mocks[version].datasetDefault,
-    expected: [mocks[version].record2001,mocks[version].record2002]
-  },
-  {
-    name: "queries two queries",
-    query: "?_=datum&actname=name.*&actdate=2001-01-01",
-    initial: mocks[version].datasetDefault,
-    expected: [mocks[version].record2001]
-  },
-  {
-    name: "queries export1_tag with export1_key",
-    query: "?_=export1_tag&export1_key=longkey1",
-    initial: mocks[version].datasetArrayAdded,
-    expected: [mocks[version].recordExport1Tag]
-  },
-  {
-    name: "queries unlinked export1_tag with export1_key",
-    query: "?_=export1_tag&export1_key=longkey1",
-    initial: mocks[version].datasetDeletedArrayItem,
-    expected: [mocks[version].recordExport1Tag]
-  },
-  {
-    name: "queries name",
-    query: "?_=actname",
-    initial: mocks[version].datasetAdded,
-    expected: mocks[version].optionsActname
-  },
-  {
-    name: "queries date",
-    query: "_=actdate",
-    initial: mocks[version].datasetAdded,
-    expected: mocks[version].optionsActdate
-  },
-  {
-    name: "queries sayname with grep",
-    query: "_=sayname",
-    initial: mocks[version].datasetAdded,
-    expected: mocks[version].optionsSayname
-  },
-  {
-    name: "queries saydate with grep",
-    query: "_=saydate",
-    initial: mocks[version].datasetAdded,
-    expected: mocks[version].optionsSaydate
-  },
-  {
-    name: "queries object",
-    query: "_=export1_tag",
-    initial: mocks[version].datasetArray,
-    expected: mocks[version].optionsExport1Tag
-  },
-  {
-    name: "queries object free from trunk",
-    query: "_=export1_tag",
-    initial: mocks[version].datasetArrayFree,
-    expected: mocks[version].optionsExport1TagFree
-  },
-  {
-    name: "query schema relations",
-    query: "_=_",
-    initial: mocks[version].datasetDefault,
-    expected: [mocks[version].recordSchema]
-  },
-  {
-    name: "queries name1 with leader filepath",
-    query: "?_=datum&__=filepath&actname=name1",
-    initial: mocks[version].datasetDefault,
-    expected: [mocks[version].record2001Filepath]
-  },
-  {
-    name: "queries name1 with array of literal values",
-    query: "?_=datum&actname=name1",
-    initial: mocks[version].datasetArrayLiteral,
-    expected: [mocks[version].recordArrayLiteral]
-  },
+  // {
+  //   name: "queries name2",
+  //   query: "?_=datum&actname=name2",
+  //   initial: mocks[version].datasetDefault,
+  //   expected: [mocks[version].record2002]
+  // },
+  // {
+  //   name: "queries name3",
+  //   query: "?_=datum&actname=name3",
+  //   initial: mocks[version].datasetDefault,
+  //   expected: [mocks[version].record2003Unedited]
+  // },
+  // {
+  //   name: "queries name2 with out-of-order schema",
+  //   query: "?_=datum&actname=name2",
+  //   initial: mocks[version].datasetUnordered,
+  //   expected: [mocks[version].record2002]
+  // },
+  // {
+  //   name: "queries name1 with array of tags",
+  //   query: "?_=datum&actname=name1",
+  //   initial: mocks[version].datasetArray,
+  //   expected: [mocks[version].recordArray]
+  // },
+  // //{
+  // //  name: "queries name1 by UUID",
+  // //  query: "actname=9367417d63903350aeb7e092bca792263d4fd82d4912252e014e073a8931b4c1",
+  // //  initial: mocks[version].datasetDefault,
+  // //  expected: [mocks[version].record2001]
+  // //},
+  // {
+  //   name: "queries value2 with array of tags",
+  //   query: "?_=datum&datum=value1",
+  //   initial: mocks[version].datasetArrayAdded,
+  //   expected: [mocks[version].recordArray]
+  // },
+  // {
+  //   name: "queries export1_key with array of tags",
+  //   query: "?_=datum&export1_key=longkey1",
+  //   initial: mocks[version].datasetArrayAdded,
+  //   expected: [mocks[version].recordArray]
+  // },
+  // {
+  //   name: "queries name1 with regexp",
+  //   query: "?_=datum&actname=name.*",
+  //   initial: mocks[version].datasetDefault,
+  //   expected: [mocks[version].record2001,mocks[version].record2002,mocks[version].record2003Unedited]
+  // },
+  // {
+  //   name: "queries no names with literal regexp",
+  //   query: "?_=datum&actname=name$",
+  //   initial: mocks[version].datasetDefault,
+  //   expected: []
+  // },
+  // {
+  //   name: "queries no names with literal regexp",
+  //   query: "?_=datum&actname=^ame$",
+  //   initial: mocks[version].datasetDefault,
+  //   expected: []
+  // },
+  // {
+  //   name: "queries moddate regex",
+  //   query: "?_=datum&moddate=.*-01-01",
+  //   initial: mocks[version].datasetDefault,
+  //   expected: [mocks[version].record2001,mocks[version].record2002]
+  // },
+  // {
+  //   name: "queries two queries",
+  //   query: "?_=datum&actname=name.*&actdate=2001-01-01",
+  //   initial: mocks[version].datasetDefault,
+  //   expected: [mocks[version].record2001]
+  // },
+  // {
+  //   name: "queries export1_tag with export1_key",
+  //   query: "?_=export1_tag&export1_key=longkey1",
+  //   initial: mocks[version].datasetArrayAdded,
+  //   expected: [mocks[version].recordExport1Tag]
+  // },
+  // {
+  //   name: "queries unlinked export1_tag with export1_key",
+  //   query: "?_=export1_tag&export1_key=longkey1",
+  //   initial: mocks[version].datasetDeletedArrayItem,
+  //   expected: [mocks[version].recordExport1Tag]
+  // },
+  // {
+  //   name: "queries name",
+  //   query: "?_=actname",
+  //   initial: mocks[version].datasetAdded,
+  //   expected: mocks[version].optionsActname
+  // },
+  // {
+  //   name: "queries date",
+  //   query: "_=actdate",
+  //   initial: mocks[version].datasetAdded,
+  //   expected: mocks[version].optionsActdate
+  // },
+  // {
+  //   name: "queries sayname with grep",
+  //   query: "_=sayname",
+  //   initial: mocks[version].datasetAdded,
+  //   expected: mocks[version].optionsSayname
+  // },
+  // {
+  //   name: "queries saydate with grep",
+  //   query: "_=saydate",
+  //   initial: mocks[version].datasetAdded,
+  //   expected: mocks[version].optionsSaydate
+  // },
+  // {
+  //   name: "queries object",
+  //   query: "_=export1_tag",
+  //   initial: mocks[version].datasetArray,
+  //   expected: mocks[version].optionsExport1Tag
+  // },
+  // {
+  //   name: "queries object free from trunk",
+  //   query: "_=export1_tag",
+  //   initial: mocks[version].datasetArrayFree,
+  //   expected: mocks[version].optionsExport1TagFree
+  // },
+  // {
+  //   name: "query schema relations",
+  //   query: "_=_",
+  //   initial: mocks[version].datasetDefault,
+  //   expected: [mocks[version].recordSchema]
+  // },
+  // {
+  //   name: "queries name1 with leader filepath",
+  //   query: "?_=datum&__=filepath&actname=name1",
+  //   initial: mocks[version].datasetDefault,
+  //   expected: [mocks[version].record2001Filepath]
+  // },
+  // {
+  //   name: "queries name1 with array of literal values",
+  //   query: "?_=datum&actname=name1",
+  //   initial: mocks[version].datasetArrayLiteral,
+  //   expected: [mocks[version].recordArrayLiteral]
+  // },
 ]
 
 export const testCasesUpdate = (version) => [

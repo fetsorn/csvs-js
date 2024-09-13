@@ -9,6 +9,8 @@ import {
   findQueries,
   findKeys,
   condense,
+  shell,
+  findStrategy
 } from "./bin.js";
 
 /** Class representing a dataset query. */
@@ -59,28 +61,40 @@ export default class Select {
 
     const isQueriedMap = findQueries(this.#store.schema, queryMap, base);
 
-    const baseKeys = await findKeys(
+    const strategy = findStrategy(this.#store.schema, query, queryMap, isQueriedMap, base);
+
+    const records = await shell(
       this.#store.schema,
       this.#store.cache,
       query,
       queryMap,
       isQueriedMap,
       base,
+      strategy,
     );
 
-    const valueMap = await findValues(
-      this.#store.schema,
-      this.#store.cache,
-      base,
-      baseKeys,
-    );
+    // const baseKeys = await findKeys(
+    //   this.#store.schema,
+    //   this.#store.cache,
+    //   query,
+    //   queryMap,
+    //   isQueriedMap,
+    //   base,
+    // );
 
-    const records = baseKeys.map((key) =>
-      condense(
-        this.#store.schema,
-        buildRecord(this.#store.schema, valueMap, base, key),
-      ),
-    );
+    // const valueMap = await findValues(
+    //   this.#store.schema,
+    //   this.#store.cache,
+    //   base,
+    //   baseKeys,
+    // );
+
+    // const records = baseKeys.map((key) =>
+    //   condense(
+    //     this.#store.schema,
+    //     buildRecord(this.#store.schema, valueMap, base, key),
+    //   ),
+    // );
 
     if (leader && leader !== base) {
       return records.map((record) => record[leader]).filter(Boolean)
