@@ -16,7 +16,8 @@ export function parseTablet(cache, tablet) {
     objectMode: true,
 
     transform(state, encoding, callback) {
-      console.log("tablet", state, tablet);
+      // if (tablet.filename === "export_tags-export1_tag.csv")
+      //   console.log("tablet", tablet.filename, lines, "\n", state);
       let stateIntermediary = state;
 
       for (const line of lines) {

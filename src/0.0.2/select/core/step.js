@@ -286,116 +286,257 @@ export function stepOld(tablet, state, trait, thing) {
 }
 
 export function step(tablet, state, trait, thing) {
-  console.log("step", state, trait, thing);
+  // if (tablet.filename === "export_tags-export1_tag.csv")
+  console.log(
+    "step",
+    tablet.filename,
+    state.record._,
+    "\n",
+    trait,
+    thing,
+    "\n",
+    JSON.stringify(state, undefined, 2),
+  );
 
   const { _: base } = state.record;
 
   // iterate over fields of state.record
-  return Object.entries(state.record).reduce((acc, [key, value]) => {
-    // if value is list of objects, map step to items
-    // assume that the list is homogenous and has only objects
-    if (Array.isArray(value) && typeof value[0] === "object") {
-      // TODO if tablet.hasConstraints check constraints here
-      const values = value.map((item) => {
-        const stateItem = { record: item };
-
-        // TODO if item is not object, match
-
-        // if item is object, map to step?
-        // TODO should we strip base values if trunk is object for matching?
-        return step(tablet, stateItem, trait, thing).record;
-      });
-
-      return {
-        ...acc,
-        record: {
-          ...acc.record,
-          [key]: values,
-        },
-      };
-    }
-
+  const bar = Object.entries(state.record).reduce((accEntry, [key, value]) => {
     // if value is object, step to value
-    if (typeof value === "object") {
+    if (!Array.isArray(value) && typeof value === "object") {
+      console.log("is object", value);
       const stateObject = { record: value };
 
-      return {
-        ...acc,
+      if (tablet.filename === "export_tags-export2_tag.csv")
+        console.log("down one step", base, stateObject);
+
+      const iii = step(tablet, stateObject, trait, thing).record;
+
+      const res = {
+        ...accEntry,
         record: {
-          ...acc.record,
-          [key]: step(tablet, stateObject, trait, thing).record,
+          ...accEntry.record,
+          [key]: iii,
         },
+        // next: true,
       };
+
+      return res;
     }
 
-    // otherwise if value is literal, match against tablet and line
-    // if key is trait, match trait value against value
-    if (key === tablet.trait) {
-      if (tablet.hasConstraints) {
-        // assume that trait is not regex but one literal value
-        // should be safe here because of strategy
-        // TODO what about trait that is regex but not value?
-        const values = Array.isArray(value) ? value : [value];
+    let values = Array.isArray(value) ? value : [value];
 
-        const failsConstraints = !values.includes(trait);
+    // TODO what if accItem already has more values than value?
+    // then omitter loses them and shadows with old value
+    // instead should not omit, but pass accEntry as is
+    if (
+      accEntry.record[key] !== undefined &&
+      JSON.stringify([accEntry.record[key]].flat()) !== JSON.stringify(values)
+    )
+      values = accEntry.record[key];
 
-        if (failsConstraints) return acc;
-      }
+    // console.log("omitting", accEntry.record[key], "for", values);
 
-      const regexes = Array.isArray(value) ? value : [value];
+    const { [key]: omitted, ...recordWithoutKey } = accEntry.record;
 
-      const isMatch =
-        matchRegexes(
-          regexes,
-          // TODO replace this with .some()
-          [trait],
-        ).length > 0;
+    // if (
+    //   tablet.filename === "export_tags-export1_tag.csv" &&
+    //   key === "export1_tag"
+    // )
+    //   console.log("reduce values", accEntry, key, values, recordWithoutKey);
 
-      // TODO how do i know here that trunk should become object?
-      if (isMatch) {
-        // if matched, set value of thing to thing value
-        //
-        //
-        // if trait is not base, set trait to object
-        // TODO what if trait is leaf and matches base?
-        if (tablet.trait !== base && tablet.thing !== base) {
-          // assume that trait here is always trunk of thing
-          const trunk = tablet.trait;
+    const foo = values.reduce(
+      (accItem, item) => {
+        if (!Array.isArray(item) && typeof item === "object") {
+          // console.log("is object", value);
+          const itemNew = step(tablet, { record: item }, trait, thing).record;
 
-          // assume that trait is literal in state.record
-          const trunkValue = state.record[trunk];
+          const itemsPartial =
+            accItem.record[key] === undefined ? [] : accItem.record[key];
 
-          const trunkObject = {
-            _: trunk,
-            [trunk]: trunkValue,
-            [tablet.thing]: thing,
-          };
+          const itemsOld = Array.isArray(itemsPartial)
+            ? itemsPartial
+            : [itemsPartial];
+
+          const itemsNew =
+            itemsOld.length > 0 ? [...itemsOld, itemNew] : itemNew;
 
           return {
-            ...acc,
-            record: { ...acc.record, [trunk]: trunkObject },
-            next: true,
+            ...accItem,
+            record: {
+              ...accItem.record,
+              [key]: itemsNew,
+            },
+            // next: true,
           };
         }
 
-        // assume that thing is a leaf
-        const leaf = tablet.thing;
+        // otherwise if value is literal, match against tablet and line
+        // if key is trait branch, match trait value against value
+        if (key === tablet.trait) {
+          if (tablet.hasConstraints) {
+            // assume that trait is not regex but one literal value
+            // should be safe here because of the strategy
+            // TODO what about trait that is regex but not value?
+            // TODO use tablet.regexes
+            const failsConstraints = item !== trait;
 
-        // assume that existing leaf value is a literal
-        // append here if value already exists
-        const leafValue =
-          state.record[leaf] === undefined
-            ? thing
-            : [state.record[leaf], thing];
+            const itemsPartial =
+              accItem.record[key] === undefined ? [] : accItem.record[key];
+
+            const itemsOld = Array.isArray(itemsPartial)
+              ? itemsPartial
+              : [itemsPartial];
+
+            const itemsNew = itemsOld.length > 0 ? [...itemsOld, item] : item;
+
+            if (failsConstraints)
+              return {
+                ...accItem,
+                record: { ...accItem.record, [key]: itemsNew },
+              };
+          }
+
+          // TODO use tablet.regexes
+          const isMatch =
+            matchRegexes(
+              [item],
+              // TODO replace this with .some()
+              [trait],
+            ).length > 0;
+
+          // TODO how do i know here that trunk should become object?
+          if (isMatch) {
+            // if matched, set value of thing to thing value
+            //
+
+            const leaf = tablet.thing;
+
+            // if trait is not base, set trait to object
+            // TODO what if trait is leaf and matches base?
+            if (tablet.trait === base || tablet.thing === base) {
+              const leafValue =
+                accItem.record[leaf] === undefined
+                  ? thing
+                  : [accItem.record[leaf], thing];
+
+              const itemsPartial =
+                accItem.record[key] === undefined ? [] : accItem.record[key];
+
+              const itemsOld = Array.isArray(itemsPartial)
+                ? itemsPartial
+                : [itemsPartial];
+
+              const itemsNew = itemsOld.length > 0 ? [...itemsOld, item] : item;
+
+              const res = {
+                ...accItem,
+                record: {
+                  ...accItem.record,
+                  [key]: itemsNew,
+                  [leaf]: leafValue,
+                },
+                next: true,
+              };
+
+              return res;
+            }
+            // assume that trait here is always trunk of thing
+            const trunk = key;
+
+            // assume that trait is literal in state.record
+            const trunkValue = item;
+
+            // assume that thing is a leaf
+
+            // const trunkObject = {
+            //   _: trunk,
+            //   [trunk]: trunkValue,
+            //   [leaf]: thing,
+            // };
+
+            // return trunkObject;
+            // }
+
+            // assume that thing is a leaf
+            // const leaf = tablet.thing;
+
+            // assume that existing leaf value is a literal
+            // append here if value already exists
+            const leafValue =
+              accItem.record[leaf] === undefined
+                ? thing
+                : [accItem.record[leaf], thing];
+
+            const trunkObject = {
+              _: trunk,
+              [trunk]: trunkValue,
+              [leaf]: leafValue,
+            };
+
+            const itemsPartial =
+              accItem.record[key] === undefined ? [] : accItem.record[key];
+
+            const itemsOld = Array.isArray(itemsPartial)
+              ? itemsPartial
+              : [itemsPartial];
+
+            const itemsNew =
+              itemsOld.length > 0 ? [...itemsOld, trunkObject] : trunkObject;
+
+            return {
+              ...accItem,
+              record: {
+                ...accItem.record,
+                [trunk]: itemsNew,
+              },
+              next: true,
+            };
+          }
+        }
+
+        const itemsPartial =
+          accItem.record[key] === undefined ? [] : accItem.record[key];
+
+        // if (tablet.filename === "export_tags-export1_tag.csv")
+        // console.log("itemsPartial", accItem, itemsPartial);
+
+        const itemsOld = Array.isArray(itemsPartial)
+          ? itemsPartial
+          : [itemsPartial];
+
+        const itemsNew = itemsOld.length > 0 ? [...itemsOld, item] : item;
+
+        // if (tablet.filename === "export_tags-export1_tag.csv")
+        //   console.log("itemsNew", itemsNew);
 
         return {
-          ...acc,
-          record: { ...acc.record, [leaf]: leafValue },
-          next: true,
+          ...accItem,
+          record: { ...accItem.record, [key]: itemsNew },
         };
-      }
-    }
+      },
+      { ...state, record: recordWithoutKey },
+    );
 
-    return acc;
+    // if (tablet.filename === "export_tags-export1_tag.csv")
+    //   console.log("foo", base, key, value, foo);
+
+    return { ...accEntry, ...foo };
+
+    // TODO can values length be 0?
+    //return {
+    //  ...accEntry,
+    //  record: {
+    //    ...accEntry.record,
+    //    ...valuesPartial,
+    //    // [key]: valuesNew.length === 1 ? valuesNew[0] : valuesNew,
+    //  },
+    //  next: true,
+    //};
   }, state);
+
+  // if (tablet.filename === "export_tags-export1_tag.csv")
+  //   console.log("bar", base, thing, bar);
+
+  return bar;
 }

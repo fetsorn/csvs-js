@@ -9,7 +9,15 @@ import { step } from "./core/index.js";
  * @returns {Object[]}
  */
 export function parseLine(state, tablet, line) {
-  console.log("line", state, line);
+  // if (tablet.filename === "export_tags-export1_tag.csv")
+  console.log(
+    "line",
+    tablet.filename,
+    "\n",
+    line,
+    "\n",
+    JSON.stringify(state, undefined, 2),
+  );
   // ignore empty newline
   if (line === "") return state;
 
@@ -25,7 +33,12 @@ export function parseLine(state, tablet, line) {
 
   // iterate
 
-  return step(tablet, state, trait, thing);
+  const res = step(tablet, state, trait, thing);
+
+  // if (tablet.filename === "export_tags-export1_tag.csv")
+  //   console.log("end of line\n", JSON.stringify(res, undefined, 2));
+
+  return res;
 
   // let stateIntermediary = state;
 

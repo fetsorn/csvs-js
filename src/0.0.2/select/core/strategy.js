@@ -128,6 +128,7 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
     traitIsFirst: false,
     filename: `${schema[base].trunk}-${base}.csv`,
     regexes: [query[base] ?? ""],
+    // should it have constraints?
   };
 
   const leaves = Object.keys(schema).filter((b) => schema[b].trunk === base);
@@ -144,6 +145,7 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
     filename: `${base}-${leaf}.csv`,
     regexes: [query[base] ?? ""],
     isAppend: true,
+    // should it have constraints?
   }));
 
   // const baseGroups = baseHasTrunk ? [[trunkTablet]] : [leafTablets];
@@ -196,12 +198,38 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
     })
     .flat();
 
+  const valueTablets2 = valueBranches
+    .map((branch) => {
+      const branchLeaves1 = Object.keys(schema).filter(
+        (b) => schema[b].trunk === branch,
+      );
+      return branchLeaves1.map((leaf1) => {
+        const branchLeaves2 = Object.keys(schema).filter(
+          (b) => schema[b].trunk === leaf1,
+        );
+        return branchLeaves2.map((leaf2) => ({
+          // what branch to set?
+          thing: leaf2,
+          // what branch to match?
+          trait: leaf1,
+          // do we set first column?
+          thingIsFirst: false,
+          // do we match first column?
+          traitIsFirst: true,
+          filename: `${leaf1}-${leaf2}.csv`,
+          isValue: true,
+        }));
+      });
+    })
+    .flat(Infinity);
+
   const strategy = [
     ...queriedGroups,
     ...basePartial,
     ...leafPartial,
     valueTablets,
     valueTablets1,
+    valueTablets2,
   ];
 
   return strategy;
