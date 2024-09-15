@@ -1,13 +1,17 @@
 /* eslint-disable no-console */
+import { describe, beforeEach, expect, test } from "@jest/globals";
+import { TextEncoder, TextDecoder, promisify } from "util";
+import fs from "fs";
+import crypto from "crypto";
+import { exec } from "child_process";
+import { CSVS } from "../src/index.js";
 import {
-  describe, beforeEach, expect, test,
-} from '@jest/globals';
-import { TextEncoder, TextDecoder, promisify } from 'util';
-import fs from 'fs';
-import crypto from 'crypto';
-import { exec } from 'child_process';
-import { CSVS } from '../src/index';
-import { testCasesSelect, testCasesUpdate, testCasesDelete } from './cases.js';
+  testCasesSelect,
+  testCasesUpdate,
+  testCasesDelete,
+  testCasesGetValue,
+  testCasesSetValue,
+} from "./cases.js";
 
 // node polyfills for browser APIs
 // used in csvs_js.digestMessage for hashes
@@ -19,10 +23,9 @@ global.crypto = {
 };
 
 function sortObject(a) {
-  return Object.keys(a).sort().reduce(
-    (obj, key) => ({ ...obj, [key]: a[key] }),
-    {},
-  );
+  return Object.keys(a)
+    .sort()
+    .reduce((obj, key) => ({ ...obj, [key]: a[key] }), {});
 }
 
 let callback;
@@ -35,7 +38,7 @@ const callbackOriginal = {
 
     // backwards compatibility with old tests
     if (counter === 1) {
-      return '5ff1e403-da6e-430d-891f-89aa46b968bf';
+      return "5ff1e403-da6e-430d-891f-89aa46b968bf";
     }
 
     return `${counter}`;
@@ -51,19 +54,19 @@ async function grepCLI(contentFile, patternFile, isInverse) {
 
   await fs.promises.writeFile(patternFilePath, patternFile);
 
-  let output = '';
+  let output = "";
 
   try {
     const { stdout, stderr } = await promisify(exec)(
-      `rg ${isInverse ? '-v' : ''} -f ${patternFilePath} ${contentFilePath}`,
+      `rg ${isInverse ? "-v" : ""} -f ${patternFilePath} ${contentFilePath}`,
     );
 
     if (stderr) {
-      console.log('grep cli failed', stderr);
+      console.log("grep cli failed", stderr);
     } else {
       output = stdout;
     }
-  } catch (e) {
+  } catch {
     // console.log('grep returned empty', e, contentFile, patternFile);
   }
 
@@ -74,7 +77,7 @@ async function grepCLI(contentFile, patternFile, isInverse) {
   return output;
 }
 
-describe('Query.select() no ripgrep 0.0.1', () => {
+describe("Query.select() no ripgrep 0.0.1", () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
   });
@@ -85,7 +88,7 @@ describe('Query.select() no ripgrep 0.0.1', () => {
 
       callback.readFile = (path) => testCase.initial[path];
 
-      const client = new CSVS(callback)
+      const client = new CSVS(callback);
 
       return client.select(searchParams).then((data) => {
         if (data[0].export_tags) {
@@ -95,16 +98,16 @@ describe('Query.select() no ripgrep 0.0.1', () => {
         data.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
 
         const expected = testCase.expected
-                                 .map(sortObject)
-                                 .sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
+          .map(sortObject)
+          .sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
 
-        expect(data).toStrictEqual(expected)
-      })
-    })
-  })
-})
+        expect(data).toStrictEqual(expected);
+      });
+    });
+  });
+});
 
-describe('Query.select() no ripgrep 0.0.2', () => {
+describe("Query.select() no ripgrep 0.0.2", () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
   });
@@ -115,23 +118,24 @@ describe('Query.select() no ripgrep 0.0.2', () => {
 
       callback.readFile = (path) => testCase.initial[path];
 
-      const client = new CSVS(callback)
+      const client = new CSVS(callback);
 
       return client.select(searchParams).then((data) => {
-        const dataSorted = data.map(sortObject)
-                               .sort((a, b) => (a[a._] < b[b._] ? -1 : 1))
+        const dataSorted = data
+          .map(sortObject)
+          .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
 
         const expected = testCase.expected
-                                 .map(sortObject)
-                                 .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
+          .map(sortObject)
+          .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
 
-        expect(dataSorted).toStrictEqual(expected)
-      })
-    })
-  })
-})
+        expect(dataSorted).toStrictEqual(expected);
+      });
+    });
+  });
+});
 
-describe('Query.select() ripgrep 0.0.1', () => {
+describe("Query.select() ripgrep 0.0.1", () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
 
@@ -144,7 +148,7 @@ describe('Query.select() ripgrep 0.0.1', () => {
 
       callback.readFile = (path) => testCase.initial[path];
 
-      const client = new CSVS(callback)
+      const client = new CSVS(callback);
 
       return client.select(searchParams).then((data) => {
         if (data[0].export_tags) {
@@ -154,16 +158,16 @@ describe('Query.select() ripgrep 0.0.1', () => {
         data.sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
 
         const expected = testCase.expected
-                                 .map(sortObject)
-                                 .sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
+          .map(sortObject)
+          .sort((a, b) => (a.UUID < b.UUID ? -1 : 1));
 
-        expect(data).toStrictEqual(expected)
-      })
-    })
-  })
-})
+        expect(data).toStrictEqual(expected);
+      });
+    });
+  });
+});
 
-describe.only('Query.select() ripgrep 0.0.2', () => {
+describe.only("Query.select() ripgrep 0.0.2", () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
 
@@ -176,23 +180,24 @@ describe.only('Query.select() ripgrep 0.0.2', () => {
 
       callback.readFile = (path) => testCase.initial[path];
 
-      const client = new CSVS(callback)
+      const client = new CSVS(callback);
 
       return client.select(searchParams).then((data) => {
-        const dataSorted = data.map(sortObject)
-                               .sort((a, b) => (a[a._] < b[b._] ? -1 : 1))
+        const dataSorted = data
+          .map(sortObject)
+          .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
 
         const expected = testCase.expected
-                                 .map(sortObject)
-                                 .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
+          .map(sortObject)
+          .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
 
-        expect(dataSorted).toStrictEqual(expected)
-      })
-    })
-  })
-})
+        expect(dataSorted).toStrictEqual(expected);
+      });
+    });
+  });
+});
 
-describe('Query.selectBaseKeys() ripgrep 0.0.2', () => {
+describe("Query.selectBaseKeys() ripgrep 0.0.2", () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
 
@@ -205,25 +210,28 @@ describe('Query.selectBaseKeys() ripgrep 0.0.2', () => {
 
       callback.readFile = (path) => testCase.initial[path];
 
-      const client = new CSVS(callback)
+      const client = new CSVS(callback);
 
-      const { base, baseKeys } = await client.selectBaseKeys(searchParams)
+      const { base, baseKeys } = await client.selectBaseKeys(searchParams);
 
-      const records = await Promise.all(baseKeys.map((baseKey) => client.buildRecord(base, baseKey)));
+      const records = await Promise.all(
+        baseKeys.map((baseKey) => client.buildRecord(base, baseKey)),
+      );
 
-      const dataSorted = records.map(sortObject)
-                                .sort((a, b) => (a[a._] < b[b._] ? -1 : 1))
+      const dataSorted = records
+        .map(sortObject)
+        .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
 
       const expected = testCase.expected
-                               .map(sortObject)
-                               .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
+        .map(sortObject)
+        .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
 
-      expect(dataSorted).toStrictEqual(expected)
-    })
-  })
-})
+      expect(dataSorted).toStrictEqual(expected);
+    });
+  });
+});
 
-describe('Entry.update() 0.0.1', () => {
+describe("Entry.update() 0.0.1", () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
   });
@@ -242,16 +250,16 @@ describe('Entry.update() 0.0.1', () => {
 
       counter = 0;
 
-      const client = new CSVS(callback)
+      const client = new CSVS(callback);
 
-      return client.update(testCase.query).then((data) => {
-        expect(editedFiles).toStrictEqual(testCase.expected)
-      })
-    })
-  })
-})
+      return client.update(testCase.query).then(() => {
+        expect(editedFiles).toStrictEqual(testCase.expected);
+      });
+    });
+  });
+});
 
-describe('Entry.update() 0.0.2', () => {
+describe("Entry.update() 0.0.2", () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
   });
@@ -270,16 +278,16 @@ describe('Entry.update() 0.0.2', () => {
 
       counter = 0;
 
-      const client = new CSVS(callback)
+      const client = new CSVS(callback);
 
-      return client.update(testCase.query).then((data) => {
-        expect(editedFiles).toStrictEqual(testCase.expected)
-      })
-    })
-  })
-})
+      return client.update(testCase.query).then(() => {
+        expect(editedFiles).toStrictEqual(testCase.expected);
+      });
+    });
+  });
+});
 
-describe('Entry.delete() 0.0.1', () => {
+describe("Entry.delete() 0.0.1", () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
   });
@@ -296,16 +304,16 @@ describe('Entry.delete() 0.0.1', () => {
 
       callback.readFile = async (path) => editedFiles[path];
 
-      const client = new CSVS(callback)
+      const client = new CSVS(callback);
 
-      return client.delete(testCase.query).then((data) => {
-        expect(editedFiles).toStrictEqual(testCase.expected)
-      })
-    })
-  })
-})
+      return client.delete(testCase.query).then(() => {
+        expect(editedFiles).toStrictEqual(testCase.expected);
+      });
+    });
+  });
+});
 
-describe('Entry.delete() 0.0.2', () => {
+describe("Entry.delete() 0.0.2", () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
   });
@@ -321,11 +329,37 @@ describe('Entry.delete() 0.0.2', () => {
 
       callback.readFile = async (path) => editedFiles[path];
 
-      const client = new CSVS(callback)
+      const client = new CSVS(callback);
 
-      return client.delete(testCase.query).then((data) => {
-        expect(editedFiles).toStrictEqual(testCase.expected)
-      })
-    })
-  })
-})
+      return client.delete(testCase.query).then(() => {
+        expect(editedFiles).toStrictEqual(testCase.expected);
+      });
+    });
+  });
+});
+
+describe("getValue", () => {
+  testCasesGetValue().forEach((testCase) => {
+    test(testCase.name, () => {
+      expect(
+        getValue(testCase.schema, testCase.query, testCase.initial),
+      ).toStrictEqual(testCase.expected);
+    });
+  });
+});
+
+describe("setValue", () => {
+  testCasesSetValue().forEach((testCase) => {
+    test(testCase.name, () => {
+      expect(
+        setValue(
+          testCase.schema,
+          testCase.initial,
+          testCase.trunk,
+          testCase.branch,
+          testCase.value,
+        ),
+      ).toStrictEqual(testCase.expected);
+    });
+  });
+});

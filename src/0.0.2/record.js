@@ -1,0 +1,175 @@
+/**
+ * This function is true when branch has no leaves
+ * @name isTwig
+ * @function
+ * @param {object} schema - Dataset schema.
+ * @param {object} record - An expanded record.
+ * @returns {object} - A condensed record.
+ */
+export function isTwig(schema, branch) {
+  return (
+    Object.keys(schema).filter((b) => schema[b].trunk === branch).length === 0
+  );
+}
+
+/**
+ * This function condenses the data structure where possible
+ * @name condense
+ * @function
+ * @param {object} schema - Dataset schema.
+ * @param {object} record - An expanded record.
+ * @returns {object} - A condensed record.
+ */
+export function condense(schema, record) {
+  const base = record._;
+
+  const entries = Object.entries(record);
+
+  const entriesCondensed = entries
+    .filter(([key]) => key !== "_" && key !== record._)
+    .map(([branch, value]) => {
+      if (Array.isArray(value)) {
+        const itemsCondensed = isTwig(schema, branch)
+          ? value.map((item) =>
+              typeof item === "string" ? item : item[branch],
+            )
+          : value.map((item) => condense(schema, item));
+
+        if (itemsCondensed.length === 0) {
+          return undefined;
+        }
+
+        if (itemsCondensed.length === 1) {
+          const valueCondensed = itemsCondensed[0];
+
+          return [branch, valueCondensed];
+        }
+
+        return [branch, itemsCondensed];
+      }
+
+      if (typeof value === "object") {
+        const valueCondensed = isTwig ? value[branch] : condense(schema, value);
+
+        return [branch, valueCondensed];
+      }
+
+      if (typeof value === "string") {
+        const valueCondensed = isTwig ? value : { _: branch, [branch]: value };
+
+        return [branch, valueCondensed];
+      }
+
+      return undefined;
+    });
+
+  const recordCondensed = Object.fromEntries(entriesCondensed.filter(Boolean));
+
+  return { ...recordCondensed, _: base, [base]: record[base] };
+}
+
+/**
+ * This function expands the data structure
+ * @name expand
+ * @function
+ * @param {object} record - A condensed record.
+ * @returns {object} - An expanded record.
+ */
+export function expand(record) {
+  const base = record._;
+
+  const entries = Object.entries(record);
+
+  // TODO: this is borked, fix
+  const entriesExpanded = entries
+    .filter(([key]) => key !== "_" && key !== record._)
+    .map(([key, value]) => {
+      const valueExpanded =
+        typeof value === "string"
+          ? [{ _: key, [key]: value }]
+          : [value].flat().map(expand);
+
+      return [key, valueExpanded];
+    });
+
+  const recordExpanded = Object.fromEntries(entriesExpanded);
+
+  return { _: base, [base]: record[base], ...recordExpanded };
+}
+
+// add trunk field from schema record to branch records
+// turn { _: _, branch1: [ branch2 ] }, [{ _: branch, branch: "branch2", task: "date" }]
+// into [{ _: branch, branch: "branch2", trunk: "branch1", task: "date" }]
+export function enrichBranchRecords(schemaRecord, metaRecords) {
+  // [[branch1, [branch2]]]
+  const schemaRelations = Object.entries(schemaRecord).filter(
+    ([key]) => key !== "_",
+  );
+
+  // list of unique branches in the schema
+  const branches = [...new Set(schemaRelations.flat(Infinity))];
+
+  const branchRecords = branches.reduce((accBranch, branch) => {
+    // check each key of schemaRecord, if array has branch, push trunk to metaRecord.trunk
+    const trunkPartial = schemaRelations.reduce((accTrunk, [trunk, leaves]) => {
+      if (leaves.includes(branch)) {
+        // if old is array, [ ...old, new ]
+        // if old is string, [ old, new ]
+        // is old is undefined, [ new ]
+        const trunks = accTrunk.trunk
+          ? [accTrunk.trunk, trunk].flat(Infinity)
+          : trunk;
+
+        return { ...accTrunk, trunk: trunks };
+      }
+
+      return accTrunk;
+    }, {});
+
+    const branchPartial = { _: "branch", branch };
+
+    const metaPartial =
+      metaRecords.find((record) => record.branch === branch) ?? {};
+
+    // if branch has no trunks, it's a trunk
+    if (trunkPartial.trunk === undefined) {
+      const rootRecord = { ...branchPartial, ...metaPartial };
+
+      return [...accBranch, rootRecord];
+    }
+
+    const branchRecord = { ...branchPartial, ...metaPartial, ...trunkPartial };
+
+    return [...accBranch, branchRecord];
+  }, []);
+
+  return branchRecords;
+}
+
+// extract schema record with trunks from branch records
+// turn [{ _: branch, branch: "branch2", trunk: "branch1", task: "date" }]
+// into [{ _: _, branch1: branch2 }, { _: branch, branch: "branch2", task: "date" }]
+export function extractSchemaRecords(branchRecords) {
+  const records = branchRecords.reduce(
+    (acc, branchRecord) => {
+      const { trunk, ...branchRecordOmitted } = branchRecord;
+
+      const accLeaves = acc.schemaRecord[trunk] ?? [];
+
+      const schemaRecord =
+        trunk !== undefined
+          ? {
+              ...acc.schemaRecord,
+              [trunk]: [branchRecord.branch, ...accLeaves],
+            }
+          : acc.schemaRecord;
+
+      const metaRecords = [branchRecordOmitted, ...acc.metaRecords];
+
+      return { schemaRecord, metaRecords };
+    },
+    { schemaRecord: { _: "_" }, metaRecords: [] },
+  );
+
+  return [records.schemaRecord, ...records.metaRecords];
+}

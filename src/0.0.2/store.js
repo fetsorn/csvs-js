@@ -1,5 +1,5 @@
 import csv from "papaparse";
-import { findCrownPaths } from "./bin.js";
+import { findCrownPaths } from "./schema.js";
 
 export default class Store {
   /**

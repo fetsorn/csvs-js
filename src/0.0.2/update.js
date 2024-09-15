@@ -1,6 +1,7 @@
 import csv from "papaparse";
 import Store from "./store.js";
-import { recordToRelationMap, findCrown } from "./bin.js";
+import { findCrown } from "./schema.js";
+import { recordToRelationMap } from "./query.js";
 
 /** Class representing a dataset record. */
 export default class Update {
@@ -66,7 +67,9 @@ export default class Update {
       // handle if value is literal, expand
       // TODO: handle if value is object, expand?
       // TODO: handle if value is array of objects?
-      const values = Array.isArray(record[trunk]) ? record[trunk] : [record[trunk]];
+      const values = Array.isArray(record[trunk])
+        ? record[trunk]
+        : [record[trunk]];
 
       // assume value is array of literals
       const relations = values.map((branch) => `${trunk},${branch}`);
