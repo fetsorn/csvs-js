@@ -47,6 +47,16 @@ export function parseTablet(cache, tablet) {
         stateIntermediary = stateNew;
       }
 
+      console.log(
+        "push",
+        tablet.filename,
+        tablet,
+        JSON.stringify(
+          stateIntermediary.matched ?? stateIntermediary.current,
+          undefined,
+          2,
+        ),
+      );
       this.push(stateIntermediary.matched ?? stateIntermediary.current);
 
       callback();

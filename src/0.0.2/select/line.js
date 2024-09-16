@@ -31,9 +31,6 @@ export function parseLine(state, tablet, line) {
 
   const thing = tablet.thingIsFirst ? fst : snd;
 
-  if (state.trait !== undefined && state.trait !== trait)
-    console.log("setting new state", state.trait, trait);
-
   const stateNew =
     state.trait === undefined || state.trait === trait
       ? { ...state, trait: trait }
