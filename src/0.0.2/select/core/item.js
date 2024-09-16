@@ -2,10 +2,10 @@ export function parseItem(tablet, state, trait, thing, key, item, omitted) {
   console.log(
     "item",
     tablet.filename,
-    state.record._,
+    state.current._,
     "\n",
-    trait,
-    thing,
+    JSON.stringify(trait, undefined, 2),
+    JSON.stringify(thing, undefined, 2),
     "\n",
     key,
     JSON.stringify(item, undefined, 2),
@@ -13,13 +13,13 @@ export function parseItem(tablet, state, trait, thing, key, item, omitted) {
     JSON.stringify(state, undefined, 2),
   );
 
-  const { _: base } = state.record;
+  const { _: base } = state.current;
   // TODO erase regex here
   // TODO check previous trait here for next partial
 
   // if (!Array.isArray(item) && typeof item === "object") {}
   if (key === tablet.trait) {
-    if (!tablet.traitIsRegex) {
+    if (tablet.traitIsRegex === undefined) {
       console.log(
         "constraints",
         tablet.hasConstraints,
@@ -33,16 +33,16 @@ export function parseItem(tablet, state, trait, thing, key, item, omitted) {
       if (failsConstraints) {
         const stateItem = {
           ...state,
-          record: { ...state.record, [key]: item },
+          current: { ...state.current, [key]: item },
         };
 
         console.log(
           "item fails constraints",
           tablet.filename,
-          state.record._,
+          state.current._,
           "\n",
-          trait,
-          thing,
+          JSON.stringify(trait, undefined, 2),
+          JSON.stringify(thing, undefined, 2),
           "\n",
           key,
           JSON.stringify(item, undefined, 2),
@@ -68,29 +68,31 @@ export function parseItem(tablet, state, trait, thing, key, item, omitted) {
     // assume that thing is a leaf
     // if trait is not base, set trait to object
     // assume that trait here is always trunk of thing
-    // assume that trait is literal in state.record
+    // assume that trait is literal in state.current
     // assume that existing leaf value is a literal
     // append here if value already exists
     if (isMatch) {
       if (key === base || tablet.thing === base) {
         // TODO add to existing tablet.thing
         const things =
-          state.record[tablet.thing] === undefined
+          state.current[tablet.thing] === undefined
             ? thing
-            : [state.record[tablet.thing], thing].flat();
+            : [state.current[tablet.thing], thing].flat();
 
         const stateItem = {
           ...state,
-          record: { ...state.record, [key]: item, [tablet.thing]: things },
+          matched: { ...state.current, [key]: item, [tablet.thing]: things },
+          current: { ...state.current, [key]: item, [tablet.thing]: things },
+          next: true,
         };
 
         console.log(
           "item base match",
           tablet.filename,
-          state.record._,
+          state.current._,
           "\n",
-          trait,
-          thing,
+          JSON.stringify(trait, undefined, 2),
+          JSON.stringify(thing, undefined, 2),
           "\n",
           key,
           JSON.stringify(item, undefined, 2),
@@ -107,16 +109,18 @@ export function parseItem(tablet, state, trait, thing, key, item, omitted) {
 
         const stateItem = {
           ...state,
-          record: { ...state.record, [key]: keyObject },
+          matched: { ...state.current, [key]: keyObject },
+          current: { ...state.current, [key]: keyObject },
+          next: true,
         };
 
         console.log(
           "item leaf match",
           tablet.filename,
-          state.record._,
+          state.current._,
           "\n",
-          trait,
-          thing,
+          JSON.stringify(trait, undefined, 2),
+          JSON.stringify(thing, undefined, 2),
           "\n",
           key,
           JSON.stringify(item, undefined, 2),
@@ -129,15 +133,15 @@ export function parseItem(tablet, state, trait, thing, key, item, omitted) {
     }
   }
 
-  const stateItem = { ...state, record: { ...state.record, [key]: omitted } };
+  const stateItem = { ...state, current: { ...state.current, [key]: omitted } };
 
   console.log(
     "item no match",
     tablet.filename,
-    state.record._,
+    state.current._,
     "\n",
-    trait,
-    thing,
+    JSON.stringify(trait, undefined, 2),
+    JSON.stringify(thing, undefined, 2),
     "\n",
     key,
     JSON.stringify(item, undefined, 2),

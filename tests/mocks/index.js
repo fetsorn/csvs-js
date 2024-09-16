@@ -80,6 +80,7 @@ export function loadMocks() {
       datasetUnordered: loadContents("0.0.2/unordered"),
       datasetArray: loadContents("0.0.2/array"),
       datasetArraySimple: loadContents("0.0.2/array_simple"),
+      datasetArrayDouble: loadContents("0.0.2/array_double"),
       datasetArrayEmpty: loadContents("0.0.2/array_empty"),
       datasetArrayAdded: loadContents("0.0.2/array_added"),
       datasetAddedArrayItem: loadContents("0.0.2/added_array_item"),

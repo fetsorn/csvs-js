@@ -4,15 +4,15 @@ export function step(tablet, state, trait, thing) {
   console.log(
     "step",
     tablet.filename,
-    state.record._,
+    state.current._,
     "\n",
-    trait,
-    thing,
+    JSON.stringify(trait, undefined, 2),
+    JSON.stringify(thing, undefined, 2),
     "\n",
     JSON.stringify(state, undefined, 2),
   );
 
-  const { _: base, ...record } = state.record;
+  const { _: base, ...record } = state.current;
 
   const entries = Object.entries(record);
 
@@ -21,7 +21,7 @@ export function step(tablet, state, trait, thing) {
     let values = Array.isArray(value) ? value : [value];
 
     // remove values of given key to rewrite later
-    const { [key]: omitted, ...recordWithoutKey } = accEntry.record;
+    const { [key]: omitted, ...recordWithoutKey } = accEntry.current;
 
     // reduce each value item to match trait and set thing
     const stateValues = values.reduce(
@@ -30,7 +30,7 @@ export function step(tablet, state, trait, thing) {
       },
       {
         ...accEntry,
-        record: recordWithoutKey,
+        current: recordWithoutKey,
       },
     );
 
@@ -40,7 +40,7 @@ export function step(tablet, state, trait, thing) {
     console.log(
       "step values",
       tablet.filename,
-      state.record._,
+      state.current._,
       "\n",
       key,
       value,
@@ -54,7 +54,7 @@ export function step(tablet, state, trait, thing) {
   console.log(
     "step entries",
     tablet.filename,
-    state.record._,
+    state.current._,
     "\n",
     trait,
     thing,

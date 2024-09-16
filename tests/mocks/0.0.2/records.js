@@ -66,6 +66,16 @@ const recordArraySimple = {
   actname: "name2",
 };
 
+const recordArrayDouble = {
+  _: "datum",
+  datum: "value2",
+  filepath: { _: "filepath", filepath: "path/to/2", moddate: "2002-01-01" },
+  saydate: "2002-01-01",
+  sayname: ["name2", "name3"],
+  actdate: "2002-01-01",
+  actname: ["name1", "name1"],
+};
+
 const recordArray = {
   _: "datum",
   datum: "value1",
@@ -358,6 +368,7 @@ export default {
   recordAdded,
   recordArray,
   recordArraySimple,
+  recordArrayDouble,
   recordArrayAdded,
   recordAddedArrayItem,
   recordEditedArrayItem,

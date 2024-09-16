@@ -25,26 +25,29 @@ export function parseTablet(cache, tablet) {
         JSON.stringify(state, undefined, 2),
       );
 
-      let stateIntermediary = state;
+      let stateIntermediary = { initial: state, current: state };
 
       for (const line of lines) {
-        const { next, end, ...stateNew } = parseLine(
+        const { next, ...stateNew } = parseLine(
           stateIntermediary,
           tablet,
           line,
         );
 
-        if (next || end) {
+        if (next && stateNew.previous) {
           console.log(
             "push",
             tablet.filename,
-            JSON.stringify(stateIntermediary, undefined, 2),
+            tablet,
+            JSON.stringify(stateNew.previous, undefined, 2),
           );
-          this.push({ ...stateIntermediary });
+          this.push({ ...stateNew.previous });
         }
 
         stateIntermediary = stateNew;
       }
+
+      this.push(stateIntermediary.matched ?? stateIntermediary.current);
 
       callback();
     },

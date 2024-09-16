@@ -19,7 +19,7 @@ export function parseLine(state, tablet, line) {
   );
 
   // ignore empty newline
-  if (line === "") return { ...state, end: true };
+  if (line === "") return state;
 
   const {
     data: [row],
@@ -31,5 +31,18 @@ export function parseLine(state, tablet, line) {
 
   const thing = tablet.thingIsFirst ? fst : snd;
 
-  return step(tablet, state, trait, thing);
+  if (state.trait !== undefined && state.trait !== trait)
+    console.log("setting new state", state.trait, trait);
+
+  const stateNew =
+    state.trait === undefined || state.trait === trait
+      ? { ...state, trait: trait }
+      : {
+          ...state,
+          current: state.initial,
+          previous: state.matched,
+          trait: trait,
+        };
+
+  return step(tablet, stateNew, trait, thing);
 }

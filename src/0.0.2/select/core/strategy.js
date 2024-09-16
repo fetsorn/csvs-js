@@ -147,6 +147,7 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
     filename: `${base}-${leaf}.csv`,
     regexes: [query[base] ?? ""],
     isAppend: true,
+    traitIsRegex: true,
     // should it have constraints?
   }));
 
