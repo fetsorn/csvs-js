@@ -27,16 +27,16 @@ export function intersect(as, bs) {
 
 export function step(tablet, state, trait, thing) {
   // if (tablet.filename === "export_tags-export1_tag.csv")
-  console.log(
-    "step",
-    tablet.filename,
-    state.record._,
-    "\n",
-    trait,
-    thing,
-    "\n",
-    JSON.stringify(state, undefined, 2),
-  );
+  // console.log(
+  //   "step",
+  //   tablet.filename,
+  //   state.record._,
+  //   "\n",
+  //   trait,
+  //   thing,
+  //   "\n",
+  //   JSON.stringify(state, undefined, 2),
+  // );
 
   const { _: base } = state.record;
 
@@ -92,10 +92,10 @@ export function step(tablet, state, trait, thing) {
                 next: true,
               };
 
-              console.log(
-                "accEntry object base",
-                JSON.stringify(res, undefined, 2),
-              );
+              // console.log(
+              //   "accEntry object base",
+              //   JSON.stringify(res, undefined, 2),
+              // );
 
               return res;
             }
@@ -137,21 +137,21 @@ export function step(tablet, state, trait, thing) {
               next: true,
             };
 
-            console.log(
-              "accEntry object leaf",
-              tablet.filename,
-              base,
-              "\n",
-              value,
-              "\n",
-              trait,
-              "\n",
-              thing,
-              "\n",
-              JSON.stringify(accEntry, undefined, 2),
-              "\n",
-              JSON.stringify(res, undefined, 2),
-            );
+            // console.log(
+            //   "accEntry object leaf",
+            //   tablet.filename,
+            //   base,
+            //   "\n",
+            //   value,
+            //   "\n",
+            //   trait,
+            //   "\n",
+            //   thing,
+            //   "\n",
+            //   JSON.stringify(accEntry, undefined, 2),
+            //   "\n",
+            //   JSON.stringify(res, undefined, 2),
+            // );
 
             return res;
           }
@@ -170,10 +170,10 @@ export function step(tablet, state, trait, thing) {
             record: { ...accEntry.record, [key]: value },
           };
 
-          console.log(
-            "accEntry object nomatch",
-            JSON.stringify(res, undefined, 2),
-          );
+          // console.log(
+          //   "accEntry object nomatch",
+          //   JSON.stringify(res, undefined, 2),
+          // );
 
           return res;
         }
@@ -187,10 +187,10 @@ export function step(tablet, state, trait, thing) {
           record: { ...accEntry.record, [key]: itemNew },
         };
 
-        console.log(
-          "accEntry object notrait",
-          JSON.stringify(res, undefined, 2),
-        );
+        // console.log(
+        //   "accEntry object notrait",
+        //   JSON.stringify(res, undefined, 2),
+        // );
 
         return res;
       }
@@ -235,7 +235,7 @@ export function step(tablet, state, trait, thing) {
               // next: true,
             };
 
-            console.log("accItem object", JSON.stringify(res, undefined, 2));
+            // console.log("accItem object", JSON.stringify(res, undefined, 2));
 
             return res;
           }
@@ -268,10 +268,10 @@ export function step(tablet, state, trait, thing) {
                   record: { ...accItem.record, [key]: itemsNew },
                 };
 
-                console.log(
-                  "accItem fails constraints",
-                  JSON.stringify(res, undefined, 2),
-                );
+                // console.log(
+                //   "accItem fails constraints",
+                //   JSON.stringify(res, undefined, 2),
+                // );
 
                 return res;
               }
@@ -323,11 +323,11 @@ export function step(tablet, state, trait, thing) {
                   next: true,
                 };
 
-                console.log(
-                  "accItem matches base",
-                  JSON.stringify(accItem, undefined, 2),
-                  JSON.stringify(res, undefined, 2),
-                );
+                // console.log(
+                //   "accItem matches base",
+                //   JSON.stringify(accItem, undefined, 2),
+                //   JSON.stringify(res, undefined, 2),
+                // );
 
                 return res;
               }
@@ -370,10 +370,10 @@ export function step(tablet, state, trait, thing) {
                 next: true,
               };
 
-              console.log(
-                "accItem matches leaf",
-                JSON.stringify(res, undefined, 2),
-              );
+              // console.log(
+              //   "accItem matches leaf",
+              //   JSON.stringify(res, undefined, 2),
+              // );
 
               return res;
             }
@@ -393,40 +393,40 @@ export function step(tablet, state, trait, thing) {
             record: { ...accItem.record, [key]: itemsNew },
           };
 
-          console.log(
-            "accItem no match",
-            base,
-            key,
-            JSON.stringify(res, undefined, 2),
-          );
+          // console.log(
+          //   "accItem no match",
+          //   base,
+          //   key,
+          //   JSON.stringify(res, undefined, 2),
+          // );
 
           return res;
         },
         { ...state, record: recordWithoutKey },
       );
 
-      console.log(
-        "values result",
-        base,
-        key,
-        JSON.stringify(valuesRes, undefined, 2),
-      );
+      // console.log(
+      //   "values result",
+      //   base,
+      //   key,
+      //   JSON.stringify(valuesRes, undefined, 2),
+      // );
 
       return valuesRes;
     },
     state,
   );
 
-  console.log(
-    "step result",
-    tablet.filename,
-    state.record._,
-    "\n",
-    trait,
-    thing,
-    "\n",
-    JSON.stringify(stepRes, undefined, 2),
-  );
+  // console.log(
+  //   "step result",
+  //   tablet.filename,
+  //   state.record._,
+  //   "\n",
+  //   trait,
+  //   thing,
+  //   "\n",
+  //   JSON.stringify(stepRes, undefined, 2),
+  // );
 
   return stepRes;
 }

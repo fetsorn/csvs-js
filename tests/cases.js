@@ -3,30 +3,30 @@ import { loadMocks } from "./mocks/index.js";
 const mocks = loadMocks();
 
 export const testCasesSelect = (version) => [
-  //{
-  //  name: "queries name1",
-  //  query: "?_=datum&actname=name1",
-  //  initial: mocks[version].datasetDefault,
-  //  expected: [mocks[version].record2001],
-  //},
-  //{
-  //  name: "queries name2",
-  //  query: "?_=datum&actname=name2",
-  //  initial: mocks[version].datasetDefault,
-  //  expected: [mocks[version].record2002],
-  //},
-  //{
-  //  name: "queries name3",
-  //  query: "?_=datum&actname=name3",
-  //  initial: mocks[version].datasetDefault,
-  //  expected: [mocks[version].record2003Unedited],
-  //},
-  //{
-  //  name: "queries name2 with out-of-order schema",
-  //  query: "?_=datum&actname=name2",
-  //  initial: mocks[version].datasetUnordered,
-  //  expected: [mocks[version].record2002],
-  //},
+  {
+    name: "queries name1",
+    query: "?_=datum&actname=name1",
+    initial: mocks[version].datasetDefault,
+    expected: [mocks[version].record2001],
+  },
+  {
+    name: "queries name2",
+    query: "?_=datum&actname=name2",
+    initial: mocks[version].datasetDefault,
+    expected: [mocks[version].record2002],
+  },
+  {
+    name: "queries name3",
+    query: "?_=datum&actname=name3",
+    initial: mocks[version].datasetDefault,
+    expected: [mocks[version].record2003Unedited],
+  },
+  {
+    name: "queries name2 with out-of-order schema",
+    query: "?_=datum&actname=name2",
+    initial: mocks[version].datasetUnordered,
+    expected: [mocks[version].record2002],
+  },
   //{
   //  name: "queries name1 with array of tags",
   //  query: "?_=datum&actname=name1",
@@ -51,16 +51,16 @@ export const testCasesSelect = (version) => [
   //  initial: mocks[version].datasetArrayAdded,
   //  expected: [mocks[version].recordArray],
   //},
-  {
-    name: "queries name1 with regexp",
-    query: "?_=datum&actname=name.*",
-    initial: mocks[version].datasetDefault,
-    expected: [
-      mocks[version].record2001,
-      mocks[version].record2002,
-      mocks[version].record2003Unedited,
-    ],
-  },
+  //{
+  //  name: "queries name1 with regexp",
+  //  query: "?_=datum&actname=name.*",
+  //  initial: mocks[version].datasetDefault,
+  //  expected: [
+  //    mocks[version].record2001,
+  //    mocks[version].record2002,
+  //    mocks[version].record2003Unedited,
+  //  ],
+  //},
   // {
   //   name: "queries no names with literal regexp",
   //   query: "?_=datum&actname=name$",

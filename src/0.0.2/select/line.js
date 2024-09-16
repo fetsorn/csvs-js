@@ -9,14 +9,14 @@ import { step } from "./core/index.js";
  * @returns {Object[]}
  */
 export function parseLine(state, tablet, line) {
-  console.log(
-    "line",
-    tablet.filename,
-    "\n",
-    line,
-    "\n",
-    JSON.stringify(state, undefined, 2),
-  );
+  // console.log(
+  //   "line",
+  //   tablet.filename,
+  //   "\n",
+  //   line,
+  //   "\n",
+  //   JSON.stringify(state, undefined, 2),
+  // );
 
   // ignore empty newline
   if (line === "") return state;

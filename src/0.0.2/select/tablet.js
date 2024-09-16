@@ -16,14 +16,14 @@ export function parseTablet(cache, tablet) {
     objectMode: true,
 
     transform(state, encoding, callback) {
-      console.log(
-        "tablet",
-        tablet,
-        "\n",
-        lines,
-        "\n",
-        JSON.stringify(state, undefined, 2),
-      );
+      // console.log(
+      //   "tablet",
+      //   tablet,
+      //   "\n",
+      //   lines,
+      //   "\n",
+      //   JSON.stringify(state, undefined, 2),
+      // );
       let stateIntermediary = state;
 
       for (const line of lines) {
