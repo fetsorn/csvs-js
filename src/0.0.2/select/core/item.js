@@ -19,7 +19,7 @@ export function parseItem(tablet, state, trait, thing, key, item) {
 
   // if (!Array.isArray(item) && typeof item === "object") {}
   if (key === tablet.trait) {
-    if (tablet.hasConstraints) {
+    if (!tablet.traitIsRegex) {
       console.log(
         "constraints",
         tablet.hasConstraints,
@@ -27,6 +27,31 @@ export function parseItem(tablet, state, trait, thing, key, item) {
         item,
         trait,
       );
+
+      const failsConstraints = item !== trait;
+
+      if (failsConstraints) {
+        const stateItem = {
+          ...state,
+          record: { ...state.record, [key]: item },
+        };
+
+        console.log(
+          "item fails constraints",
+          tablet.filename,
+          state.record._,
+          "\n",
+          trait,
+          thing,
+          "\n",
+          key,
+          JSON.stringify(item, undefined, 2),
+          "\n",
+          JSON.stringify(stateItem, undefined, 2),
+        );
+
+        return stateItem;
+      }
     }
     // TODO use tablet.regexes
     // TODO if value is object but base is thing, match object's key

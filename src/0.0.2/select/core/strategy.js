@@ -85,6 +85,7 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
       )
       .flat(),
     hasConstraints: true,
+    traitIsRegex: true,
   }));
 
   const queriedGroups = queriedTablets.reduce(
@@ -128,6 +129,7 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
     traitIsFirst: false,
     filename: `${schema[base].trunk}-${base}.csv`,
     regexes: [query[base] ?? ""],
+    traitIsRegex: true,
     // should it have constraints?
   };
 
