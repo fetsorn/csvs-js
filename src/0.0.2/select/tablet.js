@@ -24,31 +24,58 @@ export function parseTablet(cache, tablet) {
       //   "\n",
       //   JSON.stringify(state, undefined, 2),
       // );
-      let stateIntermediary = state;
+      const stateInitial = state;
+
+      let stateIntermediary = stateInitial;
+
+      let statePrevious = undefined;
+
+      let isEnd = false;
+      let isNext = false;
 
       for (const line of lines) {
         // take "next" here for checking lists, never pass "next = true" to push
-        const { next, ...stateNew } = parseLine(
+        const { next, end, ...stateNew } = parseLine(
           stateIntermediary,
           tablet,
           line,
         );
 
-        // if this line proved to be new, push previous record
-        if (next && this.toggle) {
-          this.push({ ...stateIntermediary, keyPrevious: undefined });
-        }
-
-        // skip first record
-        if (next) {
-          this.toggle = true;
-        }
+        if (end) isEnd = end;
+        if (next) isNext = next;
 
         // TODO erase regex here
         stateIntermediary = stateNew;
+
+        if (next && this.toggle) {
+          isNext = false;
+          this.push({ ...statePrevious, keyPrevious: undefined });
+        }
+
+        if (next) {
+          statePrevious = stateIntermediary;
+          stateIntermediary = stateInitial;
+          this.toggle = true;
+        }
       }
 
-      this.push({ ...stateIntermediary, keyPrevious: undefined });
+      // if no match, end of file returns stateInitial
+      if (isEnd && !isNext && tablet.isAppend) {
+        this.push({ ...stateInitial, keyPrevious: undefined });
+
+        callback();
+
+        return;
+      }
+
+      // if match, end of file pushes the last record
+      if (isEnd && isNext) {
+        this.push({ ...statePrevious, keyPrevious: undefined });
+
+        callback();
+
+        return;
+      }
 
       callback();
     },

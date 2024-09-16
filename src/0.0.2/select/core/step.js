@@ -412,7 +412,7 @@ export function step(tablet, state, trait, thing) {
       //   JSON.stringify(valuesRes, undefined, 2),
       // );
 
-      return valuesRes;
+      return { ...accEntry, ...valuesRes };
     },
     state,
   );

@@ -19,7 +19,7 @@ export function parseLine(state, tablet, line) {
   // );
 
   // ignore empty newline
-  if (line === "") return state;
+  if (line === "") return { ...state, end: true };
 
   const {
     data: [row],
