@@ -248,7 +248,10 @@ export function step(tablet, state, trait, thing) {
               // should be safe here because of the strategy
               // TODO what about trait that is regex but not value?
               // TODO use tablet.regexes
-              const failsConstraints = item !== trait;
+              const failsConstraints =
+                (tablet.regexes === undefined ||
+                  !tablet.regexes.includes(item)) &&
+                item !== trait;
 
               const itemsPartial =
                 accItem.record[key] === undefined ? [] : accItem.record[key];
