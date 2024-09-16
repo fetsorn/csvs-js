@@ -128,8 +128,6 @@ export default class Select {
       objectMode: true,
 
       write(state, encoding, callback) {
-        // console.log("write", state);
-
         records.push(state.record);
 
         callback();

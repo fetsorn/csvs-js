@@ -191,6 +191,8 @@ describe.only("Query.select() ripgrep 0.0.2", () => {
           .map(sortObject)
           .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
 
+        console.log(dataSorted);
+
         expect(dataSorted).toStrictEqual(expected);
       });
     });
