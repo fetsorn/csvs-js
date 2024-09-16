@@ -178,6 +178,7 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
     isValue: true,
     hasConstraints: true,
     isAppend: true,
+    passthrough: true,
   }));
 
   // TODO general implementation for each nesting level
@@ -199,6 +200,7 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
         filename: `${branch}-${leaf}.csv`,
         isValue: true,
         isAppend: true,
+        passthrough: true,
       }));
     })
     .flat();
@@ -224,6 +226,7 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
           filename: `${leaf1}-${leaf2}.csv`,
           isValue: true,
           isAppend: true,
+          passthrough: true,
         }));
       });
     })
