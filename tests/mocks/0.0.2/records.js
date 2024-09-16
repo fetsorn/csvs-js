@@ -61,9 +61,9 @@ const recordArraySimple = {
   datum: "value2",
   filepath: { _: "filepath", filepath: "path/to/2", moddate: "2002-01-01" },
   saydate: "2002-01-01",
-  sayname: "name2",
+  sayname: ["name2", "name3"],
   actdate: "2002-01-01",
-  actname: ["name2", "name3"],
+  actname: "name2",
 };
 
 const recordArray = {

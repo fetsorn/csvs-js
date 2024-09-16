@@ -1,4 +1,4 @@
-export function parseItem(tablet, state, trait, thing, key, item) {
+export function parseItem(tablet, state, trait, thing, key, item, omitted) {
   console.log(
     "item",
     tablet.filename,
@@ -73,9 +73,15 @@ export function parseItem(tablet, state, trait, thing, key, item) {
     // append here if value already exists
     if (isMatch) {
       if (key === base || tablet.thing === base) {
+        // TODO add to existing tablet.thing
+        const things =
+          state.record[tablet.thing] === undefined
+            ? thing
+            : [state.record[tablet.thing], thing].flat();
+
         const stateItem = {
           ...state,
-          record: { ...state.record, [key]: item, [tablet.thing]: thing },
+          record: { ...state.record, [key]: item, [tablet.thing]: things },
         };
 
         console.log(
@@ -123,7 +129,7 @@ export function parseItem(tablet, state, trait, thing, key, item) {
     }
   }
 
-  const stateItem = { ...state, record: { ...state.record, [key]: item } };
+  const stateItem = { ...state, record: { ...state.record, [key]: omitted } };
 
   console.log(
     "item no match",
@@ -140,7 +146,6 @@ export function parseItem(tablet, state, trait, thing, key, item) {
   );
 
   return stateItem;
-  // return { ...state, next: true };
 }
 
 /**

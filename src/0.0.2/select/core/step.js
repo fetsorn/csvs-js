@@ -26,7 +26,7 @@ export function step(tablet, state, trait, thing) {
     // reduce each value item to match trait and set thing
     const stateValues = values.reduce(
       (accItem, item) => {
-        return parseItem(tablet, accItem, trait, thing, key, item);
+        return parseItem(tablet, accItem, trait, thing, key, item, omitted);
       },
       {
         ...accEntry,
