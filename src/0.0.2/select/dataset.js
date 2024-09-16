@@ -5,7 +5,7 @@ export function parseDataset(schema, cache, strategy) {
   var accSequential = [];
 
   for (const group of strategy) {
-    // caeach group be run in parallel
+    // stages inside a group can be run in parallel
     var accParallel = accSequential;
 
     for (const stage of group) {

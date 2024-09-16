@@ -16,8 +16,14 @@ export function parseTablet(cache, tablet) {
     objectMode: true,
 
     transform(state, encoding, callback) {
-      // if (tablet.filename === "export_tags-export1_tag.csv")
-      //   console.log("tablet", tablet.filename, lines, "\n", state);
+      console.log(
+        "tablet",
+        tablet,
+        "\n",
+        lines,
+        "\n",
+        JSON.stringify(state, undefined, 2),
+      );
       let stateIntermediary = state;
 
       for (const line of lines) {
@@ -27,8 +33,6 @@ export function parseTablet(cache, tablet) {
           tablet,
           line,
         );
-
-        // console.log("stateNew", stateNew);
 
         // if this line proved to be new, push previous record
         if (next && this.toggle) {
