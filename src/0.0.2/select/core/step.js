@@ -14,235 +14,218 @@ function log(name, tablet, state, trait, thing, key, item) {
   );
 }
 
-function baseIsTraitFoo(tablet, stateBase, trait, thing) {
-  // assume that base value is not a list or an object
-  const { _: key, [key]: item, ...recordWithoutBase } = stateBase.current;
+// assume that base value is not a list or an object
+function baseIsTraitFoo(tablet, state, trait, thing) {
+  const { trait: base, thing: leaf } = tablet;
 
-  const state = { ...stateBase, current: { _: key, ...recordWithoutBase } };
+  const { [base]: baseValue, ...recordWithoutBase } = state.current;
 
-  const failsConstraints = tablet.traitIsRegex === undefined && item !== trait;
+  const passesConstraints = tablet.traitIsRegex || baseValue === trait;
 
-  if (failsConstraints)
-    log("item constrai", tablet, state, trait, thing, key, item);
+  // if (!passesConstraints)
+  //   log("item constrai", tablet, state, trait, thing, base, baseValue);
 
-  const isMatch = !failsConstraints && new RegExp(item).test(trait);
+  const isMatch = passesConstraints && new RegExp(baseValue).test(trait);
 
-  if (isMatch) {
-    // append if another value already exists
-    const things =
-      state.current[tablet.thing] === undefined
-        ? thing
-        : [state.current[tablet.thing], thing].flat();
+  const leafValue = recordWithoutBase[leaf];
 
-    const stateItem = {
-      ...state,
-      matched: { ...state.current, [key]: item, [tablet.thing]: things },
-      current: { ...state.current, [key]: item, [tablet.thing]: things },
-    };
+  // append if another value already exists
+  const leafValues =
+    leafValue === undefined ? thing : [leafValue, thing].flat();
 
-    log("match base", tablet, stateItem, trait, thing, key, item);
+  const current = isMatch
+    ? { ...recordWithoutBase, [base]: baseValue, [leaf]: leafValues }
+    : { ...recordWithoutBase, [base]: baseValue };
 
-    return stateItem;
-  }
+  const matched = isMatch ? current : undefined;
 
-  const stateItem = { ...state, current: { ...state.current, [key]: item } };
+  const stateItem = { ...state, matched, current };
 
-  log("item no match", tablet, stateItem, trait, thing, key, item);
+  // if (isMatch) {
+  //   log("base match", tablet, stateItem, trait, thing, base, baseValue);
+  // } else {
+  //   log("base no match", tablet, stateItem, trait, thing, base, baseValue);
+  // }
 
   return stateItem;
 }
 
 function baseIsThingFoo(tablet, stateBase, trait, thing) {
-  // TODO what if traitValue is undefined here?
-  const { [tablet.trait]: value, ...recordWithoutLeaf } = stateBase.current;
+  const { trait: leaf, thing: base } = tablet;
 
-  let values = Array.isArray(value) ? value : [value];
+  // TODO what if traitValue is undefined here?
+  const { [leaf]: omitted, ...recordWithoutLeaf } = stateBase.current;
+
+  let leafItems = Array.isArray(omitted) ? omitted : [omitted];
 
   // if record has a trait leaf and thing base, match it to trait to set base
-  const stateValues = values.reduce(
-    (state, itemObj) => {
-      const key = tablet.trait;
+  const stateValues = leafItems.reduce(
+    (state, leafObject) => {
+      const isObject =
+        !Array.isArray(leafObject) && typeof leafObject === "object";
 
-      // take item[tablet.trait] as item value
-      const isObject = !Array.isArray(itemObj) && typeof itemObj === "object";
+      const leafValue = isObject ? leafObject[leaf] : leafObject;
 
-      const item = isObject ? itemObj[tablet.trait] : itemObj;
+      const passesConstraints = tablet.traitIsRegex || leafValue === trait;
 
-      const failsConstraints =
-        tablet.traitIsRegex === undefined && item !== trait;
+      // if (!passesConstraints)
+      //   log("item constrai", tablet, stateItem, trait, thing, leaf, leafValue);
 
-      if (failsConstraints)
-        log("item constrai", tablet, stateItem, trait, thing, key, item);
+      const isMatch = passesConstraints && new RegExp(leafValue).test(trait);
 
-      const isMatch = !failsConstraints && new RegExp(item).test(trait);
+      const baseValue = state.current[base];
 
-      if (isMatch) {
-        const things =
-          state.current[tablet.thing] === undefined
-            ? thing
-            : [state.current[tablet.thing], thing].flat();
+      const baseValues =
+        baseValue === undefined ? thing : [baseValue, thing].flat();
 
-        const stateItem = {
-          ...state,
-          matched: {
+      const current = isMatch
+        ? {
             ...state.current,
-            [key]: item,
-            [tablet.thing]: things,
-          },
-          current: {
-            ...state.current,
-            [key]: item,
-            [tablet.thing]: things,
-          },
-        };
+            [leaf]: leafValue,
+            [base]: baseValues,
+          }
+        : { ...state.current, [leaf]: leafValue };
 
-        log("match base", tablet, stateItem, trait, thing, key, item);
+      const matched = isMatch ? current : undefined;
 
-        return stateItem;
-      }
+      const stateItem = { ...state, matched, current };
 
-      const stateItem = {
-        ...state,
-        current: { ...state.current, [key]: item },
-      };
-
-      log("item no match", tablet, stateItem, trait, thing, key, item);
+      // if (isMatch) {
+      //   log("base match", tablet, stateItem, trait, thing, leaf, leafValue);
+      // } else {
+      //   log("base no match", tablet, stateItem, trait, thing, leaf, leafValue);
+      // }
 
       return stateItem;
     },
     { ...stateBase, current: recordWithoutLeaf },
   );
 
-  log("step leaf", tablet, stateValues, trait, thing, tablet.trait, value);
+  // log("step leaf", tablet, stateValues, trait, thing, leaf, leafItems);
 
   return stateValues;
 }
 
-function leafIsTraitFoo(tablet, stateBase, trait, thing) {
+function trunkIsTraitFoo(tablet, stateBase, trait, thing) {
+  const { trait: trunk, thing: leaf } = tablet;
   // TODO what if traitValue is undefined here?
-  const { [tablet.trait]: value, ...recordWithoutLeaf } = stateBase.current;
+  const { [trunk]: omitted, ...recordWithoutTrunk } = stateBase.current;
 
-  let values = Array.isArray(value) ? value : [value];
+  let trunkItems = Array.isArray(omitted) ? omitted : [omitted];
 
-  const stateValues = values.reduce(
-    (state, item) => {
-      const key = tablet.trait;
+  const stateValues = trunkItems.reduce(
+    (state, trunkObject) => {
+      // log("item", tablet, state, trait, thing, trunk, trunkObject);
 
-      log("item", tablet, state, trait, thing, key, item);
+      const isObject =
+        !Array.isArray(trunkObject) && typeof trunkObject === "object";
 
-      // TODO if item is object, set item value to item[key] and object field to thing
-      // const isObject = !Array.isArray(item) && typeof item === "object";
+      const trunkValue = isObject ? trunkObject[trunk] : trunkObject;
 
-      const failsConstraints =
-        tablet.traitIsRegex === undefined && item !== trait;
+      const passesConstraints = tablet.traitIsRegex || trunkValue === trait;
 
-      if (failsConstraints)
-        log("item constrai", tablet, state, trait, thing, key, item);
+      // if (!passesConstraints)
+      //   log("item constrai", tablet, state, trait, thing, trunk, trunkValue);
 
-      const isMatch = !failsConstraints && new RegExp(item).test(trait);
+      const isMatch = passesConstraints && new RegExp(trunkValue).test(trait);
 
-      if (isMatch) {
-        const keyObject = { _: key, [key]: item, [tablet.thing]: thing };
+      // TODO try to take ...trunkObject if it has something
+      const keyObject = { _: trunk, [trunk]: trunkValue, [leaf]: thing };
 
-        const stateItem = {
-          ...state,
-          matched: { ...state.current, [key]: keyObject },
-          current: { ...state.current, [key]: keyObject },
-        };
+      const current = isMatch
+        ? { ...state.current, [trunk]: keyObject }
+        : {
+            ...state.current, // TODO try to take ...trunkObject if it has something
+            [trunk]: trunkValue,
+          };
 
-        log("match leaf", tablet, stateItem, trait, thing, key, item);
+      const matched = isMatch ? current : undefined;
 
-        return stateItem;
-      }
+      const stateItem = { ...state, matched, current };
 
-      const stateItem = {
-        ...state,
-        current: { ...state.current, [key]: item },
-      };
-
-      log("item no match", tablet, stateItem, trait, thing, key, item);
+      // if (isMatch) {
+      //   log("leaf match", tablet, stateItem, trait, thing, trunk, trunkValue);
+      // } else {
+      //   log("leaf no match", tablet, stateItem, trait, thing, trunk, trunkValue);
+      // }
 
       return stateItem;
     },
-    { ...stateBase, current: recordWithoutLeaf },
+    { ...stateBase, current: recordWithoutTrunk },
   );
 
-  log("step trunk", tablet, stateValues, trait, thing, tablet.trait, value);
+  // log("step trunk", tablet, stateValues, trait, thing, trunk, trunkItems);
 
   return stateValues;
 }
 
-function entriesFoo(tablet, stateOld, trait, thing) {
+// walk down the rest of the leaves to find the trait-thing pair
+function entriesFoo(tablet, stateBase, trait, thing) {
   const {
     _: base,
     [base]: baseValueOmitted,
     ...recordWithoutBase
-  } = stateOld.current;
+  } = stateBase.current;
 
   // TODO can we guess here which of the remaining leaves leads to the tablet.trait?
-  // walk down the rest of the leaves to find the trait-thing pair
   const entries = Object.entries(recordWithoutBase);
 
   // reduce each key-value pair to match trait and set thing
-  const stateEntries = entries.reduce((accEntry, [key, value]) => {
-    let values = Array.isArray(value) ? value : [value];
-
+  const stateEntries = entries.reduce((accEntry, [leaf, leafValue]) => {
     // remove values of given key to rewrite later
-    const { [key]: omitted, ...recordWithoutKey } = accEntry.current;
+    const { [leaf]: omitted, ...recordWithoutLeaf } = accEntry.current;
+
+    let leafItems = Array.isArray(omitted) ? omitted : [omitted];
 
     // reduce each value item to match trait and set thing
-    const stateValues = values.reduce(
-      (state, item) => {
-        const isObject = !Array.isArray(item) && typeof item === "object";
+    const stateValues = leafItems.reduce(
+      (state, leafItem) => {
+        const isObject =
+          !Array.isArray(leafItem) && typeof leafItem === "object";
 
-        if (isObject) {
-          const stateObject = step(tablet, { current: item }, trait, thing);
+        const stateObject = isObject
+          ? step(tablet, { current: leafItem }, trait, thing)
+          : {};
 
-          const matchedPartial = stateObject.matched
-            ? { matched: { ...state.current, [key]: stateObject.matched } }
-            : {};
+        const isMatch = stateObject.matched !== undefined;
 
-          const stateItem = {
-            ...state,
-            current: { ...state.current, [key]: stateObject.current },
-            ...matchedPartial,
-          };
+        const current = isMatch
+          ? { ...state.current, [leaf]: stateObject.current }
+          : { ...state.current, [leaf]: leafItem };
 
-          log("item object", tablet, stateItem, trait, thing, key, item);
+        const matched = stateObject.matched ? current : undefined;
 
-          return stateItem;
-        }
+        const stateItem = { ...state, current, matched };
 
-        const stateItem = {
-          ...state,
-          current: { ...state.current, [key]: item },
-        };
-
-        log("item not object", tablet, stateItem, trait, thing, key, item);
+        // if (isMatch) {
+        //   log("item object", tablet, stateItem, trait, thing, leaf, leafItem);
+        // } else {
+        //   log("item not obj", tablet, stateItem, trait, thing, leaf, leafItem);
+        // }
 
         return stateItem;
       },
       {
         ...accEntry,
-        current: recordWithoutKey,
+        current: recordWithoutLeaf,
       },
     );
 
     // TODO can values length be 0?
-    // [key]: valuesNew.length === 1 ? valuesNew[0] : valuesNew,
+    // [leaf]: valuesNew.length === 1 ? valuesNew[0] : valuesNew,
 
-    log("step values", tablet, stateValues, trait, thing, key, value);
+    // log("step values", tablet, stateValues, trait, thing, leaf, leafItems);
 
     return { ...accEntry, ...stateValues };
-  }, stateOld);
+  }, stateBase);
 
-  log("step entries", tablet, stateEntries, trait, thing);
+  // log("step entries", tablet, stateEntries, trait, thing);
 
   return stateEntries;
 }
 
 export function step(tablet, state, trait, thing) {
-  log("step", tablet, state, trait, thing);
+  // log("step", tablet, state, trait, thing);
 
   const { _: base, [base]: baseValue } = state.current;
 
@@ -259,7 +242,7 @@ export function step(tablet, state, trait, thing) {
   if (baseIsThing) return baseIsThingFoo(tablet, state, trait, thing);
 
   // if leaf is trait but base is not thing
-  if (leafIsTrait) return leafIsTraitFoo(tablet, state, trait, thing);
+  if (leafIsTrait) return trunkIsTraitFoo(tablet, state, trait, thing);
 
   // if none of the fields are trait or thing, go into objects
   return entriesFoo(tablet, state, trait, thing);
