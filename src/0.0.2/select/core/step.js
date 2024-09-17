@@ -16,18 +16,18 @@ function match(tablet, state, thing, key, item) {
       next: true,
     };
 
-    console.log(
-      "match base",
-      tablet.filename,
-      state.current._,
-      "\n",
-      JSON.stringify(thing, undefined, 2),
-      "\n",
-      key,
-      JSON.stringify(item, undefined, 2),
-      "\n",
-      JSON.stringify(stateItem, undefined, 2),
-    );
+    // console.log(
+    //   "match base",
+    //   tablet.filename,
+    //   state.current._,
+    //   "\n",
+    //   JSON.stringify(thing, undefined, 2),
+    //   "\n",
+    //   key,
+    //   JSON.stringify(item, undefined, 2),
+    //   "\n",
+    //   JSON.stringify(stateItem, undefined, 2),
+    // );
 
     return stateItem;
   }
@@ -43,37 +43,37 @@ function match(tablet, state, thing, key, item) {
       next: true,
     };
 
-    console.log(
-      "match leaf",
-      tablet.filename,
-      state.current._,
-      "\n",
-      JSON.stringify(thing, undefined, 2),
-      "\n",
-      key,
-      JSON.stringify(item, undefined, 2),
-      "\n",
-      JSON.stringify(stateItem, undefined, 2),
-    );
+    // console.log(
+    //   "match leaf",
+    //   tablet.filename,
+    //   state.current._,
+    //   "\n",
+    //   JSON.stringify(thing, undefined, 2),
+    //   "\n",
+    //   key,
+    //   JSON.stringify(item, undefined, 2),
+    //   "\n",
+    //   JSON.stringify(stateItem, undefined, 2),
+    // );
 
     return stateItem;
   }
 }
 
 export function parseItem(tablet, state, trait, thing, key, item) {
-  console.log(
-    "item",
-    tablet.filename,
-    state.current._,
-    "\n",
-    JSON.stringify(trait, undefined, 2),
-    JSON.stringify(thing, undefined, 2),
-    "\n",
-    key,
-    JSON.stringify(item, undefined, 2),
-    "\n",
-    JSON.stringify(state, undefined, 2),
-  );
+  // console.log(
+  //   "item",
+  //   tablet.filename,
+  //   state.current._,
+  //   "\n",
+  //   JSON.stringify(trait, undefined, 2),
+  //   JSON.stringify(thing, undefined, 2),
+  //   "\n",
+  //   key,
+  //   JSON.stringify(item, undefined, 2),
+  //   "\n",
+  //   JSON.stringify(state, undefined, 2),
+  // );
 
   if (!Array.isArray(item) && typeof item === "object") {
     const stateObject = step(tablet, { current: item }, trait, thing);
@@ -88,32 +88,32 @@ export function parseItem(tablet, state, trait, thing, key, item) {
       ...matchedPartial,
     };
 
-    console.log(
-      "item fails constraints",
-      tablet.filename,
-      state.current._,
-      "\n",
-      JSON.stringify(trait, undefined, 2),
-      JSON.stringify(thing, undefined, 2),
-      "\n",
-      key,
-      JSON.stringify(item, undefined, 2),
-      "\n",
-      JSON.stringify(stateItem, undefined, 2),
-    );
+    // console.log(
+    //   "item fails constraints",
+    //   tablet.filename,
+    //   state.current._,
+    //   "\n",
+    //   JSON.stringify(trait, undefined, 2),
+    //   JSON.stringify(thing, undefined, 2),
+    //   "\n",
+    //   key,
+    //   JSON.stringify(item, undefined, 2),
+    //   "\n",
+    //   JSON.stringify(stateItem, undefined, 2),
+    // );
 
     return stateItem;
   }
 
   if (key === tablet.trait) {
     if (tablet.traitIsRegex === undefined) {
-      console.log(
-        "constraints",
-        tablet.hasConstraints,
-        tablet.regexes,
-        item,
-        trait,
-      );
+      // console.log(
+      //   "constraints",
+      //   tablet.hasConstraints,
+      //   tablet.regexes,
+      //   item,
+      //   trait,
+      // );
 
       const failsConstraints = item !== trait;
 
@@ -123,19 +123,19 @@ export function parseItem(tablet, state, trait, thing, key, item) {
           current: { ...state.current, [key]: item },
         };
 
-        console.log(
-          "item fails constraints",
-          tablet.filename,
-          state.current._,
-          "\n",
-          JSON.stringify(trait, undefined, 2),
-          JSON.stringify(thing, undefined, 2),
-          "\n",
-          key,
-          JSON.stringify(item, undefined, 2),
-          "\n",
-          JSON.stringify(stateItem, undefined, 2),
-        );
+        // console.log(
+        //   "item fails constraints",
+        //   tablet.filename,
+        //   state.current._,
+        //   "\n",
+        //   JSON.stringify(trait, undefined, 2),
+        //   JSON.stringify(thing, undefined, 2),
+        //   "\n",
+        //   key,
+        //   JSON.stringify(item, undefined, 2),
+        //   "\n",
+        //   JSON.stringify(stateItem, undefined, 2),
+        // );
 
         return stateItem;
       }
@@ -165,34 +165,34 @@ export function parseItem(tablet, state, trait, thing, key, item) {
 
   const stateItem = { ...state, current: { ...state.current, [key]: item } };
 
-  console.log(
-    "item no match",
-    tablet.filename,
-    state.current._,
-    "\n",
-    JSON.stringify(trait, undefined, 2),
-    JSON.stringify(thing, undefined, 2),
-    "\n",
-    key,
-    JSON.stringify(item, undefined, 2),
-    "\n",
-    JSON.stringify(stateItem, undefined, 2),
-  );
+  // console.log(
+  //   "item no match",
+  //   tablet.filename,
+  //   state.current._,
+  //   "\n",
+  //   JSON.stringify(trait, undefined, 2),
+  //   JSON.stringify(thing, undefined, 2),
+  //   "\n",
+  //   key,
+  //   JSON.stringify(item, undefined, 2),
+  //   "\n",
+  //   JSON.stringify(stateItem, undefined, 2),
+  // );
 
   return stateItem;
 }
 
 export function step(tablet, state, trait, thing) {
-  console.log(
-    "step",
-    tablet.filename,
-    state.current._,
-    "\n",
-    JSON.stringify(trait, undefined, 2),
-    JSON.stringify(thing, undefined, 2),
-    "\n",
-    JSON.stringify(state, undefined, 2),
-  );
+  // console.log(
+  //   "step",
+  //   tablet.filename,
+  //   state.current._,
+  //   "\n",
+  //   JSON.stringify(trait, undefined, 2),
+  //   JSON.stringify(thing, undefined, 2),
+  //   "\n",
+  //   JSON.stringify(state, undefined, 2),
+  // );
 
   const { _: base, [base]: baseValue, ...recordWithoutBase } = state.current;
 
@@ -211,19 +211,19 @@ export function step(tablet, state, trait, thing) {
     );
 
     // there's nothing else to do in this tablet, return object
-    console.log(
-      "step base",
-      tablet.filename,
-      state.current._,
-      "\n",
-      JSON.stringify(trait, undefined, 2),
-      JSON.stringify(thing, undefined, 2),
-      "\n",
-      base,
-      JSON.stringify(state.current[base], undefined, 2),
-      "\n",
-      JSON.stringify(stateItem, undefined, 2),
-    );
+    // console.log(
+    //   "step base",
+    //   tablet.filename,
+    //   state.current._,
+    //   "\n",
+    //   JSON.stringify(trait, undefined, 2),
+    //   JSON.stringify(thing, undefined, 2),
+    //   "\n",
+    //   base,
+    //   JSON.stringify(state.current[base], undefined, 2),
+    //   "\n",
+    //   JSON.stringify(stateItem, undefined, 2),
+    // );
 
     return stateItem;
   }
@@ -247,19 +247,19 @@ export function step(tablet, state, trait, thing) {
     );
 
     // there's nothing else to do in this tablet, return object
-    console.log(
-      "step leaf",
-      tablet.filename,
-      state.current._,
-      "\n",
-      JSON.stringify(trait, undefined, 2),
-      JSON.stringify(thing, undefined, 2),
-      "\n",
-      tablet.trait,
-      JSON.stringify(value, undefined, 2),
-      "\n",
-      JSON.stringify(stateItem, undefined, 2),
-    );
+    // console.log(
+    //   "step leaf",
+    //   tablet.filename,
+    //   state.current._,
+    //   "\n",
+    //   JSON.stringify(trait, undefined, 2),
+    //   JSON.stringify(thing, undefined, 2),
+    //   "\n",
+    //   tablet.trait,
+    //   JSON.stringify(value, undefined, 2),
+    //   "\n",
+    //   JSON.stringify(stateItem, undefined, 2),
+    // );
 
     return stateItem;
   }
@@ -281,19 +281,19 @@ export function step(tablet, state, trait, thing) {
     );
 
     // there's nothing else to do in this tablet, return object
-    console.log(
-      "step trunk",
-      tablet.filename,
-      state.current._,
-      "\n",
-      JSON.stringify(trait, undefined, 2),
-      JSON.stringify(thing, undefined, 2),
-      "\n",
-      tablet.trait,
-      JSON.stringify(value, undefined, 2),
-      "\n",
-      JSON.stringify(stateItem, undefined, 2),
-    );
+    // console.log(
+    //   "step trunk",
+    //   tablet.filename,
+    //   state.current._,
+    //   "\n",
+    //   JSON.stringify(trait, undefined, 2),
+    //   JSON.stringify(thing, undefined, 2),
+    //   "\n",
+    //   tablet.trait,
+    //   JSON.stringify(value, undefined, 2),
+    //   "\n",
+    //   JSON.stringify(stateItem, undefined, 2),
+    // );
 
     return stateItem;
   }
@@ -321,30 +321,30 @@ export function step(tablet, state, trait, thing) {
     // TODO can values length be 0?
     // [key]: valuesNew.length === 1 ? valuesNew[0] : valuesNew,
 
-    console.log(
-      "step values",
-      tablet.filename,
-      state.current._,
-      "\n",
-      key,
-      value,
-      "\n",
-      JSON.stringify(stateValues, undefined, 2),
-    );
+    // console.log(
+    //   "step values",
+    //   tablet.filename,
+    //   state.current._,
+    //   "\n",
+    //   key,
+    //   value,
+    //   "\n",
+    //   JSON.stringify(stateValues, undefined, 2),
+    // );
 
     return { ...accEntry, ...stateValues };
   }, state);
 
-  console.log(
-    "step entries",
-    tablet.filename,
-    state.current._,
-    "\n",
-    trait,
-    thing,
-    "\n",
-    JSON.stringify(stateEntries, undefined, 2),
-  );
+  // console.log(
+  //   "step entries",
+  //   tablet.filename,
+  //   state.current._,
+  //   "\n",
+  //   trait,
+  //   thing,
+  //   "\n",
+  //   JSON.stringify(stateEntries, undefined, 2),
+  // );
 
   return stateEntries;
 }

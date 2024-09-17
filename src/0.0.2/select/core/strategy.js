@@ -86,6 +86,7 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
       .flat(),
     hasConstraints: true,
     traitIsRegex: true,
+    querying: true,
   }));
 
   const queriedGroups = queriedTablets.reduce(
@@ -131,6 +132,7 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
     regexes: [query[base] ?? ""],
     traitIsRegex: true,
     // should it have constraints?
+    querying: true,
   };
 
   const leaves = Object.keys(schema).filter((b) => schema[b].trunk === base);
@@ -148,6 +150,7 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
     regexes: [query[base] ?? ""],
     isAppend: true,
     traitIsRegex: true,
+    accumulating: true,
     // should it have constraints?
   }));
 

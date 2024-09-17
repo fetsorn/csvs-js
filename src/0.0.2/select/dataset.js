@@ -1,4 +1,5 @@
 import { parseTablet } from "./tablet.js";
+import { parseTabletAccumulating } from "./accumulating.js";
 
 export function parseDataset(schema, cache, strategy) {
   // TODO replace with reduce, check order of sequential steps
@@ -8,8 +9,10 @@ export function parseDataset(schema, cache, strategy) {
     // stages inside a group can be run in parallel
     var accParallel = accSequential;
 
-    for (const stage of group) {
-      const streamNew = parseTablet(cache, stage);
+    for (const tablet of group) {
+      const streamNew = tablet.accumulating
+        ? parseTabletAccumulating(cache, tablet)
+        : parseTablet(cache, tablet);
 
       accParallel = [...accParallel, streamNew];
     }

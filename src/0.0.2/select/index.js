@@ -71,7 +71,7 @@ export default class Select {
     // get a map of dataset file contents
     await this.#store.read(base);
 
-    const queryStream = stream.Readable.from([query]);
+    const queryStream = stream.Readable.from([{ query }]);
 
     const queryMap = recordToRelationMap(this.#store.schema, query);
 
@@ -128,7 +128,7 @@ export default class Select {
       objectMode: true,
 
       write(state, encoding, callback) {
-        records.push(state);
+        records.push(state.record);
 
         callback();
       },

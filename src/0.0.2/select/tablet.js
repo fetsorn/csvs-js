@@ -15,57 +15,78 @@ export function parseTablet(cache, tablet) {
   return new stream.Transform({
     objectMode: true,
 
-    transform(record, encoding, callback) {
+    transform(state, encoding, callback) {
       console.log(
         "tablet",
         tablet,
         "\n",
         lines,
         "\n",
-        JSON.stringify(record, undefined, 2),
+        JSON.stringify(state.record, undefined, 2),
       );
 
-      let stateIntermediary = { initial: record, current: record };
+      // how do I decide here if I want to make record.query a record?
+      // maybe it should be in the tablets?
+      // after accumulating I _don't_ want to turn record.query into a record
+
+      // value tablets drop query and require a record
+      if (tablet.querying === undefined && state.record === undefined) {
+        callback();
+
+        return;
+      }
+
+      // this will stream state after file reader streams
+      let stateIntermediary = {
+        initial: state.query ?? state.record,
+        current: state.query ?? state.record,
+      };
+
       let hasMatch = false;
 
+      // this will stream transform after file reader streams
       for (const line of lines) {
         stateIntermediary = parseLine(stateIntermediary, tablet, line);
 
         if (stateIntermediary.previous) {
-          console.log(
-            "push",
-            tablet.filename,
-            tablet,
-            JSON.stringify(stateIntermediary.previous, undefined, 2),
-          );
-          this.push({ ...stateIntermediary.previous });
+          // console.log(
+          //   "push",
+          //   tablet.filename,
+          //   tablet,
+          //   JSON.stringify(stateIntermediary.previous, undefined, 2),
+          // );
+          this.push({ record: stateIntermediary.previous });
+
           hasMatch = true;
+
           stateIntermediary.previous = undefined;
         }
       }
 
+      // this will stream final after file reader streams
       stateIntermediary = parseLine(stateIntermediary, tablet, undefined);
 
       if (stateIntermediary.previous) {
-        console.log(
-          "push",
-          tablet.filename,
-          tablet,
-          JSON.stringify(stateIntermediary.previous, undefined, 2),
-        );
-        this.push({ ...stateIntermediary.previous });
+        // console.log(
+        //   "push",
+        //   tablet.filename,
+        //   tablet,
+        //   JSON.stringify(stateIntermediary.previous, undefined, 2),
+        // );
+        this.push({ record: stateIntermediary.previous });
+
         hasMatch = true;
       }
 
       // if no match and tablet is not a filter, push initial record
       if (hasMatch === false && tablet.passthrough) {
-        console.log(
-          "push",
-          tablet.filename,
-          tablet,
-          JSON.stringify(record, undefined, 2),
-        );
-        this.push(record);
+        // console.log(
+        //   "push",
+        //   tablet.filename,
+        //   tablet,
+        //   JSON.stringify(state.record, undefined, 2),
+        // );
+        this.push({ record: state.query ?? state.record });
       }
 
       callback();
