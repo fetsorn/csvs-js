@@ -17,7 +17,7 @@ export function parseTabletAccumulating(cache, tablet) {
 
     transform(state, encoding, callback) {
       console.log(
-        "tablet",
+        "tablet acc",
         tablet,
         "\n",
         lines,

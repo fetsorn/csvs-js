@@ -9,14 +9,15 @@ import { step } from "./core/index.js";
  * @returns {Object[]}
  */
 export function parseLine(state, tablet, line) {
-  // console.log(
-  //   "line",
-  //   tablet.filename,
-  //   "\n",
-  //   line,
-  //   "\n",
-  //   JSON.stringify(state, undefined, 2),
-  // );
+  if (tablet.filename === "export1_tag-export1_channel.csv")
+    console.log(
+      "line",
+      tablet.filename,
+      "\n",
+      line,
+      "\n",
+      JSON.stringify(state, undefined, 2),
+    );
 
   // if end of file, ask to push matched if exists
   if (line === undefined)

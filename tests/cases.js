@@ -3,36 +3,36 @@ import { loadMocks } from "./mocks/index.js";
 const mocks = loadMocks();
 
 export const testCasesSelect = (version) => [
-  //{
-  //  name: "queries name1",
-  //  query: "?_=datum&actname=name1",
-  //  initial: mocks[version].datasetDefault,
-  //  expected: [mocks[version].record2001],
-  //},
-  //{
-  //  name: "queries name2",
-  //  query: "?_=datum&actname=name2",
-  //  initial: mocks[version].datasetDefault,
-  //  expected: [mocks[version].record2002],
-  //},
-  //{
-  //  name: "queries name3 with empty string trunk value",
-  //  query: "?_=datum&actname=name3",
-  //  initial: mocks[version].datasetDefault,
-  //  expected: [mocks[version].record2003Unedited],
-  //},
-  //{
-  //  name: "queries name2 with out-of-order schema",
-  //  query: "?_=datum&actname=name2",
-  //  initial: mocks[version].datasetUnordered,
-  //  expected: [mocks[version].record2002],
-  //},
-  //{
-  //  name: "queries name1 with simple array",
-  //  query: "?_=datum&actname=name2",
-  //  initial: mocks[version].datasetArraySimple,
-  //  expected: [mocks[version].recordArraySimple],
-  //},
+  {
+    name: "queries name1",
+    query: "?_=datum&actname=name1",
+    initial: mocks[version].datasetDefault,
+    expected: [mocks[version].record2001],
+  },
+  {
+    name: "queries name2",
+    query: "?_=datum&actname=name2",
+    initial: mocks[version].datasetDefault,
+    expected: [mocks[version].record2002],
+  },
+  {
+    name: "queries name3 with empty string trunk value",
+    query: "?_=datum&actname=name3",
+    initial: mocks[version].datasetDefault,
+    expected: [mocks[version].record2003Unedited],
+  },
+  {
+    name: "queries name2 with out-of-order schema",
+    query: "?_=datum&actname=name2",
+    initial: mocks[version].datasetUnordered,
+    expected: [mocks[version].record2002],
+  },
+  {
+    name: "queries name1 with simple array",
+    query: "?_=datum&actname=name2",
+    initial: mocks[version].datasetArraySimple,
+    expected: [mocks[version].recordArraySimple],
+  },
   {
     name: "queries name1 with double array",
     query: "?_=datum&datum=value",
