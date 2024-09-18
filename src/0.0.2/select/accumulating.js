@@ -16,14 +16,14 @@ export function parseTabletAccumulating(cache, tablet) {
     objectMode: true,
 
     transform(state, encoding, callback) {
-      console.log(
-        "tablet acc",
-        tablet,
-        "\n",
-        lines,
-        "\n",
-        JSON.stringify(state.record, undefined, 2),
-      );
+      // console.log(
+      //   "tablet acc",
+      //   tablet,
+      //   "\n",
+      //   lines,
+      //   "\n",
+      //   JSON.stringify(state.record, undefined, 2),
+      // );
 
       // forward the record if it hasn't been pushed yet
       if (state.record) {

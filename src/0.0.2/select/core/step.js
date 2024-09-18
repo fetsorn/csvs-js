@@ -1,52 +1,84 @@
-function log(name, tablet, state, trait, thing, key, item) {
-  console.log(
-    name,
-    tablet.filename,
-    state.current._,
-    "\n",
-    JSON.stringify(trait, undefined, 2),
-    JSON.stringify(thing, undefined, 2),
-    "\n",
-    JSON.stringify(key, undefined, 2),
-    JSON.stringify(item, undefined, 2),
-    "\n",
-    JSON.stringify(state, undefined, 2),
-  );
+// function s(value) {
+//   return JSON.stringify(value, undefined, 2);
+// }
+
+// function log(name, tablet, state, trait, thing, key, item) {
+//   console.log(
+//     name,
+//     tablet.filename,
+//     state ? state.record._ : undefined,
+//     "\n",
+//     s(trait),
+//     s(thing),
+//     "\n",
+//     s(key),
+//     s(item),
+//     "\n",
+//     s(state.record),
+//   );
+// }
+
+// assume that base value is not a list or an object
+function baseIsRegexCase(tablet, record, trait, thing) {
+  // base is both trait and thing
+  const { _: base, [base]: baseValue } = record;
+
+  const isMatch = tablet.traitIsRegex
+    ? new RegExp(baseValue).test(trait)
+    : baseValue === trait;
+
+  // if match replace base value with thing
+  const basePartial = isMatch ? { [base]: thing } : {};
+
+  // if match update leaf values
+  const state = {
+    isMatch,
+    record: { ...record, ...basePartial },
+  };
+
+  // if (isMatch) {
+  //   log("regex match", tablet, state, trait, thing, base, baseValue);
+  // } else {
+  //   log("regex no match", tablet, state, trait, thing, base, baseValue);
+  // }
+
+  return state;
 }
 
 // assume that base value is not a list or an object
-function baseIsTraitCase(tablet, record, trait, thing) {
+function traitIsBaseCase(tablet, record, trait, thing) {
   const { trait: base, thing: leaf } = tablet;
 
-  const { [base]: baseValue, ...recordWithoutBase } = record;
+  const { [base]: baseValue } = record;
 
-  const passesConstraints = tablet.traitIsRegex || baseValue === trait;
+  const isMatch = tablet.traitIsRegex
+    ? new RegExp(baseValue).test(trait)
+    : baseValue === trait;
 
-  // if (!passesConstraints)
-  //   log("item constrai", tablet, record, trait, thing, base, baseValue);
-
-  const isMatch = passesConstraints && new RegExp(baseValue).test(trait);
-
-  const leafValue = recordWithoutBase[leaf];
+  const existingValue = record[leaf];
 
   // append if another value already exists
   const leafValues =
-    leafValue === undefined ? thing : [leafValue, thing].flat();
+    existingValue === undefined ? thing : [existingValue, thing].flat();
 
-  const recordNew = isMatch
-    ? { ...recordWithoutBase, isMatch, [base]: baseValue, [leaf]: leafValues }
-    : { ...recordWithoutBase, isMatch, [base]: baseValue };
+  const leafPartial = isMatch ? { [leaf]: leafValues } : {};
+
+  // if match update leaf values
+  const state = {
+    isMatch,
+    record: { ...record, ...leafPartial },
+  };
 
   // if (isMatch) {
-  //   log("base match", tablet, recordNew, trait, thing, base, baseValue);
+  //   log("base match", tablet, state, trait, thing, base, baseValue);
   // } else {
-  //   log("base no match", tablet, recordNew, trait, thing, base, baseValue);
+  //   log("base no match", tablet, state, trait, thing, base, baseValue);
   // }
 
-  return recordNew;
+  return state;
 }
 
-function baseIsThingCase(tablet, record, trait, thing) {
+function traitIsLeafCase(tablet, record, trait, thing) {
   const { trait: leaf, thing: base } = tablet;
 
   // TODO what if traitValue is undefined here?
@@ -55,88 +87,111 @@ function baseIsThingCase(tablet, record, trait, thing) {
   let leafItems = Array.isArray(omitted) ? omitted : [omitted];
 
   // if record has a trait leaf and thing base, match it to trait to set base
-  const stateValues = leafItems.reduce((state, leafObject) => {
-    const isObject =
-      !Array.isArray(leafObject) && typeof leafObject === "object";
+  const stateValues = leafItems.reduce(
+    (stateWithLeaf, leafItem) => {
+      const { isMatch: isMatchItem, record: recordWithLeaf } = stateWithLeaf;
 
-    const leafValue = isObject ? leafObject[leaf] : leafObject;
+      const isObject = !Array.isArray(leafItem) && typeof leafItem === "object";
 
-    const passesConstraints = tablet.traitIsRegex || leafValue === trait;
+      const leafValue = isObject ? leafItem[leaf] : leafItem;
 
-    // if (!passesConstraints)
-    //   log("item constrai", tablet, stateItem, trait, thing, leaf, leafValue);
+      const isMatch = tablet.traitIsRegex
+        ? new RegExp(leafValue).test(trait)
+        : leafValue === trait;
 
-    const isMatch = passesConstraints && new RegExp(leafValue).test(trait);
+      // append leafItem to leaf if recordWithLeaf
+      const existingValue = recordWithLeaf[leaf];
 
-    const baseValue = state[base];
+      const leafValues =
+        existingValue === undefined
+          ? leafItem
+          : [existingValue, leafItem].flat();
 
-    const baseValues =
-      baseValue === undefined ? thing : [baseValue, thing].flat();
+      const basePartial = isMatch ? { [base]: thing } : {};
 
-    const recordNew = isMatch
-      ? {
-          ...state,
-          isMatch,
-          [leaf]: leafValue,
-          [base]: baseValues,
-        }
-      : { ...state, isMatch, [leaf]: leafValue };
+      // if match set base to thing
+      const state = {
+        isMatch: isMatchItem ?? isMatch,
+        record: { ...recordWithLeaf, [leaf]: leafValues, ...basePartial },
+      };
 
-    // if (isMatch) {
-    //   log("base match", tablet, recordNew, trait, thing, leaf, leafValue);
-    // } else {
-    //   log("base no match", tablet, recordNew, trait, thing, leaf, leafValue);
-    // }
+      // if (isMatch) {
+      //   log("leaf match", tablet, state, trait, thing, leaf, leafValue);
+      // } else {
+      //   log("leaf no match", tablet, state, trait, thing, leaf, leafValue);
+      // }
 
-    return recordNew;
-  }, recordWithoutLeaf);
+      return state;
+    },
+    { record: recordWithoutLeaf },
+  );
 
   // log("step leaf", tablet, stateValues, trait, thing, leaf, leafItems);
 
   return stateValues;
 }
 
-function trunkIsTraitCase(tablet, record, trait, thing) {
+function traitIsTrunkCase(tablet, record, trait, thing) {
   const { trait: trunk, thing: leaf } = tablet;
-  // TODO what if traitValue is undefined here?
+  // TODO what if trunk is undefined here?
   const { [trunk]: omitted, ...recordWithoutTrunk } = record;
 
   let trunkItems = Array.isArray(omitted) ? omitted : [omitted];
 
-  const stateValues = trunkItems.reduce((state, trunkObject) => {
-    // log("item", tablet, state, trait, thing, trunk, trunkObject);
+  const stateValues = trunkItems.reduce(
+    (stateWithTrunk, trunkItem) => {
+      const { isMatch: isMatchItem, record: recordWithTrunk } = stateWithTrunk;
 
-    const isObject =
-      !Array.isArray(trunkObject) && typeof trunkObject === "object";
+      const isObject =
+        !Array.isArray(trunkItem) && typeof trunkItem === "object";
 
-    const trunkValue = isObject ? trunkObject[trunk] : trunkObject;
+      const trunkObject = isObject
+        ? trunkItem
+        : { _: trunk, [trunk]: trunkItem };
 
-    const passesConstraints = tablet.traitIsRegex || trunkValue === trait;
+      const trunkValue = isObject ? trunkItem[trunk] : trunkItem;
 
-    // if (!passesConstraints)
-    //   log("item constrai", tablet, state, trait, thing, trunk, trunkValue);
+      const isMatch = tablet.traitIsRegex
+        ? new RegExp(trunkValue).test(trait)
+        : trunkValue === trait;
 
-    const isMatch = passesConstraints && new RegExp(trunkValue).test(trait);
+      const existingLeafValue = trunkObject[leaf];
 
-    // TODO try to take ...trunkObject if it has something
-    const keyObject = { _: trunk, [trunk]: trunkValue, [leaf]: thing };
+      // append if another leaf value already exists
+      const leafValues =
+        existingLeafValue === undefined
+          ? thing
+          : [existingLeafValue, thing].flat();
 
-    const recordNew = isMatch
-      ? { ...state, isMatch, [trunk]: keyObject }
-      : {
-          ...state, // TODO try to take ...trunkObject if it has something
-          isMatch,
-          [trunk]: trunkValue,
-        };
+      // if match update leaf values in new trunk item
+      const trunkItemNew = isMatch
+        ? { ...trunkObject, [leaf]: leafValues }
+        : trunkItem;
 
-    // if (isMatch) {
-    //   log("leaf match", tablet, recordNew, trait, thing, trunk, trunkValue);
-    // } else {
-    //   log("leaf no match", tablet, recordNew, trait, thing, trunk, trunkValue);
-    // }
+      // append if another trunk value already exists
+      const existingTrunkValue = recordWithTrunk[trunk];
 
-    return recordNew;
-  }, recordWithoutTrunk);
+      const trunkValues =
+        existingTrunkValue === undefined
+          ? trunkItemNew
+          : [existingTrunkValue, trunkItemNew].flat();
+
+      // TODO what if trunkValues is empty here?
+      const state = {
+        isMatch: isMatchItem ?? isMatch,
+        record: { ...recordWithTrunk, [trunk]: trunkValues },
+      };
+
+      // if (isMatch) {
+      //   log("trunk match", tablet, state, trait, thing, trunk, trunkValue);
+      // } else {
+      //   log("trunk no match", tablet, state, trait, thing, trunk, trunkValue);
+      // }
+
+      return state;
+    },
+    { record: recordWithoutTrunk },
+  );
 
   // log("step trunk", tablet, stateValues, trait, thing, trunk, trunkItems);
 
@@ -151,75 +206,106 @@ function leafIsObjectCase(tablet, record, trait, thing) {
   const entries = Object.entries(recordWithoutBase);
 
   // reduce each key-value pair to match trait and set thing
-  const stateEntries = entries.reduce((accEntry, [leaf, leafValue]) => {
-    // remove values of given key to rewrite later
-    const { [leaf]: omitted, ...recordWithoutLeaf } = accEntry;
+  const stateEntries = entries.reduce(
+    (stateWithEntry, [leaf, leafValue]) => {
+      // remember is previous entry already matched
+      const { isMatch: isMatchEntry, record: recordWithEntry } = stateWithEntry;
 
-    let leafItems = Array.isArray(omitted) ? omitted : [omitted];
+      // if previous entry matched none of the rest can, return as is
+      if (isMatchEntry) return stateWithEntry;
 
-    // reduce each value item to match trait and set thing
-    const stateValues = leafItems.reduce((state, leafItem) => {
-      const isObject = !Array.isArray(leafItem) && typeof leafItem === "object";
+      // remove values of given key to rewrite later
+      const { [leaf]: omitted, ...recordWithoutLeaf } = recordWithEntry;
 
-      const { isMatch, ...stateObject } = isObject
-        ? choose(tablet, leafItem, trait, thing)
-        : { isMatch: false };
+      // TODO should we take from omitted or leafValue here?
+      let leafItems = Array.isArray(leafValue) ? leafValue : [leafValue];
 
-      const recordNew = isMatch
-        ? { ...state, isMatch, [leaf]: stateObject }
-        : { ...state, isMatch, [leaf]: leafItem };
+      // reduce each value item to match trait and set thing
+      const stateValues = leafItems.reduce(
+        (stateWithLeaf, leafItem) => {
+          // remember if previous item already matched
+          const { isMatch: isMatchItem, record: recordWithLeaf } =
+            stateWithLeaf;
 
-      // if (isMatch) {
-      //   log("item object", tablet, recordNew, trait, thing, leaf, leafItem);
-      // } else {
-      //   log("item not obj", tablet, recordNew, trait, thing, leaf, leafItem);
-      // }
+          const isObject =
+            !Array.isArray(leafItem) && typeof leafItem === "object";
 
-      return recordNew;
-    }, recordWithoutLeaf);
+          // if object, call choose to get isMatch and new item
+          // if not object, set isMatch to false and new item to leafItem
+          const { isMatch, record: leafItemNew } = isObject
+            ? step(tablet, leafItem, trait, thing)
+            : { isMatch: false, record: leafItem };
 
-    // TODO can values length be 0?
-    // [leaf]: valuesNew.length === 1 ? valuesNew[0] : valuesNew,
+          const existingValue = recordWithLeaf[leaf];
 
-    // log("step values", tablet, stateValues, trait, thing, leaf, leafItems);
+          const leafValues =
+            existingValue === undefined
+              ? leafItemNew
+              : [existingValue, leafItemNew].flat();
 
-    return { ...accEntry, ...stateValues };
-  }, record);
+          // update leaf field
+          const state = {
+            isMatch: isMatchItem ?? isMatch,
+            record: { ...recordWithLeaf, [leaf]: leafValues },
+          };
+
+          // if (isMatch) {
+          //   log("object match", tablet, state, trait, thing, leaf, leafItem);
+          // } else {
+          //   log("object no match", tablet, state, trait, thing, leaf, leafItem);
+          // }
+
+          return state;
+        },
+        { record: recordWithoutLeaf },
+      );
+
+      // TODO can values length be 0?
+      // [leaf]: valuesNew.length === 1 ? valuesNew[0] : valuesNew,
+
+      // log("step values", tablet, stateValues, trait, thing, leaf, leafItems);
+
+      // TODO should we spread to accentry here?
+      return stateValues;
+    },
+    { record: recordWithoutBase },
+  );
+
+  // TODO put base back in
+  const stateWithBase = {
+    isMatch: stateEntries.isMatch,
+    record: { ...stateEntries.record, _: base, [base]: baseValueOmitted },
+  };
 
   // log("step entries", tablet, stateEntries, trait, thing);
 
-  return stateEntries;
+  return stateWithBase;
 }
 
-function choose(tablet, record, trait, thing) {
+export function step(tablet, record, trait, thing) {
   const { _: base, [base]: baseValue } = record;
 
   const baseIsTrait = base === tablet.trait && baseValue !== undefined;
 
+  const baseIsThing = base === tablet.thing;
+
+  const baseIsRegex = baseIsTrait && baseIsThing;
+
+  if (baseIsRegex) return baseIsRegexCase(tablet, record, trait, thing);
+
   // if base is trait for a leaf
-  if (baseIsTrait) return baseIsTraitCase(tablet, record, trait, thing);
+  if (baseIsTrait) return traitIsBaseCase(tablet, record, trait, thing);
 
   const leafIsTrait = Object.hasOwn(record, tablet.trait);
 
-  const baseIsThing = base === tablet.thing && leafIsTrait;
+  const traitIsLeaf = baseIsThing && leafIsTrait;
 
   // if trait is leaf of base
-  if (baseIsThing) return baseIsThingCase(tablet, record, trait, thing);
+  if (traitIsLeaf) return traitIsLeafCase(tablet, record, trait, thing);
 
   // if leaf is trait but base is not thing
-  if (leafIsTrait) return trunkIsTraitCase(tablet, record, trait, thing);
+  if (leafIsTrait) return traitIsTrunkCase(tablet, record, trait, thing);
 
   // if none of the fields are trait or thing, go into objects
   return leafIsObjectCase(tablet, record, trait, thing);
-}
-
-export function step(tablet, state, trait, thing) {
-  // log("step", tablet, state, trait, thing);
-  const { isMatch, ...current } = choose(tablet, state.current, trait, thing);
-
-  const matched = isMatch ? current : undefined;
-
-  const stateItem = { ...state, matched, current };
-
-  return stateItem;
 }

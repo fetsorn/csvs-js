@@ -16,15 +16,15 @@ export function parseTablet(cache, tablet) {
     objectMode: true,
 
     transform(state, encoding, callback) {
-      if (tablet.filename === "export1_tag-export1_channel.csv")
-        console.log(
-          "tablet",
-          tablet,
-          "\n",
-          lines,
-          "\n",
-          JSON.stringify(state.record, undefined, 2),
-        );
+      // if (tablet.filename === "export1_tag-export1_channel.csv")
+      //   console.log(
+      //     "tablet",
+      //     tablet,
+      //     "\n",
+      //     lines,
+      //     "\n",
+      //     JSON.stringify(state.record, undefined, 2),
+      //   );
 
       // how do I decide here if I want to make record.query a record?
       // maybe it should be in the tablets?
@@ -50,13 +50,13 @@ export function parseTablet(cache, tablet) {
         stateIntermediary = parseLine(stateIntermediary, tablet, line);
 
         if (stateIntermediary.previous) {
-          if (tablet.filename === "export1_tag-export1_channel.csv")
-            console.log(
-              "push",
-              tablet.filename,
-              tablet,
-              JSON.stringify(stateIntermediary.previous, undefined, 2),
-            );
+          // if (tablet.filename === "export1_tag-export1_channel.csv")
+          //   console.log(
+          //     "push",
+          //     tablet.filename,
+          //     tablet,
+          //     JSON.stringify(stateIntermediary.previous, undefined, 2),
+          //   );
           this.push({ record: stateIntermediary.previous });
 
           hasMatch = true;
@@ -69,13 +69,13 @@ export function parseTablet(cache, tablet) {
       stateIntermediary = parseLine(stateIntermediary, tablet, undefined);
 
       if (stateIntermediary.previous) {
-        if (tablet.filename === "export1_tag-export1_channel.csv")
-          console.log(
-            "push",
-            tablet.filename,
-            tablet,
-            JSON.stringify(stateIntermediary.previous, undefined, 2),
-          );
+        // if (tablet.filename === "export1_tag-export1_channel.csv")
+        //   console.log(
+        //     "push",
+        //     tablet.filename,
+        //     tablet,
+        //     JSON.stringify(stateIntermediary.previous, undefined, 2),
+        //   );
         this.push({ record: stateIntermediary.previous });
 
         hasMatch = true;
@@ -83,13 +83,13 @@ export function parseTablet(cache, tablet) {
 
       // if no match and tablet is not a filter, push initial record
       if (hasMatch === false && tablet.passthrough) {
-        if (tablet.filename === "export1_tag-export1_channel.csv")
-          console.log(
-            "push",
-            tablet.filename,
-            tablet,
-            JSON.stringify(state.record, undefined, 2),
-          );
+        // if (tablet.filename === "export1_tag-export1_channel.csv")
+        //   console.log(
+        //     "push",
+        //     tablet.filename,
+        //     tablet,
+        //     JSON.stringify(state.record, undefined, 2),
+        //   );
         this.push({ record: state.query ?? state.record });
       }
 

@@ -9,15 +9,15 @@ import { step } from "./core/index.js";
  * @returns {Object[]}
  */
 export function parseLine(state, tablet, line) {
-  if (tablet.filename === "export1_tag-export1_channel.csv")
-    console.log(
-      "line",
-      tablet.filename,
-      "\n",
-      line,
-      "\n",
-      JSON.stringify(state, undefined, 2),
-    );
+  // if (tablet.filename === "export1_tag-export1_channel.csv")
+  //   console.log(
+  //     "line",
+  //     tablet.filename,
+  //     "\n",
+  //     line,
+  //     "\n",
+  //     JSON.stringify(state, undefined, 2),
+  //   );
 
   // if end of file, ask to push matched if exists
   if (line === undefined)
@@ -41,7 +41,8 @@ export function parseLine(state, tablet, line) {
 
   const traitIsNew = state.trait === undefined || state.trait === trait;
 
-  const stateNew = traitIsNew
+  // TODO rename
+  const stateOld = traitIsNew
     ? { ...state, trait: trait }
     : {
         initial: state.initial,
@@ -50,5 +51,16 @@ export function parseLine(state, tablet, line) {
         trait: trait,
       };
 
-  return step(tablet, stateNew, trait, thing);
+  const { isMatch, record: current } = step(
+    tablet,
+    stateOld.current,
+    trait,
+    thing,
+  );
+
+  const matched = isMatch ? current : undefined;
+
+  const stateNew = { ...stateOld, matched, current };
+
+  return stateNew;
 }
