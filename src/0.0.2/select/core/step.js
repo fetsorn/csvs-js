@@ -105,10 +105,14 @@ function traitIsLeafCase(tablet, record, trait, thing) {
       // append leafItem to leaf if recordWithLeaf
       const existingValue = recordWithLeaf[leaf];
 
+      // drop regex leafValue and replace with literal trait value
+      // if object preserve an object leaves from leafItem
+      const newValue = isObject ? { ...leafItem, [leaf]: trait } : trait;
+
       const leafValues =
         existingValue === undefined
-          ? leafItem
-          : [existingValue, leafItem].flat();
+          ? newValue
+          : [existingValue, newValue].flat();
 
       const basePartial = isMatch ? { [base]: thing } : {};
 
@@ -284,7 +288,6 @@ function leafIsObjectCase(tablet, record, trait, thing) {
 
       // log("entry end", tablet, stateValues, trait, thing, leaf);
 
-      // TODO should we spread to accentry here?
       return stateValues;
     },
     { record: recordWithoutBase },

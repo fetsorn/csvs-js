@@ -3,7 +3,6 @@ import stream from "stream";
 import { promisify } from "util";
 import csv from "papaparse";
 import Store from "../store.js";
-import { recordToRelationMap, findQueries } from "../query.js";
 import { searchParamsToQuery } from "./compat.js";
 import { parseDataset } from "./dataset.js";
 import { planStrategy } from "./core/index.js";
@@ -73,18 +72,8 @@ export default class Select {
 
     const queryStream = stream.Readable.from([{ query }]);
 
-    const queryMap = recordToRelationMap(this.#store.schema, query);
-
-    const isQueriedMap = findQueries(this.#store.schema, queryMap, base);
-
     // console.log(query);
-    const strategy = planStrategy(
-      this.#store.schema,
-      queryMap,
-      isQueriedMap,
-      query,
-      base,
-    );
+    const strategy = planStrategy(this.#store.schema, query);
 
     const streams = parseDataset(
       this.#store.schema,

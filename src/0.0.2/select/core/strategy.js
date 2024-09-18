@@ -11,38 +11,41 @@ export function countLeaves(schema, branch) {
   return leaves.length;
 }
 
-/**
- * sort by level of nesting, twigs and leaves come first
- * @name sortNestingAscending
- * @export function
- * @param {string} a - dataset entity.
- * @param {string} b - dataset entity.
- * @returns {number} - sorting index, a<b -1, a>b 1, a==b 0
- */
-export function sortNestingAscending(schema) {
-  return (a, b) => {
-    const { trunk: trunkA } = schema[a];
+// in order of query,
+// first queried twigs
+// then queried trunks
+// then trunk of base
+// then base (either last queried or first unqueried),
+function gatherKeys(object) {
+  // skip base
+  const keys = Object.keys(object).filter(
+    (key) => key !== "_" && key !== object._,
+  );
 
-    const { trunk: trunkB } = schema[b];
+  return keys.reduce((acc, key) => {
+    const value = object[key];
+    // if array go down each item
+    if (Array.isArray(value)) {
+      const nestedKeys = value.reduce((accItem, item) => {
+        // assume item is not a list
+        const isObject = typeof item === "object";
 
-    if (trunkA === b) {
-      return -1;
+        const keysObject = isObject ? gatherKeys(object) : [];
+
+        return [...keysObject, ...accItem];
+      }, []);
+
+      return [...nestedKeys, key, ...acc];
     }
 
-    if (trunkB === a) {
-      return 1;
-    }
+    // assume value is not a list
+    const isObject = typeof value === "object";
 
-    if (countLeaves(schema, a) < countLeaves(schema, b)) {
-      return -1;
-    }
+    // if object gather nested keys
+    const keysObject = isObject ? gatherKeys(value) : [];
 
-    if (countLeaves(schema, a) > countLeaves(schema, b)) {
-      return 1;
-    }
-
-    return 0;
-  };
+    return [...keysObject, key, ...acc];
+  }, []);
 }
 
 /**
@@ -56,17 +59,13 @@ export function sortNestingAscending(schema) {
  * @param {string} base -
  * @returns {object[]} -
  */
-export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
-  // TODO rewrite to just using query
-  // in order of query,
-  // first queried twigs
-  // then queried trunks
-  // then trunk of base
-  // then base (either last queried or first unqueried),
-  const queriedBranches = Object.keys(isQueriedMap).sort(
-    sortNestingAscending(schema),
-  );
+export function planStrategy(schema, query) {
+  const base = query._;
 
+  // queried keys in ascending order minus the base
+  const queriedBranches = gatherKeys(query);
+
+  // TODO rewrite to using schema record
   const queriedTablets = queriedBranches.map((branch) => ({
     // what branch to set?
     thing: schema[branch].trunk,
@@ -77,18 +76,13 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
     // do we match first column?
     traitIsFirst: false,
     filename: `${schema[branch].trunk}-${branch}.csv`,
-    // TODO rewrite to just using query
-    regexes: Object.keys(queryMap[`${schema[branch].trunk}-${branch}.csv`])
-      .map(
-        (trunkRegex) =>
-          queryMap[`${schema[branch].trunk}-${branch}.csv`][trunkRegex],
-      )
-      .flat(),
-    hasConstraints: true,
     traitIsRegex: true,
     querying: true,
     eager: true, // push as soon as trait changes in the tablet
   }));
+
+  // TODO after this step if queried is a deeply nested branch, it must be parsed again
+  // to find siblings
 
   const queriedGroups = queriedTablets.reduce(
     (acc, tablet) => {
@@ -130,7 +124,6 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
     // do we match first column?
     traitIsFirst: false,
     filename: `${schema[base].trunk}-${base}.csv`,
-    regexes: [query[base] ?? ""],
     traitIsRegex: true,
     // should it have constraints?
     querying: true,
@@ -149,8 +142,6 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
     // do we match first column?
     traitIsFirst: true,
     filename: `${base}-${leaf}.csv`,
-    regexes: [query[base] ?? ""],
-    isAppend: true,
     traitIsRegex: true,
     accumulating: true,
     // should it have constraints?
@@ -181,9 +172,6 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
     // do we match first column?
     traitIsFirst: true,
     filename: `${base}-${branch}.csv`,
-    isValue: true,
-    hasConstraints: true,
-    isAppend: true,
     passthrough: true,
     eager: true, // push as soon as trait changes in the tablet
   }));
@@ -205,8 +193,6 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
         // do we match first column?
         traitIsFirst: true,
         filename: `${branch}-${leaf}.csv`,
-        isValue: true,
-        isAppend: true,
         passthrough: true,
       }));
     })
@@ -231,8 +217,6 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
           // do we match first column?
           traitIsFirst: true,
           filename: `${leaf1}-${leaf2}.csv`,
-          isValue: true,
-          isAppend: true,
           passthrough: true,
         }));
       });

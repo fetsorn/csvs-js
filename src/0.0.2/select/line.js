@@ -19,7 +19,7 @@ export function parseLine(state, tablet, line) {
   //     JSON.stringify(state, undefined, 2),
   //   );
 
-  // if end of file, ask to push matched if exists
+  // if end of file, and tablet is eager, ask to push matched if exists
   if (line === undefined)
     return {
       previous: tablet.eager ? state.matched : state.current,
