@@ -9,7 +9,7 @@ import { step } from "./core/index.js";
  * @returns {Object[]}
  */
 export function parseLine(state, tablet, line) {
-  // if (tablet.filename === "export1_tag-export1_channel.csv")
+  // if (tablet.filename === "filepath-moddate.csv")
   //   console.log(
   //     "line",
   //     tablet.filename,
@@ -22,7 +22,7 @@ export function parseLine(state, tablet, line) {
   // if end of file, ask to push matched if exists
   if (line === undefined)
     return {
-      previous: state.matched,
+      previous: tablet.eager ? state.matched : state.current,
     };
 
   // ignore empty newline
@@ -39,38 +39,32 @@ export function parseLine(state, tablet, line) {
 
   const thing = tablet.thingIsFirst ? fst : snd;
 
-  const traitIsNew = state.trait === undefined || state.trait === trait;
+  const traitIsNew = state.trait !== undefined && state.trait !== trait;
 
-  // TODO rename
-  const stateOld = traitIsNew
-    ? { ...state, trait: trait }
-    : {
-        initial: state.initial,
-        current: state.initial,
-        previous: state.matched,
-        trait: trait,
-      };
+  const resetState = tablet.eager && traitIsNew;
 
-  const { isMatch, record: current } = step(
-    tablet,
-    stateOld.current,
-    trait,
-    thing,
-  );
+  // if trait is new, move matched to previous for pushing
+  const previous = resetState ? state.matched : undefined;
 
+  // if trait is new, reset record for query
+  const record = resetState ? state.initial : state.current;
+
+  const { isMatch, record: current } = step(tablet, record, trait, thing);
+
+  // if matched, copy current to matched
   const matched = isMatch ? current : undefined;
 
-  const stateNew = { ...stateOld, matched, current };
+  const stateNew = { ...state, previous, current, matched, trait };
 
-  if (tablet.filename === "export1_tag-export1_channel.csv")
-    console.log(
-      "line end",
-      tablet.filename,
-      "\n",
-      line,
-      "\n",
-      JSON.stringify(stateNew, undefined, 2),
-    );
+  // if (tablet.filename === "filepath-moddate.csv")
+  //   console.log(
+  //     "line end",
+  //     tablet.filename,
+  //     "\n",
+  //     line,
+  //     "\n",
+  //     JSON.stringify(stateNew, undefined, 2),
+  //   );
 
   return stateNew;
 }

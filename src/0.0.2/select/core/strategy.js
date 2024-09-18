@@ -87,6 +87,7 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
     hasConstraints: true,
     traitIsRegex: true,
     querying: true,
+    eager: true, // push as soon as trait changes in the tablet
   }));
 
   const queriedGroups = queriedTablets.reduce(
@@ -133,6 +134,7 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
     traitIsRegex: true,
     // should it have constraints?
     querying: true,
+    eager: true, // push as soon as trait changes in the tablet
   };
 
   const leaves = Object.keys(schema).filter((b) => schema[b].trunk === base);
@@ -152,6 +154,7 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
     traitIsRegex: true,
     accumulating: true,
     // should it have constraints?
+    eager: true, // push as soon as trait changes in the tablet
   }));
 
   // const baseGroups = baseHasTrunk ? [[trunkTablet]] : [leafTablets];
@@ -182,6 +185,7 @@ export function planStrategy(schema, queryMap, isQueriedMap, query, base) {
     hasConstraints: true,
     isAppend: true,
     passthrough: true,
+    eager: true, // push as soon as trait changes in the tablet
   }));
 
   // TODO general implementation for each nesting level
