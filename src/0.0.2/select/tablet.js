@@ -17,14 +17,14 @@ export function parseTablet(cache, tablet) {
 
     transform(state, encoding, callback) {
       // if (tablet.filename === "export1_tag-export1_channel.csv")
-      //   console.log(
-      //     "tablet",
-      //     tablet,
-      //     "\n",
-      //     lines,
-      //     "\n",
-      //     JSON.stringify(state.record, undefined, 2),
-      //   );
+      console.log(
+        "tablet",
+        tablet,
+        "\n",
+        lines,
+        "\n",
+        JSON.stringify(state.query ?? state.record, undefined, 2),
+      );
 
       // how do I decide here if I want to make record.query a record?
       // maybe it should be in the tablets?

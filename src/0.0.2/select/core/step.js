@@ -1,22 +1,23 @@
-// function s(value) {
-//   return JSON.stringify(value, undefined, 2);
-// }
+function s(value) {
+  return JSON.stringify(value, undefined, 2);
+}
 
-// function log(name, tablet, state, trait, thing, key, item) {
-//   console.log(
-//     name,
-//     tablet.filename,
-//     state ? state.record._ : undefined,
-//     "\n",
-//     s(trait),
-//     s(thing),
-//     "\n",
-//     s(key),
-//     s(item),
-//     "\n",
-//     s(state.record),
-//   );
-// }
+function log(name, tablet, state, trait, thing, key, item) {
+  if (tablet.filename === "export1_tag-export1_channel.csv")
+    console.log(
+      name,
+      tablet.filename,
+      state ? state.record._ : undefined,
+      "\n",
+      s(trait),
+      s(thing),
+      "\n",
+      s(key),
+      s(item),
+      "\n",
+      s(state.record),
+    );
+}
 
 // assume that base value is not a list or an object
 function baseIsRegexCase(tablet, record, trait, thing) {
@@ -36,11 +37,11 @@ function baseIsRegexCase(tablet, record, trait, thing) {
     record: { ...record, ...basePartial },
   };
 
-  // if (isMatch) {
-  //   log("regex match", tablet, state, trait, thing, base, baseValue);
-  // } else {
-  //   log("regex no match", tablet, state, trait, thing, base, baseValue);
-  // }
+  if (isMatch) {
+    log("regex match", tablet, state, trait, thing, base, baseValue);
+  } else {
+    log("regex no match", tablet, state, trait, thing, base, baseValue);
+  }
 
   return state;
 }
@@ -69,16 +70,18 @@ function traitIsBaseCase(tablet, record, trait, thing) {
     record: { ...record, ...leafPartial },
   };
 
-  // if (isMatch) {
-  //   log("base match", tablet, state, trait, thing, base, baseValue);
-  // } else {
-  //   log("base no match", tablet, state, trait, thing, base, baseValue);
-  // }
+  if (isMatch) {
+    log("base match", tablet, state, trait, thing, base, baseValue);
+  } else {
+    log("base no match", tablet, state, trait, thing, base, baseValue);
+  }
 
   return state;
 }
 
 function traitIsLeafCase(tablet, record, trait, thing) {
+  log("leaf", tablet, { record }, trait, thing);
+
   const { trait: leaf, thing: base } = tablet;
 
   // TODO what if traitValue is undefined here?
@@ -115,24 +118,27 @@ function traitIsLeafCase(tablet, record, trait, thing) {
         record: { ...recordWithLeaf, [leaf]: leafValues, ...basePartial },
       };
 
-      // if (isMatch) {
-      //   log("leaf match", tablet, state, trait, thing, leaf, leafValue);
-      // } else {
-      //   log("leaf no match", tablet, state, trait, thing, leaf, leafValue);
-      // }
+      if (isMatch) {
+        log("leaf match", tablet, state, trait, thing, leaf, leafValue);
+      } else {
+        log("leaf no match", tablet, state, trait, thing, leaf, leafValue);
+      }
 
       return state;
     },
     { record: recordWithoutLeaf },
   );
 
-  // log("step leaf", tablet, stateValues, trait, thing, leaf, leafItems);
+  log("leaf end", tablet, stateValues, trait, thing, leaf, leafItems);
 
   return stateValues;
 }
 
 function traitIsTrunkCase(tablet, record, trait, thing) {
+  log("trunk", tablet, { record }, trait, thing);
+
   const { trait: trunk, thing: leaf } = tablet;
+
   // TODO what if trunk is undefined here?
   const { [trunk]: omitted, ...recordWithoutTrunk } = record;
 
@@ -182,24 +188,26 @@ function traitIsTrunkCase(tablet, record, trait, thing) {
         record: { ...recordWithTrunk, [trunk]: trunkValues },
       };
 
-      // if (isMatch) {
-      //   log("trunk match", tablet, state, trait, thing, trunk, trunkValue);
-      // } else {
-      //   log("trunk no match", tablet, state, trait, thing, trunk, trunkValue);
-      // }
+      if (isMatch) {
+        log("trunk match", tablet, state, trait, thing, trunk, trunkValue);
+      } else {
+        log("trunk no match", tablet, state, trait, thing, trunk, trunkValue);
+      }
 
       return state;
     },
     { record: recordWithoutTrunk },
   );
 
-  // log("step trunk", tablet, stateValues, trait, thing, trunk, trunkItems);
+  log("trunk end", tablet, stateValues, trait, thing, trunk, trunkItems);
 
   return stateValues;
 }
 
 // walk down the rest of the leaves to find the trait-thing pair
 function leafIsObjectCase(tablet, record, trait, thing) {
+  log("object", tablet, { record }, trait, thing);
+
   const { _: base, [base]: baseValueOmitted, ...recordWithoutBase } = record;
 
   // TODO can we guess here which of the remaining leaves leads to the tablet.trait?
@@ -208,6 +216,8 @@ function leafIsObjectCase(tablet, record, trait, thing) {
   // reduce each key-value pair to match trait and set thing
   const stateEntries = entries.reduce(
     (stateWithEntry, [leaf, leafValue]) => {
+      log("entry", tablet, stateWithEntry, trait, thing, leaf, leafValue);
+
       // remember is previous entry already matched
       const { isMatch: isMatchEntry, record: recordWithEntry } = stateWithEntry;
 
@@ -230,18 +240,27 @@ function leafIsObjectCase(tablet, record, trait, thing) {
           const isObject =
             !Array.isArray(leafItem) && typeof leafItem === "object";
 
+          const leafObject = isObject
+            ? leafItem
+            : { _: leaf, [leaf]: leafItem };
+
           // if object, call choose to get isMatch and new item
           // if not object, set isMatch to false and new item to leafItem
-          const { isMatch, record: leafItemNew } = isObject
-            ? step(tablet, leafItem, trait, thing)
-            : { isMatch: false, record: leafItem };
+          const { isMatch, record: leafItemNew } = step(
+            tablet,
+            leafObject,
+            trait,
+            thing,
+          );
+
+          const leafValue = isMatch ? leafItemNew : leafItem;
 
           const existingValue = recordWithLeaf[leaf];
 
           const leafValues =
             existingValue === undefined
-              ? leafItemNew
-              : [existingValue, leafItemNew].flat();
+              ? leafValue
+              : [existingValue, leafValue].flat();
 
           // update leaf field
           const state = {
@@ -249,11 +268,11 @@ function leafIsObjectCase(tablet, record, trait, thing) {
             record: { ...recordWithLeaf, [leaf]: leafValues },
           };
 
-          // if (isMatch) {
-          //   log("object match", tablet, state, trait, thing, leaf, leafItem);
-          // } else {
-          //   log("object no match", tablet, state, trait, thing, leaf, leafItem);
-          // }
+          if (isMatch) {
+            log("object match", tablet, state, trait, thing, leaf, leafItem);
+          } else {
+            log("object no match", tablet, state, trait, thing, leaf, leafItem);
+          }
 
           return state;
         },
@@ -263,7 +282,7 @@ function leafIsObjectCase(tablet, record, trait, thing) {
       // TODO can values length be 0?
       // [leaf]: valuesNew.length === 1 ? valuesNew[0] : valuesNew,
 
-      // log("step values", tablet, stateValues, trait, thing, leaf, leafItems);
+      log("entry end", tablet, stateValues, trait, thing, leaf);
 
       // TODO should we spread to accentry here?
       return stateValues;
@@ -277,7 +296,7 @@ function leafIsObjectCase(tablet, record, trait, thing) {
     record: { ...stateEntries.record, _: base, [base]: baseValueOmitted },
   };
 
-  // log("step entries", tablet, stateEntries, trait, thing);
+  log("object end", tablet, stateWithBase, trait, thing);
 
   return stateWithBase;
 }

@@ -62,5 +62,15 @@ export function parseLine(state, tablet, line) {
 
   const stateNew = { ...stateOld, matched, current };
 
+  if (tablet.filename === "export1_tag-export1_channel.csv")
+    console.log(
+      "line end",
+      tablet.filename,
+      "\n",
+      line,
+      "\n",
+      JSON.stringify(stateNew, undefined, 2),
+    );
+
   return stateNew;
 }
