@@ -48,23 +48,7 @@ function gatherKeys(object) {
   }, []);
 }
 
-/**
- *
- * @name findStrategy
- * @export function
- * @param {object} schema -
- * @param {object} query -
- * @param {object} queryMap -
- * @param {object} isQueriedMap -
- * @param {string} base -
- * @returns {object[]} -
- */
-export function planStrategy(schema, query) {
-  const base = query._;
-
-  // queried keys in ascending order minus the base
-  const queriedBranches = gatherKeys(query);
-
+function queriedFoo(schema, queriedBranches) {
   // TODO rewrite to using schema record
   const queriedTablets = queriedBranches.map((branch) => ({
     // what branch to set?
@@ -111,8 +95,10 @@ export function planStrategy(schema, query) {
     { nestingLevel: 0, groups: [] },
   ).groups;
 
-  const baseHasTrunk = schema[base].trunk !== undefined;
+  return queriedGroups;
+}
 
+function trunkFoo(schema, base) {
   // if base is leaf, parse the trunk relationship
   const trunkTablet = {
     // what branch to set?
@@ -130,6 +116,10 @@ export function planStrategy(schema, query) {
     eager: true, // push as soon as trait changes in the tablet
   };
 
+  return trunkTablet;
+}
+
+function leavesFoo(schema, base) {
   const leaves = Object.keys(schema).filter((b) => schema[b].trunk === base);
 
   const leafTablets = leaves.map((leaf) => ({
@@ -148,18 +138,18 @@ export function planStrategy(schema, query) {
     eager: true, // push as soon as trait changes in the tablet
   }));
 
-  // const baseGroups = baseHasTrunk ? [[trunkTablet]] : [leafTablets];
-  const basePartial = baseHasTrunk ? [[trunkTablet]] : [];
+  return leafTablets;
+}
 
-  // if at least one leaf is queried, don't parse other leaves
-  // if only datum is queried query all leaves
-  const leafPartial = queriedBranches.length === 0 ? [leafTablets] : [];
+function valueFoo(schema, queriedBranches, base) {
+  const leaves = Object.keys(schema).filter((b) => schema[b].trunk === base);
 
   // TODO account for when there's no query and all leaves are already in leafTablets
   // TODO account for nested crown when leaves of leaves also hold values
   const valueBranches = leaves.filter(
     (leaf) => !queriedBranches.includes(leaf),
   );
+  // const valueBranches = leaves;
 
   // TODO account for nested crown when trunk is not base
   const valueTablets = valueBranches.map((branch) => ({
@@ -223,13 +213,44 @@ export function planStrategy(schema, query) {
     })
     .flat(Infinity);
 
+  return [valueTablets, valueTablets1, valueTablets2];
+}
+/**
+ *
+ * @name planStrategy
+ * @export function
+ * @param {object} schema -
+ * @param {object} query -
+ * @returns {object[]} -
+ */
+export function planStrategy(schema, query) {
+  const base = query._;
+
+  // queried keys in ascending order minus the base
+  const queriedBranches = gatherKeys(query);
+
+  const queriedGroups = queriedFoo(schema, queriedBranches);
+
+  const leafTablets = leavesFoo(schema, base);
+
+  // if at least one leaf is queried, don't parse other leaves
+  // if only datum is queried query all leaves
+  const leafPartial = queriedBranches.length === 0 ? [leafTablets] : [];
+
+  const baseHasTrunk = schema[base].trunk !== undefined;
+
+  const trunkTablet = trunkFoo(schema, base);
+
+  // const baseGroups = baseHasTrunk ? [[trunkTablet]] : [leafTablets];
+  const basePartial = baseHasTrunk ? [[trunkTablet]] : [];
+
+  const valueTablets = valueFoo(schema, queriedBranches, base);
+
   const strategy = [
     ...queriedGroups,
-    ...basePartial,
     ...leafPartial,
-    valueTablets,
-    valueTablets1,
-    valueTablets2,
+    ...basePartial,
+    ...valueTablets,
   ];
 
   return strategy;
