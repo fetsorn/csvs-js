@@ -103,25 +103,29 @@ function traitIsLeafCase(tablet, record, trait, thing) {
         : leafValue === trait;
 
       // append leafItem to leaf if recordWithLeaf
-      const existingValue = recordWithLeaf[leaf];
+      const existingLeaf = recordWithLeaf[leaf];
 
       // drop regex leafValue and replace with literal trait value
       // if object preserve an object leaves from leafItem
-      const newValue = isObject ? { ...leafItem, [leaf]: trait } : trait;
+      const newLeaf = isObject ? { ...leafItem, [leaf]: trait } : trait;
 
       const leafValues =
-        existingValue === undefined
-          ? newValue
-          : [existingValue, newValue].flat();
+        existingLeaf === undefined ? newLeaf : [existingLeaf, newLeaf].flat();
 
       // drop leaf after a base is found, to be picked up again later in value tablets
       const leafPartial = tablet.querying ? {} : { [leaf]: leafValues };
 
-      const basePartial = isMatch ? { [base]: thing } : {};
+      const existingBase = recordWithLeaf[base];
+
+      const passesFilter = existingBase === undefined || existingBase === thing;
+
+      const baseIsNew = isMatch && passesFilter;
+
+      const basePartial = baseIsNew ? { [base]: thing } : {};
 
       // if match set base to thing
       const state = {
-        isMatch: isMatchItem ? isMatchItem : isMatch,
+        isMatch: isMatchItem ? isMatchItem : baseIsNew,
         record: { ...recordWithLeaf, ...leafPartial, ...basePartial },
       };
 
