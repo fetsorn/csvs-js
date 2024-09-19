@@ -112,7 +112,6 @@ function trunkFoo(schema, base) {
     filename: `${schema[base].trunk}-${base}.csv`,
     traitIsRegex: true,
     // should it have constraints?
-    querying: true,
     eager: true, // push as soon as trait changes in the tablet
   };
 
@@ -141,18 +140,11 @@ function leavesFoo(schema, base) {
   return leafTablets;
 }
 
-function valueFoo(schema, queriedBranches, base) {
+function valueFoo(schema, base) {
   const leaves = Object.keys(schema).filter((b) => schema[b].trunk === base);
 
-  // TODO account for when there's no query and all leaves are already in leafTablets
-  // TODO account for nested crown when leaves of leaves also hold values
-  const valueBranches = leaves.filter(
-    (leaf) => !queriedBranches.includes(leaf),
-  );
-  // const valueBranches = leaves;
-
   // TODO account for nested crown when trunk is not base
-  const valueTablets = valueBranches.map((branch) => ({
+  const valueTablets = leaves.map((branch) => ({
     // what branch to set?
     thing: branch,
     // what branch to match?
@@ -167,7 +159,7 @@ function valueFoo(schema, queriedBranches, base) {
   }));
 
   // TODO general implementation for each nesting level
-  const valueTablets1 = valueBranches
+  const valueTablets1 = leaves
     .map((branch) => {
       const branchLeaves = Object.keys(schema).filter(
         (b) => schema[b].trunk === branch,
@@ -188,7 +180,7 @@ function valueFoo(schema, queriedBranches, base) {
     })
     .flat();
 
-  const valueTablets2 = valueBranches
+  const valueTablets2 = leaves
     .map((branch) => {
       const branchLeaves1 = Object.keys(schema).filter(
         (b) => schema[b].trunk === branch,
@@ -244,7 +236,7 @@ export function planStrategy(schema, query) {
   // const baseGroups = baseHasTrunk ? [[trunkTablet]] : [leafTablets];
   const basePartial = baseHasTrunk ? [[trunkTablet]] : [];
 
-  const valueTablets = valueFoo(schema, queriedBranches, base);
+  const valueTablets = valueFoo(schema, base);
 
   const strategy = [
     ...queriedGroups,

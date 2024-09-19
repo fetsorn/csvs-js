@@ -114,12 +114,15 @@ function traitIsLeafCase(tablet, record, trait, thing) {
           ? newValue
           : [existingValue, newValue].flat();
 
+      // drop leaf after a base is found, to be picked up again later in value tablets
+      const leafPartial = tablet.querying ? {} : { [leaf]: leafValues };
+
       const basePartial = isMatch ? { [base]: thing } : {};
 
       // if match set base to thing
       const state = {
         isMatch: isMatchItem ? isMatchItem : isMatch,
-        record: { ...recordWithLeaf, [leaf]: leafValues, ...basePartial },
+        record: { ...recordWithLeaf, ...leafPartial, ...basePartial },
       };
 
       // if (isMatch) {
@@ -229,6 +232,7 @@ function leafIsObjectCase(tablet, record, trait, thing) {
       if (isMatchEntry) return stateWithEntry;
 
       // remove values of given key to rewrite later
+      // TODO describe difference between omitted and leafValue
       const { [leaf]: omitted, ...recordWithoutLeaf } = recordWithEntry;
 
       // TODO should we take from omitted or leafValue here?
