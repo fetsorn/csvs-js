@@ -50,7 +50,9 @@ export default class Select {
       },
     });
 
-    return [recordSchema];
+    const schemaStream = stream.Readable.from([{ record: recordSchema }]);
+
+    return [schemaStream];
   }
 
   async selectStream(urlSearchParams) {
