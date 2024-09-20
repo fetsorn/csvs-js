@@ -83,15 +83,15 @@ export default class Select {
       strategy,
     );
 
-    const leader = query.__;
+    const leader = urlSearchParams.get("__");
 
     const leaderStream = new stream.Transform({
       objectMode: true,
 
-      transform(record, encoding, callback) {
+      transform(state, encoding, callback) {
         // TODO account for nested leader
         // TODO account for a list of leader values
-        this.push(record[leader]);
+        this.push({ record: state.record[leader] });
 
         callback();
       },
