@@ -19,43 +19,54 @@ export function parseLine(state, tablet, line) {
   //     JSON.stringify(state, undefined, 2),
   //   );
 
+  // push if tablet wasn't eager or if eager matched
+  const pushEnd = !tablet.eager || state.isMatch;
+
   // if tablet is eager and has been pushing, ask to push matched
   // if tablet is not eager and so hasn't pushed anything yet, push current
-  if (line === undefined)
-    return {
-      previous: tablet.eager ? state.matched : state.current,
-    };
+  if (line === undefined) return pushEnd ? { complete: state.current } : {};
 
   // ignore empty newline
-  // treat two lines with the same trait separated by newline as not separated
+  // treat two lines with the same fst separated by newline as not separated
   if (line === "") return state;
 
   const {
-    data: [row],
+    data: [[fst, snd]],
   } = csv.parse(line);
-
-  const [fst, snd] = row;
 
   const trait = tablet.traitIsFirst ? fst : snd;
 
   const thing = tablet.thingIsFirst ? fst : snd;
 
-  const traitIsNew = state.trait !== undefined && state.trait !== trait;
+  // assume that tablet is sorted and fst will never repeat again
+  const fstIsNew = state.fst !== undefined && state.fst !== fst;
 
-  const resetState = tablet.eager && traitIsNew;
+  // inside a group of fst, snd is also sorted and won't repeat
+  // const sndIsNew = state.snd !== undefined && state.snd !== snd;
 
-  // if trait is new, move matched to previous for pushing
-  const previous = resetState ? state.matched : undefined;
+  const pushEager = tablet.eager && fstIsNew;
 
-  // if trait is new, reset record for query
-  const record = resetState ? state.initial : state.current;
+  // if fst is new, move matched to complete for pushing
+  const completePartial =
+    pushEager && state.isMatch ? { complete: state.current } : {};
+
+  // if fst is new, reset record for query
+  const record = pushEager ? state.initial : state.current;
 
   const { isMatch, record: current } = step(tablet, record, trait, thing);
 
-  // if matched, copy current to matched
-  const matched = isMatch ? current : undefined;
+  // remember previous isMatch inside a group of fst
+  const isMatchNew =
+    tablet.eager && !fstIsNew && state.isMatch ? state.isMatch : isMatch;
 
-  const stateNew = { ...state, previous, current, matched, trait };
+  const stateNew = {
+    initial: state.initial,
+    ...completePartial,
+    current,
+    fst,
+    snd,
+    isMatch: isMatchNew,
+  };
 
   // if (tablet.filename === "filepath-moddate.csv")
   //   console.log(

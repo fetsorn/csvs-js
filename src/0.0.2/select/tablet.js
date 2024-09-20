@@ -49,34 +49,34 @@ export function parseTablet(cache, tablet) {
       for (const line of lines) {
         stateIntermediary = parseLine(stateIntermediary, tablet, line);
 
-        if (stateIntermediary.previous) {
+        if (stateIntermediary.complete) {
           // if (tablet.filename === "export1_tag-export1_channel.csv")
           //   console.log(
           //     "push",
           //     tablet.filename,
           //     tablet,
-          //     JSON.stringify(stateIntermediary.previous, undefined, 2),
+          //     JSON.stringify(stateIntermediary.complete, undefined, 2),
           //   );
-          this.push({ record: stateIntermediary.previous });
+          this.push({ record: stateIntermediary.complete });
 
           hasMatch = true;
 
-          stateIntermediary.previous = undefined;
+          delete stateIntermediary.complete;
         }
       }
 
       // this will stream final after file reader streams
       stateIntermediary = parseLine(stateIntermediary, tablet, undefined);
 
-      if (stateIntermediary.previous) {
+      if (stateIntermediary.complete) {
         // if (tablet.filename === "export1_tag-export1_channel.csv")
         //   console.log(
         //     "push",
         //     tablet.filename,
         //     tablet,
-        //     JSON.stringify(stateIntermediary.previous, undefined, 2),
+        //     JSON.stringify(stateIntermediary.complete, undefined, 2),
         //   );
-        this.push({ record: stateIntermediary.previous });
+        this.push({ record: stateIntermediary.complete });
 
         hasMatch = true;
       }

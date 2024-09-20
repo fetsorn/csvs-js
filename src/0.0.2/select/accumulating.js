@@ -55,9 +55,9 @@ export function parseTabletAccumulating(cache, tablet) {
       for (const line of lines) {
         stateIntermediary = parseLine(stateIntermediary, tablet, line);
 
-        if (stateIntermediary.previous) {
+        if (stateIntermediary.complete) {
           // assume that thing is base level leaf
-          const value = stateIntermediary.previous[tablet.thing];
+          const value = stateIntermediary.complete[tablet.thing];
 
           const newMatch = matchMap.get(value) === undefined;
 
@@ -66,24 +66,24 @@ export function parseTabletAccumulating(cache, tablet) {
             //   "push",
             //   tablet.filename,
             //   tablet,
-            //   JSON.stringify(stateIntermediary.previous, undefined, 2),
+            //   JSON.stringify(stateIntermediary.complete, undefined, 2),
             // );
 
-            this.push({ record: stateIntermediary.previous });
+            this.push({ record: stateIntermediary.complete });
 
             matchMap.set(value, true);
           }
 
-          stateIntermediary.previous = undefined;
+          delete stateIntermediary.complete;
         }
       }
 
       // this will stream final after file reader streams
       stateIntermediary = parseLine(stateIntermediary, tablet, undefined);
 
-      if (stateIntermediary.previous) {
+      if (stateIntermediary.complete) {
         // assume that thing is base level leaf
-        const value = stateIntermediary.previous[tablet.thing];
+        const value = stateIntermediary.complete[tablet.thing];
 
         const newMatch = matchMap.get(value) === undefined;
 
@@ -92,10 +92,10 @@ export function parseTabletAccumulating(cache, tablet) {
           //   "push",
           //   tablet.filename,
           //   tablet,
-          //   JSON.stringify(stateIntermediary.previous, undefined, 2),
+          //   JSON.stringify(stateIntermediary.complete, undefined, 2),
           // );
 
-          this.push({ record: stateIntermediary.previous });
+          this.push({ record: stateIntermediary.complete });
 
           matchMap.set(value, true);
         }

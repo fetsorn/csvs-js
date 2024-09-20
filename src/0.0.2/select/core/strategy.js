@@ -223,12 +223,6 @@ export function planStrategy(schema, query) {
 
   const queriedGroups = queriedFoo(schema, queriedBranches);
 
-  const leafTablets = leavesFoo(schema, base);
-
-  // if at least one leaf is queried, don't parse other leaves
-  // if only datum is queried query all leaves
-  const leafPartial = queriedBranches.length === 0 ? [leafTablets] : [];
-
   const baseHasTrunk = schema[base].trunk !== undefined;
 
   const trunkTablet = trunkFoo(schema, base);
@@ -236,14 +230,16 @@ export function planStrategy(schema, query) {
   // const baseGroups = baseHasTrunk ? [[trunkTablet]] : [leafTablets];
   const basePartial = baseHasTrunk ? [[trunkTablet]] : [];
 
+  const leafTablets = leavesFoo(schema, base);
+
+  // if at least one leaf is queried, don't parse other leaves
+  // if only datum is queried query all leaves
+  const leafPartial =
+    queriedBranches.length === 0 ? [leafTablets, ...basePartial] : [];
+
   const valueTablets = valueFoo(schema, base);
 
-  const strategy = [
-    ...queriedGroups,
-    ...leafPartial,
-    ...basePartial,
-    ...valueTablets,
-  ];
+  const strategy = [...queriedGroups, ...leafPartial, ...valueTablets];
 
   return strategy;
 }

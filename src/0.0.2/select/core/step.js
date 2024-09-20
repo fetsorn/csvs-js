@@ -117,6 +117,7 @@ function traitIsLeafCase(tablet, record, trait, thing) {
 
       const existingBase = recordWithLeaf[base];
 
+      // if a different leaf already found a base value, make sure it matches
       const passesFilter = existingBase === undefined || existingBase === thing;
 
       const baseIsNew = isMatch && passesFilter;
@@ -301,7 +302,7 @@ function leafIsObjectCase(tablet, record, trait, thing) {
     { record: recordWithoutBase },
   );
 
-  // TODO put base back in
+  // put base back in
   const stateWithBase = {
     isMatch: stateEntries.isMatch,
     record: { ...stateEntries.record, _: base, [base]: baseValueOmitted },
@@ -335,6 +336,8 @@ export function step(tablet, record, trait, thing) {
 
   // if leaf is trait but base is not thing
   if (leafIsTrait) return traitIsTrunkCase(tablet, record, trait, thing);
+
+  // TODO handle trunk tablet when leaf is both thing and trait
 
   // if none of the fields are trait or thing, go into objects
   return leafIsObjectCase(tablet, record, trait, thing);
