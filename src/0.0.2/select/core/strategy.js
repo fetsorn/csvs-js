@@ -113,6 +113,7 @@ function trunkFoo(schema, base) {
     traitIsRegex: true,
     // should it have constraints?
     eager: true, // push as soon as trait changes in the tablet
+    accumulating: true,
   };
 
   return trunkTablet;

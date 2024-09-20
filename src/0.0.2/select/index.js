@@ -117,7 +117,9 @@ export default class Select {
       objectMode: true,
 
       write(state, encoding, callback) {
-        records.push(state.record);
+        if (state.record) {
+          records.push(state.record);
+        }
 
         callback();
       },

@@ -38,9 +38,9 @@ function baseIsRegexCase(tablet, record, trait, thing) {
   };
 
   // if (isMatch) {
-  //   log("regex match", tablet, state, trait, thing, base, baseValue);
+  //   log("base regex match", tablet, state, trait, thing, base, baseValue);
   // } else {
-  //   log("regex no match", tablet, state, trait, thing, base, baseValue);
+  //   log("base regex no match", tablet, state, trait, thing, base, baseValue);
   // }
 
   return state;
@@ -149,6 +149,27 @@ function traitIsLeafCase(tablet, record, trait, thing) {
 function traitIsTrunkCase(tablet, record, trait, thing) {
   // log("trunk", tablet, { record }, trait, thing);
 
+  // TODO what if it's an object?
+  const { _: base, [trait]: leafValue } = record;
+
+  const isMatch = tablet.traitIsRegex
+    ? new RegExp(leafValue).test(trait)
+    : leafValue === trait;
+
+  const state = { isMatch: true, record: { ...record, [base]: thing } };
+
+  // if (isMatch) {
+  //   log("trunk match", tablet, state, trait, thing, base, leafValue);
+  // } else {
+  //   log("trunk no match", tablet, state, trait, thing, base, leafValue);
+  // }
+
+  return state;
+}
+
+function traitIsObjectCase(tablet, record, trait, thing) {
+  // log("object", tablet, { record }, trait, thing);
+
   const { trait: trunk, thing: leaf } = tablet;
 
   // TODO what if trunk is undefined here?
@@ -201,9 +222,9 @@ function traitIsTrunkCase(tablet, record, trait, thing) {
       };
 
       // if (isMatch) {
-      //   log("trunk match", tablet, state, trait, thing, trunk, trunkValue);
+      //   log("object match", tablet, state, trait, thing, trunk, trunkValue);
       // } else {
-      //   log("trunk no match", tablet, state, trait, thing, trunk, trunkValue);
+      //   log("object no match", tablet, state, trait, thing, trunk, trunkValue);
       // }
 
       return state;
@@ -211,14 +232,14 @@ function traitIsTrunkCase(tablet, record, trait, thing) {
     { record: recordWithoutTrunk },
   );
 
-  // log("trunk end", tablet, stateValues, trait, thing, trunk, trunkItems);
+  // log("object end", tablet, stateValues, trait, thing, trunk, trunkItems);
 
   return stateValues;
 }
 
 // walk down the rest of the leaves to find the trait-thing pair
-function leafIsObjectCase(tablet, record, trait, thing) {
-  // log("object", tablet, { record }, trait, thing);
+function traitIsNestedCase(tablet, record, trait, thing) {
+  // log("nested", tablet, { record }, trait, thing);
 
   const { _: base, [base]: baseValueOmitted, ...recordWithoutBase } = record;
 
@@ -282,9 +303,9 @@ function leafIsObjectCase(tablet, record, trait, thing) {
           };
 
           // if (isMatch) {
-          //   log("object match", tablet, state, trait, thing, leaf, leafItem);
+          //   log("nested match", tablet, state, trait, thing, leaf, leafItem);
           // } else {
-          //   log("object no match", tablet, state, trait, thing, leaf, leafItem);
+          //   log("nested no match", tablet, state, trait, thing, leaf, leafItem);
           // }
 
           return state;
@@ -308,7 +329,7 @@ function leafIsObjectCase(tablet, record, trait, thing) {
     record: { ...stateEntries.record, _: base, [base]: baseValueOmitted },
   };
 
-  // log("object end", tablet, stateWithBase, trait, thing);
+  // log("nested end", tablet, stateWithBase, trait, thing);
 
   return stateWithBase;
 }
@@ -327,18 +348,21 @@ export function step(tablet, record, trait, thing) {
   // if base is trait for a leaf
   if (baseIsTrait) return traitIsBaseCase(tablet, record, trait, thing);
 
-  const leafIsTrait = Object.hasOwn(record, tablet.trait);
+  const recordHasTrait = Object.hasOwn(record, tablet.trait);
 
-  const traitIsLeaf = baseIsThing && leafIsTrait;
+  const traitIsLeaf = baseIsThing && recordHasTrait;
 
   // if trait is leaf of base
   if (traitIsLeaf) return traitIsLeafCase(tablet, record, trait, thing);
 
-  // if leaf is trait but base is not thing
-  if (leafIsTrait) return traitIsTrunkCase(tablet, record, trait, thing);
+  // if trait is trunk of base
+  const traitIsTrunk = baseIsThing && !recordHasTrait;
 
-  // TODO handle trunk tablet when leaf is both thing and trait
+  if (traitIsTrunk) return traitIsTrunkCase(tablet, record, trait, thing);
+
+  // if leaf is trait but base is not thing
+  if (recordHasTrait) return traitIsObjectCase(tablet, record, trait, thing);
 
   // if none of the fields are trait or thing, go into objects
-  return leafIsObjectCase(tablet, record, trait, thing);
+  return traitIsNestedCase(tablet, record, trait, thing);
 }
