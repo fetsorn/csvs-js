@@ -1,5 +1,5 @@
 import csv from "papaparse";
-import Store from "./store.js";
+import Store from "../store.js";
 
 /** Class representing a dataset record. */
 export default class Delete {

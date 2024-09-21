@@ -19,6 +19,16 @@
 //     );
 // }
 
+function schemaCase(tablet, record, trait, thing) {
+  // append thing to trait
+  const existingLeaf = record[trait];
+
+  const leaves =
+    existingLeaf === undefined ? [thing] : [existingLeaf, thing].flat();
+
+  return { isMatch: true, record: { ...record, [trait]: leaves } };
+}
+
 // assume that base value is not a list or an object
 function baseIsRegexCase(tablet, record, trait, thing) {
   // base is both trait and thing
@@ -342,6 +352,8 @@ export function step(tablet, record, trait, thing) {
   const baseIsThing = base === tablet.thing;
 
   const baseIsRegex = baseIsTrait && baseIsThing;
+
+  if (base === "_") return schemaCase(tablet, record, trait, thing);
 
   if (baseIsRegex) return baseIsRegexCase(tablet, record, trait, thing);
 

@@ -1,11 +1,11 @@
 import stream from "stream";
 // use promisify instead of stream/promises.pipeline to allow polyfills
 import { promisify } from "util";
-import csv from "papaparse";
 import Store from "../store.js";
 import { searchParamsToQuery } from "./compat.js";
-import { parseDataset } from "./dataset.js";
-import { planStrategy } from "./core/index.js";
+import { parseTablet } from "./tablet.js";
+import { parseTabletAccumulating } from "./accumulating.js";
+import { planValues, planOptions, planQuery, planSchema } from "./strategy.js";
 
 /** Class representing a dataset query. */
 export default class Select {
@@ -34,25 +34,17 @@ export default class Select {
   async #selectSchema() {
     let recordSchema = { _: "_" };
 
-    const tablet = this.#store.cache["_-_.csv"];
+    const queryStream = stream.Readable.from([{ record: recordSchema }]);
 
-    csv.parse(tablet, {
-      step: (row) => {
-        if (row.data.length === 1 && row.data[0] === "") return;
+    const schemaStrategy = planSchema();
 
-        const [key, value] = row.data;
+    const streams = schemaStrategy.map((tablet) =>
+      tablet.accumulating
+        ? parseTabletAccumulating(this.#store.cache, tablet)
+        : parseTablet(this.#store.cache, tablet),
+    );
 
-        const values = recordSchema[key] ?? [];
-
-        const valuesNew = [...values, value];
-
-        recordSchema[key] = valuesNew;
-      },
-    });
-
-    const schemaStream = stream.Readable.from([{ record: recordSchema }]);
-
-    return [schemaStream];
+    return [queryStream, ...streams];
   }
 
   async selectStream(urlSearchParams) {
@@ -74,13 +66,21 @@ export default class Select {
 
     const queryStream = stream.Readable.from([{ query }]);
 
-    // console.log(query);
-    const strategy = planStrategy(this.#store.schema, query);
+    const queryStrategy = planQuery(this.#store.schema, query);
 
-    const streams = parseDataset(
-      this.#store.schema,
-      this.#store.cache,
-      strategy,
+    const baseStrategy =
+      queryStrategy.length > 0
+        ? queryStrategy
+        : planOptions(this.#store.schema, base);
+
+    const valueStrategy = planValues(this.#store.schema, query);
+
+    const strategy = [...baseStrategy, ...valueStrategy];
+
+    const streams = strategy.map((tablet) =>
+      tablet.accumulating
+        ? parseTabletAccumulating(this.#store.cache, tablet)
+        : parseTablet(this.#store.cache, tablet),
     );
 
     const leader = urlSearchParams.get("__");
@@ -137,6 +137,108 @@ export default class Select {
 
     await pipeline([...streams, collectStream]);
 
+    return records;
+  }
+
+  async selectBaseKeys(urlSearchParams) {
+    await this.#store.readSchema();
+
+    const query = searchParamsToQuery(this.#store.schema, urlSearchParams);
+
+    // there can be only one root base in search query
+    // TODO: validate against arrays of multiple bases, do not return [], throw error
+    const base = query._;
+
+    // if no base is provided, return empty
+    if (base === undefined) return [];
+
+    if (base === "_") return this.#selectSchema(query);
+
+    // get a map of dataset file contents
+    await this.#store.read(base);
+
+    const queryStream = stream.Readable.from([{ query }]);
+
+    // console.log(query);
+    const strategy = planQuery(this.#store.schema, query);
+
+    const streams = strategy.map((tablet) =>
+      tablet.accumulating
+        ? parseTabletAccumulating(this.#store.cache, tablet)
+        : parseTablet(this.#store.cache, tablet),
+    );
+
+    var records = [];
+
+    const collectStream = new stream.Writable({
+      objectMode: true,
+
+      write(state, encoding, callback) {
+        if (state.record) {
+          records.push(state.record);
+        }
+
+        callback();
+      },
+
+      close() {},
+
+      abort(err) {
+        console.log("Sink error:", err);
+      },
+    });
+
+    const pipeline = promisify(stream.pipeline);
+
+    await pipeline([queryStream, ...streams, collectStream]);
+
+    return records;
+  }
+
+  async buildRecord(record) {
+    await this.#store.readSchema();
+
+    const base = record._;
+
+    // get a map of dataset file contents
+    await this.#store.read(base);
+
+    const queryStream = stream.Readable.from([{ record }]);
+
+    const strategy = planValues(this.#store.schema);
+
+    const streams = strategy.map((tablet) =>
+      tablet.accumulating
+        ? parseTabletAccumulating(this.#store.cache, tablet)
+        : parseTablet(this.#store.cache, tablet),
+    );
+
+    var records = [];
+
+    const collectStream = new stream.Writable({
+      objectMode: true,
+
+      write(state, encoding, callback) {
+        if (state.record) {
+          records.push(state.record);
+        }
+
+        callback();
+      },
+
+      close() {},
+
+      abort(err) {
+        console.log("Sink error:", err);
+      },
+    });
+
+    const pipeline = promisify(stream.pipeline);
+
+    await pipeline([queryStream, ...streams, collectStream]);
+
+    // takes record with base
+    // returns record with values
     return records;
   }
 }

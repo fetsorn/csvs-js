@@ -2,8 +2,8 @@ import Select1 from "./0.0.1/select.js";
 import Update1 from "./0.0.1/update.js";
 import { grep as grepPolyfill1 } from "./0.0.1/grep.js";
 import Select2 from "./0.0.2/select/index.js";
-import Update2 from "./0.0.2/update.js";
-import Delete2 from "./0.0.2/delete.js";
+import Update2 from "./0.0.2/update/index.js";
+import Delete2 from "./0.0.2/delete/index.js";
 import { randomUUID as randomUUIDPolyfill } from "./random.js";
 import { detectVersion } from "./version.js";
 

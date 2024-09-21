@@ -1,6 +1,6 @@
 import csv from "papaparse";
-import Store from "./store.js";
-import { findCrown } from "./schema.js";
+import Store from "../store.js";
+import { findCrown } from "../schema.js";
 import { recordToRelationMap } from "./query.js";
 
 /** Class representing a dataset record. */
@@ -20,36 +20,6 @@ export default class Update {
    */
   constructor(callback) {
     this.#store = new Store(callback);
-  }
-
-  /**
-   * This updates the dataset record.
-   * @name update
-   * @function
-   * @param {object} record - A dataset record.
-   * @returns {object} - A dataset record.
-   */
-  async update(record) {
-    await this.#store.readSchema();
-
-    // exit if record is undefined
-    if (record === undefined) return;
-
-    // TODO find base value if _ is object or array
-    // TODO exit if no base field or invalid base value
-    const base = record._;
-
-    await this.#store.read(base);
-
-    if (base === "_") {
-      this.#updateSchema(record);
-    } else {
-      this.#updateRecord(record);
-    }
-
-    // TODO if query result equals record skip
-    // otherwise write output
-    await this.#store.write();
   }
 
   /**
@@ -178,5 +148,35 @@ export default class Update {
         },
       });
     });
+  }
+
+  /**
+   * This updates the dataset record.
+   * @name update
+   * @function
+   * @param {object} record - A dataset record.
+   * @returns {object} - A dataset record.
+   */
+  async update(record) {
+    await this.#store.readSchema();
+
+    // exit if record is undefined
+    if (record === undefined) return;
+
+    // TODO find base value if _ is object or array
+    // TODO exit if no base field or invalid base value
+    const base = record._;
+
+    await this.#store.read(base);
+
+    if (base === "_") {
+      this.#updateSchema(record);
+    } else {
+      this.#updateRecord(record);
+    }
+
+    // TODO if query result equals record skip
+    // otherwise write output
+    await this.#store.write();
   }
 }

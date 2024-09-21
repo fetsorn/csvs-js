@@ -1,5 +1,5 @@
 import csv from "papaparse";
-import { step } from "./core/index.js";
+import { step } from "./step.js";
 
 /**
  *

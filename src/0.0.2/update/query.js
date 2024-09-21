@@ -1,4 +1,4 @@
-import { findCrown, sortNestingAscending } from "./schema.js";
+import { findCrown, sortNestingAscending } from "../schema.js";
 
 /**
  * This collapses a nested record into a list of key-value relations
@@ -72,34 +72,4 @@ export function recordToRelationMap(schema, record) {
   }, {});
 
   return relationMap;
-}
-
-/**
- *
- * @name findQueries
- * @export function
- * @param {object} schema -
- * @param {object} queryMap -
- * @param {string} base -
- * @returns {object} -
- */
-export function findQueries(schema, queryMap, base) {
-  // list of branches
-  const crown = findCrown(schema, base).sort(sortNestingAscending(schema));
-
-  const isQueriedMap = crown.reduce((acc, branch) => {
-    const { trunk } = schema[branch];
-
-    const pair = `${trunk}-${branch}.csv`;
-
-    const queries = queryMap[pair];
-
-    const isQueried = queries !== undefined;
-
-    const partial = isQueried ? { [branch]: isQueried } : {};
-
-    return { ...acc, ...partial };
-  }, {});
-
-  return isQueriedMap;
 }
