@@ -1,5 +1,8 @@
-import csv from "papaparse";
+import stream from "stream";
+import { promisify } from "util";
 import Store from "../store.js";
+import { planPrune } from "./strategy.js";
+import { pruneTablet } from "./tablet.js";
 
 /** Class representing a dataset record. */
 export default class Delete {
@@ -21,105 +24,57 @@ export default class Delete {
   }
 
   /**
-   * This deletes the dataset record.
-   * @name delete
-   * @param {object} record - A dataset record.
-   * @function
-   */
-  async delete(record) {
-    await this.#store.readSchema();
-
-    const base = record._;
-
-    await this.#store.read(base);
-
-    this.#deleteRecord(record);
-
-    await this.#store.write();
-  }
-
-  /**
    * This deletes a record from the dataset.
    * @name updateRecord
    * @param {object} record - A dataset record.
    * @function
    */
-  #deleteRecord(record) {
-    // TODO: handle weird case when value is array
-    // { _: a, a: [ { _: a, a: a1 }, { _: a, a: a1 } ] }
-    const base = record._;
+  #deleteRecord(schema, cache, appendOutput) {
+    return new stream.Writable({
+      objectMode: true,
 
-    const baseValue = record[base];
+      write(record, encoding, callback) {
+        const strategy = planPrune(schema, record);
 
-    const { trunk } = this.#store.schema[base];
+        strategy.forEach((tablet) => {
+          pruneTablet(tablet, cache, appendOutput);
+        });
 
-    if (trunk !== undefined) {
-      const pair = `${trunk}-${base}.csv`;
+        callback();
+      },
+    });
+  }
 
-      const tablet = this.#store.getCache(pair);
+  /**
+   * This deletes the dataset record.
+   * @name delete
+   * @param {object} record - A dataset record.
+   * @function
+   */
+  async delete(records) {
+    await this.#store.readSchema();
 
-      csv.parse(tablet, {
-        step: (row) => {
-          // ignore empty newline
-          if (row.data.length === 1 && row.data[0] === "") return;
+    // exit if record is undefined
+    if (records === undefined) return;
 
-          const [, value] = row.data;
+    let rs = Array.isArray(records) ? records : [records];
 
-          const isMatch = value === baseValue;
+    const base = rs[0]._;
 
-          if (isMatch) {
-            // prune if line matches a key from relationMap
-          } else {
-            const dataEscaped = row.data.map((str) =>
-              str.replace(/\n/g, "\\n"),
-            );
+    await this.#store.read(base);
 
-            const line = csv.unparse([dataEscaped], { newline: "\n" });
+    const queryStream = stream.Readable.from(rs);
 
-            // append line to output
-            this.#store.appendOutput(pair, line);
-          }
-        },
-      });
-    }
-
-    const leaves = Object.keys(this.#store.schema).filter(
-      (branch) => this.#store.schema[branch].trunk === base,
+    const writeStream = this.#deleteRecord(
+      this.#store.schema,
+      this.#store.cache,
+      this.#store.appendOutput.bind(this.#store),
     );
 
-    // csv.parse each base-leaf, prune all matches
-    for (const leaf of leaves) {
-      const pair = `${base}-${leaf}.csv`;
+    const pipeline = promisify(stream.pipeline);
 
-      const tablet = this.#store.getCache(pair);
+    await pipeline([queryStream, writeStream]);
 
-      if (tablet) {
-        this.#store.appendOutput(pair, "");
-      }
-
-      csv.parse(tablet, {
-        step: (row) => {
-          // ignore empty newline
-          if (row.data.length === 1 && row.data[0] === "") return;
-
-          const [key] = row.data;
-
-          const isMatch = key === baseValue;
-
-          if (isMatch) {
-            // prune if line matches a key from relationMap
-          } else {
-            const dataEscaped = row.data.map((str) =>
-              str.replace(/\n/g, "\\n"),
-            );
-
-            const line = csv.unparse([dataEscaped], { newline: "\n" });
-
-            // append line to output
-            this.#store.appendOutput(pair, line);
-          }
-        },
-      });
-    }
+    await this.#store.write();
   }
 }

@@ -102,7 +102,7 @@ export default class Update {
 
     await this.#store.read(base);
 
-    const queryStream = stream.Readable.from(records);
+    const queryStream = stream.Readable.from(rs);
 
     const writeStream =
       base === "_"
