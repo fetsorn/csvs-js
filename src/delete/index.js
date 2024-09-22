@@ -49,5 +49,5 @@ export async function deleteRecord(fs, dir, records) {
 
   const pipeline = promisify(stream.pipeline);
 
-  await pipeline([queryStream, writeStream]);
+  return pipeline([queryStream, writeStream]);
 }

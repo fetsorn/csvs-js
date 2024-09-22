@@ -12,7 +12,9 @@ import { parseLine } from "./line.js";
 export function parseTablet(fs, dir, tablet) {
   const filepath = path.join(dir, tablet.filename);
 
-  const contents = fs.readFileSync(filepath) ?? "";
+  const contents = fs.existsSync(filepath)
+    ? fs.readFileSync(filepath, "utf8")
+    : "";
 
   // TODO replace with file stream
   const lines = contents.split("\n");

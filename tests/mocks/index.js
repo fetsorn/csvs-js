@@ -1,4 +1,3 @@
-import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 /* eslint-disable import/extensions */
@@ -9,66 +8,34 @@ import schemas from "./schemas.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-function findpath(loadname) {
-  const loadpath = path.join(__dirname, loadname);
-
-  const loadtype = fs.statSync(loadpath);
-
-  if (loadtype.isFile()) {
-    return [loadname];
-  } else if (loadtype.isDirectory()) {
-    const filenames = fs.readdirSync(loadpath);
-
-    const entries = filenames.map((filename) => {
-      const filepath = path.join(loadname, filename);
-
-      return findpath(filepath);
-    });
-
-    return entries.flat();
-  }
-}
-
-function loadContents(loadname) {
-  const paths = findpath(loadname);
-
-  const entries = paths.map((filename) => {
-    const filepath = path.join(__dirname, filename);
-
-    const contents = fs.readFileSync(filepath, { encoding: "utf8" });
-
-    const filenameRelative = filename.replace(new RegExp(`${loadname}/`), "");
-
-    return [filenameRelative, contents];
-  });
-
-  return Object.fromEntries(entries);
+function locate(loadname) {
+  return path.join(__dirname, loadname);
 }
 
 export function loadMocks() {
   return {
-    datasetDefault: loadContents("default"),
-    datasetEmpty: loadContents("empty"),
-    datasetEdited: loadContents("edited"),
-    datasetAdded: loadContents("added"),
-    datasetDeleted: loadContents("deleted"),
-    datasetEmptyAdded: loadContents("empty_added"),
-    datasetUnordered: loadContents("unordered"),
-    datasetArray: loadContents("array"),
-    datasetArraySimple: loadContents("array_simple"),
-    datasetArrayDouble: loadContents("array_double"),
-    datasetArrayEmpty: loadContents("array_empty"),
-    datasetArrayAdded: loadContents("array_added"),
-    datasetAddedArrayItem: loadContents("added_array_item"),
-    datasetEditedArrayItem: loadContents("edited_array_item"),
-    datasetDeletedArrayItem: loadContents("deleted_array_item"),
-    datasetEditedArrayItemObject: loadContents("edited_array_item_object"),
-    datasetArrayLiteral: loadContents("array_literal"),
-    datasetArrayFree: loadContents("array_free"),
-    datasetDeletedLeaf: loadContents("deleted_leaf"),
-    datasetSchema: loadContents("schema"),
-    datasetSchemaNone: loadContents("schema_none"),
-    datasetSchemaLiteral: loadContents("schema_literal"),
+    datasetDefault: locate("default"),
+    datasetEmpty: locate("empty"),
+    datasetEdited: locate("edited"),
+    datasetAdded: locate("added"),
+    datasetDeleted: locate("deleted"),
+    datasetEmptyAdded: locate("empty_added"),
+    datasetUnordered: locate("unordered"),
+    datasetArray: locate("array"),
+    datasetArraySimple: locate("array_simple"),
+    datasetArrayDouble: locate("array_double"),
+    datasetArrayEmpty: locate("array_empty"),
+    datasetArrayAdded: locate("array_added"),
+    datasetAddedArrayItem: locate("added_array_item"),
+    datasetEditedArrayItem: locate("edited_array_item"),
+    datasetDeletedArrayItem: locate("deleted_array_item"),
+    datasetEditedArrayItemObject: locate("edited_array_item_object"),
+    datasetArrayLiteral: locate("array_literal"),
+    datasetArrayFree: locate("array_free"),
+    datasetDeletedLeaf: locate("deleted_leaf"),
+    datasetSchema: locate("schema"),
+    datasetSchemaNone: locate("schema_none"),
+    datasetSchemaLiteral: locate("schema_literal"),
     ...options,
     ...records,
     ...schemas,

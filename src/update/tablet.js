@@ -5,7 +5,9 @@ export function updateTablet(fs, dir, relations, filename) {
   // createReadStream
   const filepath = path.join(dir, filename);
 
-  const contents = fs.readFileSync(filepath) ?? "";
+  const contents = fs.existsSync(filepath)
+    ? fs.readFileSync(filepath, "utf8")
+    : "";
 
   // TODO replace with file stream
   const lines = contents.split("\n");
