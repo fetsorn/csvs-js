@@ -123,16 +123,18 @@ export async function selectBaseKeys(fs, dir, query) {
   // if no base is provided, return empty
   if (base === undefined) return [];
 
-  if (base === "_") return selectSchema(fs, dir);
-
   const [schemaRecord] = await select(fs, dir, { _: "_" });
+
+  if (base === "_") return [schemaRecord];
 
   const schema = toSchema(schemaRecord);
 
   const queryStream = stream.Readable.from([{ query }]);
 
-  // console.log(query);
-  const strategy = planQuery(schema, query);
+  const queryStrategy = planQuery(schema, query);
+
+  const strategy =
+    queryStrategy.length > 0 ? queryStrategy : planOptions(schema, base);
 
   const streams = strategy.map((tablet) =>
     tablet.accumulating
@@ -160,21 +162,42 @@ export async function selectBaseKeys(fs, dir, query) {
     },
   });
 
+  const leader = query.__;
+
+  // preserve leader for building values later
+  const leaderStream = new stream.Transform({
+    objectMode: true,
+
+    transform(state, encoding, callback) {
+      // TODO account for nested leader
+      // TODO account for a list of leader values
+      this.push({ record: { ...state.record, __: leader } });
+
+      callback();
+    },
+  });
+
+  const leaderPartial = leader && leader !== base ? [leaderStream] : [];
+
   const pipeline = promisify(stream.pipeline);
 
-  await pipeline([queryStream, ...streams, collectStream]);
+  await pipeline([queryStream, ...streams, ...leaderPartial, collectStream]);
 
   return records;
 }
 
 export async function buildRecord(fs, dir, record) {
+  const base = record._;
+
   const [schemaRecord] = await select(fs, dir, { _: "_" });
+
+  if (base === "_") return schemaRecord;
 
   const schema = toSchema(schemaRecord);
 
   const queryStream = stream.Readable.from([{ record }]);
 
-  const strategy = planValues(schema);
+  const strategy = planValues(schema, record);
 
   const streams = strategy.map((tablet) =>
     tablet.accumulating
@@ -202,11 +225,27 @@ export async function buildRecord(fs, dir, record) {
     },
   });
 
+  const leader = record.__;
+
+  const leaderStream = new stream.Transform({
+    objectMode: true,
+
+    transform(state, encoding, callback) {
+      // TODO account for nested leader
+      // TODO account for a list of leader values
+      this.push({ record: state.record[leader] });
+
+      callback();
+    },
+  });
+
+  const leaderPartial = leader && leader !== base ? [leaderStream] : [];
+
   const pipeline = promisify(stream.pipeline);
 
-  await pipeline([queryStream, ...streams, collectStream]);
+  await pipeline([queryStream, ...streams, ...leaderPartial, collectStream]);
 
   // takes record with base
   // returns record with values
-  return records;
+  return records[0];
 }
