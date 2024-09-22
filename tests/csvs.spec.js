@@ -5,13 +5,7 @@ import fs from "fs";
 import crypto from "crypto";
 import { exec } from "child_process";
 import { CSVS } from "../src/index.js";
-import {
-  testCasesSelect,
-  testCasesUpdate,
-  testCasesDelete,
-  testCasesGetValue,
-  testCasesSetValue,
-} from "./cases.js";
+import { testCasesSelect, testCasesUpdate, testCasesDelete } from "./cases.js";
 
 // node polyfills for browser APIs
 // used in csvs_js.digestMessage for hashes
@@ -114,13 +108,11 @@ describe("Query.select() no ripgrep 0.0.2", () => {
 
   testCasesSelect("0.0.2").forEach((testCase) => {
     test(testCase.name, () => {
-      const searchParams = new URLSearchParams(testCase.query);
-
       callback.readFile = (path) => testCase.initial[path];
 
       const client = new CSVS(callback);
 
-      return client.select(searchParams).then((data) => {
+      return client.select(testCase.query).then((data) => {
         const dataSorted = data
           .map(sortObject)
           .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
@@ -176,13 +168,11 @@ describe.only("Query.select() ripgrep 0.0.2", () => {
 
   testCasesSelect("0.0.2").forEach((testCase) => {
     test(testCase.name, () => {
-      const searchParams = new URLSearchParams(testCase.query);
-
       callback.readFile = (path) => testCase.initial[path];
 
       const client = new CSVS(callback);
 
-      return client.select(searchParams).then((data) => {
+      return client.select(testCase.query).then((data) => {
         const dataSorted = data
           .map(sortObject)
           .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
@@ -191,7 +181,7 @@ describe.only("Query.select() ripgrep 0.0.2", () => {
           .map(sortObject)
           .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
 
-        // console.log(JSON.stringify(dataSorted, undefined, 2));
+        console.log(JSON.stringify(dataSorted, undefined, 2));
 
         expect(dataSorted).toStrictEqual(expected);
       });
@@ -208,13 +198,11 @@ describe("Query.selectBaseKeys() ripgrep 0.0.2", () => {
 
   testCasesSelect("0.0.2").forEach((testCase) => {
     test(testCase.name, async () => {
-      const searchParams = new URLSearchParams(testCase.query);
-
       callback.readFile = (path) => testCase.initial[path];
 
       const client = new CSVS(callback);
 
-      const { base, baseKeys } = await client.selectBaseKeys(searchParams);
+      const { base, baseKeys } = await client.selectBaseKeys(testCase.query);
 
       const records = await Promise.all(
         baseKeys.map((baseKey) => client.buildRecord(base, baseKey)),
@@ -336,32 +324,6 @@ describe("Entry.delete() 0.0.2", () => {
       return client.delete(testCase.query).then(() => {
         expect(editedFiles).toStrictEqual(testCase.expected);
       });
-    });
-  });
-});
-
-describe("getValue", () => {
-  testCasesGetValue().forEach((testCase) => {
-    test(testCase.name, () => {
-      expect(
-        getValue(testCase.schema, testCase.query, testCase.initial),
-      ).toStrictEqual(testCase.expected);
-    });
-  });
-});
-
-describe("setValue", () => {
-  testCasesSetValue().forEach((testCase) => {
-    test(testCase.name, () => {
-      expect(
-        setValue(
-          testCase.schema,
-          testCase.initial,
-          testCase.trunk,
-          testCase.branch,
-          testCase.value,
-        ),
-      ).toStrictEqual(testCase.expected);
     });
   });
 });

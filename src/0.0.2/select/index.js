@@ -2,7 +2,6 @@ import stream from "stream";
 // use promisify instead of stream/promises.pipeline to allow polyfills
 import { promisify } from "util";
 import Store from "../store.js";
-import { searchParamsToQuery } from "./compat.js";
 import { parseTablet } from "./tablet.js";
 import { parseTabletAccumulating } from "./accumulating.js";
 import { planValues, planOptions, planQuery, planSchema } from "./strategy.js";
@@ -47,10 +46,8 @@ export default class Select {
     return [queryStream, ...streams];
   }
 
-  async selectStream(urlSearchParams) {
+  async selectStream(query) {
     await this.#store.readSchema();
-
-    const query = searchParamsToQuery(this.#store.schema, urlSearchParams);
 
     // there can be only one root base in search query
     // TODO: validate against arrays of multiple bases, do not return [], throw error
@@ -83,7 +80,7 @@ export default class Select {
         : parseTablet(this.#store.cache, tablet),
     );
 
-    const leader = urlSearchParams.get("__");
+    const leader = query.__;
 
     const leaderStream = new stream.Transform({
       objectMode: true,
@@ -107,11 +104,10 @@ export default class Select {
    * This returns an array of records from the dataset.
    * @name select
    * @function
-   * @param {URLSearchParams} urlSearchParams - search params from a query string.
    * @returns {Object[]}
    */
-  async select(urlSearchParams) {
-    const streams = await this.selectStream(urlSearchParams);
+  async select(query) {
+    const streams = await this.selectStream(query);
 
     var records = [];
 
@@ -140,10 +136,8 @@ export default class Select {
     return records;
   }
 
-  async selectBaseKeys(urlSearchParams) {
+  async selectBaseKeys(query) {
     await this.#store.readSchema();
-
-    const query = searchParamsToQuery(this.#store.schema, urlSearchParams);
 
     // there can be only one root base in search query
     // TODO: validate against arrays of multiple bases, do not return [], throw error
@@ -196,9 +190,9 @@ export default class Select {
   }
 
   async buildRecord(record) {
-    await this.#store.readSchema();
-
     const base = record._;
+
+    await this.#store.readSchema();
 
     // get a map of dataset file contents
     await this.#store.read(base);

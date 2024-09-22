@@ -12,7 +12,7 @@ import {
 function gatherKeys(record) {
   // skip base
   const leaves = Object.keys(record).filter(
-    (key) => key !== "_" && key !== record._,
+    (key) => key !== "_" && key !== "__" && key !== record._,
   );
 
   return leaves.reduce((keys, key) => {
