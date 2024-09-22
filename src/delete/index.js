@@ -15,12 +15,12 @@ export function deleteStream(fs, dir, schema) {
   return new stream.Writable({
     objectMode: true,
 
-    write(record, encoding, callback) {
+    async write(record, encoding, callback) {
       const strategy = planPrune(schema, record);
 
-      strategy.forEach((tablet) => {
-        pruneTablet(fs, dir, tablet);
-      });
+      const promises = strategy.map((tablet) => pruneTablet(fs, dir, tablet));
+
+      await Promise.all(promises);
 
       callback();
     },

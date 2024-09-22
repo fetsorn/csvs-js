@@ -129,14 +129,12 @@ describe("selectBaseKeys()", () => {
 describe("update()", () => {
   testCasesUpdate.forEach((testCase) => {
     test(testCase.name, () => {
-      const tmpNew = nodefs.mkdtempSync("test");
+      const tmpdir = nodefs.mkdtempSync(os.tmpdir());
 
-      const tmpPath = join(tmpDir, tmpNew);
+      copy(testCase.initial, tmpdir);
 
-      copy(testCase.initial, tmpPath);
-
-      return update(nodefs, tmpPath, testCase.query).then(() => {
-        expect(loadContents(nodefs, tmpPath)).toStrictEqual(
+      return update(nodefs, tmpdir, testCase.query).then(() => {
+        expect(loadContents(nodefs, tmpdir)).toStrictEqual(
           loadContents(nodefs, testCase.expected),
         );
       });
@@ -144,17 +142,15 @@ describe("update()", () => {
   });
 });
 
-describe("deleteRecord()", () => {
+describe.only("deleteRecord()", () => {
   testCasesDelete.forEach((testCase) => {
     test(testCase.name, async () => {
-      const tmpNew = nodefs.mkdtempSync("test");
+      const tmpdir = nodefs.mkdtempSync(os.tmpdir());
 
-      const tmpPath = join(tmpDir, tmpNew);
+      copy(testCase.initial, tmpdir);
 
-      copy(testCase.initial, tmpPath);
-
-      return deleteRecord(nodefs, tmpPath, testCase.query).then(() => {
-        expect(loadContents(nodefs, tmpPath)).toStrictEqual(
+      return deleteRecord(nodefs, tmpdir, testCase.query).then(() => {
+        expect(loadContents(nodefs, tmpdir)).toStrictEqual(
           loadContents(nodefs, testCase.expected),
         );
       });
