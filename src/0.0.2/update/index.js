@@ -1,7 +1,9 @@
-import csv from "papaparse";
+import stream from "stream";
+import { promisify } from "util";
 import Store from "../store.js";
 import { findCrown } from "../schema.js";
 import { recordToRelationMap } from "./query.js";
+import { updateTablet } from "./tablet.js";
 
 /** Class representing a dataset record. */
 export default class Update {
@@ -22,131 +24,60 @@ export default class Update {
     this.#store = new Store(callback);
   }
 
-  /**
-   * This saves the schema to the dataset.
-   * @name updateSchema
-   * @param {object} record - A dataset record.
-   * @function
-   */
-  #updateSchema(record) {
-    // for each field, for each value
-    const trunks = Object.keys(record).filter((key) => key !== "_");
+  async #updateSchema(cache, appendOutput) {
+    // writable
+    return new stream.Writable({
+      objectMode: true,
 
-    // list of
-    const relations = trunks.reduce((acc, trunk) => {
-      // handle if value is literal, expand
-      // TODO: handle if value is object, expand?
-      // TODO: handle if value is array of objects?
-      const values = Array.isArray(record[trunk])
-        ? record[trunk]
-        : [record[trunk]];
+      write(record, encoding, callback) {
+        const filename = `_-_.csv`;
 
-      // assume value is array of literals
-      const relations = values.map((branch) => `${trunk},${branch}`);
+        const relations = Object.fromEntries(
+          Object.entries(record)
+            .filter(([key]) => key !== "_")
+            .map(([key, value]) => [
+              key,
+              Array.isArray(value) ? value : [value],
+            ]),
+        );
 
-      return acc.concat(relations);
-    }, []);
+        updateTablet({ [filename]: "" }, relations, filename, appendOutput);
 
-    const contents = relations.sort().join("\n");
-
-    // overwrite the .csvs.csv file with field,value
-    this.#store.setOutput("_-_.csv", contents);
+        callback();
+      },
+    });
   }
 
-  /**
-   * This saves a record to the dataset.
-   * @name updateRecord
-   * @param {object} record - A dataset record.
-   * @function
-   */
-  #updateRecord(record) {
-    // TODO if base is array, map array to multiple records
+  async #updateRecord(schema, cache, appendOutput) {
+    // writable
+    return new stream.Writable({
+      objectMode: true,
 
-    const base = record._;
+      write(record, encoding, callback) {
+        const base = record._;
 
-    // build a relation map of the record. tablet -> key -> list of values
-    const relationMap = recordToRelationMap(this.#store.schema, record);
+        // build a relation map of the record. tablet -> key -> list of values
+        const relationMap = recordToRelationMap(schema, record);
 
-    // iterate over leaves of leaves, the whole crown
-    const crown = findCrown(this.#store.schema, base);
+        // for each branch in crown
+        const crown = findCrown(schema, base);
 
-    crown.forEach((branch) => {
-      const { trunk } = this.#store.schema[branch];
+        for (const branch of crown) {
+          const { trunk } = schema[branch];
 
-      const pair = `${trunk}-${branch}.csv`;
+          const filename = `${trunk}-${branch}.csv`;
 
-      const tablet = this.#store.getCache(pair);
+          updateTablet(cache, relationMap[filename], filename, appendOutput);
+        }
 
-      let isWrite = false;
+        callback();
+      },
 
-      // for each line of tablet
-      csv.parse(tablet, {
-        step: (row) => {
-          // ignore empty newline
-          if (row.data.length === 1 && row.data[0] === "") return;
+      close() {},
 
-          const [key] = row.data;
-
-          const keys = Object.keys(relationMap[pair] ?? {});
-
-          const lineMatchesKey = keys.includes(key);
-
-          if (lineMatchesKey) {
-            // prune if line matches a key from relationMap
-          } else {
-            const dataEscaped = row.data.map((str) =>
-              str.replace(/\n/g, "\\n"),
-            );
-
-            const line = csv.unparse([dataEscaped], { newline: "\n" });
-
-            // append line to output
-            this.#store.appendOutput(pair, line);
-          }
-        },
-        complete: () => {
-          // if flag unset and relation map not fully popped, set flag
-          if (!isWrite) {
-            const recordHasNewValues =
-              Object.keys(relationMap[pair] ?? {}).length > 0;
-
-            if (recordHasNewValues) {
-              isWrite = true;
-            }
-          }
-
-          // don't write tablet if changeset doesn't have anything on it
-          // if flag set, append relation map to pruned
-          if (isWrite) {
-            // for each key in the changeset
-            const keys = Object.keys(relationMap[pair]);
-
-            const relations = keys.reduce((acc, key) => {
-              // for each key value in the changeset
-              const values = relationMap[pair][key];
-
-              const keyRelations = values.map((value) => [key, value]);
-
-              const keyRelationsEscaped = keyRelations.map((strings) =>
-                strings.map((str) => str.replace(/\n/g, "\\n")),
-              );
-
-              return [...keyRelationsEscaped, ...acc];
-            }, []);
-
-            const lines = csv.unparse(relations, { newline: "\n" });
-
-            // append remaining relations to output
-            this.#store.appendOutput(pair, lines);
-          } else {
-            // TODO: remove this check
-            if (tablet !== "" && tablet !== undefined && tablet !== "\n") {
-              // otherwise reset output to not change it
-              this.#store.setOutput(pair, tablet);
-            }
-          }
-        },
-      });
+      abort(err) {
+        console.log("Sink error:", err);
+      },
     });
   }
 
@@ -157,23 +88,39 @@ export default class Update {
    * @param {object} record - A dataset record.
    * @returns {object} - A dataset record.
    */
-  async update(record) {
+  async update(records) {
     await this.#store.readSchema();
 
     // exit if record is undefined
-    if (record === undefined) return;
+    if (records === undefined) return;
+
+    let rs = Array.isArray(records) ? records : [records];
 
     // TODO find base value if _ is object or array
     // TODO exit if no base field or invalid base value
-    const base = record._;
+    const base = rs[0]._;
 
     await this.#store.read(base);
 
-    if (base === "_") {
-      this.#updateSchema(record);
-    } else {
-      this.#updateRecord(record);
-    }
+    const queryStream = stream.Readable.from(records);
+
+    const writeStream =
+      base === "_"
+        ? await this.#updateSchema(
+            this.#store.cache,
+            this.#store.appendOutput.bind(this.#store),
+            rs,
+          )
+        : await this.#updateRecord(
+            this.#store.schema,
+            this.#store.cache,
+            this.#store.appendOutput.bind(this.#store),
+            rs,
+          );
+
+    const pipeline = promisify(stream.pipeline);
+
+    await pipeline([queryStream, writeStream]);
 
     // TODO if query result equals record skip
     // otherwise write output
