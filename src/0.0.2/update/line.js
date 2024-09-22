@@ -25,7 +25,7 @@ export function parseLine(relations, line) {
         return [...keyRelationsEscaped, ...acc];
       }, []);
 
-      const lines = csv.unparse(relationsNew, { newline: "\n" });
+      const lines = csv.unparse(relationsNew, { newline: "\n" }).split("\n");
 
       // append remaining relations to output
       return { lines };

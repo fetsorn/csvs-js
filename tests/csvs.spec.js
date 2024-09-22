@@ -159,7 +159,7 @@ describe("Query.select() ripgrep 0.0.1", () => {
   });
 });
 
-describe.only("Query.select() ripgrep 0.0.2", () => {
+describe("Query.select() ripgrep 0.0.2", () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
 
@@ -253,7 +253,7 @@ describe("Entry.update() 0.0.1", () => {
   });
 });
 
-describe("Entry.update() 0.0.2", () => {
+describe.only("Entry.update() 0.0.2", () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
   });
@@ -274,7 +274,14 @@ describe("Entry.update() 0.0.2", () => {
 
       const client = new CSVS(callback);
 
-      return client.update(testCase.query).then(() => {
+      const fsNew = {
+        readFileSync: (path) => editedFiles[path],
+        writeFileSync: (path, contents) => {
+          editedFiles[path] = contents;
+        },
+      };
+
+      return client.update(fsNew, "", testCase.query).then(() => {
         expect(editedFiles).toStrictEqual(testCase.expected);
       });
     });

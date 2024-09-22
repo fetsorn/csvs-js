@@ -1,30 +1,16 @@
 import stream from "stream";
 import { promisify } from "util";
-import Store from "../store.js";
 import { findCrown } from "../schema.js";
 import { recordToRelationMap } from "./query.js";
 import { updateTablet } from "./tablet.js";
+import { toSchema } from "../schema.js";
+import Select2 from "../select/index.js";
 
 /** Class representing a dataset record. */
 export default class Update {
-  /**
-   * .
-   * @type {Store}
-   */
-  #store;
+  constructor() {}
 
-  /**
-   * Create a dataset instance.
-   * @param {Object} callback - The callback that returns a key.
-   * @param {CSVS~readFileCallback} callback.readFile - The callback that reads db.
-   * @param {CSVS~writeFileCallback} callback.writeFile - The callback that writes db.
-   * @param {CSVS~randomUUIDCallback} callback.randomUUID - The callback that returns a key.
-   */
-  constructor(callback) {
-    this.#store = new Store(callback);
-  }
-
-  async #updateSchema(cache, appendOutput) {
+  async #updateSchema(fs, dir) {
     // writable
     return new stream.Writable({
       objectMode: true,
@@ -41,14 +27,14 @@ export default class Update {
             ]),
         );
 
-        updateTablet({ [filename]: "" }, relations, filename, appendOutput);
+        updateTablet(fs, dir, relations, filename);
 
         callback();
       },
     });
   }
 
-  async #updateRecord(schema, cache, appendOutput) {
+  async #updateRecord(fs, dir, schema) {
     // writable
     return new stream.Writable({
       objectMode: true,
@@ -67,7 +53,7 @@ export default class Update {
 
           const filename = `${trunk}-${branch}.csv`;
 
-          updateTablet(cache, relationMap[filename], filename, appendOutput);
+          updateTablet(fs, dir, relationMap[filename], filename);
         }
 
         callback();
@@ -88,8 +74,10 @@ export default class Update {
    * @param {object} record - A dataset record.
    * @returns {object} - A dataset record.
    */
-  async update(records) {
-    await this.#store.readSchema();
+  async update(fs, dir, records) {
+    const [schemaRecord] = await new Select2({}).select(fs, dir, { _: "_" });
+
+    const schema = toSchema(schemaRecord);
 
     // exit if record is undefined
     if (records === undefined) return;
@@ -100,30 +88,15 @@ export default class Update {
     // TODO exit if no base field or invalid base value
     const base = rs[0]._;
 
-    await this.#store.read(base);
-
     const queryStream = stream.Readable.from(rs);
 
     const writeStream =
       base === "_"
-        ? await this.#updateSchema(
-            this.#store.cache,
-            this.#store.appendOutput.bind(this.#store),
-            rs,
-          )
-        : await this.#updateRecord(
-            this.#store.schema,
-            this.#store.cache,
-            this.#store.appendOutput.bind(this.#store),
-            rs,
-          );
+        ? await this.#updateSchema(fs, dir, rs)
+        : await this.#updateRecord(fs, dir, schema, rs);
 
     const pipeline = promisify(stream.pipeline);
 
     await pipeline([queryStream, writeStream]);
-
-    // TODO if query result equals record skip
-    // otherwise write output
-    await this.#store.write();
   }
 }

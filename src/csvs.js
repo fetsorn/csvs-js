@@ -174,7 +174,7 @@ export default class CSVS {
    * @param {object} record - A dataset record.
    * @returns {object} - A dataset record.
    */
-  async update(record) {
+  async update(fs, dir, record) {
     // detect dataset version
     const version = await detectVersion(this.readFile);
 
@@ -182,7 +182,7 @@ export default class CSVS {
       return this.update1.update(record);
     }
     if (version === "0.0.2") {
-      return this.update2.update(record);
+      return this.update2.update(fs, dir, record);
     }
   }
 
