@@ -1,3 +1,4 @@
+import path from "path";
 import stream from "stream";
 import { parseLine } from "./line.js";
 
@@ -8,9 +9,13 @@ import { parseLine } from "./line.js";
  * @param {object} query
  * @returns {Object[]}
  */
-export function parseTablet(cache, tablet) {
+export function parseTablet(fs, dir, tablet) {
+  const filepath = path.join(dir, tablet.filename);
+
+  const contents = fs.readFileSync(filepath) ?? "";
+
   // TODO replace with file stream
-  const lines = cache[tablet.filename].split("\n");
+  const lines = contents.split("\n");
 
   return new stream.Transform({
     objectMode: true,

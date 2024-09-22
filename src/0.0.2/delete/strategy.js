@@ -3,7 +3,7 @@ export function planPrune(schema, record) {
   // { _: a, a: [ { _: a, a: a1 }, { _: a, a: a1 } ] }
   const { _: base, [base]: baseValue } = record;
 
-  const { trunk } = schema[base];
+  const trunk = schema[base] !== undefined ? schema[base].trunk : undefined;
 
   const trunkTablet = {
     filename: `${trunk}-${base}.csv`,

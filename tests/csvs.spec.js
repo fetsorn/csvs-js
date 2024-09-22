@@ -172,7 +172,11 @@ describe.only("Query.select() ripgrep 0.0.2", () => {
 
       const client = new CSVS(callback);
 
-      return client.select(testCase.query).then((data) => {
+      const fsNew = {
+        readFileSync: (path) => testCase.initial[path],
+      };
+
+      return client.select(fsNew, "", testCase.query).then((data) => {
         const dataSorted = data
           .map(sortObject)
           .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));

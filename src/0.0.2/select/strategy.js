@@ -58,19 +58,21 @@ export function planQuery(schema, query) {
 }
 
 export function planOptions(schema, base) {
-  const baseHasTrunk = schema[base].trunk !== undefined;
+  const trunk = schema[base] !== undefined ? schema[base].trunk : undefined;
+
+  const baseHasTrunk = trunk !== undefined;
 
   // if base is leaf, parse the trunk relationship
   const trunkTablet = {
     // what branch to set?
     thing: base,
     // what branch to match?
-    trait: schema[base].trunk,
+    trait: trunk,
     // do we set first column?
     thingIsFirst: false,
     // do we match first column?
     traitIsFirst: false,
-    filename: `${schema[base].trunk}-${base}.csv`,
+    filename: `${trunk}-${base}.csv`,
     traitIsRegex: true,
     // should it have constraints?
     eager: true, // push as soon as trait changes in the tablet

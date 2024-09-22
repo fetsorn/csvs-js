@@ -97,7 +97,7 @@ export default class CSVS {
    * @param {URLSearchParams} urlSearchParams - The search parameters.
    * @returns {Object[]}
    */
-  async select(urlSearchParams) {
+  async select(fs, dir, urlSearchParams) {
     // detect dataset version
     const version = await detectVersion(this.readFile);
 
@@ -105,7 +105,7 @@ export default class CSVS {
       return this.select1.select(urlSearchParams);
     }
     if (version === "0.0.2") {
-      return this.select2.select(urlSearchParams);
+      return this.select2.select(fs, dir, urlSearchParams);
     }
   }
 

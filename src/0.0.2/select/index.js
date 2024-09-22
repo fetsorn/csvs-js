@@ -1,28 +1,14 @@
 import stream from "stream";
 // use promisify instead of stream/promises.pipeline to allow polyfills
 import { promisify } from "util";
-import Store from "../store.js";
 import { parseTablet } from "./tablet.js";
 import { parseTabletAccumulating } from "./accumulating.js";
 import { planValues, planOptions, planQuery, planSchema } from "./strategy.js";
+import { toSchema } from "../schema.js";
 
 /** Class representing a dataset query. */
 export default class Select {
-  /**
-   * .
-   * @type {Store}
-   */
-  #store;
-
-  /**
-   * Create a dataset instance.
-   * @param {Object} callback - Object with callbacks.
-   * @param {readFileCallback} callback.readFile - The callback that reads db.
-   * @param {grepCallback} callback.grep - The callback that searches files.
-   */
-  constructor(callback) {
-    this.#store = new Store(callback);
-  }
+  constructor() {}
 
   /**
    * This returns the schema record for the dataset
@@ -30,7 +16,7 @@ export default class Select {
    * @function
    * @returns {Object[]}
    */
-  async #selectSchema() {
+  async #selectSchema(fs, dir) {
     let recordSchema = { _: "_" };
 
     const queryStream = stream.Readable.from([{ record: recordSchema }]);
@@ -39,16 +25,14 @@ export default class Select {
 
     const streams = schemaStrategy.map((tablet) =>
       tablet.accumulating
-        ? parseTabletAccumulating(this.#store.cache, tablet)
-        : parseTablet(this.#store.cache, tablet),
+        ? parseTabletAccumulating(fs, dir, tablet)
+        : parseTablet(fs, dir, tablet),
     );
 
     return [queryStream, ...streams];
   }
 
-  async selectStream(query) {
-    await this.#store.readSchema();
-
+  async selectStream(fs, dir, query) {
     // there can be only one root base in search query
     // TODO: validate against arrays of multiple bases, do not return [], throw error
     const base = query._;
@@ -56,28 +40,27 @@ export default class Select {
     // if no base is provided, return empty
     if (base === undefined) return [];
 
-    if (base === "_") return this.#selectSchema(query);
+    if (base === "_") return this.#selectSchema(fs, dir);
 
-    // get a map of dataset file contents
-    await this.#store.read(base);
+    const [schemaRecord] = await this.select(fs, dir, { _: "_" });
+
+    const schema = toSchema(schemaRecord);
 
     const queryStream = stream.Readable.from([{ query }]);
 
-    const queryStrategy = planQuery(this.#store.schema, query);
+    const queryStrategy = planQuery(schema, query);
 
     const baseStrategy =
-      queryStrategy.length > 0
-        ? queryStrategy
-        : planOptions(this.#store.schema, base);
+      queryStrategy.length > 0 ? queryStrategy : planOptions(schema, base);
 
-    const valueStrategy = planValues(this.#store.schema, query);
+    const valueStrategy = planValues(schema, query);
 
     const strategy = [...baseStrategy, ...valueStrategy];
 
     const streams = strategy.map((tablet) =>
       tablet.accumulating
-        ? parseTabletAccumulating(this.#store.cache, tablet)
-        : parseTablet(this.#store.cache, tablet),
+        ? parseTabletAccumulating(fs, dir, tablet)
+        : parseTablet(fs, dir, tablet),
     );
 
     const leader = query.__;
@@ -106,8 +89,8 @@ export default class Select {
    * @function
    * @returns {Object[]}
    */
-  async select(query) {
-    const streams = await this.selectStream(query);
+  async select(fs, dir, query) {
+    const streams = await this.selectStream(fs, dir, query);
 
     var records = [];
 
@@ -136,9 +119,7 @@ export default class Select {
     return records;
   }
 
-  async selectBaseKeys(query) {
-    await this.#store.readSchema();
-
+  async selectBaseKeys(fs, dir, query) {
     // there can be only one root base in search query
     // TODO: validate against arrays of multiple bases, do not return [], throw error
     const base = query._;
@@ -146,20 +127,21 @@ export default class Select {
     // if no base is provided, return empty
     if (base === undefined) return [];
 
-    if (base === "_") return this.#selectSchema(query);
+    if (base === "_") return this.#selectSchema(fs, dir);
 
-    // get a map of dataset file contents
-    await this.#store.read(base);
+    const [schemaRecord] = await this.select(fs, dir, { _: "_" });
+
+    const schema = toSchema(schemaRecord);
 
     const queryStream = stream.Readable.from([{ query }]);
 
     // console.log(query);
-    const strategy = planQuery(this.#store.schema, query);
+    const strategy = planQuery(schema, query);
 
     const streams = strategy.map((tablet) =>
       tablet.accumulating
-        ? parseTabletAccumulating(this.#store.cache, tablet)
-        : parseTablet(this.#store.cache, tablet),
+        ? parseTabletAccumulating(fs, dir, tablet)
+        : parseTablet(fs, dir, tablet),
     );
 
     var records = [];
@@ -189,22 +171,19 @@ export default class Select {
     return records;
   }
 
-  async buildRecord(record) {
-    const base = record._;
+  async buildRecord(fs, dir, record) {
+    const [schemaRecord] = await this.select(fs, dir, { _: "_" });
 
-    await this.#store.readSchema();
-
-    // get a map of dataset file contents
-    await this.#store.read(base);
+    const schema = toSchema(schemaRecord);
 
     const queryStream = stream.Readable.from([{ record }]);
 
-    const strategy = planValues(this.#store.schema);
+    const strategy = planValues(schema);
 
     const streams = strategy.map((tablet) =>
       tablet.accumulating
-        ? parseTabletAccumulating(this.#store.cache, tablet)
-        : parseTablet(this.#store.cache, tablet),
+        ? parseTabletAccumulating(fs, dir, tablet)
+        : parseTablet(fs, dir, tablet),
     );
 
     var records = [];

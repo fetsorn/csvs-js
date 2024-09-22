@@ -8,7 +8,7 @@
  * @returns {Boolean}
  */
 function isConnected(schema, base, branch) {
-  const { trunk } = schema[branch];
+  const trunk = schema[branch] !== undefined ? schema[branch].trunk : undefined;
 
   if (trunk === undefined) {
     // if schema root is reached, leaf is not connected to base
@@ -154,4 +154,18 @@ export function sortNestingDescending(schema) {
 
     return 0;
   };
+}
+
+export function toSchema(schemaRecord) {
+  const { _: omit, ...record } = schemaRecord;
+
+  return Object.entries(record).reduce((withEntry, [trunk, value]) => {
+    const leaves = Array.isArray(value) ? value : [value];
+
+    // TODO handle multiple trunks
+    return leaves.reduce(
+      (withLeaf, leaf) => ({ ...withLeaf, [leaf]: { trunk } }),
+      withEntry,
+    );
+  }, {});
 }

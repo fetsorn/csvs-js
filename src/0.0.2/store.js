@@ -71,9 +71,9 @@ export default class Store {
    * @param {string} base - Base branch.
    * @returns {Map} - Map of file paths to file contents.
    */
-  async read(base) {
+  async read(schema, base) {
     // get array of all filepaths required to search for base branch
-    const filepaths = findCrownPaths(this.schema, base);
+    const filepaths = findCrownPaths(schema, base);
 
     const cache = {};
 
