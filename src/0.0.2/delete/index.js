@@ -1,27 +1,13 @@
 import stream from "stream";
 import { promisify } from "util";
-import Store from "../store.js";
 import { planPrune } from "./strategy.js";
 import { pruneTablet } from "./tablet.js";
+import { toSchema } from "../schema.js";
+import Select from "../select/index.js";
 
 /** Class representing a dataset record. */
 export default class Delete {
-  /**
-   * .
-   * @type {Store}
-   */
-  #store;
-
-  /**
-   * Create a dataset instance.
-   * @param {Object} callback - The callback that returns a key.
-   * @param {CSVS~readFileCallback} callback.readFile - The callback that reads db.
-   * @param {CSVS~writeFileCallback} callback.writeFile - The callback that writes db.
-   * @param {CSVS~randomUUIDCallback} callback.randomUUID - The callback that returns a key.
-   */
-  constructor(callback) {
-    this.#store = new Store(callback);
-  }
+  constructor() {}
 
   /**
    * This deletes a record from the dataset.
@@ -29,7 +15,7 @@ export default class Delete {
    * @param {object} record - A dataset record.
    * @function
    */
-  #deleteRecord(schema, cache, appendOutput) {
+  #deleteRecord(fs, dir, schema) {
     return new stream.Writable({
       objectMode: true,
 
@@ -37,7 +23,7 @@ export default class Delete {
         const strategy = planPrune(schema, record);
 
         strategy.forEach((tablet) => {
-          pruneTablet(tablet, cache, appendOutput);
+          pruneTablet(fs, dir, tablet);
         });
 
         callback();
@@ -51,30 +37,22 @@ export default class Delete {
    * @param {object} record - A dataset record.
    * @function
    */
-  async delete(records) {
-    await this.#store.readSchema();
+  async delete(fs, dir, records) {
+    const [schemaRecord] = await new Select({}).select(fs, dir, { _: "_" });
+
+    const schema = toSchema(schemaRecord);
 
     // exit if record is undefined
     if (records === undefined) return;
 
     let rs = Array.isArray(records) ? records : [records];
 
-    const base = rs[0]._;
-
-    await this.#store.read(base);
-
     const queryStream = stream.Readable.from(rs);
 
-    const writeStream = this.#deleteRecord(
-      this.#store.schema,
-      this.#store.cache,
-      this.#store.appendOutput.bind(this.#store),
-    );
+    const writeStream = this.#deleteRecord(fs, dir, schema);
 
     const pipeline = promisify(stream.pipeline);
 
     await pipeline([queryStream, writeStream]);
-
-    await this.#store.write();
   }
 }

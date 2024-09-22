@@ -4,7 +4,7 @@ import { findCrown } from "../schema.js";
 import { recordToRelationMap } from "./query.js";
 import { updateTablet } from "./tablet.js";
 import { toSchema } from "../schema.js";
-import Select2 from "../select/index.js";
+import Select from "../select/index.js";
 
 /** Class representing a dataset record. */
 export default class Update {
@@ -75,7 +75,7 @@ export default class Update {
    * @returns {object} - A dataset record.
    */
   async update(fs, dir, records) {
-    const [schemaRecord] = await new Select2({}).select(fs, dir, { _: "_" });
+    const [schemaRecord] = await new Select({}).select(fs, dir, { _: "_" });
 
     const schema = toSchema(schemaRecord);
 

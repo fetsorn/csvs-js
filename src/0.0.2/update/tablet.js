@@ -1,5 +1,5 @@
-import { parseLine } from "./line.js";
 import path from "path";
+import { parseLine } from "./line.js";
 
 export function updateTablet(fs, dir, relations, filename) {
   // createReadStream
@@ -10,7 +10,7 @@ export function updateTablet(fs, dir, relations, filename) {
   // TODO replace with file stream
   const lines = contents.split("\n");
 
-  // createWriteStream to tmp, rename tmp to origin
+  // TODO createWriteStream to tmp, rename tmp to origin
   let output = [];
 
   // transform
@@ -33,8 +33,6 @@ export function updateTablet(fs, dir, relations, filename) {
 
   if (contentsNew !== "") {
     const contentsNewline = `${contentsNew}\n`;
-
-    // console.log(filepath, contentsNewline);
 
     fs.writeFileSync(filepath, contentsNewline);
   }

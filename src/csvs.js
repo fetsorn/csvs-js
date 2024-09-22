@@ -192,7 +192,7 @@ export default class CSVS {
    * @param {object} record - A dataset record.
    * @function
    */
-  async delete(record) {
+  async delete(fs, dir, record) {
     // detect dataset version
     const version = await detectVersion(this.readFile);
 
@@ -200,7 +200,7 @@ export default class CSVS {
       return this.update1.delete(record);
     }
     if (version === "0.0.2") {
-      return this.delete2.delete(record);
+      return this.delete2.delete(fs, dir, record);
     }
   }
 }

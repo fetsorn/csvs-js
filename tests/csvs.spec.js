@@ -185,7 +185,7 @@ describe("Query.select() ripgrep 0.0.2", () => {
           .map(sortObject)
           .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
 
-        console.log(JSON.stringify(dataSorted, undefined, 2));
+        // console.log(JSON.stringify(dataSorted, undefined, 2));
 
         expect(dataSorted).toStrictEqual(expected);
       });
@@ -253,7 +253,7 @@ describe("Entry.update() 0.0.1", () => {
   });
 });
 
-describe.only("Entry.update() 0.0.2", () => {
+describe("Entry.update() 0.0.2", () => {
   beforeEach(() => {
     callback = { ...callbackOriginal };
   });
@@ -332,7 +332,14 @@ describe("Entry.delete() 0.0.2", () => {
 
       const client = new CSVS(callback);
 
-      return client.delete(testCase.query).then(() => {
+      const fsNew = {
+        readFileSync: (path) => editedFiles[path],
+        writeFileSync: (path, contents) => {
+          editedFiles[path] = contents;
+        },
+      };
+
+      return client.delete(fsNew, "", testCase.query).then(() => {
         expect(editedFiles).toStrictEqual(testCase.expected);
       });
     });
