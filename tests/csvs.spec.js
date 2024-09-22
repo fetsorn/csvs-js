@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
 import { describe, expect, test } from "@jest/globals";
 import { join } from "path";
-import zenfs from "@zenfs/core";
 import nodefs from "fs";
+import os from "os";
 import {
   select,
   selectBaseKeys,
@@ -12,7 +12,7 @@ import {
 } from "../src/index.js";
 import { testCasesSelect, testCasesUpdate, testCasesDelete } from "./cases.js";
 
-zenfs.mkdirSync("/tmp");
+const tmpDir = os.tmpdir();
 
 function sortObject(a) {
   return Object.keys(a)
@@ -64,13 +64,13 @@ function copy(_path, path) {
   if (!stats.isDirectory()) {
     const content = nodefs.readFileSync(_path, "utf8");
 
-    zenfs.writeFileSync(path, content);
+    nodefs.writeFileSync(path, content);
 
     return;
   }
 
-  if (path != "/" && !zenfs.existsSync(path)) {
-    zenfs.mkdirSync(path);
+  if (path != "/" && !nodefs.existsSync(path)) {
+    nodefs.mkdirSync(path);
   }
 
   for (const file of nodefs.readdirSync(_path)) {
@@ -129,12 +129,14 @@ describe("selectBaseKeys()", () => {
 describe("update()", () => {
   testCasesUpdate.forEach((testCase) => {
     test(testCase.name, () => {
-      const tmpdir = zenfs.mkdtempSync();
+      const tmpNew = nodefs.mkdtempSync("test");
 
-      copy(testCase.initial, tmpdir);
+      const tmpPath = join(tmpDir, tmpNew);
 
-      return update(zenfs, tmpdir, testCase.query).then(() => {
-        expect(loadContents(zenfs, tmpdir)).toStrictEqual(
+      copy(testCase.initial, tmpPath);
+
+      return update(nodefs, tmpPath, testCase.query).then(() => {
+        expect(loadContents(nodefs, tmpPath)).toStrictEqual(
           loadContents(nodefs, testCase.expected),
         );
       });
@@ -145,12 +147,14 @@ describe("update()", () => {
 describe("deleteRecord()", () => {
   testCasesDelete.forEach((testCase) => {
     test(testCase.name, async () => {
-      const tmpdir = zenfs.mkdtempSync();
+      const tmpNew = nodefs.mkdtempSync("test");
 
-      copy(testCase.initial, tmpdir);
+      const tmpPath = join(tmpDir, tmpNew);
 
-      return deleteRecord(zenfs, tmpdir, testCase.query).then(() => {
-        expect(loadContents(zenfs, tmpdir)).toStrictEqual(
+      copy(testCase.initial, tmpPath);
+
+      return deleteRecord(nodefs, tmpPath, testCase.query).then(() => {
+        expect(loadContents(nodefs, tmpPath)).toStrictEqual(
           loadContents(nodefs, testCase.expected),
         );
       });
