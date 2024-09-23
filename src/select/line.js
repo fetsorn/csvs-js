@@ -64,7 +64,6 @@ export function parseLine(state, tablet, line) {
     ...completePartial,
     current,
     fst,
-    snd,
     isMatch: isMatchNew,
   };
 

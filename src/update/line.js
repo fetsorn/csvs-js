@@ -1,59 +1,36 @@
 import csv from "papaparse";
+import { step } from "./step.js";
 
-export function parseLine(relations, line) {
+export function updateLine(state, line) {
   if (line === undefined) {
-    // TODO rewrite to sorted insert
-    // if flag unset and relation map not fully popped, set flag
-    const recordHasNewValues = Object.keys(relations ?? {}).length > 0;
+    const stateNew = step(state.relations, state.fst, undefined);
 
-    // don't write tablet if changeset doesn't have anything on it
-    // if flag set, append relation map to pruned
-    if (recordHasNewValues) {
-      // for each key in the changeset
-      const keys = Object.keys(relations);
-
-      const relationsNew = keys.reduce((acc, key) => {
-        // for each key value in the changeset
-        const values = relations[key];
-
-        const keyRelations = values.map((value) => [key, value]);
-
-        const keyRelationsEscaped = keyRelations.map((strings) =>
-          strings.map((str) => str.replace(/\n/g, "\\n")),
-        );
-
-        return [...keyRelationsEscaped, ...acc];
-      }, []);
-
-      const lines = csv.unparse(relationsNew, { newline: "\n" }).split("\n");
-
-      // append remaining relations to output
-      return { lines };
-    }
-
-    return {};
+    return stateNew;
   }
 
   if (line === "") return {};
 
-  // csv parse
   const {
-    data: [[key, value]],
+    data: [[fst]],
   } = csv.parse(line);
 
-  const keys = Object.keys(relations ?? {});
+  const fstIsNew = state.fst !== fst;
 
-  const lineMatchesKey = keys.includes(key);
+  const insert = fstIsNew;
 
-  if (lineMatchesKey) {
-    // prune if line matches a key from relationMap
-  } else {
-    const dataEscaped = [key, value].map((str) => str.replace(/\n/g, "\\n"));
+  const { relations: relationsNew, lines: insertPartial } = insert
+    ? step(state.relations, state.fst, fst)
+    : { relations: state.relations, lines: [] };
 
-    const line = csv.unparse([dataEscaped], { newline: "\n" });
+  const keys = Object.keys(relationsNew);
 
-    return { lines: [line] };
-  }
+  const isMatch = keys.includes(fst);
 
-  return {};
+  const matchPartial = isMatch ? [] : [line];
+
+  const linesNew = [...insertPartial, ...matchPartial];
+
+  const stateNew = { lines: linesNew, relations: relationsNew, fst, isMatch };
+
+  return stateNew;
 }

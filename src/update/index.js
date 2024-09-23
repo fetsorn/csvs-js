@@ -11,7 +11,7 @@ export async function updateSchema(fs, dir) {
   return new stream.Writable({
     objectMode: true,
 
-    write(record, encoding, callback) {
+    async write(record, encoding, callback) {
       const filename = `_-_.csv`;
 
       const relations = Object.fromEntries(
@@ -20,7 +20,7 @@ export async function updateSchema(fs, dir) {
           .map(([key, value]) => [key, Array.isArray(value) ? value : [value]]),
       );
 
-      updateTablet(fs, dir, relations, filename);
+      await updateTablet(fs, dir, relations, filename);
 
       callback();
     },
@@ -32,7 +32,7 @@ export async function updateRecord(fs, dir, schema) {
   return new stream.Writable({
     objectMode: true,
 
-    write(record, encoding, callback) {
+    async write(record, encoding, callback) {
       const base = record._;
 
       // build a relation map of the record. tablet -> key -> list of values
@@ -46,7 +46,7 @@ export async function updateRecord(fs, dir, schema) {
 
         const filename = `${trunk}-${branch}.csv`;
 
-        updateTablet(fs, dir, relationMap[filename], filename);
+        await updateTablet(fs, dir, relationMap[filename] ?? {}, filename);
       }
 
       callback();

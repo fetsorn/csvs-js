@@ -2,8 +2,8 @@ import path from "path";
 import os from "os";
 import { promisify } from "util";
 import stream from "stream";
-import { pruneLine } from "./line.js";
 import readline from "readline";
+import { pruneLine } from "./line.js";
 
 export async function pruneTablet(fs, dir, tablet) {
   const filepath = path.join(dir, tablet.filename);

@@ -142,7 +142,7 @@ describe("update()", () => {
   });
 });
 
-describe.only("deleteRecord()", () => {
+describe("deleteRecord()", () => {
   testCasesDelete.forEach((testCase) => {
     test(testCase.name, async () => {
       const tmpdir = nodefs.mkdtempSync(os.tmpdir());

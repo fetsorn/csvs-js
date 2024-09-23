@@ -160,11 +160,12 @@ function traitIsTrunkCase(tablet, record, trait, thing) {
   // log("trunk", tablet, { record }, trait, thing);
 
   // TODO what if it's an object?
-  const { _: base, [trait]: leafValue } = record;
+  // const { _: base, [trait]: leafValue } = record;
+  const { _: base } = record;
 
-  const isMatch = tablet.traitIsRegex
-    ? new RegExp(leafValue).test(trait)
-    : leafValue === trait;
+  // const isMatch = tablet.traitIsRegex
+  //   ? new RegExp(leafValue).test(trait)
+  //   : leafValue === trait;
 
   const state = { isMatch: true, record: { ...record, [base]: thing } };
 

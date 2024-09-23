@@ -1,8 +1,7 @@
 import stream from "stream";
 // use promisify instead of stream/promises.pipeline to allow polyfills
 import { promisify } from "util";
-import { parseTablet } from "./tablet.js";
-import { parseTabletAccumulating } from "./accumulating.js";
+import { parseTablet, parseTabletAccumulating } from "./tablet.js";
 import { planValues, planOptions, planQuery, planSchema } from "./strategy.js";
 import { toSchema } from "../schema.js";
 
