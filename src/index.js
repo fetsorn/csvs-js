@@ -1,6 +1,7 @@
 export {
   selectSchemaStream,
   selectRecordStream,
+  selectSchema,
   selectRecord,
   selectBase,
   selectBody,
@@ -18,3 +19,4 @@ export {
   enrichBranchRecords,
   extractSchemaRecords,
 } from "./record.js";
+export { findCrown, toSchema } from "./schema.js";

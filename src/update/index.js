@@ -4,7 +4,7 @@ import { findCrown } from "../schema.js";
 import { recordToRelationMap } from "./query.js";
 import { updateTablet } from "./tablet.js";
 import { toSchema } from "../schema.js";
-import { selectRecord } from "../select/index.js";
+import { selectSchema } from "../select/index.js";
 
 export async function updateSchemaStream({ fs, dir }) {
   // writable
@@ -28,7 +28,7 @@ export async function updateSchemaStream({ fs, dir }) {
 }
 
 export async function updateRecordStream({ fs, dir }) {
-  const [schemaRecord] = await selectRecord({ fs, dir, query: { _: "_" } });
+  const [schemaRecord] = await selectSchema({ fs, dir });
 
   const schema = toSchema(schemaRecord);
 

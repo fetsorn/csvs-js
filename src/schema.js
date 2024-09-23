@@ -42,40 +42,6 @@ export function findCrown(schema, base) {
 }
 
 /**
- * This finds paths to all files required to search for base branch.
- * @name findStorePaths
- * @function
- * @param {object} schema - Dataset schema.
- * @param {string} base - Base branch name.
- * @returns {string[]} - Array of file paths.
- */
-export function findCrownPaths(schema, base) {
-  const crown = findCrown(schema, base);
-
-  const filePaths = crown.concat([base]).map((branch) => {
-    const schemaHasBranch = Object.prototype.hasOwnProperty.call(
-      schema,
-      branch,
-    );
-
-    if (schemaHasBranch) {
-      const branchHasTrunk = Object.prototype.hasOwnProperty.call(
-        schema[branch],
-        "trunk",
-      );
-
-      if (branchHasTrunk) {
-        const { trunk } = schema[branch];
-
-        return `${trunk}-${branch}.csv`;
-      }
-    }
-  });
-
-  return filePaths.filter(Boolean).flat();
-}
-
-/**
  * counts number of leaves.
  * @name countLeaves
  * @export function

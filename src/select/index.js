@@ -26,7 +26,55 @@ export async function selectSchemaStream({ fs, dir }) {
 
   const streams = await Promise.all(promises);
 
-  return [queryStream, ...streams];
+  const leaderStream = new stream.Transform({
+    objectMode: true,
+
+    transform(state, encoding, callback) {
+      // TODO account for nested leader
+      // TODO account for a list of leader values
+      if (state.record) {
+        this.push(state.record);
+      }
+
+      callback();
+    },
+  });
+
+  return [queryStream, ...streams, leaderStream];
+}
+
+/**
+ * This returns a list with schema record
+ * @name selectSchema
+ * @function
+ * @returns {Object[]}
+ */
+export async function selectSchema({ fs, dir }) {
+  const streams = await selectSchemaStream({ fs, dir });
+
+  var records = [];
+
+  const collectStream = new stream.Writable({
+    objectMode: true,
+
+    write(record, encoding, callback) {
+      records.push(record);
+
+      callback();
+    },
+
+    close() {},
+
+    abort(err) {
+      console.log("Sink error:", err);
+    },
+  });
+
+  const pipeline = promisify(stream.pipeline);
+
+  await pipeline([...streams, collectStream]);
+
+  return records;
 }
 
 /**
@@ -45,7 +93,7 @@ export async function selectRecordStream({ fs, dir, query }) {
 
   if (base === "_") return selectSchemaStream({ fs, dir });
 
-  const [schemaRecord] = await selectRecord({ fs, dir, query: { _: "_" } });
+  const [schemaRecord] = await selectSchema({ fs, dir });
 
   const schema = toSchema(schemaRecord);
 
@@ -74,18 +122,21 @@ export async function selectRecordStream({ fs, dir, query }) {
     objectMode: true,
 
     transform(state, encoding, callback) {
+      const record =
+        leader && leader !== base ? state.record[leader] : state.record;
+
       // TODO account for nested leader
       // TODO account for a list of leader values
-      this.push({ record: state.record[leader] });
+      if (record) {
+        this.push(record);
+      }
 
       callback();
     },
   });
 
-  const leaderPartial = leader && leader !== base ? [leaderStream] : [];
-
   // TODO rewrite to stream.compose
-  return [queryStream, ...streams, ...leaderPartial];
+  return [queryStream, ...streams, leaderStream];
 }
 
 /**
@@ -102,7 +153,7 @@ export async function selectBase({ fs, dir, query }) {
   // if no base is provided, return empty
   if (base === undefined) return [];
 
-  const [schemaRecord] = await selectRecord({ fs, dir, query: { _: "_" } });
+  const [schemaRecord] = await selectSchema({ fs, dir });
 
   if (base === "_") return [schemaRecord];
 
@@ -123,15 +174,35 @@ export async function selectBase({ fs, dir, query }) {
 
   const streams = await Promise.all(promises);
 
+  const leader = query.__;
+
+  // preserve leader for building values later
+  const leaderStream = new stream.Transform({
+    objectMode: true,
+
+    transform(state, encoding, callback) {
+      const record =
+        leader && leader !== base
+          ? { ...state.record, __: leader }
+          : state.record;
+
+      // TODO account for nested leader
+      // TODO account for a list of leader values
+      if (record !== undefined) {
+        this.push(record);
+      }
+
+      callback();
+    },
+  });
+
   var records = [];
 
   const collectStream = new stream.Writable({
     objectMode: true,
 
-    write(state, encoding, callback) {
-      if (state.record) {
-        records.push(state.record);
-      }
+    write(record, encoding, callback) {
+      records.push(record);
 
       callback();
     },
@@ -143,26 +214,9 @@ export async function selectBase({ fs, dir, query }) {
     },
   });
 
-  const leader = query.__;
-
-  // preserve leader for building values later
-  const leaderStream = new stream.Transform({
-    objectMode: true,
-
-    transform(state, encoding, callback) {
-      // TODO account for nested leader
-      // TODO account for a list of leader values
-      this.push({ record: { ...state.record, __: leader } });
-
-      callback();
-    },
-  });
-
-  const leaderPartial = leader && leader !== base ? [leaderStream] : [];
-
   const pipeline = promisify(stream.pipeline);
 
-  await pipeline([queryStream, ...streams, ...leaderPartial, collectStream]);
+  await pipeline([queryStream, ...streams, leaderStream, collectStream]);
 
   return records;
 }
@@ -176,7 +230,7 @@ export async function selectBase({ fs, dir, query }) {
 export async function selectBody({ fs, dir, query }) {
   const base = query._;
 
-  const [schemaRecord] = await selectRecord({ fs, dir, query: { _: "_" } });
+  const [schemaRecord] = await selectSchema({ fs, dir });
 
   if (base === "_") return schemaRecord;
 
@@ -194,15 +248,32 @@ export async function selectBody({ fs, dir, query }) {
 
   const streams = await Promise.all(promises);
 
+  const leader = query.__;
+
+  const leaderStream = new stream.Transform({
+    objectMode: true,
+
+    transform(state, encoding, callback) {
+      const record =
+        leader && leader !== base ? state.record[leader] : state.record;
+
+      if (record !== undefined) {
+        // TODO account for nested leader
+        // TODO account for a list of leader values
+        this.push(record);
+      }
+
+      callback();
+    },
+  });
+
   var records = [];
 
   const collectStream = new stream.Writable({
     objectMode: true,
 
-    write(state, encoding, callback) {
-      if (state.record) {
-        records.push(state.record);
-      }
+    write(record, encoding, callback) {
+      records.push(record);
 
       callback();
     },
@@ -214,25 +285,9 @@ export async function selectBody({ fs, dir, query }) {
     },
   });
 
-  const leader = query.__;
-
-  const leaderStream = new stream.Transform({
-    objectMode: true,
-
-    transform(state, encoding, callback) {
-      // TODO account for nested leader
-      // TODO account for a list of leader values
-      this.push({ record: state.record[leader] });
-
-      callback();
-    },
-  });
-
-  const leaderPartial = leader && leader !== base ? [leaderStream] : [];
-
   const pipeline = promisify(stream.pipeline);
 
-  await pipeline([queryStream, ...streams, ...leaderPartial, collectStream]);
+  await pipeline([queryStream, ...streams, leaderStream, collectStream]);
 
   // takes record with base
   // returns record with values
@@ -253,10 +308,8 @@ export async function selectRecord({ fs, dir, query }) {
   const collectStream = new stream.Writable({
     objectMode: true,
 
-    write(state, encoding, callback) {
-      if (state.record) {
-        records.push(state.record);
-      }
+    write(record, encoding, callback) {
+      records.push(record);
 
       callback();
     },

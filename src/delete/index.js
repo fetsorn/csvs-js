@@ -3,7 +3,7 @@ import { promisify } from "util";
 import { planPrune } from "./strategy.js";
 import { pruneTablet } from "./tablet.js";
 import { toSchema } from "../schema.js";
-import { selectRecord } from "../select/index.js";
+import { selectSchema } from "../select/index.js";
 
 /**
  * This deletes a record from the dataset.
@@ -12,7 +12,7 @@ import { selectRecord } from "../select/index.js";
  * @function
  */
 export async function deleteRecordStream({ fs, dir }) {
-  const [schemaRecord] = await selectRecord({ fs, dir, query: { _: "_" } });
+  const [schemaRecord] = await selectSchema({ fs, dir });
 
   const schema = toSchema(schemaRecord);
 
