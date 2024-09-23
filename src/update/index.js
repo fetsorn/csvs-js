@@ -4,9 +4,9 @@ import { findCrown } from "../schema.js";
 import { recordToRelationMap } from "./query.js";
 import { updateTablet } from "./tablet.js";
 import { toSchema } from "../schema.js";
-import { select } from "../select/index.js";
+import { selectRecord } from "../select/index.js";
 
-export async function updateSchema(fs, dir) {
+export async function updateSchemaStream({ fs, dir }) {
   // writable
   return new stream.Writable({
     objectMode: true,
@@ -27,7 +27,11 @@ export async function updateSchema(fs, dir) {
   });
 }
 
-export async function updateRecord(fs, dir, schema) {
+export async function updateRecordStream({ fs, dir }) {
+  const [schemaRecord] = await selectRecord({ fs, dir, query: { _: "_" } });
+
+  const schema = toSchema(schemaRecord);
+
   // writable
   return new stream.Writable({
     objectMode: true,
@@ -67,26 +71,22 @@ export async function updateRecord(fs, dir, schema) {
  * @param {object} record - A dataset record.
  * @returns {object} - A dataset record.
  */
-export async function update(fs, dir, records) {
-  const [schemaRecord] = await select(fs, dir, { _: "_" });
-
-  const schema = toSchema(schemaRecord);
-
+export async function updateRecord({ fs, dir, query }) {
   // exit if record is undefined
-  if (records === undefined) return;
+  if (query === undefined) return;
 
-  let rs = Array.isArray(records) ? records : [records];
+  let records = Array.isArray(query) ? query : [query];
 
   // TODO find base value if _ is object or array
   // TODO exit if no base field or invalid base value
-  const base = rs[0]._;
+  const base = records[0]._;
 
-  const queryStream = stream.Readable.from(rs);
+  const queryStream = stream.Readable.from(records);
 
   const writeStream =
     base === "_"
-      ? await updateSchema(fs, dir, rs)
-      : await updateRecord(fs, dir, schema, rs);
+      ? await updateSchemaStream({ fs, dir })
+      : await updateRecordStream({ fs, dir });
 
   const pipeline = promisify(stream.pipeline);
 

@@ -4,15 +4,13 @@ import { join } from "path";
 import nodefs from "fs";
 import os from "os";
 import {
-  select,
-  selectBaseKeys,
-  buildRecord,
-  update,
+  selectRecord,
+  selectBase,
+  selectBody,
+  updateRecord,
   deleteRecord,
 } from "../src/index.js";
 import { testCasesSelect, testCasesUpdate, testCasesDelete } from "./cases.js";
-
-const tmpDir = os.tmpdir();
 
 function sortObject(a) {
   return Object.keys(a)
@@ -78,10 +76,14 @@ function copy(_path, path) {
   }
 }
 
-describe.only("select()", () => {
+describe("selectRecord()", () => {
   testCasesSelect.forEach((testCase) => {
     test(testCase.name, () => {
-      return select(nodefs, testCase.initial, testCase.query).then((data) => {
+      return selectRecord({
+        fs: nodefs,
+        dir: testCase.initial,
+        query: testCase.query,
+      }).then((data) => {
         const dataSorted = data
           .map(sortObject)
           .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
@@ -98,18 +100,18 @@ describe.only("select()", () => {
   });
 });
 
-describe("selectBaseKeys()", () => {
+describe("selectBase()", () => {
   testCasesSelect.forEach((testCase) => {
     test(testCase.name, async () => {
-      const baseRecords = await selectBaseKeys(
-        nodefs,
-        testCase.initial,
-        testCase.query,
-      );
+      const baseRecords = await selectBase({
+        fs: nodefs,
+        dir: testCase.initial,
+        query: testCase.query,
+      });
 
       const records = await Promise.all(
         baseRecords.map((baseRecord) =>
-          buildRecord(nodefs, testCase.initial, baseRecord),
+          selectBody({ fs: nodefs, dir: testCase.initial, query: baseRecord }),
         ),
       );
 
@@ -126,14 +128,18 @@ describe("selectBaseKeys()", () => {
   });
 });
 
-describe("update()", () => {
+describe("updateRecord()", () => {
   testCasesUpdate.forEach((testCase) => {
     test(testCase.name, () => {
       const tmpdir = nodefs.mkdtempSync(os.tmpdir());
 
       copy(testCase.initial, tmpdir);
 
-      return update(nodefs, tmpdir, testCase.query).then(() => {
+      return updateRecord({
+        fs: nodefs,
+        dir: tmpdir,
+        query: testCase.query,
+      }).then(() => {
         expect(loadContents(nodefs, tmpdir)).toStrictEqual(
           loadContents(nodefs, testCase.expected),
         );
@@ -149,7 +155,11 @@ describe("deleteRecord()", () => {
 
       copy(testCase.initial, tmpdir);
 
-      return deleteRecord(nodefs, tmpdir, testCase.query).then(() => {
+      return deleteRecord({
+        fs: nodefs,
+        dir: tmpdir,
+        query: testCase.query,
+      }).then(() => {
         expect(loadContents(nodefs, tmpdir)).toStrictEqual(
           loadContents(nodefs, testCase.expected),
         );

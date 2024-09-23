@@ -6,12 +6,12 @@ import { planValues, planOptions, planQuery, planSchema } from "./strategy.js";
 import { toSchema } from "../schema.js";
 
 /**
- * This returns the schema record for the dataset
- * @name selectSchema
+ * This returns a Transform stream
+ * @name selectSchemaStream
  * @function
- * @returns {Object[]}
+ * @returns {Transform}
  */
-export async function selectSchema(fs, dir) {
+export async function selectSchemaStream({ fs, dir }) {
   let recordSchema = { _: "_" };
 
   const queryStream = stream.Readable.from([{ record: recordSchema }]);
@@ -29,7 +29,13 @@ export async function selectSchema(fs, dir) {
   return [queryStream, ...streams];
 }
 
-export async function selectStream(fs, dir, query) {
+/**
+ * This returns a Transform stream
+ * @name selectRecordStream
+ * @function
+ * @returns {Transform}
+ */
+export async function selectRecordStream({ fs, dir, query }) {
   // there can be only one root base in search query
   // TODO: validate against arrays of multiple bases, do not return [], throw error
   const base = query._;
@@ -37,9 +43,9 @@ export async function selectStream(fs, dir, query) {
   // if no base is provided, return empty
   if (base === undefined) return [];
 
-  if (base === "_") return selectSchema(fs, dir);
+  if (base === "_") return selectSchemaStream({ fs, dir });
 
-  const [schemaRecord] = await select(fs, dir, { _: "_" });
+  const [schemaRecord] = await selectRecord({ fs, dir, query: { _: "_" } });
 
   const schema = toSchema(schemaRecord);
 
@@ -83,42 +89,12 @@ export async function selectStream(fs, dir, query) {
 }
 
 /**
- * This returns an array of records from the dataset.
- * @name select
+ * This returns a list of base records
+ * @name selectBase
  * @function
  * @returns {Object[]}
  */
-export async function select(fs, dir, query) {
-  const streams = await selectStream(fs, dir, query);
-
-  var records = [];
-
-  const collectStream = new stream.Writable({
-    objectMode: true,
-
-    write(state, encoding, callback) {
-      if (state.record) {
-        records.push(state.record);
-      }
-
-      callback();
-    },
-
-    close() {},
-
-    abort(err) {
-      console.log("Sink error:", err);
-    },
-  });
-
-  const pipeline = promisify(stream.pipeline);
-
-  await pipeline([...streams, collectStream]);
-
-  return records;
-}
-
-export async function selectBaseKeys(fs, dir, query) {
+export async function selectBase({ fs, dir, query }) {
   // there can be only one root base in search query
   // TODO: validate against arrays of multiple bases, do not return [], throw error
   const base = query._;
@@ -126,7 +102,7 @@ export async function selectBaseKeys(fs, dir, query) {
   // if no base is provided, return empty
   if (base === undefined) return [];
 
-  const [schemaRecord] = await select(fs, dir, { _: "_" });
+  const [schemaRecord] = await selectRecord({ fs, dir, query: { _: "_" } });
 
   if (base === "_") return [schemaRecord];
 
@@ -191,18 +167,24 @@ export async function selectBaseKeys(fs, dir, query) {
   return records;
 }
 
-export async function buildRecord(fs, dir, record) {
-  const base = record._;
+/**
+ * This returns a list of complete records
+ * @name selectBody
+ * @function
+ * @returns {Object[]}
+ */
+export async function selectBody({ fs, dir, query }) {
+  const base = query._;
 
-  const [schemaRecord] = await select(fs, dir, { _: "_" });
+  const [schemaRecord] = await selectRecord({ fs, dir, query: { _: "_" } });
 
   if (base === "_") return schemaRecord;
 
   const schema = toSchema(schemaRecord);
 
-  const queryStream = stream.Readable.from([{ record }]);
+  const queryStream = stream.Readable.from([{ record: query }]);
 
-  const strategy = planValues(schema, record);
+  const strategy = planValues(schema, query);
 
   const promises = strategy.map((tablet) =>
     tablet.accumulating
@@ -232,7 +214,7 @@ export async function buildRecord(fs, dir, record) {
     },
   });
 
-  const leader = record.__;
+  const leader = query.__;
 
   const leaderStream = new stream.Transform({
     objectMode: true,
@@ -255,4 +237,40 @@ export async function buildRecord(fs, dir, record) {
   // takes record with base
   // returns record with values
   return records[0];
+}
+
+/**
+ * This returns a list of records
+ * @name selectRecord
+ * @function
+ * @returns {Object[]}
+ */
+export async function selectRecord({ fs, dir, query }) {
+  const streams = await selectRecordStream({ fs, dir, query });
+
+  var records = [];
+
+  const collectStream = new stream.Writable({
+    objectMode: true,
+
+    write(state, encoding, callback) {
+      if (state.record) {
+        records.push(state.record);
+      }
+
+      callback();
+    },
+
+    close() {},
+
+    abort(err) {
+      console.log("Sink error:", err);
+    },
+  });
+
+  const pipeline = promisify(stream.pipeline);
+
+  await pipeline([...streams, collectStream]);
+
+  return records;
 }

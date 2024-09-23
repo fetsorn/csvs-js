@@ -1,12 +1,16 @@
 export {
-  select,
-  selectSchema,
-  selectStream,
-  selectBaseKeys,
-  buildRecord,
+  selectSchemaStream,
+  selectRecordStream,
+  selectRecord,
+  selectBase,
+  selectBody,
 } from "./select/index.js";
-export { update, updateRecord, updateSchema } from "./update/index.js";
-export { deleteRecord, deleteStream } from "./delete/index.js";
+export {
+  updateRecord,
+  updateRecordStream,
+  updateSchemaStream,
+} from "./update/index.js";
+export { deleteRecord, deleteRecordStream } from "./delete/index.js";
 export {
   condense,
   expand,

@@ -3,7 +3,7 @@ import { promisify } from "util";
 import { planPrune } from "./strategy.js";
 import { pruneTablet } from "./tablet.js";
 import { toSchema } from "../schema.js";
-import { select } from "../select/index.js";
+import { selectRecord } from "../select/index.js";
 
 /**
  * This deletes a record from the dataset.
@@ -11,7 +11,11 @@ import { select } from "../select/index.js";
  * @param {object} record - A dataset record.
  * @function
  */
-export function deleteStream(fs, dir, schema) {
+export async function deleteRecordStream({ fs, dir }) {
+  const [schemaRecord] = await selectRecord({ fs, dir, query: { _: "_" } });
+
+  const schema = toSchema(schemaRecord);
+
   return new stream.Writable({
     objectMode: true,
 
@@ -33,19 +37,15 @@ export function deleteStream(fs, dir, schema) {
  * @param {object} record - A dataset record.
  * @function
  */
-export async function deleteRecord(fs, dir, records) {
-  const [schemaRecord] = await select(fs, dir, { _: "_" });
-
-  const schema = toSchema(schemaRecord);
-
+export async function deleteRecord({ fs, dir, query }) {
   // exit if record is undefined
-  if (records === undefined) return;
+  if (query === undefined) return;
 
-  let rs = Array.isArray(records) ? records : [records];
+  let records = Array.isArray(query) ? query : [query];
 
-  const queryStream = stream.Readable.from(rs);
+  const queryStream = stream.Readable.from(records);
 
-  const writeStream = deleteStream(fs, dir, schema);
+  const writeStream = await deleteRecordStream({ fs, dir });
 
   const pipeline = promisify(stream.pipeline);
 
