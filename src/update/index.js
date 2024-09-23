@@ -1,5 +1,3 @@
-import stream from "stream";
-import { promisify } from "util";
 import { findCrown } from "../schema.js";
 import { recordToRelationMap } from "./query.js";
 import { updateTablet } from "./tablet.js";
@@ -8,10 +6,8 @@ import { selectSchema } from "../select/index.js";
 
 export async function updateSchemaStream({ fs, dir }) {
   // writable
-  return new stream.Writable({
-    objectMode: true,
-
-    async write(record, encoding, callback) {
+  return new WritableStream({
+    async write(record) {
       const filename = `_-_.csv`;
 
       const relations = Object.fromEntries(
@@ -21,8 +17,6 @@ export async function updateSchemaStream({ fs, dir }) {
       );
 
       await updateTablet(fs, dir, relations, filename);
-
-      callback();
     },
   });
 }
@@ -33,10 +27,8 @@ export async function updateRecordStream({ fs, dir }) {
   const schema = toSchema(schemaRecord);
 
   // writable
-  return new stream.Writable({
-    objectMode: true,
-
-    async write(record, encoding, callback) {
+  return new WritableStream({
+    async write(record) {
       const base = record._;
 
       // build a relation map of the record. tablet -> key -> list of values
@@ -52,14 +44,6 @@ export async function updateRecordStream({ fs, dir }) {
 
         await updateTablet(fs, dir, relationMap[filename] ?? {}, filename);
       }
-
-      callback();
-    },
-
-    close() {},
-
-    abort(err) {
-      console.log("Sink error:", err);
     },
   });
 }
@@ -81,14 +65,12 @@ export async function updateRecord({ fs, dir, query }) {
   // TODO exit if no base field or invalid base value
   const base = records[0]._;
 
-  const queryStream = stream.Readable.from(records);
+  const queryStream = ReadableStream.from(records);
 
   const writeStream =
     base === "_"
       ? await updateSchemaStream({ fs, dir })
       : await updateRecordStream({ fs, dir });
 
-  const pipeline = promisify(stream.pipeline);
-
-  await pipeline([queryStream, writeStream]);
+  await queryStream.pipeTo(writeStream);
 }

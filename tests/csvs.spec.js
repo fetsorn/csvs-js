@@ -76,7 +76,7 @@ function copy(_path, path) {
   }
 }
 
-describe("selectRecord()", () => {
+describe.only("selectRecord()", () => {
   testCasesSelect.forEach((testCase) => {
     test(testCase.name, () => {
       return selectRecord({

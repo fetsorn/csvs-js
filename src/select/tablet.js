@@ -1,24 +1,6 @@
 import path from "path";
-import stream from "stream";
-import readline from "readline";
 import { parseLine } from "./line.js";
-
-function isEmpty(fs, filepath) {
-  if (!fs.existsSync(filepath)) return true;
-
-  const emptyStream = fs.createReadStream(filepath);
-
-  return new Promise((res) => {
-    emptyStream.once("data", () => {
-      emptyStream.destroy();
-      res(false);
-    });
-
-    emptyStream.on("end", () => {
-      res(true);
-    });
-  });
-}
+import { isEmpty, createLineStream } from "../stream.js";
 
 /**
  *
@@ -32,10 +14,8 @@ function isEmpty(fs, filepath) {
 export async function parseTablet(fs, dir, tablet) {
   const filepath = path.join(dir, tablet.filename);
 
-  return new stream.Transform({
-    objectMode: true,
-
-    async transform(state, encoding, callback) {
+  return new TransformStream({
+    async transform(state, controller) {
       // if (tablet.filename === "export1_tag-export1_channel.csv")
       // console.log(
       //   "tablet",
@@ -52,8 +32,6 @@ export async function parseTablet(fs, dir, tablet) {
 
       // value tablets drop query and require a record
       if (tablet.querying === undefined && state.record === undefined) {
-        callback();
-
         return;
       }
 
@@ -66,10 +44,10 @@ export async function parseTablet(fs, dir, tablet) {
       let hasMatch = false;
 
       const fileStream = (await isEmpty(fs, filepath))
-        ? stream.Readable.from([""])
-        : fs.createReadStream(filepath);
+        ? ReadableStream.from([""])
+        : ReadableStream.from(fs.createReadStream(filepath));
 
-      const lineStream = readline.createInterface({ input: fileStream });
+      const lineStream = await fileStream.pipeThrough(createLineStream());
 
       // this will stream transform after file reader streams
       for await (const line of lineStream) {
@@ -83,7 +61,7 @@ export async function parseTablet(fs, dir, tablet) {
           //     tablet,
           //     JSON.stringify(stateIntermediary.complete, undefined, 2),
           //   );
-          this.push({ record: stateIntermediary.complete });
+          controller.enqueue({ record: stateIntermediary.complete });
 
           hasMatch = true;
 
@@ -102,7 +80,7 @@ export async function parseTablet(fs, dir, tablet) {
         //     tablet,
         //     JSON.stringify(stateIntermediary.complete, undefined, 2),
         //   );
-        this.push({ record: stateIntermediary.complete });
+        controller.enqueue({ record: stateIntermediary.complete });
 
         hasMatch = true;
       }
@@ -116,10 +94,8 @@ export async function parseTablet(fs, dir, tablet) {
         //     tablet,
         //     JSON.stringify(state.record, undefined, 2),
         //   );
-        this.push({ record: state.query ?? state.record });
+        controller.enqueue({ record: state.query ?? state.record });
       }
-
-      callback();
     },
   });
 }
@@ -136,10 +112,8 @@ export async function parseTablet(fs, dir, tablet) {
 export function parseTabletAccumulating(fs, dir, tablet) {
   const filepath = path.join(dir, tablet.filename);
 
-  return new stream.Transform({
-    objectMode: true,
-
-    async transform(state, encoding, callback) {
+  return new TransformStream({
+    async transform(state, controller) {
       // console.log(
       //   "tablet acc",
       //   tablet,
@@ -158,28 +132,25 @@ export function parseTabletAccumulating(fs, dir, tablet) {
         //   JSON.stringify(state.record, undefined, 2),
         // );
         // assume the record is new because it has been checked against stream map upstream
-        this.push({ record: state.record });
-
-        callback();
+        controller.enqueue({ record: state.record });
 
         return;
       }
 
       if (state.query === undefined) {
-        callback();
-
         return;
       }
 
       // this will stream state after file reader streams
       let stateIntermediary = { initial: state.query, current: state.query };
+
       let matchMap = state.map ?? new Map();
 
       const fileStream = (await isEmpty(fs, filepath))
-        ? stream.Readable.from([""])
-        : fs.createReadStream(filepath);
+        ? ReadableStream.from([""])
+        : ReadableStream.from(fs.createReadStream(filepath));
 
-      const lineStream = readline.createInterface({ input: fileStream });
+      const lineStream = await fileStream.pipeThrough(createLineStream());
 
       // this will stream transform after file reader streams
       for await (const line of lineStream) {
@@ -199,7 +170,7 @@ export function parseTabletAccumulating(fs, dir, tablet) {
             //   JSON.stringify(stateIntermediary.complete, undefined, 2),
             // );
 
-            this.push({ record: stateIntermediary.complete });
+            controller.enqueue({ record: stateIntermediary.complete });
 
             matchMap.set(value, true);
           }
@@ -225,7 +196,7 @@ export function parseTabletAccumulating(fs, dir, tablet) {
           //   JSON.stringify(stateIntermediary.complete, undefined, 2),
           // );
 
-          this.push({ record: stateIntermediary.complete });
+          controller.enqueue({ record: stateIntermediary.complete });
 
           matchMap.set(value, true);
         }
@@ -240,9 +211,7 @@ export function parseTabletAccumulating(fs, dir, tablet) {
       //   JSON.stringify(state.query, undefined, 2),
       // );
 
-      this.push({ query: state.query, map: matchMap });
-
-      callback();
+      controller.enqueue({ query: state.query, map: matchMap });
     },
   });
 }

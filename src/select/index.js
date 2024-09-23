@@ -1,6 +1,3 @@
-import stream from "stream";
-// use promisify instead of stream/promises.pipeline to allow polyfills
-import { promisify } from "util";
 import { parseTablet, parseTabletAccumulating } from "./tablet.js";
 import { planValues, planOptions, planQuery, planSchema } from "./strategy.js";
 import { toSchema } from "../schema.js";
@@ -14,7 +11,7 @@ import { toSchema } from "../schema.js";
 export async function selectSchemaStream({ fs, dir }) {
   let recordSchema = { _: "_" };
 
-  const queryStream = stream.Readable.from([{ record: recordSchema }]);
+  const queryStream = ReadableStream.from([{ record: recordSchema }]);
 
   const schemaStrategy = planSchema();
 
@@ -26,21 +23,22 @@ export async function selectSchemaStream({ fs, dir }) {
 
   const streams = await Promise.all(promises);
 
-  const leaderStream = new stream.Transform({
-    objectMode: true,
-
-    transform(state, encoding, callback) {
+  const leaderStream = new TransformStream({
+    transform(state, controller) {
       // TODO account for nested leader
       // TODO account for a list of leader values
       if (state.record) {
-        this.push(state.record);
+        controller.enqueue(state.record);
       }
-
-      callback();
     },
   });
 
-  return [queryStream, ...streams, leaderStream];
+  const schemaStream = [...streams, leaderStream].reduce(
+    (withStream, stream) => withStream.pipeThrough(stream),
+    queryStream,
+  );
+
+  return schemaStream;
 }
 
 /**
@@ -50,29 +48,17 @@ export async function selectSchemaStream({ fs, dir }) {
  * @returns {Object[]}
  */
 export async function selectSchema({ fs, dir }) {
-  const streams = await selectSchemaStream({ fs, dir });
+  const schemaStream = await selectSchemaStream({ fs, dir });
 
   var records = [];
 
-  const collectStream = new stream.Writable({
-    objectMode: true,
-
-    write(record, encoding, callback) {
+  const collectStream = new WritableStream({
+    write(record) {
       records.push(record);
-
-      callback();
-    },
-
-    close() {},
-
-    abort(err) {
-      console.log("Sink error:", err);
     },
   });
 
-  const pipeline = promisify(stream.pipeline);
-
-  await pipeline([...streams, collectStream]);
+  await schemaStream.pipeTo(collectStream);
 
   return records;
 }
@@ -97,7 +83,7 @@ export async function selectRecordStream({ fs, dir, query }) {
 
   const schema = toSchema(schemaRecord);
 
-  const queryStream = stream.Readable.from([{ query }]);
+  const queryStream = ReadableStream.from([{ query }]);
 
   const queryStrategy = planQuery(schema, query);
 
@@ -118,25 +104,26 @@ export async function selectRecordStream({ fs, dir, query }) {
 
   const leader = query.__;
 
-  const leaderStream = new stream.Transform({
-    objectMode: true,
-
-    transform(state, encoding, callback) {
+  const leaderStream = new TransformStream({
+    transform(state, controller) {
       const record =
         leader && leader !== base ? state.record[leader] : state.record;
 
       // TODO account for nested leader
       // TODO account for a list of leader values
       if (record) {
-        this.push(record);
+        controller.enqueue(record);
       }
-
-      callback();
     },
   });
 
+  const schemaStream = [...streams, leaderStream].reduce(
+    (withStream, stream) => withStream.pipeThrough(stream),
+    queryStream,
+  );
+
   // TODO rewrite to stream.compose
-  return [queryStream, ...streams, leaderStream];
+  return schemaStream;
 }
 
 /**
@@ -159,7 +146,7 @@ export async function selectBase({ fs, dir, query }) {
 
   const schema = toSchema(schemaRecord);
 
-  const queryStream = stream.Readable.from([{ query }]);
+  const queryStream = ReadableStream.from([{ query }]);
 
   const queryStrategy = planQuery(schema, query);
 
@@ -177,10 +164,8 @@ export async function selectBase({ fs, dir, query }) {
   const leader = query.__;
 
   // preserve leader for building values later
-  const leaderStream = new stream.Transform({
-    objectMode: true,
-
-    transform(state, encoding, callback) {
+  const leaderStream = new TransformStream({
+    transform(state, controller) {
       const record =
         leader && leader !== base
           ? { ...state.record, __: leader }
@@ -189,34 +174,25 @@ export async function selectBase({ fs, dir, query }) {
       // TODO account for nested leader
       // TODO account for a list of leader values
       if (record !== undefined) {
-        this.push(record);
+        controller.enqueue(record);
       }
-
-      callback();
     },
   });
 
   var records = [];
 
-  const collectStream = new stream.Writable({
-    objectMode: true,
-
-    write(record, encoding, callback) {
+  const collectStream = new WritableStream({
+    write(record) {
       records.push(record);
-
-      callback();
-    },
-
-    close() {},
-
-    abort(err) {
-      console.log("Sink error:", err);
     },
   });
 
-  const pipeline = promisify(stream.pipeline);
+  const selectStream = [...streams, leaderStream].reduce(
+    (withStream, stream) => withStream.pipeThrough(stream),
+    queryStream,
+  );
 
-  await pipeline([queryStream, ...streams, leaderStream, collectStream]);
+  await selectStream.pipeTo(collectStream);
 
   return records;
 }
@@ -236,7 +212,7 @@ export async function selectBody({ fs, dir, query }) {
 
   const schema = toSchema(schemaRecord);
 
-  const queryStream = stream.Readable.from([{ record: query }]);
+  const queryStream = ReadableStream.from([{ record: query }]);
 
   const strategy = planValues(schema, query);
 
@@ -250,44 +226,35 @@ export async function selectBody({ fs, dir, query }) {
 
   const leader = query.__;
 
-  const leaderStream = new stream.Transform({
-    objectMode: true,
-
-    transform(state, encoding, callback) {
+  const leaderStream = new TransformStream({
+    transform(state, controller) {
       const record =
         leader && leader !== base ? state.record[leader] : state.record;
 
       if (record !== undefined) {
         // TODO account for nested leader
         // TODO account for a list of leader values
-        this.push(record);
+        controller.enqueue(record);
       }
-
-      callback();
     },
   });
 
   var records = [];
 
-  const collectStream = new stream.Writable({
+  const collectStream = new WritableStream({
     objectMode: true,
 
-    write(record, encoding, callback) {
+    write(record) {
       records.push(record);
-
-      callback();
-    },
-
-    close() {},
-
-    abort(err) {
-      console.log("Sink error:", err);
     },
   });
 
-  const pipeline = promisify(stream.pipeline);
+  const selectStream = [...streams, leaderStream].reduce(
+    (withStream, stream) => withStream.pipeThrough(stream),
+    queryStream,
+  );
 
-  await pipeline([queryStream, ...streams, leaderStream, collectStream]);
+  await selectStream.pipeTo(collectStream);
 
   // takes record with base
   // returns record with values
@@ -301,29 +268,17 @@ export async function selectBody({ fs, dir, query }) {
  * @returns {Object[]}
  */
 export async function selectRecord({ fs, dir, query }) {
-  const streams = await selectRecordStream({ fs, dir, query });
+  const selectStream = await selectRecordStream({ fs, dir, query });
 
   var records = [];
 
-  const collectStream = new stream.Writable({
-    objectMode: true,
-
-    write(record, encoding, callback) {
+  const collectStream = new WritableStream({
+    write(record) {
       records.push(record);
-
-      callback();
-    },
-
-    close() {},
-
-    abort(err) {
-      console.log("Sink error:", err);
     },
   });
 
-  const pipeline = promisify(stream.pipeline);
-
-  await pipeline([...streams, collectStream]);
+  await selectStream.pipeTo(collectStream);
 
   return records;
 }

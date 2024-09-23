@@ -1,5 +1,3 @@
-import stream from "stream";
-import { promisify } from "util";
 import { planPrune } from "./strategy.js";
 import { pruneTablet } from "./tablet.js";
 import { toSchema } from "../schema.js";
@@ -16,17 +14,13 @@ export async function deleteRecordStream({ fs, dir }) {
 
   const schema = toSchema(schemaRecord);
 
-  return new stream.Writable({
-    objectMode: true,
-
-    async write(record, encoding, callback) {
+  return new WritableStream({
+    async write(record) {
       const strategy = planPrune(schema, record);
 
       const promises = strategy.map((tablet) => pruneTablet(fs, dir, tablet));
 
       await Promise.all(promises);
-
-      callback();
     },
   });
 }
@@ -43,11 +37,9 @@ export async function deleteRecord({ fs, dir, query }) {
 
   let records = Array.isArray(query) ? query : [query];
 
-  const queryStream = stream.Readable.from(records);
+  const queryStream = ReadableStream.from(records);
 
   const writeStream = await deleteRecordStream({ fs, dir });
 
-  const pipeline = promisify(stream.pipeline);
-
-  return pipeline([queryStream, writeStream]);
+  await queryStream.pipeTo(writeStream);
 }

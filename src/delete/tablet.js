@@ -1,50 +1,42 @@
 import path from "path";
-import os from "os";
-import { promisify } from "util";
-import stream from "stream";
-import readline from "readline";
 import { pruneLine } from "./line.js";
+import { createLineStream } from "../stream.js";
 
 export async function pruneTablet(fs, dir, tablet) {
   const filepath = path.join(dir, tablet.filename);
 
   if (!fs.existsSync(filepath)) return;
 
-  const fileStream = fs.createReadStream(filepath);
+  const fileStream = ReadableStream.from(fs.createReadStream(filepath));
 
-  const pruneStream = new stream.Transform({
-    transform(line, encoding, callback) {
-      const isMatch = pruneLine(tablet, line.toString());
+  const pruneStream = new TransformStream({
+    transform(line, controller) {
+      const isMatch = pruneLine(tablet, line);
 
       if (!isMatch) {
-        this.push(line);
-        this.push("\n");
+        controller.enqueue(line);
       }
-
-      callback();
     },
   });
 
-  const tmpdir = await fs.mkdtempSync(os.tmpdir());
+  const tmpdir = await fs.mkdtempSync(path.join(dir, "prune-"));
 
   const tmpPath = path.join(tmpdir, tablet.filename);
 
-  const writeStream = fs.createWriteStream(tmpPath);
+  const writeStream = new WritableStream({
+    write(line) {
+      fs.appendFileSync(tmpPath, line);
+    },
+  });
 
-  const pipeline = promisify(stream.pipeline);
-
-  try {
-    await pipeline([
-      fileStream,
-      (input) => readline.createInterface({ input }),
-      pruneStream,
-      writeStream,
-    ]);
-  } catch (e) {
-    console.error(e);
-  }
+  await fileStream
+    .pipeThrough(createLineStream())
+    .pipeThrough(pruneStream)
+    .pipeTo(writeStream);
 
   if (fs.existsSync(tmpPath)) {
     await fs.promises.rename(tmpPath, filepath);
   }
+
+  await fs.promises.rmdir(tmpdir);
 }
