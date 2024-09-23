@@ -18,11 +18,13 @@ export async function selectSchema(fs, dir) {
 
   const schemaStrategy = planSchema();
 
-  const streams = schemaStrategy.map((tablet) =>
+  const promises = schemaStrategy.map((tablet) =>
     tablet.accumulating
       ? parseTabletAccumulating(fs, dir, tablet)
       : parseTablet(fs, dir, tablet),
   );
+
+  const streams = await Promise.all(promises);
 
   return [queryStream, ...streams];
 }
@@ -52,11 +54,13 @@ export async function selectStream(fs, dir, query) {
 
   const strategy = [...baseStrategy, ...valueStrategy];
 
-  const streams = strategy.map((tablet) =>
+  const promises = strategy.map((tablet) =>
     tablet.accumulating
       ? parseTabletAccumulating(fs, dir, tablet)
       : parseTablet(fs, dir, tablet),
   );
+
+  const streams = await Promise.all(promises);
 
   const leader = query.__;
 
@@ -135,11 +139,13 @@ export async function selectBaseKeys(fs, dir, query) {
   const strategy =
     queryStrategy.length > 0 ? queryStrategy : planOptions(schema, base);
 
-  const streams = strategy.map((tablet) =>
+  const promises = strategy.map((tablet) =>
     tablet.accumulating
       ? parseTabletAccumulating(fs, dir, tablet)
       : parseTablet(fs, dir, tablet),
   );
+
+  const streams = await Promise.all(promises);
 
   var records = [];
 
@@ -198,11 +204,13 @@ export async function buildRecord(fs, dir, record) {
 
   const strategy = planValues(schema, record);
 
-  const streams = strategy.map((tablet) =>
+  const promises = strategy.map((tablet) =>
     tablet.accumulating
       ? parseTabletAccumulating(fs, dir, tablet)
       : parseTablet(fs, dir, tablet),
   );
+
+  const streams = await Promise.all(promises);
 
   var records = [];
 

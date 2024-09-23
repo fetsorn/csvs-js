@@ -1,28 +1,41 @@
 import path from "path";
 import stream from "stream";
+import readline from "readline";
 import { parseLine } from "./line.js";
 
+function isEmpty(fs, filepath) {
+  if (!fs.existsSync(filepath)) return true;
+
+  const emptyStream = fs.createReadStream(filepath);
+
+  return new Promise((res) => {
+    emptyStream.once("data", () => {
+      emptyStream.destroy();
+      res(false);
+    });
+
+    emptyStream.on("end", () => {
+      res(true);
+    });
+  });
+}
+
 /**
- * This returns an array of streams that read tablets.
- * @name shell
+ *
+ * @name parseTablet
  * @function
- * @param {object} query
- * @returns {Object[]}
+ * @param {object} fs
+ * @param {string} dir
+ * @param {object} tablet
+ * @returns {Transform}
  */
-export function parseTablet(fs, dir, tablet) {
+export async function parseTablet(fs, dir, tablet) {
   const filepath = path.join(dir, tablet.filename);
-
-  const contents = fs.existsSync(filepath)
-    ? fs.readFileSync(filepath, "utf8")
-    : "";
-
-  // TODO replace with file stream
-  const lines = contents.split("\n");
 
   return new stream.Transform({
     objectMode: true,
 
-    transform(state, encoding, callback) {
+    async transform(state, encoding, callback) {
       // if (tablet.filename === "export1_tag-export1_channel.csv")
       // console.log(
       //   "tablet",
@@ -52,8 +65,14 @@ export function parseTablet(fs, dir, tablet) {
 
       let hasMatch = false;
 
+      const fileStream = (await isEmpty(fs, filepath))
+        ? stream.Readable.from([""])
+        : fs.createReadStream(filepath);
+
+      const lineStream = readline.createInterface({ input: fileStream });
+
       // this will stream transform after file reader streams
-      for (const line of lines) {
+      for await (const line of lineStream) {
         stateIntermediary = parseLine(stateIntermediary, tablet, line);
 
         if (stateIntermediary.complete) {
@@ -106,26 +125,21 @@ export function parseTablet(fs, dir, tablet) {
 }
 
 /**
- * This returns an array of streams that read tablets.
- * @name shell
+ *
+ * @name parseTablet
  * @function
- * @param {object} query
- * @returns {Object[]}
+ * @param {object} fs
+ * @param {string} dir
+ * @param {object} tablet
+ * @returns {Transform}
  */
 export function parseTabletAccumulating(fs, dir, tablet) {
   const filepath = path.join(dir, tablet.filename);
 
-  const contents = fs.existsSync(filepath)
-    ? fs.readFileSync(filepath, "utf8")
-    : "";
-
-  // TODO replace with file stream
-  const lines = contents.split("\n");
-
   return new stream.Transform({
     objectMode: true,
 
-    transform(state, encoding, callback) {
+    async transform(state, encoding, callback) {
       // console.log(
       //   "tablet acc",
       //   tablet,
@@ -161,8 +175,14 @@ export function parseTabletAccumulating(fs, dir, tablet) {
       let stateIntermediary = { initial: state.query, current: state.query };
       let matchMap = state.map ?? new Map();
 
+      const fileStream = (await isEmpty(fs, filepath))
+        ? stream.Readable.from([""])
+        : fs.createReadStream(filepath);
+
+      const lineStream = readline.createInterface({ input: fileStream });
+
       // this will stream transform after file reader streams
-      for (const line of lines) {
+      for await (const line of lineStream) {
         stateIntermediary = parseLine(stateIntermediary, tablet, line);
 
         if (stateIntermediary.complete) {

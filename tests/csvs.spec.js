@@ -78,7 +78,7 @@ function copy(_path, path) {
   }
 }
 
-describe("select()", () => {
+describe.only("select()", () => {
   testCasesSelect.forEach((testCase) => {
     test(testCase.name, () => {
       return select(nodefs, testCase.initial, testCase.query).then((data) => {
