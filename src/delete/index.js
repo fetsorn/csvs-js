@@ -1,3 +1,4 @@
+import { WritableStream, ReadableStream } from "node:stream/web";
 import { planPrune } from "./strategy.js";
 import { pruneTablet } from "./tablet.js";
 import { toSchema } from "../schema.js";

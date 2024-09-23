@@ -1,3 +1,8 @@
+import {
+  WritableStream,
+  ReadableStream,
+  TransformStream,
+} from "node:stream/web";
 import { parseTablet, parseTabletAccumulating } from "./tablet.js";
 import { planValues, planOptions, planQuery, planSchema } from "./strategy.js";
 import { toSchema } from "../schema.js";

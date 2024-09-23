@@ -1,3 +1,8 @@
+import {
+  WritableStream,
+  ReadableStream,
+  TransformStream,
+} from "node:stream/web";
 import path from "path";
 import { updateLine } from "./line.js";
 import { isEmpty, createLineStream } from "../stream.js";

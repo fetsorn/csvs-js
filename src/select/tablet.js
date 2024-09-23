@@ -1,3 +1,4 @@
+import { ReadableStream, TransformStream } from "node:stream/web";
 import path from "path";
 import { parseLine } from "./line.js";
 import { isEmpty, createLineStream } from "../stream.js";

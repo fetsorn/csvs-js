@@ -1,3 +1,8 @@
+import {
+  WritableStream,
+  ReadableStream,
+  TransformStream,
+} from "node:stream/web";
 import path from "path";
 import { pruneLine } from "./line.js";
 import { createLineStream } from "../stream.js";

@@ -1,3 +1,5 @@
+import { TransformStream } from "node:stream/web";
+
 export function isEmpty(fs, filepath) {
   if (!fs.existsSync(filepath)) return true;
 
