@@ -1,4 +1,4 @@
-import { WritableStream, ReadableStream } from "node:stream/web";
+import { WritableStream, ReadableStream } from "@swimburger/isomorphic-streams";
 import { findCrown } from "../schema.js";
 import { recordToRelationMap } from "./query.js";
 import { updateTablet } from "./tablet.js";

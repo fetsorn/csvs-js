@@ -2,7 +2,7 @@ import {
   WritableStream,
   ReadableStream,
   TransformStream,
-} from "node:stream/web";
+} from "@swimburger/isomorphic-streams";
 import { parseTablet, parseTabletAccumulating } from "./tablet.js";
 import { planValues, planOptions, planQuery, planSchema } from "./strategy.js";
 import { toSchema } from "../schema.js";

@@ -1,20 +1,18 @@
-import { TransformStream } from "node:stream/web";
+import { TransformStream } from "@swimburger/isomorphic-streams";
 
-export function isEmpty(fs, filepath) {
-  if (!fs.existsSync(filepath)) return true;
+export async function isEmpty(fs, filepath) {
+  // only use functions covered by lightning-fs
+  try {
+    const stats = await fs.promises.stat(filepath);
 
-  const emptyStream = fs.createReadStream(filepath);
+    if (stats.size > 0) {
+      return false;
+    }
 
-  return new Promise((res) => {
-    emptyStream.once("data", () => {
-      emptyStream.destroy();
-      res(false);
-    });
-
-    emptyStream.on("end", () => {
-      res(true);
-    });
-  });
+    return true;
+  } catch {
+    return true;
+  }
 }
 
 function concatArrayBuffers(chunks) {

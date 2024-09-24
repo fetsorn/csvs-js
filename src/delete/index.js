@@ -1,4 +1,4 @@
-import { WritableStream, ReadableStream } from "node:stream/web";
+import { WritableStream, ReadableStream } from "@swimburger/isomorphic-streams";
 import { planPrune } from "./strategy.js";
 import { pruneTablet } from "./tablet.js";
 import { toSchema } from "../schema.js";

@@ -1,7 +1,7 @@
 {
   "name": "@fetsorn/csvs-js",
   "description": "csvs: comma-separated value store, js bindings",
-  "version": "0.19.0",
+  "version": "0.19.1",
   "author": "Anton Davydov <fetsorn@gmail.com>",
   "license": "MIT",
   "exports": "./src/index.js",
@@ -27,6 +27,7 @@
     "yarn": "^1.22.17"
   },
   "dependencies": {
+    "@swimburger/isomorphic-streams": "^1.1.1",
     "papaparse": "^5.4.1"
   }
 }

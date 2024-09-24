@@ -2,7 +2,7 @@ import {
   WritableStream,
   ReadableStream,
   TransformStream,
-} from "node:stream/web";
+} from "@swimburger/isomorphic-streams";
 import path from "path";
 import { updateLine } from "./line.js";
 import { isEmpty, createLineStream } from "../stream.js";
@@ -47,13 +47,13 @@ export async function updateTablet(fs, dir, relations, filename) {
     },
   });
 
-  const tmpdir = await fs.mkdtempSync(path.join(dir, "update-"));
+  const tmpdir = await fs.promises.mkdtemp(path.join(dir, "update-"));
 
   const tmpPath = path.join(tmpdir, filename);
 
   const writeStream = new WritableStream({
-    write(line) {
-      fs.appendFileSync(tmpPath, line + "\n");
+    async write(line) {
+      await fs.promises.appendFile(tmpPath, line + "\n");
     },
   });
 

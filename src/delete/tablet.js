@@ -2,15 +2,15 @@ import {
   WritableStream,
   ReadableStream,
   TransformStream,
-} from "node:stream/web";
+} from "@swimburger/isomorphic-streams";
 import path from "path";
 import { pruneLine } from "./line.js";
-import { createLineStream } from "../stream.js";
+import { isEmpty, createLineStream } from "../stream.js";
 
 export async function pruneTablet(fs, dir, tablet) {
   const filepath = path.join(dir, tablet.filename);
 
-  if (!fs.existsSync(filepath)) return;
+  if (await isEmpty(fs, filepath)) return;
 
   const fileStream = ReadableStream.from(fs.createReadStream(filepath));
 
@@ -24,13 +24,13 @@ export async function pruneTablet(fs, dir, tablet) {
     },
   });
 
-  const tmpdir = await fs.mkdtempSync(path.join(dir, "prune-"));
+  const tmpdir = await fs.promises.mkdtemp(path.join(dir, "prune-"));
 
   const tmpPath = path.join(tmpdir, tablet.filename);
 
   const writeStream = new WritableStream({
-    write(line) {
-      fs.appendFileSync(tmpPath, line);
+    async write(line) {
+      await fs.promises.appendFile(tmpPath, line);
     },
   });
 
@@ -39,7 +39,7 @@ export async function pruneTablet(fs, dir, tablet) {
     .pipeThrough(pruneStream)
     .pipeTo(writeStream);
 
-  if (fs.existsSync(tmpPath)) {
+  if (!(await isEmpty(fs, filepath))) {
     await fs.promises.rename(tmpPath, filepath);
   }
 

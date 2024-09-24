@@ -203,19 +203,24 @@ export function searchParamsToQuery(schema, searchParams) {
       // TODO: can handly only two levels of nesting, suffices for compatibility
       // push to [trunk]: { [key]: [ value ] }
 
-      const { trunk: trunk1 } = schema[branch];
+      const trunk1 =
+        schema[branch] !== undefined ? schema[branch].trunk : undefined;
 
       if (trunk1 === base || branch === base) {
         return { ...acc, [branch]: value };
       }
-      const { trunk: trunk2 } = schema[trunk1];
+
+      const trunk2 =
+        schema[trunk1] !== undefined ? schema[trunk1].trunk : undefined;
 
       if (trunk2 === base) {
         const trunk1Record = acc[trunk1] ?? { _: trunk1 };
 
         return { ...acc, [trunk1]: { ...trunk1Record, [branch]: value } };
       }
-      const { trunk: trunk3 } = schema[trunk2];
+
+      const trunk3 =
+        schema[trunk2] !== undefined ? schema[trunk2].trunk : undefined;
 
       if (trunk3 === base) {
         const trunk2Record = acc[trunk2] ?? { _: trunk2 };
