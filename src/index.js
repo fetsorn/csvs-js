@@ -1,4 +1,4 @@
-export {
+import {
   selectSchemaStream,
   selectRecordStream,
   selectSchema,
@@ -6,17 +6,62 @@ export {
   selectBase,
   selectBody,
 } from "./select/index.js";
-export {
+import {
   updateRecord,
   updateRecordStream,
   updateSchemaStream,
 } from "./update/index.js";
-export { deleteRecord, deleteRecordStream } from "./delete/index.js";
-export {
+import { deleteRecord, deleteRecordStream } from "./delete/index.js";
+import {
   condense,
   expand,
   isTwig,
   enrichBranchRecords,
   extractSchemaRecords,
+  searchParamsToQuery,
 } from "./record.js";
-export { findCrown, toSchema } from "./schema.js";
+import { findCrown, toSchema } from "./schema.js";
+
+export {
+  selectSchemaStream,
+  selectRecordStream,
+  selectSchema,
+  selectRecord,
+  selectBase,
+  selectBody,
+  updateRecord,
+  updateRecordStream,
+  updateSchemaStream,
+  deleteRecord,
+  deleteRecordStream,
+  condense,
+  expand,
+  isTwig,
+  enrichBranchRecords,
+  extractSchemaRecords,
+  searchParamsToQuery,
+  findCrown,
+  toSchema,
+};
+
+export default {
+  selectSchemaStream,
+  selectRecordStream,
+  selectSchema,
+  selectRecord,
+  selectBase,
+  selectBody,
+  updateRecord,
+  updateRecordStream,
+  updateSchemaStream,
+  deleteRecord,
+  deleteRecordStream,
+  condense,
+  expand,
+  isTwig,
+  enrichBranchRecords,
+  extractSchemaRecords,
+  searchParamsToQuery,
+  findCrown,
+  toSchema,
+};
