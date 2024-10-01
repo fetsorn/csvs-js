@@ -56,39 +56,6 @@ function baseIsRegexCase(tablet, record, trait, thing) {
   return state;
 }
 
-// assume that base value is not a list or an object
-function traitIsBaseCase(tablet, record, trait, thing) {
-  const { trait: base, thing: leaf } = tablet;
-
-  const { [base]: baseValue } = record;
-
-  const isMatch = tablet.traitIsRegex
-    ? new RegExp(baseValue).test(trait)
-    : baseValue === trait;
-
-  const existingValue = record[leaf];
-
-  // append if another value already exists
-  const leafValues =
-    existingValue === undefined ? thing : [existingValue, thing].flat();
-
-  const leafPartial = isMatch ? { [leaf]: leafValues } : {};
-
-  // if match update leaf values
-  const state = {
-    isMatch,
-    record: { ...record, ...leafPartial },
-  };
-
-  // if (isMatch) {
-  //   log("base match", tablet, state, trait, thing, base, baseValue);
-  // } else {
-  //   log("base no match", tablet, state, trait, thing, base, baseValue);
-  // }
-
-  return state;
-}
-
 function traitIsLeafCase(tablet, record, trait, thing) {
   // log("leaf", tablet, { record }, trait, thing);
 
@@ -117,13 +84,12 @@ function traitIsLeafCase(tablet, record, trait, thing) {
 
       // drop regex leafValue and replace with literal trait value
       // if object preserve an object leaves from leafItem
-      const newLeaf = isObject ? { ...leafItem, [leaf]: trait } : trait;
+      const thisLeaf = isObject ? { ...leafItem, [leaf]: trait } : trait;
 
       const leafValues =
-        existingLeaf === undefined ? newLeaf : [existingLeaf, newLeaf].flat();
+        existingLeaf === undefined ? thisLeaf : [existingLeaf, thisLeaf].flat();
 
-      // drop leaf after a base is found, to be picked up again later in value tablets
-      const leafPartial = tablet.querying ? {} : { [leaf]: leafValues };
+      const leafPartial = { [leaf]: leafValues };
 
       const existingBase = recordWithLeaf[base];
 
@@ -169,13 +135,79 @@ function traitIsTrunkCase(tablet, record, trait, thing) {
 
   const state = { isMatch: true, record: { ...record, [base]: thing } };
 
+  // log("trunk match", tablet, state, trait, thing, base);
+
+  return state;
+}
+
+function baseIsThingCase(tablet, record, trait, thing) {
+  const { _: base, [base]: baseValue } = record;
+
+  const baseIsRegex = base === tablet.trait && baseValue !== undefined;
+
+  if (base === "_") return schemaCase(tablet, record, trait, thing);
+
+  if (baseIsRegex) return baseIsRegexCase(tablet, record, trait, thing);
+
+  const recordHasTrait = Object.hasOwn(record, tablet.trait);
+
+  const traitIsLeaf = recordHasTrait;
+
+  // TODO this should fail and not pass through if record has no trait
+
+  // if trait is leaf of base
+  if (traitIsLeaf) return traitIsLeafCase(tablet, record, trait, thing);
+
+  // if trait is trunk of base
+  const traitIsTrunk = !recordHasTrait;
+
+  if (traitIsTrunk) return traitIsTrunkCase(tablet, record, trait, thing);
+
+  // TODO unreachable? throw error?
+}
+
+// assume that base value is not a list or an object
+function traitIsBaseCase(tablet, record, trait, thing) {
+  const { trait: base, thing: leaf } = tablet;
+
+  const { [base]: baseValue } = record;
+
+  const isMatch = tablet.traitIsRegex
+    ? new RegExp(baseValue).test(trait)
+    : baseValue === trait;
+
+  const existingValue = record[leaf];
+
+  // append if another value already exists
+  const leafValues =
+    existingValue === undefined ? thing : [existingValue, thing].flat();
+
+  const leafPartial = isMatch ? { [leaf]: leafValues } : {};
+
+  // if match update leaf values
+  const state = {
+    isMatch,
+    record: { ...record, ...leafPartial },
+  };
+
   // if (isMatch) {
-  //   log("trunk match", tablet, state, trait, thing, base, leafValue);
+  //   log("base match", tablet, state, trait, thing, base, baseValue);
   // } else {
-  //   log("trunk no match", tablet, state, trait, thing, base, leafValue);
+  //   log("base no match", tablet, state, trait, thing, base, baseValue);
   // }
 
   return state;
+}
+
+function baseIsTraitCase(tablet, record, trait, thing) {
+  // && baseValue !== undefined
+
+  // if base is trait for a leaf
+  return traitIsBaseCase(tablet, record, trait, thing);
+
+  // what if baseValue undefined?
+
+  // TODO unreachable? throw error?
 }
 
 function traitIsObjectCase(tablet, record, trait, thing) {
@@ -346,34 +378,18 @@ function traitIsNestedCase(tablet, record, trait, thing) {
 }
 
 export function step(tablet, record, trait, thing) {
-  const { _: base, [base]: baseValue } = record;
-
-  const baseIsTrait = base === tablet.trait && baseValue !== undefined;
+  const { _: base } = record;
 
   const baseIsThing = base === tablet.thing;
 
-  const baseIsRegex = baseIsTrait && baseIsThing;
+  if (baseIsThing) return baseIsThingCase(tablet, record, trait, thing);
 
-  if (base === "_") return schemaCase(tablet, record, trait, thing);
+  const baseIsTrait = base === tablet.trait;
 
-  if (baseIsRegex) return baseIsRegexCase(tablet, record, trait, thing);
-
-  // if base is trait for a leaf
-  if (baseIsTrait) return traitIsBaseCase(tablet, record, trait, thing);
+  if (baseIsTrait) return baseIsTraitCase(tablet, record, trait, thing);
 
   const recordHasTrait = Object.hasOwn(record, tablet.trait);
 
-  const traitIsLeaf = baseIsThing && recordHasTrait;
-
-  // if trait is leaf of base
-  if (traitIsLeaf) return traitIsLeafCase(tablet, record, trait, thing);
-
-  // if trait is trunk of base
-  const traitIsTrunk = baseIsThing && !recordHasTrait;
-
-  if (traitIsTrunk) return traitIsTrunkCase(tablet, record, trait, thing);
-
-  // if leaf is trait but base is not thing
   if (recordHasTrait) return traitIsObjectCase(tablet, record, trait, thing);
 
   // if none of the fields are trait or thing, go into objects

@@ -80,7 +80,7 @@ export async function selectRecordStream({ fs, dir, query }) {
   const base = query._;
 
   // if no base is provided, return empty
-  if (base === undefined) return [];
+  if (base === undefined) return ReadableStream.from([]);
 
   if (base === "_") return selectSchemaStream({ fs, dir });
 

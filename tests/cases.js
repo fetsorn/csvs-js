@@ -159,6 +159,12 @@ export const testCasesSelect = [
     initial: mocks.datasetArrayLiteral,
     expected: [mocks.recordArrayLiteral],
   },
+  {
+    name: "fails a match on list of values",
+    query: { _: "export_tags", export1_tag: "not" },
+    initial: mocks.datasetArray,
+    expected: [],
+  },
 ];
 
 export const testCasesUpdate = [
