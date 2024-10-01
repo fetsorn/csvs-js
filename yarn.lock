@@ -2370,11 +2370,6 @@ isexe@^2.0.0:
   resolved "https://registry.yarnpkg.com/isexe/-/isexe-2.0.0.tgz#e8fbf374dc556ff8947a10dcb0572d633f2cfa10"
   integrity sha1-6PvzdNxVb/iUehDcsFctYz8s+hA=
 
-isomorphic-streams@^1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/isomorphic-streams/-/isomorphic-streams-1.0.3.tgz#aae6d1a74932fda4ed12929587ad03a6d1437816"
-  integrity sha512-xBJRVuCdyihBsd5I4/TelZpFAffmaVoc/V5FuATKdfiblhY2LqB8I5U52BBFiJaDI7D6nDCCx0vG4kNmsMJC5Q==
-
 istanbul-lib-coverage@^3.0.0, istanbul-lib-coverage@^3.2.0:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/istanbul-lib-coverage/-/istanbul-lib-coverage-3.2.0.tgz#189e7909d0a39fa5a3dfad5b03f71947770191d3"

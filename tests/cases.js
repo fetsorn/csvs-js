@@ -258,6 +258,24 @@ export const testCasesUpdate = [
     initial: mocks.datasetDefault,
     expected: mocks.datasetArrayLiteral,
   },
+  {
+    name: "adds existing record with quotes",
+    query: mocks.recordQuotes,
+    initial: mocks.datasetQuotes,
+    expected: mocks.datasetQuotes,
+  },
+  {
+    name: "adds existing record with newline",
+    query: mocks.recordNewline,
+    initial: mocks.datasetNewline,
+    expected: mocks.datasetNewline,
+  },
+  {
+    name: "adds existing record with pipe",
+    query: mocks.recordPipe,
+    initial: mocks.datasetPipe,
+    expected: mocks.datasetPipe,
+  },
 ];
 
 export const testCasesDelete = [

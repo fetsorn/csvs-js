@@ -38,13 +38,15 @@ export async function updateRecordStream({ fs, dir }) {
       // for each branch in crown
       const crown = findCrown(schema, base);
 
-      for (const branch of crown) {
+      const promises = crown.map((branch) => {
         const { trunk } = schema[branch];
 
         const filename = `${trunk}-${branch}.csv`;
 
-        await updateTablet(fs, dir, relationMap[filename] ?? {}, filename);
-      }
+        return updateTablet(fs, dir, relationMap[filename] ?? {}, filename);
+      });
+
+      await Promise.all(promises);
     },
   });
 }

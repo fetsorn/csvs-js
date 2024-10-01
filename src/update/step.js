@@ -8,9 +8,9 @@ function toLines(relations, keys) {
 
     const relationsNew = values.sort().map((item) => [key, item]);
 
-    const lines = relationsNew
-      .map((relation) => csv.unparse([relation], { newline: "\n" }))
-      .map((str) => str.replace(/\n/g, "\\n"));
+    const lines = relationsNew.map((relation) =>
+      csv.unparse([relation], { delimiter: ",", newline: "\n" }),
+    );
 
     return [...withLine, ...lines];
   }, []);

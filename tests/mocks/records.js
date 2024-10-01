@@ -371,6 +371,33 @@ const recordSchemaArray = {
   ],
 };
 
+const recordQuotes = {
+  _: "datum",
+  datum: '"value1"',
+  filepath: { _: "filepath", filepath: "path/to/1", moddate: "2001-01-01" },
+  saydate: "2001-01-01",
+  sayname: "name1",
+  actdate: "2001-01-01",
+  actname: "name1",
+};
+
+const recordNewline = {
+  _: "datum",
+  datum: "value\\n1",
+  filepath: { _: "filepath", filepath: "path/to/1", moddate: "2001-01-01" },
+  saydate: "2001-01-01",
+  sayname: "name1",
+  actdate: "2001-01-01",
+  actname: "name1",
+};
+
+const recordPipe = {
+  _: "datum",
+  datum: "0006eaf0b2483928436885786943ae867affaa9faf647ac5a7eb1aa769e56432",
+  actname:
+    ": Land of Slings : Bridled Hill\\n: The Whimsical Tour : Blue Gloves\\n** 工具\\n|-----------+--------+--------------+---------|\\n| Month     | Number | Season       | Caravan |\\n|-----------+--------+--------------+---------|\\n| Granite   |     01 | Early-Spring |         |\\n| Slate     |     02 | Mid-  Spring | Elven   |\\n| Felsite   |     03 | Late- Spring |         |\\n| Hematite  |     04 | Early-Summer | Human   |\\n| Malachite |     05 | Mid-  Summer |         |\\n| Galena    |     06 | Late- Summer |         |\\n| Limestone |     07 | Early-Autumn | Dwarven |\\n| Sandstone |     08 | Mid-  Autumn |         |\\n| Timber    |     09 | Late- Autumn |         |\\n| Moonstone |     10 | Early-Winter | None    |\\n| Opal      |     11 | Mid-  Winter |         |\\n| Obsidian  |     12 | Late- Winter |         |\\n|-----------+--------+--------------+---------|",
+};
+
 export default {
   record2001,
   record2002,
@@ -392,4 +419,7 @@ export default {
   record2001Filepath,
   record2001Edited,
   recordSchemaArray,
+  recordQuotes,
+  recordNewline,
+  recordPipe,
 };

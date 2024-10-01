@@ -12,7 +12,7 @@ export function updateLine(state, line) {
 
   const {
     data: [[fst, snd]],
-  } = csv.parse(line);
+  } = csv.parse(line, { delimiter: "," });
 
   const fstIsNew = state.fst !== fst;
 
@@ -28,7 +28,7 @@ export function updateLine(state, line) {
 
   const matchPartial = isMatch
     ? []
-    : [csv.unparse([[fst, snd]], { newline: "\n" })];
+    : [csv.unparse([[fst, snd]], { delimiter: ",", newline: "\n" })];
 
   const linesNew = [...insertPartial, ...matchPartial];
 
