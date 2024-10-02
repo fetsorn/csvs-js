@@ -39,6 +39,7 @@ export function loadMocks() {
     datasetQuotes: locate("quotes"),
     datasetNewline: locate("newline"),
     datasetPipe: locate("pipe"),
+    datasetArrayLong: locate("array_long"),
     ...options,
     ...records,
     ...schemas,

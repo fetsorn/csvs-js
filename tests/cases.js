@@ -165,6 +165,12 @@ export const testCasesSelect = [
     initial: mocks.datasetArray,
     expected: [],
   },
+  {
+    name: "fails a match on list of values",
+    query: { _: "event", actname: "not" },
+    initial: mocks.datasetArrayLong,
+    expected: [],
+  },
 ];
 
 export const testCasesUpdate = [
