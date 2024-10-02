@@ -39,7 +39,7 @@ export function parseLine(state, tablet, line) {
 
   const {
     data: [[fst, snd]],
-  } = csv.parse(line);
+  } = csv.parse(line, { delimiter: "," });
 
   const trait = tablet.traitIsFirst ? fst : snd;
 

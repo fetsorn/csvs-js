@@ -40,6 +40,7 @@ export function loadMocks() {
     datasetNewline: locate("newline"),
     datasetPipe: locate("pipe"),
     datasetArrayLong: locate("array_long"),
+    datasetSemicolon: locate("semicolon"),
     ...options,
     ...records,
     ...schemas,

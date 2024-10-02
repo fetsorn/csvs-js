@@ -171,6 +171,12 @@ export const testCasesSelect = [
     initial: mocks.datasetArrayLong,
     expected: [],
   },
+  {
+    name: "finds value with semicolon",
+    query: { _: "event", event: "event1" },
+    initial: mocks.datasetSemicolon,
+    expected: [mocks.recordSemicolon],
+  },
 ];
 
 export const testCasesUpdate = [

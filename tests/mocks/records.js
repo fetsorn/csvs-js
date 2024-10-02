@@ -398,6 +398,12 @@ const recordPipe = {
     ": Land of Slings : Bridled Hill\\n: The Whimsical Tour : Blue Gloves\\n** 工具\\n|-----------+--------+--------------+---------|\\n| Month     | Number | Season       | Caravan |\\n|-----------+--------+--------------+---------|\\n| Granite   |     01 | Early-Spring |         |\\n| Slate     |     02 | Mid-  Spring | Elven   |\\n| Felsite   |     03 | Late- Spring |         |\\n| Hematite  |     04 | Early-Summer | Human   |\\n| Malachite |     05 | Mid-  Summer |         |\\n| Galena    |     06 | Late- Summer |         |\\n| Limestone |     07 | Early-Autumn | Dwarven |\\n| Sandstone |     08 | Mid-  Autumn |         |\\n| Timber    |     09 | Late- Autumn |         |\\n| Moonstone |     10 | Early-Winter | None    |\\n| Opal      |     11 | Mid-  Winter |         |\\n| Obsidian  |     12 | Late- Winter |         |\\n|-----------+--------+--------------+---------|",
 };
 
+const recordSemicolon = {
+  _: "event",
+  event: "event1",
+  datum: "df; af; ha; ka; ad",
+};
+
 export default {
   record2001,
   record2002,
@@ -422,4 +428,5 @@ export default {
   recordQuotes,
   recordNewline,
   recordPipe,
+  recordSemicolon,
 };
