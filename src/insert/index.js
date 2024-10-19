@@ -1,28 +1,11 @@
 import { WritableStream, ReadableStream } from "@swimburger/isomorphic-streams";
 import { selectSchema } from "../select/index.js";
 import { toSchema } from "../schema.js";
-import { recordToRelationMap } from "../record.js";
 import { findCrown } from "../schema.js";
+import { recordToRelationMap } from "../record.js";
 import { updateTablet } from "./tablet.js";
 
-export async function updateSchemaStream({ fs, dir }) {
-  // writable
-  return new WritableStream({
-    async write(record) {
-      const filename = `_-_.csv`;
-
-      const relations = Object.fromEntries(
-        Object.entries(record)
-          .filter(([key]) => key !== "_")
-          .map(([key, value]) => [key, Array.isArray(value) ? value : [value]]),
-      );
-
-      await updateTablet(fs, dir, relations, filename);
-    },
-  });
-}
-
-export async function updateRecordStream({ fs, dir }) {
+export async function insertRecordStream({ fs, dir }) {
   const [schemaRecord] = await selectSchema({ fs, dir });
 
   const schema = toSchema(schemaRecord);
@@ -51,29 +34,15 @@ export async function updateRecordStream({ fs, dir }) {
   });
 }
 
-/**
- * This updates the dataset record.
- * @name update
- * @function
- * @param {object} record - A dataset record.
- * @returns {object} - A dataset record.
- */
-export async function updateRecord({ fs, dir, query }) {
+export async function insertRecord({ fs, dir, query }) {
   // exit if record is undefined
   if (query === undefined) return;
 
   let records = Array.isArray(query) ? query : [query];
 
-  // TODO find base value if _ is object or array
-  // TODO exit if no base field or invalid base value
-  const base = records[0]._;
-
   const queryStream = ReadableStream.from(records);
 
-  const writeStream =
-    base === "_"
-      ? await updateSchemaStream({ fs, dir })
-      : await updateRecordStream({ fs, dir });
+  const writeStream = await insertRecordStream({ fs, dir });
 
   await queryStream.pipeTo(writeStream);
 }

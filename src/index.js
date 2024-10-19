@@ -12,6 +12,7 @@ import {
   updateSchemaStream,
 } from "./update/index.js";
 import { deleteRecord, deleteRecordStream } from "./delete/index.js";
+import { insertRecord, insertRecordStream } from "./insert/index.js";
 import {
   condense,
   expand,

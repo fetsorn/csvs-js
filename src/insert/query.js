@@ -1,5 +1,3 @@
-import { findCrown, sortNestingAscending } from "../schema.js";
-
 /**
  * This collapses a nested record into a list of key-value relations
  * @name recordToRelations
@@ -46,30 +44,4 @@ export function recordToRelations(schema, record) {
   }, []);
 
   return relations;
-}
-
-/**
- * This collapses a nested record into a map of key-value relations
- * @name recordToRelations
- * @param {object} record - A dataset record.
- * @export function
- * @returns {object} - A map of key-value relations
- */
-export function recordToRelationMap(schema, record) {
-  const relations = recordToRelations(schema, record);
-
-  const relationMap = relations.reduce((acc, [pair, key, value]) => {
-    const pairMap = acc[pair] ?? {};
-
-    const values = pairMap[key] ?? [];
-
-    const accNew = {
-      ...acc,
-      [pair]: { ...pairMap, [key]: [value, ...values] },
-    };
-
-    return accNew;
-  }, {});
-
-  return relationMap;
 }

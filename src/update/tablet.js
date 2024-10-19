@@ -1,11 +1,11 @@
+import path from "path";
 import {
   WritableStream,
   ReadableStream,
   TransformStream,
 } from "@swimburger/isomorphic-streams";
-import path from "path";
-import { updateLine } from "./line.js";
 import { isEmpty, createLineStream } from "../stream.js";
+import { updateLine } from "./line.js";
 
 export async function updateTablet(fs, dir, relations, filename) {
   const filepath = path.join(dir, filename);
