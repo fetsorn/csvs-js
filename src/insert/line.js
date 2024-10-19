@@ -1,5 +1,5 @@
 import csv from "papaparse";
 
-export function updateLine(key, value) {
+export function insertLine(key, value) {
   return csv.unparse([[key, value]], { delimiter: ",", newline: "\n" });
 }

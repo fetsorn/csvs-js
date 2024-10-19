@@ -8,9 +8,15 @@ import {
   selectBase,
   selectBody,
   updateRecord,
+  insertRecord,
   deleteRecord,
 } from "../src/index.js";
-import { testCasesSelect, testCasesUpdate, testCasesDelete } from "./cases.js";
+import {
+  testCasesSelect,
+  testCasesUpdate,
+  testCasesInsert,
+  testCasesDelete,
+} from "./cases.js";
 
 function sortObject(a) {
   return Object.keys(a)
@@ -131,7 +137,7 @@ describe("selectBase()", () => {
 describe("updateRecord()", () => {
   testCasesUpdate.forEach((testCase) => {
     test(testCase.name, () => {
-      const tmpdir = nodefs.mkdtempSync(os.tmpdir());
+      const tmpdir = nodefs.mkdtempSync(join(os.tmpdir(), "csvs-"));
 
       copy(testCase.initial, tmpdir);
 
@@ -148,10 +154,30 @@ describe("updateRecord()", () => {
   });
 });
 
+describe.only("insertRecord()", () => {
+  testCasesInsert.forEach((testCase) => {
+    test(testCase.name, () => {
+      const tmpdir = nodefs.mkdtempSync(join(os.tmpdir(), "csvs-"));
+
+      copy(testCase.initial, tmpdir);
+
+      return insertRecord({
+        fs: nodefs,
+        dir: tmpdir,
+        query: testCase.query,
+      }).then(() => {
+        expect(loadContents(nodefs, tmpdir)).toStrictEqual(
+          loadContents(nodefs, testCase.expected),
+        );
+      });
+    });
+  });
+});
+
 describe("deleteRecord()", () => {
   testCasesDelete.forEach((testCase) => {
     test(testCase.name, async () => {
-      const tmpdir = nodefs.mkdtempSync(os.tmpdir());
+      const tmpdir = nodefs.mkdtempSync(join(os.tmpdir(), "csvs-"));
 
       copy(testCase.initial, tmpdir);
 

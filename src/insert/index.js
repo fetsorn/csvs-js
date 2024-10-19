@@ -3,7 +3,7 @@ import { selectSchema } from "../select/index.js";
 import { toSchema } from "../schema.js";
 import { findCrown } from "../schema.js";
 import { recordToRelationMap } from "../record.js";
-import { updateTablet } from "./tablet.js";
+import { insertTablet } from "./tablet.js";
 
 export async function insertRecordStream({ fs, dir }) {
   const [schemaRecord] = await selectSchema({ fs, dir });
@@ -26,7 +26,7 @@ export async function insertRecordStream({ fs, dir }) {
 
         const filename = `${trunk}-${branch}.csv`;
 
-        return updateTablet(fs, dir, relationMap[filename] ?? {}, filename);
+        return insertTablet(fs, dir, relationMap[filename] ?? {}, filename);
       });
 
       await Promise.all(promises);

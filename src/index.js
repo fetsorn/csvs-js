@@ -33,6 +33,8 @@ export {
   updateRecord,
   updateRecordStream,
   updateSchemaStream,
+  insertRecord,
+  insertRecordStream,
   deleteRecord,
   deleteRecordStream,
   condense,
