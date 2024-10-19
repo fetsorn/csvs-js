@@ -41,6 +41,8 @@ export function loadMocks() {
     datasetPipe: locate("pipe"),
     datasetArrayLong: locate("array_long"),
     datasetSemicolon: locate("semicolon"),
+    datasetDuplicate: locate("duplicate"),
+    datasetDuplicateLeaf: locate("duplicate_leaf"),
     ...options,
     ...records,
     ...schemas,

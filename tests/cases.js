@@ -296,6 +296,27 @@ export const testCasesUpdate = [
   },
 ];
 
+export const testCasesInsert = [
+  {
+    name: "duplicates on no change",
+    query: mocks.record2001,
+    initial: mocks.datasetDefault,
+    expected: mocks.datasetDuplicate,
+  },
+  {
+    name: "adds attribute record",
+    query: mocks.record2001Edited,
+    initial: mocks.datasetDefault,
+    expected: mocks.datasetDuplicateLeaf,
+  },
+  {
+    name: "adds record",
+    query: mocks.recordAdded,
+    initial: mocks.datasetDefault,
+    expected: mocks.datasetAdded,
+  },
+];
+
 export const testCasesDelete = [
   {
     name: "deletes a record",
