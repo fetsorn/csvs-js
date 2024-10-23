@@ -154,7 +154,7 @@ describe("updateRecord()", () => {
   });
 });
 
-describe.only("insertRecord()", () => {
+describe("insertRecord()", () => {
   testCasesInsert.forEach((testCase) => {
     test(testCase.name, () => {
       const tmpdir = nodefs.mkdtempSync(join(os.tmpdir(), "csvs-"));

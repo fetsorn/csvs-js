@@ -177,6 +177,12 @@ export const testCasesSelect = [
     initial: mocks.datasetSemicolon,
     expected: [mocks.recordSemicolon],
   },
+  {
+    name: "multiple roots",
+    query: { _: "datum", actname: "name1" },
+    initial: mocks.datasetTwoRoots,
+    expected: [mocks.record2001],
+  },
 ];
 
 export const testCasesUpdate = [

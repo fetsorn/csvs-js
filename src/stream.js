@@ -1,4 +1,5 @@
 import { TransformStream } from "@swimburger/isomorphic-streams";
+import path from "path";
 
 export async function isEmpty(fs, filepath) {
   // only use functions covered by lightning-fs
@@ -63,4 +64,47 @@ export function createLineStream() {
       }
     },
   });
+}
+
+export async function sortFile(fs, dir, filename) {
+  const filepath = path.join(dir, filename);
+
+  // TODO create to temp
+  const tmpdir = await fs.promises.mkdtemp(path.join(dir, "update-"));
+
+  const tmpPath = path.join(tmpdir, filename);
+
+  const fileStream = (await isEmpty(fs, filepath))
+    ? ReadableStream.from([""])
+    : ReadableStream.from(fs.createReadStream(filepath));
+
+  const lines = [];
+
+  const collectStream = new WritableStream({
+    write(line) {
+      lines.push(line);
+    },
+  });
+
+  await fileStream.pipeThrough(createLineStream()).pipeTo(collectStream);
+
+  const linesSorted = lines.sort();
+
+  const linesStream = ReadableStream.from(linesSorted);
+
+  const writeStream = new WritableStream({
+    async write(line) {
+      await fs.promises.appendFile(tmpPath, line);
+    },
+  });
+
+  await linesStream.pipeTo(writeStream);
+
+  if (!(await isEmpty(fs, tmpPath))) {
+    await fs.promises.copyFile(tmpPath, filepath);
+
+    await fs.promises.unlink(tmpPath);
+  }
+
+  await fs.promises.rmdir(tmpdir);
 }

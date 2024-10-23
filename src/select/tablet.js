@@ -6,6 +6,8 @@ import path from "path";
 import { parseLine } from "./line.js";
 import { isEmpty, createLineStream } from "../stream.js";
 
+const start = Date.now();
+
 /**
  *
  * @name parseTablet
@@ -15,17 +17,16 @@ import { isEmpty, createLineStream } from "../stream.js";
  * @param {object} tablet
  * @returns {Transform}
  */
-export async function parseTablet(fs, dir, tablet) {
+export function parseTablet(fs, dir, tablet) {
   const filepath = path.join(dir, tablet.filename);
 
   return new TransformStream({
     async transform(state, controller) {
       // if (tablet.filename === "export1_tag-export1_channel.csv")
       // console.log(
+      //   Date.now() - start,
       //   "tablet",
       //   tablet,
-      //   "\n",
-      //   lines,
       //   "\n",
       //   JSON.stringify(state.query ?? state.record, undefined, 2),
       // );
@@ -59,12 +60,14 @@ export async function parseTablet(fs, dir, tablet) {
 
         if (stateIntermediary.complete) {
           // if (tablet.filename === "export1_tag-export1_channel.csv")
-          //   console.log(
-          //     "push",
-          //     tablet.filename,
-          //     tablet,
-          //     JSON.stringify(stateIntermediary.complete, undefined, 2),
-          //   );
+          // console.log(
+          //   Date.now() - start,
+          //   "push match",
+          //   tablet.filename,
+          //   tablet,
+          //   JSON.stringify(stateIntermediary.complete, undefined, 2),
+          // );
+
           controller.enqueue({ record: stateIntermediary.complete });
 
           hasMatch = true;
@@ -78,12 +81,14 @@ export async function parseTablet(fs, dir, tablet) {
 
       if (stateIntermediary.complete) {
         // if (tablet.filename === "export1_tag-export1_channel.csv")
-        //   console.log(
-        //     "push",
-        //     tablet.filename,
-        //     tablet,
-        //     JSON.stringify(stateIntermediary.complete, undefined, 2),
-        //   );
+        // console.log(
+        //   Date.now() - start,
+        //   "push end",
+        //   tablet.filename,
+        //   tablet,
+        //   JSON.stringify(stateIntermediary.complete, undefined, 2),
+        // );
+
         controller.enqueue({ record: stateIntermediary.complete });
 
         hasMatch = true;
@@ -92,12 +97,14 @@ export async function parseTablet(fs, dir, tablet) {
       // if no match and tablet is not a filter, push initial record
       if (hasMatch === false && tablet.passthrough) {
         // if (tablet.filename === "export1_tag-export1_channel.csv")
-        //   console.log(
-        //     "push",
-        //     tablet.filename,
-        //     tablet,
-        //     JSON.stringify(state.record, undefined, 2),
-        //   );
+        // console.log(
+        //   Date.now() - start,
+        //   "push through",
+        //   tablet.filename,
+        //   tablet,
+        //   JSON.stringify(state.record, undefined, 2),
+        // );
+
         controller.enqueue({ record: state.query ?? state.record });
       }
     },
@@ -106,7 +113,7 @@ export async function parseTablet(fs, dir, tablet) {
 
 /**
  *
- * @name parseTablet
+ * @name parseTabletAccumulating
  * @function
  * @param {object} fs
  * @param {string} dir
@@ -119,10 +126,9 @@ export function parseTabletAccumulating(fs, dir, tablet) {
   return new TransformStream({
     async transform(state, controller) {
       // console.log(
+      //   Date.now() - start,
       //   "tablet acc",
       //   tablet,
-      //   "\n",
-      //   lines,
       //   "\n",
       //   JSON.stringify(state.record, undefined, 2),
       // );
@@ -130,11 +136,13 @@ export function parseTabletAccumulating(fs, dir, tablet) {
       // forward the record if it hasn't been pushed yet
       if (state.record) {
         // console.log(
-        //   "tablet forward",
+        //   Date.now() - start,
+        //   "acc forward",
         //   tablet,
         //   "\n",
         //   JSON.stringify(state.record, undefined, 2),
         // );
+
         // assume the record is new because it has been checked against stream map upstream
         controller.enqueue({ record: state.record });
 
@@ -168,7 +176,8 @@ export function parseTabletAccumulating(fs, dir, tablet) {
 
           if (newMatch) {
             // console.log(
-            //   "push",
+            //   Date.now() - start,
+            //   "acc push match",
             //   tablet.filename,
             //   tablet,
             //   JSON.stringify(stateIntermediary.complete, undefined, 2),
@@ -194,7 +203,8 @@ export function parseTabletAccumulating(fs, dir, tablet) {
 
         if (newMatch) {
           // console.log(
-          //   "push",
+          //   Date.now() - start,
+          //   "acc push end",
           //   tablet.filename,
           //   tablet,
           //   JSON.stringify(stateIntermediary.complete, undefined, 2),
@@ -209,7 +219,8 @@ export function parseTabletAccumulating(fs, dir, tablet) {
       // push query forward for other accumulating streams to process it
       // along with the match map to avoid pushing the same thing twice
       // console.log(
-      //   "push map",
+      //   Date.now() - start,
+      //   "acc push map",
       //   tablet.filename,
       //   matchMap,
       //   JSON.stringify(state.query, undefined, 2),

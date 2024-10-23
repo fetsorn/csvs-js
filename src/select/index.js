@@ -3,9 +3,9 @@ import {
   ReadableStream,
   TransformStream,
 } from "@swimburger/isomorphic-streams";
+import { toSchema } from "../schema.js";
 import { parseTablet, parseTabletAccumulating } from "./tablet.js";
 import { planValues, planOptions, planQuery, planSchema } from "./strategy.js";
-import { toSchema } from "../schema.js";
 
 /**
  * This returns a Transform stream
@@ -99,13 +99,11 @@ export async function selectRecordStream({ fs, dir, query }) {
 
   const strategy = [...baseStrategy, ...valueStrategy];
 
-  const promises = strategy.map((tablet) =>
+  const streams = strategy.map((tablet) =>
     tablet.accumulating
       ? parseTabletAccumulating(fs, dir, tablet)
       : parseTablet(fs, dir, tablet),
   );
-
-  const streams = await Promise.all(promises);
 
   const leader = query.__;
 

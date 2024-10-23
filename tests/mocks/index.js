@@ -43,6 +43,7 @@ export function loadMocks() {
     datasetSemicolon: locate("semicolon"),
     datasetDuplicate: locate("duplicate"),
     datasetDuplicateLeaf: locate("duplicate_leaf"),
+    datasetTwoRoots: locate("two_roots"),
     ...options,
     ...records,
     ...schemas,

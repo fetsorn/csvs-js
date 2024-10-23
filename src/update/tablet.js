@@ -63,8 +63,13 @@ export async function updateTablet(fs, dir, relations, filename) {
     .pipeTo(writeStream);
 
   if (!(await isEmpty(fs, tmpPath))) {
-    await fs.promises.rename(tmpPath, filepath);
+    // use copyFile because rename doesn't work with external drives
+    await fs.promises.copyFile(tmpPath, filepath);
+
+    // unlink to rmdir later
+    await fs.promises.unlink(tmpPath);
   }
 
+  // keep rmdir because lightningfs doesn't support rm
   await fs.promises.rmdir(tmpdir);
 }

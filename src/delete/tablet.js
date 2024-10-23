@@ -40,8 +40,13 @@ export async function pruneTablet(fs, dir, tablet) {
     .pipeTo(writeStream);
 
   if (!(await isEmpty(fs, filepath))) {
-    await fs.promises.rename(tmpPath, filepath);
+    // use copyFile because rename doesn't work with external drives
+    await fs.promises.copyFile(tmpPath, filepath);
+
+    // unlink to rmdir later
+    await fs.promises.unlink(tmpPath);
   }
 
+  // keep rmdir because lightningfs doesn't support rm
   await fs.promises.rmdir(tmpdir);
 }

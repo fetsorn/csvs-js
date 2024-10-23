@@ -7,20 +7,32 @@
  * @param {string} branch - Branch name.
  * @returns {Boolean}
  */
-function isConnected(schema, base, branch) {
-  const trunk = schema[branch] !== undefined ? schema[branch].trunk : undefined;
+export function isConnected(schema, base, branch) {
+  if (branch === base) {
+    // if branch is base, it is connected
+    return true;
+  }
 
-  if (trunk === undefined) {
-    // if schema root is reached, leaf is not connected to base
-    return false;
-  }
-  if (trunk === base) {
-    // if trunk is base, leaf is connected to base
-    return true;
-  }
-  if (isConnected(schema, base, trunk)) {
-    // if trunk is connected to base, leaf is also connected to base
-    return true;
+  const trunkValue =
+    schema[branch] !== undefined ? schema[branch].trunk : undefined;
+
+  const trunkList = Array.isArray(trunkValue) ? trunkValue : [trunkValue];
+
+  for (const trunk of trunkList) {
+    if (trunk === undefined) {
+      // if schema root is reached, leaf is not connected to base
+      continue;
+    }
+
+    if (trunk === base) {
+      // if trunk is base, leaf is connected to base
+      return true;
+    }
+
+    if (isConnected(schema, base, trunk)) {
+      // if trunk is connected to base, leaf is also connected to base
+      return true;
+    }
   }
 
   // if trunk is not connected to base, leaf is also not connected to base
@@ -128,10 +140,13 @@ export function toSchema(schemaRecord) {
   return Object.entries(record).reduce((withEntry, [trunk, value]) => {
     const leaves = Array.isArray(value) ? value : [value];
 
-    // TODO handle multiple trunks
-    return leaves.reduce(
-      (withLeaf, leaf) => ({ ...withLeaf, [leaf]: { trunk } }),
-      withEntry,
-    );
+    return leaves.reduce((withLeaf, leaf) => {
+      const trunkValue =
+        withLeaf[leaf] !== undefined && withLeaf[leaf].trunk !== undefined
+          ? [withLeaf[leaf].trunk, trunk].flat()
+          : trunk;
+
+      return { ...withLeaf, [leaf]: { trunk: trunkValue } };
+    }, withEntry);
   }, {});
 }

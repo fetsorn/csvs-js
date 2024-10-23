@@ -1,5 +1,6 @@
 import {
   findCrown,
+  isConnected,
   sortNestingAscending,
   sortNestingDescending,
 } from "../schema.js";
@@ -108,19 +109,26 @@ export function planValues(schema, query) {
 
   const crown = findCrown(schema, base).sort(sortNestingDescending(schema));
 
-  const valueTablets = crown.map((branch) => ({
-    // what branch to set?
-    thing: branch,
-    // what branch to match?
-    trait: schema[branch].trunk,
-    // do we set first column?
-    thingIsFirst: false,
-    // do we match first column?
-    traitIsFirst: true,
-    filename: `${schema[branch].trunk}-${branch}.csv`,
-    passthrough: true,
-    eager: schema[branch].trunk === base, // push as soon as trait changes in the tablet
-  }));
+  const valueTablets = crown.map((branch) => {
+    const trunkList = [schema[branch].trunk].flat();
+
+    // TODO what if more than one trunk is connected to base?
+    const trunk = trunkList.find((trunk) => isConnected(schema, base, trunk));
+
+    return {
+      // what branch to set?
+      thing: branch,
+      // what branch to match?
+      trait: trunk,
+      // do we set first column?
+      thingIsFirst: false,
+      // do we match first column?
+      traitIsFirst: true,
+      filename: `${trunk}-${branch}.csv`,
+      passthrough: true,
+      eager: trunk === base, // push as soon as trait changes in the tablet
+    };
+  });
 
   return valueTablets;
 }
