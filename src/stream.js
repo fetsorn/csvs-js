@@ -70,7 +70,7 @@ export async function sortFile(fs, dir, filename) {
   const filepath = path.join(dir, filename);
 
   // TODO create to temp
-  const tmpdir = await fs.promises.mkdtemp(path.join(dir, "update-"));
+  const tmpdir = await fs.promises.mkdtemp(path.join(dir, "sort-"));
 
   const tmpPath = path.join(tmpdir, filename);
 

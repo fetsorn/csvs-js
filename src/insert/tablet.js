@@ -1,6 +1,5 @@
 import path from "path";
 import { WritableStream, ReadableStream } from "@swimburger/isomorphic-streams";
-import { isEmpty } from "../stream.js";
 import { insertLine } from "./line.js";
 
 export async function insertTablet(fs, dir, relations, filename) {
