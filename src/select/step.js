@@ -149,9 +149,9 @@ function traitIsTrunkCase(tablet, record, trait, thing) {
 function baseIsThingCase(tablet, record, trait, thing) {
   const { _: base, [base]: baseValue } = record;
 
-  const baseIsRegex = base === tablet.trait && baseValue !== undefined;
-
   if (base === "_") return schemaCase(tablet, record, trait, thing);
+
+  const baseIsRegex = base === tablet.trait && baseValue !== undefined;
 
   if (baseIsRegex) return baseIsRegexCase(tablet, record, trait, thing);
 

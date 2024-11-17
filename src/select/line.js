@@ -19,20 +19,6 @@ export function parseLine(state, tablet, line) {
   //     JSON.stringify(state, undefined, 2),
   //   );
 
-  // TODO does this fail when record doesn't have the trait?
-  const { [tablet.trait]: omitted, ...completeWithoutTrait } = state.current;
-
-  const complete = tablet.querying ? completeWithoutTrait : state.current;
-
-  // push if tablet wasn't eager or if eager matched
-  const pushEnd = !tablet.eager || state.isMatch;
-
-  // if tablet is eager and has been pushing, ask to push matched
-  // if tablet is not eager and so hasn't pushed anything yet, push current
-  const stateEnd = pushEnd ? { complete } : {};
-
-  if (line === undefined) return stateEnd;
-
   // ignore empty newline
   // treat two lines with the same fst separated by newline as not separated
   if (line === "") return state;
@@ -54,6 +40,11 @@ export function parseLine(state, tablet, line) {
   const pushEager = tablet.eager && fstIsNew;
 
   const isComplete = pushEager && state.isMatch;
+
+  // TODO does this fail when record doesn't have the trait?
+  const { [tablet.trait]: omitted, ...completeWithoutTrait } = state.current;
+
+  const complete = tablet.querying ? completeWithoutTrait : state.current;
 
   // if fst is new, move matched to complete for pushing
   const completePartial = isComplete ? { complete } : {};

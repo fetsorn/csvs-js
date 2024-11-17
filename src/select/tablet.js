@@ -54,6 +54,7 @@ export function parseTablet(fs, dir, tablet) {
 
       const lineStream = await fileStream.pipeThrough(createLineStream());
 
+      // for loop because there's no async reduce
       // this will stream transform after file reader streams
       for await (const line of lineStream) {
         stateIntermediary = parseLine(stateIntermediary, tablet, line);
@@ -76,8 +77,17 @@ export function parseTablet(fs, dir, tablet) {
         }
       }
 
+      const { [tablet.trait]: omitted, ...completeWithoutTrait } = stateIntermediary.current;
+
+      const complete = tablet.querying ? completeWithoutTrait : stateIntermediary.current;
+
+      // push if tablet wasn't eager or if eager matched
+      const pushEnd = !tablet.eager || stateIntermediary.isMatch;
+
+      // if tablet is eager and has been pushing, ask to push matched
+      // if tablet is not eager and so hasn't pushed anything yet, push current
       // this will stream final after file reader streams
-      stateIntermediary = parseLine(stateIntermediary, tablet, undefined);
+      stateIntermediary = pushEnd ? { complete } : {};
 
       if (stateIntermediary.complete) {
         // if (tablet.filename === "export1_tag-export1_channel.csv")
@@ -193,7 +203,17 @@ export function parseTabletAccumulating(fs, dir, tablet) {
       }
 
       // this will stream final after file reader streams
-      stateIntermediary = parseLine(stateIntermediary, tablet, undefined);
+      const { [tablet.trait]: omitted, ...completeWithoutTrait } = stateIntermediary.current;
+
+      const complete = tablet.querying ? completeWithoutTrait : stateIntermediary.current;
+
+      // push if tablet wasn't eager or if eager matched
+      const pushEnd = !tablet.eager || stateIntermediary.isMatch;
+
+      // if tablet is eager and has been pushing, ask to push matched
+      // if tablet is not eager and so hasn't pushed anything yet, push current
+      // this will stream final after file reader streams
+      stateIntermediary = pushEnd ? { complete } : {};
 
       if (stateIntermediary.complete) {
         // assume that thing is base level leaf
