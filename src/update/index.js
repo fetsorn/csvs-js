@@ -62,13 +62,13 @@ export async function updateRecord({ fs, dir, query }) {
   // exit if record is undefined
   if (query === undefined) return;
 
-  let records = Array.isArray(query) ? query : [query];
+  let queries = Array.isArray(query) ? query : [query];
 
   // TODO find base value if _ is object or array
   // TODO exit if no base field or invalid base value
-  const base = records[0]._;
+  const base = queries[0]._;
 
-  const queryStream = ReadableStream.from(records);
+  const queryStream = ReadableStream.from(queries);
 
   const writeStream =
     base === "_"

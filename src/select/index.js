@@ -14,36 +14,43 @@ import { planValues, planOptions, planQuery, planSchema } from "./strategy.js";
  * @returns {Transform}
  */
 export async function selectSchemaStream({ fs, dir }) {
-  let recordSchema = { _: "_" };
 
-  const queryStream = ReadableStream.from([{ record: recordSchema }]);
+  return new TransformStream({
+    async transform(query, controllerOuter) {
+      const queryStream = ReadableStream.from([{ record: query }]);
 
-  const schemaStrategy = planSchema();
+      const schemaStrategy = planSchema();
 
-  const promises = schemaStrategy.map((tablet) =>
-    tablet.accumulating
-      ? parseTabletAccumulating(fs, dir, tablet)
-      : parseTablet(fs, dir, tablet),
-  );
+      const promises = schemaStrategy.map((tablet) =>
+        tablet.accumulating
+          ? parseTabletAccumulating(fs, dir, tablet)
+          : parseTablet(fs, dir, tablet),
+      );
 
-  const streams = await Promise.all(promises);
+      const streams = await Promise.all(promises);
 
-  const leaderStream = new TransformStream({
-    transform(state, controller) {
-      // TODO account for nested leader
-      // TODO account for a list of leader values
-      if (state.record) {
-        controller.enqueue(state.record);
-      }
-    },
-  });
+      const leaderStream = new TransformStream({
+        transform(state, controllerInner) {
+          // TODO account for nested leader
+          // TODO account for a list of leader values
+          if (state.record) {
+            controllerInner.enqueue(state.record);
+          }
+        },
+      });
 
-  const schemaStream = [...streams, leaderStream].reduce(
-    (withStream, stream) => withStream.pipeThrough(stream),
-    queryStream,
-  );
+      const schemaStream = [...streams, leaderStream].reduce(
+        (withStream, stream) => withStream.pipeThrough(stream),
+        queryStream,
+      );
 
-  return schemaStream;
+      await schemaStream.pipeTo(new WritableStream({
+        async write(record) {
+          controllerOuter.enqueue(record)
+        }
+      }))
+    }
+  })
 }
 
 /**
@@ -55,6 +62,8 @@ export async function selectSchemaStream({ fs, dir }) {
 export async function selectSchema({ fs, dir }) {
   const schemaStream = await selectSchemaStream({ fs, dir });
 
+  const queryStream = ReadableStream.from([{ _: "_" }]);
+
   var records = [];
 
   const collectStream = new WritableStream({
@@ -63,7 +72,7 @@ export async function selectSchema({ fs, dir }) {
     },
   });
 
-  await schemaStream.pipeTo(collectStream);
+  await queryStream.pipeThrough(schemaStream).pipeTo(collectStream);
 
   return records;
 }
@@ -74,59 +83,64 @@ export async function selectSchema({ fs, dir }) {
  * @function
  * @returns {Transform}
  */
-export async function selectRecordStream({ fs, dir, query }) {
-  // there can be only one root base in search query
-  // TODO: validate against arrays of multiple bases, do not return [], throw error
-  const base = query._;
-
-  // if no base is provided, return empty
-  if (base === undefined) return ReadableStream.from([]);
-
-  if (base === "_") return selectSchemaStream({ fs, dir });
-
+export async function selectRecordStream({ fs, dir }) {
   const [schemaRecord] = await selectSchema({ fs, dir });
 
   const schema = toSchema(schemaRecord);
 
-  const queryStream = ReadableStream.from([{ query }]);
+  return new TransformStream({
+    async transform(query, controllerOuter) {
+      // there can be only one root base in search query
+      // TODO: validate against arrays of multiple bases, do not return [], throw error
+      const base = query._;
 
-  const queryStrategy = planQuery(schema, query);
+      // if no base is provided, return empty
+      if (base === undefined) return undefined;
 
-  const baseStrategy =
-    queryStrategy.length > 0 ? queryStrategy : planOptions(schema, base);
+      const queryStream = ReadableStream.from([{ query }]);
 
-  const valueStrategy = planValues(schema, query);
+      const queryStrategy = planQuery(schema, query);
 
-  const strategy = [...baseStrategy, ...valueStrategy];
+      const baseStrategy =
+            queryStrategy.length > 0 ? queryStrategy : planOptions(schema, base);
 
-  const streams = strategy.map((tablet) =>
-    tablet.accumulating
-      ? parseTabletAccumulating(fs, dir, tablet)
-      : parseTablet(fs, dir, tablet),
-  );
+      const valueStrategy = planValues(schema, query);
 
-  const leader = query.__;
+      const strategy = [...baseStrategy, ...valueStrategy];
 
-  const leaderStream = new TransformStream({
-    transform(state, controller) {
-      const record =
-        leader && leader !== base ? state.record[leader] : state.record;
+      const streams = strategy.map((tablet) =>
+        tablet.accumulating
+          ? parseTabletAccumulating(fs, dir, tablet)
+          : parseTablet(fs, dir, tablet),
+      );
 
-      // TODO account for nested leader
-      // TODO account for a list of leader values
-      if (record) {
-        controller.enqueue(record);
-      }
-    },
-  });
+      const leader = query.__;
 
-  const schemaStream = [...streams, leaderStream].reduce(
-    (withStream, stream) => withStream.pipeThrough(stream),
-    queryStream,
-  );
+      const leaderStream = new TransformStream({
+        transform(state, controllerInner) {
+          const record =
+                leader && leader !== base ? state.record[leader] : state.record;
 
-  // TODO rewrite to stream.compose
-  return schemaStream;
+          // TODO account for nested leader
+          // TODO account for a list of leader values
+          if (record) {
+            controllerInner.enqueue(record);
+          }
+        },
+      });
+
+      const schemaStream = [...streams, leaderStream].reduce(
+        (withStream, stream) => withStream.pipeThrough(stream),
+        queryStream,
+      );
+
+      await schemaStream.pipeTo(new WritableStream({
+        async write(record) {
+          controllerOuter.enqueue(record)
+        }
+      }))
+    }
+  })
 }
 
 /**
@@ -271,9 +285,22 @@ export async function selectBody({ fs, dir, query }) {
  * @returns {Object[]}
  */
 export async function selectRecord({ fs, dir, query }) {
-  const selectStream = await selectRecordStream({ fs, dir, query });
+  // exit if record is undefined
+  if (query === undefined) return;
 
-  var records = [];
+  let queries = Array.isArray(query) ? query : [query];
+
+  // TODO find base value if _ is object or array
+  // TODO exit if no base field or invalid base value
+  const base = queries[0]._;
+
+  const queryStream = ReadableStream.from([query]);
+
+  const selectStream = base === "_"
+        ? await selectSchemaStream({ fs, dir })
+        : await selectRecordStream({ fs, dir });
+
+  const records = [];
 
   const collectStream = new WritableStream({
     write(record) {
@@ -281,7 +308,7 @@ export async function selectRecord({ fs, dir, query }) {
     },
   });
 
-  await selectStream.pipeTo(collectStream);
+  await queryStream.pipeThrough(selectStream).pipeTo(collectStream);
 
   return records;
 }
