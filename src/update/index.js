@@ -6,23 +6,26 @@ import {
 import { selectSchema } from "../select/index.js";
 import { toSchema } from "../schema.js";
 import { recordToRelationMap } from "../record.js";
-import { findCrown } from "../schema.js";
-import { updateTablet } from "./tablet.js";
+import { updateTabletStream } from "./tablet.js";
+import { planUpdateSchema, planUpdate } from "./strategy.js";
 
 export async function updateSchemaStream({ fs, dir }) {
   return new TransformStream({
-    async transform(record, controller) {
-      const filename = `_-_.csv`;
+    async transform(query, controller) {
+      const queryStream = ReadableStream.from([{ query }]);
 
-      const relations = Object.fromEntries(
-        Object.entries(record)
-          .filter(([key]) => key !== "_")
-          .map(([key, value]) => [key, Array.isArray(value) ? value : [value]]),
+      const strategy = planUpdateSchema(schema, query);
+
+      const streams = strategy.map((tablet) =>
+        updateTabletStream(fs, dir, tablet)
       );
 
-      await updateTablet(fs, dir, relations, filename);
+      const schemaStream = [...streams].reduce(
+        (withStream, stream) => withStream.pipeThrough(stream),
+        queryStream,
+      );
 
-      controller.enqueue(record);
+      controller.enqueue(query);
     },
   });
 }
@@ -33,26 +36,27 @@ export async function updateRecordStream({ fs, dir }) {
   const schema = toSchema(schemaRecord);
 
   return new TransformStream({
-    async transform(record, controller) {
-      const base = record._;
+    async transform(query, controllerOuter) {
+      const base = query._;
 
-      // build a relation map of the record. tablet -> key -> list of values
-      const relationMap = recordToRelationMap(schema, record);
+      const queryStream = ReadableStream.from([{ query }]);
 
-      // for each branch in crown
-      const crown = findCrown(schema, base);
+      const strategy = planUpdate(schema, query);
 
-      const promises = crown.map((branch) => {
-        const { trunk } = schema[branch];
+      const streams = strategy.map((tablet) =>
+        updateTabletStream(fs, dir, tablet)
+      );
 
-        const filename = `${trunk}-${branch}.csv`;
+      const schemaStream = [...streams].reduce(
+        (withStream, stream) => withStream.pipeThrough(stream),
+        queryStream,
+      );
 
-        return updateTablet(fs, dir, relationMap[filename] ?? {}, filename);
-      });
-
-      await Promise.all(promises);
-
-      controller.enqueue(record);
+      await schemaStream.pipeTo(new WritableStream({
+        async write(record) {
+          controllerOuter.enqueue(record)
+        }
+      }))
     },
   });
 }
@@ -88,6 +92,8 @@ export async function updateRecord({ fs, dir, query }) {
       },
     })
   );
+
+  // wait for all streams to finish updating tablets
 
   return records
 }

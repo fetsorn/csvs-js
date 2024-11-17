@@ -4,7 +4,7 @@ import {
   TransformStream,
 } from "@swimburger/isomorphic-streams";
 import { toSchema } from "../schema.js";
-import { parseTablet } from "./tablet.js";
+import { selectTabletStream } from "./tablet.js";
 import { planValues, planOptions, planQuery, planSchema } from "./strategy.js";
 
 /**
@@ -14,7 +14,6 @@ import { planValues, planOptions, planQuery, planSchema } from "./strategy.js";
  * @returns {Transform}
  */
 export async function selectSchemaStream({ fs, dir }) {
-
   return new TransformStream({
     async transform(query, controllerOuter) {
       const queryStream = ReadableStream.from([{ record: query }]);
@@ -22,7 +21,7 @@ export async function selectSchemaStream({ fs, dir }) {
       const schemaStrategy = planSchema();
 
       const promises = schemaStrategy.map((tablet) =>
-        parseTablet(fs, dir, tablet),
+        selectTabletStream(fs, dir, tablet),
       );
 
       const streams = await Promise.all(promises);
@@ -107,7 +106,7 @@ export async function selectRecordStream({ fs, dir }) {
       const strategy = [...baseStrategy, ...valueStrategy];
 
       const streams = strategy.map((tablet) =>
-        parseTablet(fs, dir, tablet),
+        selectTabletStream(fs, dir, tablet),
       );
 
       const leader = query.__;
@@ -167,7 +166,7 @@ export async function selectBase({ fs, dir, query }) {
     queryStrategy.length > 0 ? queryStrategy : planOptions(schema, base);
 
   const promises = strategy.map((tablet) =>
-    parseTablet(fs, dir, tablet),
+    selectTabletStream(fs, dir, tablet),
   );
 
   const streams = await Promise.all(promises);
@@ -228,7 +227,7 @@ export async function selectBody({ fs, dir, query }) {
   const strategy = planValues(schema, query);
 
   const promises = strategy.map((tablet) =>
-    parseTablet(fs, dir, tablet),
+    selectTabletStream(fs, dir, tablet),
   );
 
   const streams = await Promise.all(promises);

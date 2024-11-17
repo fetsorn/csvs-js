@@ -7,69 +7,73 @@ import {
 import { isEmpty, createLineStream } from "../stream.js";
 import { updateLine } from "./line.js";
 
-export async function updateTablet(fs, dir, relations, filename) {
-  const filepath = path.join(dir, filename);
+export function updateTabletStream(fs, dir, tablet) {
+  const filepath = path.join(dir, tablet.filename);
 
-  const fileStream = (await isEmpty(fs, filepath))
-    ? ReadableStream.from([""])
-    : ReadableStream.from(fs.createReadStream(filepath));
+  return new TransformStream({
+    async transform(query, controllerOuter) {
+      // pass the query early on to start other tablet streams
+      controllerOuter.enqueue(query);
 
-  const updateStream = new TransformStream({
-    transform(line, controller) {
-      if (this._state === undefined) this._state = { relations };
+      const fileStream = (await isEmpty(fs, filepath))
+            ? ReadableStream.from([""])
+            : ReadableStream.from(fs.createReadStream(filepath));
 
-      const state = updateLine(this._state, line);
+      let stateIntermediary = { };
 
-      // append line to output
-      if (state.lines !== undefined) {
-        for (const lineNew of state.lines) {
-          controller.enqueue(lineNew);
+      const updateStream = new TransformStream({
+        async transform(line, controllerInner) {
+          stateIntermediary = updateLine(stateIntermediary, tablet, line);
+
+          if (stateIntermediary.complete) {
+              controllerInner.enqueue(stateIntermediary.complete);
+          }
+        },
+
+        flush(controllerInner) {
+          // TODO do some cleanup
+          if (stateIntermediary.complete) {
+              controllerInner.enqueue(stateIntermediary.complete);
+          }
         }
+      })
+
+      const toLinesStream = new TransformStream({
+        async transform(record, controllerInner) {
+          const lines = toLines(record)
+
+          for (const line of lines) {
+            controllerInner.enqueue(line)
+          }
+        }
+      })
+
+      const tmpdir = await fs.promises.mkdtemp(path.join(dir, "update-"));
+
+      const tmpPath = path.join(tmpdir, tablet.filename);
+
+      const writeStream = new WritableStream({
+        async write(line) {
+          await fs.promises.appendFile(tmpPath, line + "\n");
+        },
+      });
+
+      await fileStream
+        .pipeThrough(createLineStream())
+        .pipeThrough(updateStream)
+        .pipeThrough(toLinesStream)
+        .pipeTo(writeStream);
+
+      if (!(await isEmpty(fs, tmpPath))) {
+        // use copyFile because rename doesn't work with external drives
+        await fs.promises.copyFile(tmpPath, filepath);
+
+        // unlink to rmdir later
+        await fs.promises.unlink(tmpPath);
       }
 
-      this._state = {
-        fst: state.fst,
-        isMatch: state.isMatch,
-        relations: state.relations,
-      };
-    },
-
-    flush(controller) {
-      if (this._state === undefined) this._state = { relations };
-
-      const state = updateLine(this._state, undefined);
-
-      if (state.lines !== undefined) {
-        for (const lineNew of state.lines) {
-          controller.enqueue(lineNew);
-        }
-      }
-    },
-  });
-
-  const tmpdir = await fs.promises.mkdtemp(path.join(dir, "update-"));
-
-  const tmpPath = path.join(tmpdir, filename);
-
-  const writeStream = new WritableStream({
-    async write(line) {
-      await fs.promises.appendFile(tmpPath, line + "\n");
-    },
-  });
-
-  await fileStream
-    .pipeThrough(createLineStream())
-    .pipeThrough(updateStream)
-    .pipeTo(writeStream);
-
-  if (!(await isEmpty(fs, tmpPath))) {
-    // use copyFile because rename doesn't work with external drives
-    await fs.promises.copyFile(tmpPath, filepath);
-
-    // unlink to rmdir later
-    await fs.promises.unlink(tmpPath);
-  }
-
-  // keep rmdir because lightningfs doesn't support rm
-  await fs.promises.rmdir(tmpdir);
+      // keep rmdir because lightningfs doesn't support rm
+      await fs.promises.rmdir(tmpdir);
+    }
+  })
 }

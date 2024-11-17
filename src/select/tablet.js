@@ -10,14 +10,14 @@ const start = Date.now();
 
 /**
  *
- * @name parseTablet
+ * @name selectTabletStream
  * @function
  * @param {object} fs
  * @param {string} dir
  * @param {object} tablet
  * @returns {Transform}
  */
-export function parseTablet(fs, dir, tablet) {
+export function selectTabletStream(fs, dir, tablet) {
   const filepath = path.join(dir, tablet.filename);
 
   return new TransformStream({
