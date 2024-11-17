@@ -1,4 +1,8 @@
-import { WritableStream, ReadableStream } from "@swimburger/isomorphic-streams";
+import {
+  WritableStream,
+  ReadableStream,
+  TransformStream,
+} from "@swimburger/isomorphic-streams";
 import { selectSchema } from "../select/index.js";
 import { toSchema } from "../schema.js";
 import { recordToRelationMap } from "../record.js";
@@ -6,9 +10,8 @@ import { findCrown } from "../schema.js";
 import { updateTablet } from "./tablet.js";
 
 export async function updateSchemaStream({ fs, dir }) {
-  // writable
-  return new WritableStream({
-    async write(record) {
+  return new TransformStream({
+    async transform(record, controller) {
       const filename = `_-_.csv`;
 
       const relations = Object.fromEntries(
@@ -18,6 +21,8 @@ export async function updateSchemaStream({ fs, dir }) {
       );
 
       await updateTablet(fs, dir, relations, filename);
+
+      controller.enqueue(record);
     },
   });
 }
@@ -27,9 +32,8 @@ export async function updateRecordStream({ fs, dir }) {
 
   const schema = toSchema(schemaRecord);
 
-  // writable
-  return new WritableStream({
-    async write(record) {
+  return new TransformStream({
+    async transform(record, controller) {
       const base = record._;
 
       // build a relation map of the record. tablet -> key -> list of values
@@ -47,6 +51,8 @@ export async function updateRecordStream({ fs, dir }) {
       });
 
       await Promise.all(promises);
+
+      controller.enqueue(record);
     },
   });
 }
@@ -68,12 +74,20 @@ export async function updateRecord({ fs, dir, query }) {
   // TODO exit if no base field or invalid base value
   const base = queries[0]._;
 
-  const queryStream = ReadableStream.from(queries);
-
   const writeStream =
     base === "_"
       ? await updateSchemaStream({ fs, dir })
       : await updateRecordStream({ fs, dir });
 
-  await queryStream.pipeTo(writeStream);
+  const records = [];
+
+  await ReadableStream.from(queries).pipeThrough(writeStream).pipeTo(
+    new WritableStream({
+      write(record) {
+        records.push(record);
+      },
+    })
+  );
+
+  return records
 }

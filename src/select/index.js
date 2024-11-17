@@ -294,21 +294,19 @@ export async function selectRecord({ fs, dir, query }) {
   // TODO exit if no base field or invalid base value
   const base = queries[0]._;
 
-  const queryStream = ReadableStream.from([query]);
-
   const selectStream = base === "_"
         ? await selectSchemaStream({ fs, dir })
         : await selectRecordStream({ fs, dir });
 
   const records = [];
 
-  const collectStream = new WritableStream({
-    write(record) {
-      records.push(record);
-    },
-  });
-
-  await queryStream.pipeThrough(selectStream).pipeTo(collectStream);
+  await ReadableStream.from(queries).pipeThrough(selectStream).pipeTo(
+    new WritableStream({
+      write(record) {
+        records.push(record);
+      },
+    })
+  );
 
   return records;
 }
