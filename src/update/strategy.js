@@ -23,8 +23,12 @@ export function planUpdate(schema, query) {
 
     return {
       filename: `${trunk}-${branch}.csv`,
+      trunk,
+      branch
     }
   })
+
+  console.log("planUpdate", query, tablets)
 
   return tablets
 }

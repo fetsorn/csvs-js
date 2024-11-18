@@ -12,6 +12,9 @@ export function updateTabletStream(fs, dir, tablet) {
 
   return new TransformStream({
     async transform(query, controllerOuter) {
+      if (tablet.filename === 'datum-actdate.csv')
+        console.log("updateTablet", query, tablet);
+
       // pass the query early on to start other tablet streams
       controllerOuter.enqueue(query);
 
@@ -23,28 +26,41 @@ export function updateTabletStream(fs, dir, tablet) {
 
       const updateStream = new TransformStream({
         async transform(line, controllerInner) {
+          if (tablet.filename === 'datum-actdate.csv')
+            console.log("transform line", line);
+
           stateIntermediary = updateLine(stateIntermediary, tablet, line);
 
-          if (stateIntermediary.complete) {
-              controllerInner.enqueue(stateIntermediary.complete);
+          if (stateIntermediary.line) {
+              controllerInner.enqueue(stateIntermediary.line);
+
+              delete stateIntermediary.line;
           }
         },
 
         flush(controllerInner) {
+          if (tablet.filename === 'datum-actdate.csv')
+            console.log("flush line");
+
           // TODO do some cleanup
-          if (stateIntermediary.complete) {
-              controllerInner.enqueue(stateIntermediary.complete);
+          if (stateIntermediary.line) {
+              controllerInner.enqueue(stateIntermediary.line);
           }
         }
       })
 
       const toLinesStream = new TransformStream({
         async transform(record, controllerInner) {
-          const lines = toLines(record)
+          if (tablet.filename === 'datum-actdate.csv')
+            console.log("transform toLines", record);
 
-          for (const line of lines) {
-            controllerInner.enqueue(line)
-          }
+          const fst = record[tablet.trunk];
+
+          const snd = record[tablet.branch];
+
+          const line = csv.unparse([fst, snd], { delimiter: ",", newline: "\n" });
+
+          controllerInner.enqueue(line)
         }
       })
 
@@ -54,14 +70,17 @@ export function updateTabletStream(fs, dir, tablet) {
 
       const writeStream = new WritableStream({
         async write(line) {
-          await fs.promises.appendFile(tmpPath, line + "\n");
+          if (tablet.filename === 'datum-actdate.csv')
+            console.log("write line", line);
+
+          await fs.promises.appendFile(tmpPath, line);
         },
       });
 
       await fileStream
         .pipeThrough(createLineStream())
         .pipeThrough(updateStream)
-        .pipeThrough(toLinesStream)
+        // .pipeThrough(toLinesStream)
         .pipeTo(writeStream);
 
       if (!(await isEmpty(fs, tmpPath))) {
