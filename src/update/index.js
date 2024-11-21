@@ -10,6 +10,10 @@ import { updateTabletStream } from "./tablet.js";
 import { planUpdateSchema, planUpdate } from "./strategy.js";
 
 export async function updateSchemaStream({ fs, dir }) {
+  const [schemaRecord] = await selectSchema({ fs, dir });
+
+  const schema = toSchema(schemaRecord);
+
   return new TransformStream({
     async transform(query, controller) {
       const queryStream = ReadableStream.from([{ query }]);
@@ -17,7 +21,7 @@ export async function updateSchemaStream({ fs, dir }) {
       const strategy = planUpdateSchema(schema, query);
 
       const streams = strategy.map((tablet) =>
-        updateTabletStream(fs, dir, tablet)
+        updateTabletStream(fs, dir, tablet, schema)
       );
 
       const schemaStream = [...streams].reduce(
@@ -44,7 +48,7 @@ export async function updateRecordStream({ fs, dir }) {
       const strategy = planUpdate(schema, query);
 
       const streams = strategy.map((tablet) =>
-        updateTabletStream(fs, dir, tablet)
+        updateTabletStream(fs, dir, tablet, schema)
       );
 
       const schemaStream = [...streams].reduce(

@@ -1,4 +1,5 @@
 import { URLSearchParams } from "node:url";
+import { isConnected } from "./schema.js";
 
 /**
  * This function is true when branch has no leaves
@@ -319,4 +320,74 @@ export function recordToRelationMap(schema, record) {
   }, {});
 
   return relationMap;
+}
+
+// TODO fix filepath-filehash.csv [ { _: 'filepath', filepath: 'path/to/1', moddate: '2001-01-01' } ]
+// find all single-relation records for trunk-branch in the record
+export function findSireres(schema, record, trunk, branch) {
+  const base = record._;
+
+  // assume base is single value
+  const baseValue = record[base];
+
+  // if base is trunk
+  // and has a leaf that is branch
+  const hasRelation = base === trunk && Object.hasOwn(record, branch)
+
+  // take values
+  const branchItems = Array.isArray(record[branch])
+        ? record[branch]
+        : [record[branch]].filter(Boolean);
+
+  const sireresRecord = hasRelation ? branchItems.map((branchItem) => {
+    const isObject = typeof branchItem === "object";
+
+    const branchValue = isObject ? branchItem[branch] : branchItem;
+
+    return { _: trunk, [trunk]: baseValue, [branch]: branchValue };
+  }) : []
+
+  const leaves = Object.keys(schema).filter(
+    (b) => schema[b].trunk === base
+  ).filter(
+    (b) => b !== branch
+  );
+
+  // for each leaf
+  const sireresLeaves = leaves.reduce((acc, leaf) => {
+    // if trunk is connected to leaf,
+    if (isConnected(schema, leaf, trunk)) {
+      const leafItems = Array.isArray(record[leaf])
+            ? record[leaf]
+            : [record[leaf]].filter(Boolean);
+
+      const leafObjects = leafItems.map((leafItem) => {
+        const isObject = typeof leafItem === "object";
+
+        const leafObject = isObject ? leafItem : { _: leaf, [leaf]: leafItem }
+
+        return leafObject
+      });
+
+      const leafLeaves = Object.keys(schema).filter((b) => schema[b].trunk === leaf);
+
+      // for each leaf item
+      const sireresLeafItem = leafItems.reduce((accLeafItem, leafItem) => {
+        // call findSireres on leaf item
+        const sireresLeafItems = leafLeaves.reduce((accLeafLeaf, leafLeaf) => {
+          const sireresLeafLeaf = findSireres(schema, leafItem, leaf, leafLeaf);
+
+          return [...accLeafLeaf, ...sireresLeafLeaf];
+        }, [])
+
+        return [...accLeafItem, ...sireresLeafItems];
+      }, [])
+
+      return [...acc, ...sireresLeafItem]
+    }
+
+    return acc
+  }, [])
+
+  return [...sireresRecord, ...sireresLeaves];
 }

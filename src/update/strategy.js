@@ -1,8 +1,5 @@
 import {
   findCrown,
-  isConnected,
-  sortNestingAscending,
-  sortNestingDescending,
 } from "../schema.js";
 
 export function planUpdateSchema(schema, query) {
@@ -27,8 +24,6 @@ export function planUpdate(schema, query) {
       branch
     }
   })
-
-  console.log("planUpdate", query, tablets)
 
   return tablets
 }

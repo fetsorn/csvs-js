@@ -6,29 +6,13 @@ import {
   TransformStream,
 } from "@swimburger/isomorphic-streams";
 import { isEmpty, createLineStream } from "../stream.js";
+import { findSireres } from "../record.js";
 
-function foo(tablet) {
-  if (tablet.filename === 'datum-actdate.csv')
-    return [{ _: "datum", datum: "value3", actdate: "2003-01-01" }]
-  if (tablet.filename === 'datum-actname.csv')
-    return [{ _: "datum", datum: "value3", actname: "name3" }]
-  if (tablet.filename === 'datum-filepath.csv')
-    return [{ _: "datum", datum: "value3", filepath: "path/to/3" }]
-  if (tablet.filename === 'datum-saydate.csv')
-    return [{ _: "datum", datum: "value3", saydate: "2003-03-01" }]
-  if (tablet.filename === 'datum-sayname.csv')
-    return [{ _: "datum", datum: "value3", sayname: "name3" }]
-  return []
-}
-
-export function updateTabletStream(fs, dir, tablet) {
+export function updateTabletStream(fs, dir, tablet, schema) {
   const filepath = path.join(dir, tablet.filename);
 
   return new TransformStream({
     async transform(query, controllerOuter) {
-      if (tablet.filename === 'datum-actdate.csv')
-        console.log("updateTablet", query, tablet);
-
       // pass the query early on to start other tablet streams
       controllerOuter.enqueue(query);
 
@@ -36,10 +20,10 @@ export function updateTabletStream(fs, dir, tablet) {
             ? ReadableStream.from([""])
             : ReadableStream.from(fs.createReadStream(filepath));
 
-      const sireres = foo(tablet, query);
+      const sireres = findSireres(schema, query.query, tablet.trunk, tablet.branch);
 
       // get the keys and all values for each key, all sorted
-      let keys = sireres.map((sirere) => sirere[tablet.trunk]);
+      let keys = sireres.map((sirere) => sirere[tablet.trunk]).sort();
 
       const values = sireres.reduce((acc, sirere) => {
         const key = sirere[tablet.trunk];
@@ -48,87 +32,75 @@ export function updateTabletStream(fs, dir, tablet) {
 
         const valuesOld = acc[key] ?? [];
 
-        const valuesNew = [ ...valuesOld, value ];
+        const valuesNew = [ ...valuesOld, value ].sort();
 
         return { ...acc, [key]: valuesNew }
       }, {}) ;
+
+      function insertAndForget(key, controller) {
+        for (const value of values[key] ?? []) {
+          const line = csv.unparse(
+            [[key, value]],
+            { delimiter: ",", newline: "\n" }
+          );
+
+          controller.enqueue(line + "\n");
+        }
+
+        keys = keys.filter((k) => k !== key);
+      }
 
       let stateIntermediary = { };
 
       const updateStream = new TransformStream({
         async transform(line, controllerInner) {
-          if (tablet.filename === 'datum-actdate.csv')
-            console.log("transform line", line);
-
           if (line === "") return;
 
           const {
             data: [[fst, snd]],
           } = csv.parse(line, { delimiter: "," });
 
-          const fstIsNew = stateIntermediary.fst !== fst;
+          const fstIsNew = stateIntermediary.fst === undefined || stateIntermediary.fst !== fst;
 
-          // TODO assume it is not a regex. what if this is regex?
-          // match this fst against all keys
-          // TODO do we need to match this
-          //      against the key that will be removed?
-          // TODO what if next key has the same fst and also needs to match?
-          // TODO what if next key has a different fst but matches the same key?
-          const matchingKeys = [];
+          // if previous isMatch and fstIsNew
+          if (stateIntermediary.isMatch && fstIsNew) {
+            insertAndForget(stateIntermediary.fst, controllerInner);
+          }
 
-          const isMatch = matchingKeys.length > 0;
-
-          // if line is new, try to insert
+          // if fstIsNew
           if (fstIsNew) {
-            // NOTE: use reduce to filter this key?
-            // for each key in alphabetic order
-            //   if key is after previous fst or previous is undefined and
-            //   if key is before this fst
-            //     for all values in alphabetic order
-            //       enqueue a line of key,value
-            //     remove key from keys
-            //   otherwise leave the key as is
+            // insert and forget all record keys between previous and next
+            const keysBetween = keys.filter((key) => {
+              const isAfter = stateIntermediary.fst === undefined || stateIntermediary.fst.localeCompare(key) < 1;
+
+              const isBefore = key.localeCompare(fst) === -1;
+
+              const isBetween = isAfter && isBefore;
+
+              return isBetween
+            });
+
+            for (const key of keysBetween) {
+              insertAndForget(key, controllerInner);
+            }
           }
 
-          // if this line matched one of keys, don't enqueue
-          // if did not match, enqueue the original line
+          // match this fst against all keys
+          const isMatch = keys.includes(fst);
+
+          // if match, set doInsert and prune line
           if (!isMatch) {
-            controllerInner.enqueue(line)
+            controllerInner.enqueue(line);
           }
 
-          // write fst to memory
-          stateIntermediary = { fst };
+          stateIntermediary = { fst, isMatch };
         },
 
         flush(controllerInner) {
-          if (tablet.filename === 'datum-actdate.csv')
-            console.log("flush line");
-
           // for each key in alphabetic order
           for (const key of keys) {
-            // for all values in alphabetic order
-            for (const value of values[key] ?? []) {
-              const line = csv.unparse([[key, value]], { delimiter: ",", newline: "\n" }) + "\n";
-
-              // enqueue a line of key,value
-              controllerInner.enqueue(line)
-            }
+            insertAndForget(key, controllerInner);
           }
-        }
-      })
-
-      const toLinesStream = new TransformStream({
-        async transform(record, controllerInner) {
-          if (tablet.filename === 'datum-actdate.csv')
-            console.log("transform toLines", record);
-
-          const fst = record[tablet.trunk];
-
-          const snd = record[tablet.branch];
-
-          const line = csv.unparse([fst, snd], { delimiter: ",", newline: "\n" });
-
-          controllerInner.enqueue(line)
         }
       })
 
@@ -138,9 +110,6 @@ export function updateTabletStream(fs, dir, tablet) {
 
       const writeStream = new WritableStream({
         async write(line) {
-          if (tablet.filename === 'datum-actdate.csv')
-            console.log("write line", line);
-
           await fs.promises.appendFile(tmpPath, line);
         },
       });
@@ -148,7 +117,6 @@ export function updateTabletStream(fs, dir, tablet) {
       await fileStream
         .pipeThrough(createLineStream())
         .pipeThrough(updateStream)
-        // .pipeThrough(toLinesStream)
         .pipeTo(writeStream);
 
       if (!(await isEmpty(fs, tmpPath))) {
@@ -159,7 +127,7 @@ export function updateTabletStream(fs, dir, tablet) {
         await fs.promises.unlink(tmpPath);
       }
 
-      // keep rmdir because lightningfs doesn't support rm
+      // use rmdir because lightningfs doesn't support rm
       await fs.promises.rmdir(tmpdir);
     }
   })

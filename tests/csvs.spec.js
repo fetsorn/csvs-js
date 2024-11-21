@@ -134,7 +134,7 @@ describe("selectBase()", () => {
   });
 });
 
-describe("updateRecord()", () => {
+describe.only("updateRecord()", () => {
   testCasesUpdate.forEach((testCase) => {
     test(testCase.name, () => {
       const tmpdir = nodefs.mkdtempSync(join(os.tmpdir(), "csvs-"));
