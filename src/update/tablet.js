@@ -20,7 +20,7 @@ export function updateTabletStream(fs, dir, tablet, schema) {
             ? ReadableStream.from([""])
             : ReadableStream.from(fs.createReadStream(filepath));
 
-      const sireres = findSireres(schema, query.query, tablet.trunk, tablet.branch);
+      const sireres = findSireres(schema, query.query, tablet.trunk, tablet.branch, tablet.filename);
 
       // get the keys and all values for each key, all sorted
       let keys = sireres.map((sirere) => sirere[tablet.trunk]).sort();

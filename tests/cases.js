@@ -192,12 +192,12 @@ export const testCasesUpdate = [
     initial: mocks.datasetDefault,
     expected: mocks.datasetDefault,
   },
-  //{
-  //  name: "edits record",
-  //  query: mocks.record2003Edited,
-  //  initial: mocks.datasetDefault,
-  //  expected: mocks.datasetEdited,
-  //},
+  {
+    name: "edits record",
+    query: mocks.record2003Edited,
+    initial: mocks.datasetDefault,
+    expected: mocks.datasetEdited,
+  },
   //{
   //  name: "adds record",
   //  query: mocks.recordAdded,

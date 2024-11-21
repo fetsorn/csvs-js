@@ -322,9 +322,14 @@ export function recordToRelationMap(schema, record) {
   return relationMap;
 }
 
-// TODO fix filepath-filehash.csv [ { _: 'filepath', filepath: 'path/to/1', moddate: '2001-01-01' } ]
 // find all single-relation records for trunk-branch in the record
-export function findSireres(schema, record, trunk, branch) {
+export function findSireres(schema, record, trunk, branch, filename) {
+  if (filename === "filepath-filehash.csv")
+    console.log(record, trunk, branch)
+
+  if (filename === "wtf")
+    console.log("wtf", record, trunk, branch)
+
   const base = record._;
 
   // assume base is single value
@@ -355,7 +360,7 @@ export function findSireres(schema, record, trunk, branch) {
 
   // for each leaf
   const sireresLeaves = leaves.reduce((acc, leaf) => {
-    // if trunk is connected to leaf,
+    // if trunk is connected to leaf
     if (isConnected(schema, leaf, trunk)) {
       const leafItems = Array.isArray(record[leaf])
             ? record[leaf]
@@ -369,25 +374,42 @@ export function findSireres(schema, record, trunk, branch) {
         return leafObject
       });
 
-      const leafLeaves = Object.keys(schema).filter((b) => schema[b].trunk === leaf);
+      const leafLeaves = Object.keys(schema).filter((b) => schema[b].trunk === leaf && b === branch);
 
       // for each leaf item
       const sireresLeafItem = leafItems.reduce((accLeafItem, leafItem) => {
         // call findSireres on leaf item
         const sireresLeafItems = leafLeaves.reduce((accLeafLeaf, leafLeaf) => {
-          const sireresLeafLeaf = findSireres(schema, leafItem, leaf, leafLeaf);
+          const sireresLeafLeaf = filename === "filepath-filehash.csv"
+                ? findSireres(schema, leafItem, leaf, leafLeaf, "wtf")
+                : findSireres(schema, leafItem, leaf, leafLeaf);
+
+          if (filename === "filepath-filehash.csv")
+            console.log(accLeafLeaf, sireresLeafLeaf)
 
           return [...accLeafLeaf, ...sireresLeafLeaf];
-        }, [])
+        }, []);
+
+        if (filename === "filepath-filehash.csv")
+          console.log(sireresLeafItems)
 
         return [...accLeafItem, ...sireresLeafItems];
-      }, [])
+      }, []);
+
+      if (filename === "filepath-filehash.csv")
+        console.log(sireresLeafItem)
 
       return [...acc, ...sireresLeafItem]
     }
 
     return acc
-  }, [])
+  }, []);
+
+  if (filename === "filepath-filehash.csv")
+    console.log("end", sireresLeaves)
+
+  if (filename === "wtf")
+    console.log("wtf end", sireresRecord)
 
   return [...sireresRecord, ...sireresLeaves];
 }
