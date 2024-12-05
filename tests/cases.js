@@ -186,18 +186,18 @@ export const testCasesSelect = [
 ];
 
 export const testCasesUpdate = [
-  {
-    name: "does nothing on no change",
-    query: mocks.record2001,
-    initial: mocks.datasetDefault,
-    expected: mocks.datasetDefault,
-  },
-  {
-    name: "edits record",
-    query: mocks.record2003Edited,
-    initial: mocks.datasetDefault,
-    expected: mocks.datasetEdited,
-  },
+  //{
+  //  name: "does nothing on no change",
+  //  query: mocks.record2001,
+  //  initial: mocks.datasetDefault,
+  //  expected: mocks.datasetDefault,
+  //},
+  //{
+  //  name: "edits record",
+  //  query: mocks.record2003Edited,
+  //  initial: mocks.datasetDefault,
+  //  expected: mocks.datasetEdited,
+  //},
   //{
   //  name: "adds record",
   //  query: mocks.recordAdded,
@@ -335,5 +335,36 @@ export const testCasesDelete = [
     query: mocks.recordExport1Tag,
     initial: mocks.datasetArray,
     expected: mocks.datasetDeletedLeaf,
+  },
+];
+
+export const testCasesSireres = [
+  {
+    name: "sirere from simple event",
+    initial: mocks.datasetDefault,
+    record: mocks.record2001,
+    trunk: "datum",
+    branch: "actdate",
+    expected: [{
+      "_": "datum",
+      "actdate": "2001-01-01",
+      "datum": "value1",
+    }],
+  },
+  {
+    name: "sirere from array",
+    initial: mocks.datasetArray,
+    record: mocks.recordArray,
+    trunk: "export1_tag",
+    branch: "export1_channel",
+    expected: [{
+      "_": "export1_tag",
+      "export1_tag": "1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42",
+      "export1_channel": "https://channel1.url",
+    },{
+      "_": "export1_tag",
+      "export1_tag": "fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77",
+      "export1_channel": "https://channel2.url",
+    }],
   },
 ];

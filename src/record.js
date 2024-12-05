@@ -323,13 +323,8 @@ export function recordToRelationMap(schema, record) {
 }
 
 // find all single-relation records for trunk-branch in the record
-export function findSireres(schema, record, trunk, branch, filename) {
-  if (filename === "filepath-filehash.csv")
-    console.log(record, trunk, branch)
-
-  if (filename === "wtf")
-    console.log("wtf", record, trunk, branch)
-
+// grain is a single-relation record
+export function winnow(schema, record, trunk, branch) {
   const base = record._;
 
   // assume base is single value
@@ -344,7 +339,7 @@ export function findSireres(schema, record, trunk, branch, filename) {
         ? record[branch]
         : [record[branch]].filter(Boolean);
 
-  const sireresRecord = hasRelation ? branchItems.map((branchItem) => {
+  const grainsRecord = hasRelation ? branchItems.map((branchItem) => {
     const isObject = typeof branchItem === "object";
 
     const branchValue = isObject ? branchItem[branch] : branchItem;
@@ -352,64 +347,57 @@ export function findSireres(schema, record, trunk, branch, filename) {
     return { _: trunk, [trunk]: baseValue, [branch]: branchValue };
   }) : []
 
+  // if (base === "export1_tag" &&
+  //     trunk === "export1_tag" &&
+  //     branch === "export1_channel")
+  //   console.log("AA", record, grainsRecord)
+
   const leaves = Object.keys(schema).filter(
     (b) => schema[b].trunk === base
   ).filter(
     (b) => b !== branch
+  ).filter(
+    (b) => isConnected(schema, b, trunk)
   );
 
   // for each leaf
-  const sireresLeaves = leaves.reduce((acc, leaf) => {
+  const grainsLeaves = leaves.reduce((withLeaf, leaf) => {
     // if trunk is connected to leaf
-    if (isConnected(schema, leaf, trunk)) {
-      const leafItems = Array.isArray(record[leaf])
-            ? record[leaf]
-            : [record[leaf]].filter(Boolean);
+    const leafItems = Array.isArray(record[leaf])
+          ? record[leaf]
+          : [record[leaf]].filter(Boolean);
 
-      const leafObjects = leafItems.map((leafItem) => {
-        const isObject = typeof leafItem === "object";
+    const leafObjects = leafItems.map((leafItem) => {
+      const isObject = typeof leafItem === "object";
 
-        const leafObject = isObject ? leafItem : { _: leaf, [leaf]: leafItem }
+      const leafObject = isObject ? leafItem : { _: leaf, [leaf]: leafItem }
 
-        return leafObject
-      });
+      return leafObject
+    });
 
-      const leafLeaves = Object.keys(schema).filter((b) => schema[b].trunk === leaf && b === branch);
+    // TODO check if branch is connected to trunk
+    const leafLeaves = Object.keys(schema).filter(
+      (b) => schema[b].trunk === leaf && isConnected(schema, b, trunk)
+    );
 
-      // for each leaf item
-      const sireresLeafItem = leafItems.reduce((accLeafItem, leafItem) => {
-        // call findSireres on leaf item
-        const sireresLeafItems = leafLeaves.reduce((accLeafLeaf, leafLeaf) => {
-          const sireresLeafLeaf = filename === "filepath-filehash.csv"
-                ? findSireres(schema, leafItem, leaf, leafLeaf, "wtf")
-                : findSireres(schema, leafItem, leaf, leafLeaf);
+    // for each leaf item
+    const grainsLeafItem = leafItems.reduce((withLeafItem, leafItem) => {
+      // call winnow on leaf item
+      const grainsLeafItems = leafLeaves.reduce((withLeafLeaf, leafLeaf) => {
+        const grainsLeafLeaf = winnow(schema, leafItem, trunk, branch);
 
-          if (filename === "filepath-filehash.csv")
-            console.log(accLeafLeaf, sireresLeafLeaf)
-
-          return [...accLeafLeaf, ...sireresLeafLeaf];
-        }, []);
-
-        if (filename === "filepath-filehash.csv")
-          console.log(sireresLeafItems)
-
-        return [...accLeafItem, ...sireresLeafItems];
+        return [...withLeafLeaf, ...grainsLeafLeaf];
       }, []);
 
-      if (filename === "filepath-filehash.csv")
-        console.log(sireresLeafItem)
+      return [...withLeafItem, ...grainsLeafItems];
+    }, []);
 
-      return [...acc, ...sireresLeafItem]
-    }
-
-    return acc
+    return [...withLeaf, ...grainsLeafItem]
   }, []);
 
-  if (filename === "filepath-filehash.csv")
-    console.log("end", sireresLeaves)
+  // if (trunk === "export_tags" &&
+  //     branch === "export1_tag")
+  //   console.log(grainsRecord, grainsLeaves)
 
-  if (filename === "wtf")
-    console.log("wtf end", sireresRecord)
-
-  return [...sireresRecord, ...sireresLeaves];
+  return [...grainsRecord, ...grainsLeaves];
 }

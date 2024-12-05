@@ -6,7 +6,7 @@ import {
   TransformStream,
 } from "@swimburger/isomorphic-streams";
 import { isEmpty, createLineStream } from "../stream.js";
-import { findSireres } from "../record.js";
+import { winnow } from "../record.js";
 
 export function updateTabletStream(fs, dir, tablet, schema) {
   const filepath = path.join(dir, tablet.filename);
@@ -20,15 +20,18 @@ export function updateTabletStream(fs, dir, tablet, schema) {
             ? ReadableStream.from([""])
             : ReadableStream.from(fs.createReadStream(filepath));
 
-      const sireres = findSireres(schema, query.query, tablet.trunk, tablet.branch, tablet.filename);
+      const grains = winnow(schema, query.query, tablet.trunk, tablet.branch, tablet.filename);
+
+      // if (tablet.filename === "export1_tag-export1_channel.csv")
+      //   console.log(JSON.stringify(query.query, null, 2), grains)
 
       // get the keys and all values for each key, all sorted
-      let keys = sireres.map((sirere) => sirere[tablet.trunk]).sort();
+      let keys = grains.map((grain) => grains[tablet.trunk]).sort();
 
-      const values = sireres.reduce((acc, sirere) => {
-        const key = sirere[tablet.trunk];
+      const values = grains.reduce((acc, grain) => {
+        const key = grain[tablet.trunk];
 
-        const value = sirere[tablet.branch];
+        const value = grain[tablet.branch];
 
         const valuesOld = acc[key] ?? [];
 
