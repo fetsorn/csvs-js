@@ -5,17 +5,21 @@ import nodefs from "fs";
 import os from "os";
 import {
   selectRecord,
+  selectSchema,
   selectBase,
   selectBody,
   updateRecord,
   insertRecord,
   deleteRecord,
+  toSchema,
+  winnow,
 } from "../src/index.js";
 import {
   testCasesSelect,
   testCasesUpdate,
   testCasesInsert,
   testCasesDelete,
+  testCasesWinnow,
 } from "./cases.js";
 
 function sortObject(a) {
@@ -190,6 +194,33 @@ describe("deleteRecord()", () => {
           loadContents(nodefs, testCase.expected),
         );
       });
+    });
+  });
+});
+
+describe("winnow()", () => {
+  testCasesWinnow.forEach((testCase) => {
+    test(testCase.name, async () => {
+      const schemaRecord = await selectSchema({
+        fs: nodefs,
+        dir: testCase.initial,
+      });
+
+      const schema = toSchema(schemaRecord);
+
+      const data = winnow(schema, testCase.record, testCase.trunk, testCase.branch)
+
+      const dataSorted = data
+        .map(sortObject)
+        .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
+
+      const expected = testCase.expected
+        .map(sortObject)
+        .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
+
+      // console.log(JSON.stringify(dataSorted, undefined, 2));
+
+      expect(dataSorted).toStrictEqual(expected);
     });
   });
 });

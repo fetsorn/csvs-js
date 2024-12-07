@@ -20,13 +20,24 @@ export function updateTabletStream(fs, dir, tablet, schema) {
             ? ReadableStream.from([""])
             : ReadableStream.from(fs.createReadStream(filepath));
 
-      const grains = winnow(schema, query.query, tablet.trunk, tablet.branch, tablet.filename);
+      const isSchema = tablet.filename === "_-_.csv";
 
-      // if (tablet.filename === "export1_tag-export1_channel.csv")
-      //   console.log(JSON.stringify(query.query, null, 2), grains)
+      function winnowSchema(record) {
+        const grainsSchema = record.entries().filter(([branch]) => branch !== "_").reduce((withEntry, [trunk, leafValue]) => {
+          const leaves = Array.isArray(leafValue) ? leafValue : [leafValue];
+
+          const grainsTrunk = leaves.reduce((withLeaf, leaf) => ({ _: _, trunk: leaf }), []);
+
+          return grainsTrunk;
+        }, [])
+
+        return grainsSchema;
+      }
+
+      const grains = isSchema ? grainsSchema : winnow(schema, query.query, tablet.trunk, tablet.branch);
 
       // get the keys and all values for each key, all sorted
-      let keys = grains.map((grain) => grains[tablet.trunk]).sort();
+      let keys = [...(new Set(grains.map((grain) => grain[tablet.trunk])))].sort();
 
       const values = grains.reduce((acc, grain) => {
         const key = grain[tablet.trunk];
@@ -40,6 +51,9 @@ export function updateTabletStream(fs, dir, tablet, schema) {
         return { ...acc, [key]: valuesNew }
       }, {}) ;
 
+      // if (tablet.filename === "export_tags-export1_tag.csv")
+      //   console.log(JSON.stringify(query.query, null, 2), grains, keys, values)
+
       function insertAndForget(key, controller) {
         for (const value of values[key] ?? []) {
           const line = csv.unparse(
@@ -51,6 +65,8 @@ export function updateTabletStream(fs, dir, tablet, schema) {
         }
 
         keys = keys.filter((k) => k !== key);
+
+        return undefined;
       }
 
       let stateIntermediary = { };
@@ -100,6 +116,7 @@ export function updateTabletStream(fs, dir, tablet, schema) {
         },
 
         flush(controllerInner) {
+          // TODO what if key repeats many times in keys
           // for each key in alphabetic order
           for (const key of keys) {
             insertAndForget(key, controllerInner);

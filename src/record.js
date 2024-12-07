@@ -324,7 +324,6 @@ export function recordToRelationMap(schema, record) {
 
 // TODO what if trait-thing relation appears elswhere deeper in the record?
 function baseIsThingCase(schema, record, trait, thing) {
-  // console.log("baseIsThingCase", record, trait, thing)
   const { _: base } = record;
 
   // assume base is single value
@@ -340,15 +339,16 @@ function baseIsThingCase(schema, record, trait, thing) {
 
     const branchValue = isObject ? branchItem[trait] : branchItem;
 
+    if (branchValue === undefined) return undefined;
+
     return { _: base, [base]: baseValue, [trait]: branchValue };
-  });
+  }).filter(Boolean);
 
   return grains
 }
 
 // TODO what if trait-thing relation appears elswhere deeper in the record?
 function baseIsTraitCase(schema, record, trait, thing) {
-  // console.log("baseIsTraitCase", record, trait, thing)
   const { _: base } = record;
 
   // assume base is single value
@@ -364,15 +364,16 @@ function baseIsTraitCase(schema, record, trait, thing) {
 
     const branchValue = isObject ? branchItem[thing] : branchItem;
 
+    if (branchValue === undefined) return undefined;
+
     return { _: base, [base]: baseValue, [thing]: branchValue };
-  });
+  }).filter(Boolean);
 
   return grains
 }
 
 // TODO what if trait-thing relation appears elswhere deeper in the record?
 function traitIsObjectCase(schema, record, trait, thing) {
-  console.log("traitIsObjectCase", record, trait, thing)
   // TODO what if trunk is undefined here?
   const { [trait]: omitted, ...recordWithoutTrunk } = record;
 
@@ -383,7 +384,7 @@ function traitIsObjectCase(schema, record, trait, thing) {
 
     const trunkObject = isObject
           ? trunkItem
-          : { _: trunk, [trunk]: trunkItem };
+          : { _: trait, [trait]: trunkItem };
 
     const trunkValue = isObject ? trunkItem[trait] : trunkItem;
 
@@ -396,10 +397,12 @@ function traitIsObjectCase(schema, record, trait, thing) {
 
       const branchValue = branchItemIsObject ? branchItem[thing] : branchItem;
 
+      if (branchValue === undefined) return undefined;
+
       const grain = { _: trait, [trait]: trunkValue, [thing]: branchValue};
 
       return grain;
-    });
+    }).filter(Boolean);
 
     return [...withTrunkItem, ...trunkItemGrains];
   }, []).filter(Boolean);
@@ -408,7 +411,6 @@ function traitIsObjectCase(schema, record, trait, thing) {
 }
 
 function traitIsNestedCase(schema, record, trait, thing) {
-  // console.log("traitIsNestedCase", record, trait, thing)
   const { _: base, [base]: baseValueOmitted, ...recordWithoutBase } = record;
 
   // TODO can we guess here which of the remaining leaves leads to the.trait?
@@ -418,7 +420,7 @@ function traitIsNestedCase(schema, record, trait, thing) {
   const grains = entries.reduce(
     (withEntry, [leaf, leafValue]) => {
       // TODO should we take from omitted or leafValue here?
-      let leafItems = Array.isArray(leafValue) ? leafValue : [leafValue];
+      const leafItems = Array.isArray(leafValue) ? leafValue : [leafValue];
 
       const grainsLeaf = leafItems.reduce((withLeafItem, leafItem) => {
         const isObject =

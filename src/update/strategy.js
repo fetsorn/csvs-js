@@ -4,7 +4,7 @@ import {
 
 export function planUpdateSchema(schema, query) {
   const schemaTablet = {
-    filename: `${trunk}-${branch}.csv`,
+    filename: `_-_.csv`
   };
 
   return [schemaTablet]
