@@ -64,7 +64,7 @@ function traitIsLeafCase(tablet, record, trait, thing) {
   // TODO what if traitValue is undefined here?
   const { [leaf]: omitted, ...recordWithoutLeaf } = record;
 
-  let leafItems = Array.isArray(omitted) ? omitted : [omitted];
+  const leafItems = Array.isArray(omitted) ? omitted : [omitted];
 
   // if record has a trait leaf and thing base, match it to trait to set base
   const stateValues = leafItems.reduce(
@@ -311,7 +311,7 @@ function traitIsNestedCase(tablet, record, trait, thing) {
       const { [leaf]: omitted, ...recordWithoutLeaf } = recordWithEntry;
 
       // TODO should we take from omitted or leafValue here?
-      let leafItems = Array.isArray(leafValue) ? leafValue : [leafValue];
+      const leafItems = Array.isArray(leafValue) ? leafValue : [leafValue];
 
       // reduce each value item to match trait and set thing
       const stateValues = leafItems.reduce(

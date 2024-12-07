@@ -13,9 +13,11 @@ import { planValues, planOptions, planQuery, planSchema } from "./strategy.js";
  * @function
  * @returns {Transform}
  */
+// TODO remove this
 export async function selectSchemaStream({ fs, dir }) {
   return new TransformStream({
     async transform(query, controllerOuter) {
+      // NOTE this passes record but selectRecordStream passes query
       const queryStream = ReadableStream.from([{ record: query }]);
 
       const schemaStrategy = planSchema();
@@ -279,7 +281,7 @@ export async function selectRecord({ fs, dir, query }) {
   // exit if record is undefined
   if (query === undefined) return;
 
-  let queries = Array.isArray(query) ? query : [query];
+  const queries = Array.isArray(query) ? query : [query];
 
   // TODO find base value if _ is object or array
   // TODO exit if no base field or invalid base value

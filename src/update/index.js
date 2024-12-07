@@ -5,7 +5,6 @@ import {
 } from "@swimburger/isomorphic-streams";
 import { selectSchema } from "../select/index.js";
 import { toSchema } from "../schema.js";
-import { recordToRelationMap } from "../record.js";
 import { updateTabletStream } from "./tablet.js";
 import { planUpdate } from "./strategy.js";
 
@@ -16,8 +15,6 @@ export async function updateRecordStream({ fs, dir }) {
 
   return new TransformStream({
     async transform(query, controller) {
-      const base = query._;
-
       const queryStream = ReadableStream.from([{ query }]);
 
       const strategy = planUpdate(schema, query);
@@ -26,12 +23,12 @@ export async function updateRecordStream({ fs, dir }) {
         updateTabletStream(fs, dir, tablet)
       );
 
-      const schemaStream = [...streams].reduce(
+      const updateStream = [...streams].reduce(
         (withStream, stream) => withStream.pipeThrough(stream),
         queryStream,
       );
 
-      await schemaStream.pipeTo(new WritableStream({
+      await updateStream.pipeTo(new WritableStream({
         async write(record) {
           controller.enqueue(record)
         }
@@ -51,25 +48,21 @@ export async function updateRecord({ fs, dir, query }) {
   // exit if record is undefined
   if (query === undefined) return;
 
-  let queries = Array.isArray(query) ? query : [query];
+  const queries = Array.isArray(query) ? query : [query];
 
-  // TODO find base value if _ is object or array
-  // TODO exit if no base field or invalid base value
-  const base = queries[0]._;
+  const updateStream = await updateRecordStream({ fs, dir });
 
-  const writeStream = await updateRecordStream({ fs, dir });
+  const entries = [];
 
-  const records = [];
-
-  await ReadableStream.from(queries).pipeThrough(writeStream).pipeTo(
+  await ReadableStream.from(queries).pipeThrough(updateStream).pipeTo(
     new WritableStream({
       write(record) {
-        records.push(record);
+        entries.push(record);
       },
     })
   );
 
   // wait for all streams to finish updating tablets
 
-  return records
+  return entries
 }

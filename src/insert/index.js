@@ -2,47 +2,42 @@ import { WritableStream, ReadableStream } from "@swimburger/isomorphic-streams";
 import { selectSchema } from "../select/index.js";
 import { toSchema, findCrown } from "../schema.js";
 import { sortFile } from "../stream.js";
-import { recordToRelationMap } from "../record.js";
 import { insertTablet } from "./tablet.js";
+import { planInsert } from "./strategy.js";
 
 export async function insertRecordStream({ fs, dir }) {
   const [schemaRecord] = await selectSchema({ fs, dir });
 
   const schema = toSchema(schemaRecord);
 
-  // writable
-  return new WritableStream({
-    async write(record) {
-      this.base = record._;
+  const isInserted = new Map();
 
-      // build a relation map of the record. tablet -> key -> list of values
-      const relationMap = recordToRelationMap(schema, record);
+  return new TransformStream({
+    async transform(query, controller) {
+      const queryStream = ReadableStream.from([{ query }]);
 
-      // for each branch in crown
-      const crown = findCrown(schema, this.base);
+      const strategy = planInsert(schema, query);
 
-      const promises = crown.map((branch) => {
-        const { trunk } = schema[branch];
+      const streams = strategy.map((tablet) => {
+        isInserted.set(tablet.filename, true);
 
-        const filename = `${trunk}-${branch}.csv`;
-
-        return insertTablet(fs, dir, relationMap[filename] ?? {}, filename);
+        return insertTablet(fs, dir, tablet, schema);
       });
 
-      await Promise.all(promises);
+      const insertStream = [...streams].reduce(
+        (withStream, stream) => withStream.pipeThrough(stream),
+        queryStream,
+      );
+
+      await insertStream.pipeTo(new WritableStream({
+        async write(record) {
+          controller.enqueue(record)
+        }
+      }));
     },
 
-    async close() {
-      // for each branch in crown
-      const crown = findCrown(schema, this.base);
-
-      const promises = crown.map((branch) => {
-        const { trunk } = schema[branch];
-
-        const filename = `${trunk}-${branch}.csv`;
-
-        return sortFile(fs, dir, filename);
-      });
+    async flush() {
+      const promises = isInserted.entries().map(([filename]) => sortFile(fs, dir, filename));
 
       await Promise.all(promises);
     },
@@ -53,11 +48,19 @@ export async function insertRecord({ fs, dir, query }) {
   // exit if record is undefined
   if (query === undefined) return;
 
-  let records = Array.isArray(query) ? query : [query];
+  const queries = Array.isArray(query) ? query : [query];
 
-  const queryStream = ReadableStream.from(records);
+  const insertStream = await insertRecordStream({ fs, dir });
 
-  const writeStream = await insertRecordStream({ fs, dir });
+  const entries = [];
 
-  await queryStream.pipeTo(writeStream);
+  await ReadableStream.from(queries).pipeThrough(insertStream).pipeTo(
+    new WritableStream({
+      write(record) {
+        entries.push(record);
+      },
+    })
+  );
+
+  return entries
 }
