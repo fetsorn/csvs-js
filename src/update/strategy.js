@@ -2,16 +2,14 @@ import {
   findCrown,
 } from "../schema.js";
 
-export function planUpdateSchema(schema, query) {
-  const schemaTablet = {
-    filename: `_-_.csv`
-  };
-
-  return [schemaTablet]
-}
-
 export function planUpdate(schema, query) {
   const base = query._;
+
+  const isSchema = base === "_";
+
+  if (isSchema) return [{
+    filename: `_-_.csv`
+  }];
 
   const crown = findCrown(schema, base);
 

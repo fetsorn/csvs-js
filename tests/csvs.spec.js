@@ -138,7 +138,7 @@ describe("selectBase()", () => {
   });
 });
 
-describe.only("updateRecord()", () => {
+describe("updateRecord()", () => {
   testCasesUpdate.forEach((testCase) => {
     test(testCase.name, () => {
       const tmpdir = nodefs.mkdtempSync(join(os.tmpdir(), "csvs-"));
@@ -201,14 +201,7 @@ describe("deleteRecord()", () => {
 describe("winnow()", () => {
   testCasesWinnow.forEach((testCase) => {
     test(testCase.name, async () => {
-      const schemaRecord = await selectSchema({
-        fs: nodefs,
-        dir: testCase.initial,
-      });
-
-      const schema = toSchema(schemaRecord);
-
-      const data = winnow(schema, testCase.record, testCase.trunk, testCase.branch)
+      const data = winnow(testCase.record, testCase.trunk, testCase.branch)
 
       const dataSorted = data
         .map(sortObject)

@@ -323,7 +323,7 @@ export function recordToRelationMap(schema, record) {
 }
 
 // TODO what if trait-thing relation appears elswhere deeper in the record?
-function baseIsThingCase(schema, record, trait, thing) {
+function baseIsThingCase(record, trait, thing) {
   const { _: base } = record;
 
   // assume base is single value
@@ -348,7 +348,7 @@ function baseIsThingCase(schema, record, trait, thing) {
 }
 
 // TODO what if trait-thing relation appears elswhere deeper in the record?
-function baseIsTraitCase(schema, record, trait, thing) {
+function baseIsTraitCase(record, trait, thing) {
   const { _: base } = record;
 
   // assume base is single value
@@ -373,7 +373,7 @@ function baseIsTraitCase(schema, record, trait, thing) {
 }
 
 // TODO what if trait-thing relation appears elswhere deeper in the record?
-function traitIsObjectCase(schema, record, trait, thing) {
+function traitIsObjectCase(record, trait, thing) {
   // TODO what if trunk is undefined here?
   const { [trait]: omitted, ...recordWithoutTrunk } = record;
 
@@ -410,7 +410,7 @@ function traitIsObjectCase(schema, record, trait, thing) {
   return grains
 }
 
-function traitIsNestedCase(schema, record, trait, thing) {
+function traitIsNestedCase(record, trait, thing) {
   const { _: base, [base]: baseValueOmitted, ...recordWithoutBase } = record;
 
   // TODO can we guess here which of the remaining leaves leads to the.trait?
@@ -430,7 +430,7 @@ function traitIsNestedCase(schema, record, trait, thing) {
               ? leafItem
               : { _: leaf, [leaf]: leafItem };
 
-        const grainsLeafItem = winnow(schema, leafObject, trait, thing);
+        const grainsLeafItem = winnow(leafObject, trait, thing);
 
         return [...withLeafItem, ...grainsLeafItem]
       }, []);
@@ -441,21 +441,21 @@ function traitIsNestedCase(schema, record, trait, thing) {
   return grains
 }
 
-export function winnow(schema, record, trait, thing) {
+export function winnow(record, trait, thing) {
   const { _: base } = record;
 
   const baseIsThing = base === thing;
 
-  if (baseIsThing) return baseIsThingCase(schema, record, trait, thing);
+  if (baseIsThing) return baseIsThingCase(record, trait, thing);
 
   const baseIsTrait = base === trait;
 
-  if (baseIsTrait) return baseIsTraitCase(schema, record, trait, thing);
+  if (baseIsTrait) return baseIsTraitCase(record, trait, thing);
 
   const recordHasTrait = Object.hasOwn(record, trait);
 
-  if (recordHasTrait) return traitIsObjectCase(schema, record, trait, thing);
+  if (recordHasTrait) return traitIsObjectCase(record, trait, thing);
 
   // if none of the fields are trait or thing, go into objects
-  return traitIsNestedCase(schema, record, trait, thing);
+  return traitIsNestedCase(record, trait, thing);
 }

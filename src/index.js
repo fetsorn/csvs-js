@@ -9,7 +9,6 @@ import {
 import {
   updateRecord,
   updateRecordStream,
-  updateSchemaStream,
 } from "./update/index.js";
 import { deleteRecord, deleteRecordStream } from "./delete/index.js";
 import { insertRecord, insertRecordStream } from "./insert/index.js";
@@ -33,7 +32,6 @@ export {
   selectBody,
   updateRecord,
   updateRecordStream,
-  updateSchemaStream,
   insertRecord,
   insertRecordStream,
   deleteRecord,
@@ -58,7 +56,6 @@ export default {
   selectBody,
   updateRecord,
   updateRecordStream,
-  updateSchemaStream,
   insertRecord,
   insertRecordStream,
   deleteRecord,
