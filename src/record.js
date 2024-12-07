@@ -322,82 +322,138 @@ export function recordToRelationMap(schema, record) {
   return relationMap;
 }
 
-// find all single-relation records for trunk-branch in the record
-// grain is a single-relation record
-export function winnow(schema, record, trunk, branch) {
-  const base = record._;
+// TODO what if trait-thing relation appears elswhere deeper in the record?
+function baseIsThingCase(schema, record, trait, thing) {
+  // console.log("baseIsThingCase", record, trait, thing)
+  const { _: base } = record;
 
   // assume base is single value
   const baseValue = record[base];
 
-  // if base is trunk
-  // and has a leaf that is branch
-  const hasRelation = base === trunk && Object.hasOwn(record, branch)
-
   // take values
-  const branchItems = Array.isArray(record[branch])
-        ? record[branch]
-        : [record[branch]].filter(Boolean);
+  const branchItems = Array.isArray(record[trait])
+        ? record[trait]
+        : [record[trait]].filter(Boolean);
 
-  const grainsRecord = hasRelation ? branchItems.map((branchItem) => {
+  const grains = branchItems.map((branchItem) => {
     const isObject = typeof branchItem === "object";
 
-    const branchValue = isObject ? branchItem[branch] : branchItem;
+    const branchValue = isObject ? branchItem[trait] : branchItem;
 
-    return { _: trunk, [trunk]: baseValue, [branch]: branchValue };
-  }) : []
+    return { _: base, [base]: baseValue, [trait]: branchValue };
+  });
 
-  // if (base === "export1_tag" &&
-  //     trunk === "export1_tag" &&
-  //     branch === "export1_channel")
-  //   console.log("AA", record, grainsRecord)
+  return grains
+}
 
-  const leaves = Object.keys(schema).filter(
-    (b) => schema[b].trunk === base
-  ).filter(
-    (b) => b !== branch
-  ).filter(
-    (b) => isConnected(schema, b, trunk)
-  );
+// TODO what if trait-thing relation appears elswhere deeper in the record?
+function baseIsTraitCase(schema, record, trait, thing) {
+  // console.log("baseIsTraitCase", record, trait, thing)
+  const { _: base } = record;
 
-  // for each leaf
-  const grainsLeaves = leaves.reduce((withLeaf, leaf) => {
-    // if trunk is connected to leaf
-    const leafItems = Array.isArray(record[leaf])
-          ? record[leaf]
-          : [record[leaf]].filter(Boolean);
+  // assume base is single value
+  const baseValue = record[base];
 
-    const leafObjects = leafItems.map((leafItem) => {
-      const isObject = typeof leafItem === "object";
+  // take values
+  const branchItems = Array.isArray(record[thing])
+        ? record[thing]
+        : [record[thing]].filter(Boolean);
 
-      const leafObject = isObject ? leafItem : { _: leaf, [leaf]: leafItem }
+  const grains = branchItems.map((branchItem) => {
+    const isObject = typeof branchItem === "object";
 
-      return leafObject
+    const branchValue = isObject ? branchItem[thing] : branchItem;
+
+    return { _: base, [base]: baseValue, [thing]: branchValue };
+  });
+
+  return grains
+}
+
+// TODO what if trait-thing relation appears elswhere deeper in the record?
+function traitIsObjectCase(schema, record, trait, thing) {
+  console.log("traitIsObjectCase", record, trait, thing)
+  // TODO what if trunk is undefined here?
+  const { [trait]: omitted, ...recordWithoutTrunk } = record;
+
+  const trunkItems = Array.isArray(omitted) ? omitted : [omitted];
+
+  const grains = trunkItems.reduce((withTrunkItem, trunkItem) => {
+    const isObject = typeof trunkItem === "object";
+
+    const trunkObject = isObject
+          ? trunkItem
+          : { _: trunk, [trunk]: trunkItem };
+
+    const trunkValue = isObject ? trunkItem[trait] : trunkItem;
+
+    const branchItems = Array.isArray(trunkObject[thing])
+          ? trunkObject[thing]
+          : [trunkObject[thing]];
+
+    const trunkItemGrains = branchItems.map((branchItem) => {
+      const branchItemIsObject = typeof branchItem === "object";
+
+      const branchValue = branchItemIsObject ? branchItem[thing] : branchItem;
+
+      const grain = { _: trait, [trait]: trunkValue, [thing]: branchValue};
+
+      return grain;
     });
 
-    // TODO check if branch is connected to trunk
-    const leafLeaves = Object.keys(schema).filter(
-      (b) => schema[b].trunk === leaf && isConnected(schema, b, trunk)
-    );
+    return [...withTrunkItem, ...trunkItemGrains];
+  }, []).filter(Boolean);
 
-    // for each leaf item
-    const grainsLeafItem = leafItems.reduce((withLeafItem, leafItem) => {
-      // call winnow on leaf item
-      const grainsLeafItems = leafLeaves.reduce((withLeafLeaf, leafLeaf) => {
-        const grainsLeafLeaf = winnow(schema, leafItem, trunk, branch);
+  return grains
+}
 
-        return [...withLeafLeaf, ...grainsLeafLeaf];
+function traitIsNestedCase(schema, record, trait, thing) {
+  // console.log("traitIsNestedCase", record, trait, thing)
+  const { _: base, [base]: baseValueOmitted, ...recordWithoutBase } = record;
+
+  // TODO can we guess here which of the remaining leaves leads to the.trait?
+  const entries = Object.entries(recordWithoutBase);
+
+  // reduce each key-value pair to match trait and set thing
+  const grains = entries.reduce(
+    (withEntry, [leaf, leafValue]) => {
+      // TODO should we take from omitted or leafValue here?
+      let leafItems = Array.isArray(leafValue) ? leafValue : [leafValue];
+
+      const grainsLeaf = leafItems.reduce((withLeafItem, leafItem) => {
+        const isObject =
+              !Array.isArray(leafItem) && typeof leafItem === "object";
+
+        const leafObject = isObject
+              ? leafItem
+              : { _: leaf, [leaf]: leafItem };
+
+        const grainsLeafItem = winnow(schema, leafObject, trait, thing);
+
+        return [...withLeafItem, ...grainsLeafItem]
       }, []);
 
-      return [...withLeafItem, ...grainsLeafItems];
+      return [...withEntry, ...grainsLeaf];
     }, []);
 
-    return [...withLeaf, ...grainsLeafItem]
-  }, []);
+  return grains
+}
 
-  // if (trunk === "export_tags" &&
-  //     branch === "export1_tag")
-  //   console.log(grainsRecord, grainsLeaves)
+export function winnow(schema, record, trait, thing) {
+  const { _: base } = record;
 
-  return [...grainsRecord, ...grainsLeaves];
+  const baseIsThing = base === thing;
+
+  if (baseIsThing) return baseIsThingCase(schema, record, trait, thing);
+
+  const baseIsTrait = base === trait;
+
+  if (baseIsTrait) return baseIsTraitCase(schema, record, trait, thing);
+
+  const recordHasTrait = Object.hasOwn(record, trait);
+
+  if (recordHasTrait) return traitIsObjectCase(schema, record, trait, thing);
+
+  // if none of the fields are trait or thing, go into objects
+  return traitIsNestedCase(schema, record, trait, thing);
 }

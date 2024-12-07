@@ -9,7 +9,7 @@ import {
   toSchema
 } from "../src/index.js";
 import {
-  testCasesSireres,
+  testCasesWinnow,
 } from "./cases.js";
 
 function sortObject(a) {
@@ -76,8 +76,8 @@ function copy(_path, path) {
   }
 }
 
-describe("winnow()", () => {
-  testCasesSireres.forEach((testCase) => {
+describe.only("winnow()", () => {
+  testCasesWinnow.forEach((testCase) => {
     test(testCase.name, async () => {
       const schemaRecord = await selectSchema({
         fs: nodefs,

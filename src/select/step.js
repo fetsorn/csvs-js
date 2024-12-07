@@ -224,7 +224,7 @@ function traitIsObjectCase(tablet, record, trait, thing) {
   // TODO what if trunk is undefined here?
   const { [trunk]: omitted, ...recordWithoutTrunk } = record;
 
-  let trunkItems = Array.isArray(omitted) ? omitted : [omitted];
+  const trunkItems = Array.isArray(omitted) ? omitted : [omitted];
 
   const stateValues = trunkItems.reduce(
     (stateWithTrunk, trunkItem) => {

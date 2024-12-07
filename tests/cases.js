@@ -338,9 +338,9 @@ export const testCasesDelete = [
   },
 ];
 
-export const testCasesSireres = [
+export const testCasesWinnow = [
   {
-    name: "sirere from simple event",
+    name: "grain from simple event",
     initial: mocks.datasetDefault,
     record: mocks.record2001,
     trunk: "datum",
@@ -352,7 +352,7 @@ export const testCasesSireres = [
     }],
   },
   {
-    name: "sirere from array",
+    name: "grain from array",
     initial: mocks.datasetArray,
     record: mocks.recordArray,
     trunk: "export1_tag",
