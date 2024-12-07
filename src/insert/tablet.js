@@ -1,7 +1,7 @@
 import path from "path";
 import csv from "papaparse";
 import { WritableStream, ReadableStream } from "@swimburger/isomorphic-streams";
-import { recordToRelationMap } from "../record.js";
+import { winnow } from "../record.js";
 
 export function insertTablet(fs, dir, tablet, schema) {
   const filepath = path.join(dir, tablet.filename);
@@ -11,16 +11,9 @@ export function insertTablet(fs, dir, tablet, schema) {
       // pass the query early on to start other tablet streams
       controller.enqueue(query);
 
-      // build a relation map of the record. tablet -> key -> list of values
-      const relationMap = recordToRelationMap(schema, query.query);
+      const grains = winnow(query, tablet.trunk, tablet.branch);
 
-      // TODO remove relations
-      const relations = relationMap[tablet.filename] ?? {};
-
-      // form new lines from relations
-      const lines = Object.entries(relations).map(([key, values]) =>
-        values.map((value) => csv.unparse([[key, value]], { delimiter: ",", newline: "\n" })),
-      );
+      const lines = grains.map(({ [tablet.trunk]: key, [tablet.branch]: value }) => csv.unparse([[key, value]], { delimiter: ",", newline: "\n" }));
 
       const insertStream = ReadableStream.from(lines);
 
