@@ -1,5 +1,6 @@
 import csv from "papaparse";
 import { step } from "./step.js";
+import { sow, mow } from "../record.js";
 
 /**
  *
@@ -52,7 +53,32 @@ export function parseLine(state, tablet, line) {
   // if fst is new, reset record for query
   const record = pushEager ? state.initial : state.current;
 
-  const { isMatch, record: current } = step(tablet, record, trait, thing);
+  // const { isMatch, record: current } = step(tablet, record, trait, thing);
+
+  const grains = mow(record, trait, thing);
+
+  // replace
+  const { isMatch, grains: grainsNew } = grains.reduce((withGrain, grain) => {
+    const isMatch = tablet.traitIsRegex
+          ? newRegExp(grain[tablet.trait]).test(trait)
+          : grain[tablet.trait] === trait;
+
+    const isMatchPartial = {
+      isMatch: withGrain.isMatch ? withGrain.isMatch : isMatch
+    };
+
+    const grainNew = { ...grain, [thing]: thing };
+
+    const grainsPartial = {
+      grains: isMatch
+        ? [ ...withGrain.grains, grainNew ]
+        : withGrain.grains
+    };
+
+    return { ...isMatchPartial, ...grainsPartial };
+  }, { grains: [] });
+
+  const current = grainsNew.reduce((withGrain, grain) => sow(withGrain, grain, trait, thing), state.entry);
 
   // remember previous isMatch inside a group of fst
   const isMatchNew =
