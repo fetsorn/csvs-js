@@ -389,17 +389,21 @@ export function mow(record, trait, thing) {
 function sowBaseIsThing(record, grain, trait, thing) {
   const thingExisting = record[thing];
 
-  const thingValue = [thingExisting, grain[thing]];
+  const thingValue = [thingExisting, grain[thing]].flat();
 
-  return { ...record, [thing]: thingValue }
+  const recordNew = { ...record, [thing]: thingValue };
+
+  return recordNew;
 }
 
 function sowBaseIsTrait(record, grain, trait, thing) {
   const thingExisting = record[thing];
 
-  const thingValue = [thingExisting, grain[thing]];
+  const thingValue = [thingExisting, grain[thing]].flat();
 
-  return { ...record, [thing]: thingValue }
+  const recordNew = { ...record, [thing]: thingValue };
+
+  return recordNew;
 }
 
 function sowTraitIsObject(record, grain, trait, thing) {
@@ -423,7 +427,7 @@ function sowTraitIsObject(record, grain, trait, thing) {
           ? grain[thing]
           : [existingLeafValue, grain[thing]].flat();
 
-    const isMatch = trunkValue === graing[trait];
+    const isMatch = trunkValue === grain[trait];
 
     const trunkItemNew = isMatch
           ? { ...trunkObject, [leaf]: leafValues }
@@ -439,7 +443,9 @@ function sowTraitIsObject(record, grain, trait, thing) {
     return trunkItemNew
   });
 
-  return { ...record, [trait]: traitItems }
+  const recordNew = { ...record, [trait]: traitItems };
+
+  return recordNew;
 }
 
 function sowTraitIsNested(record, grain, trait, thing) {
@@ -460,7 +466,7 @@ function sowTraitIsNested(record, grain, trait, thing) {
             ? leafItem
             : { _: leaf, [leaf]: leafItem };
 
-          const leafItemNew = sow(leafObject, grain, trait, thing);
+          const leafItemNew = isObject ? sow(leafObject, grain, trait, thing) : leafItem;
 
           return leafItemNew;
         }

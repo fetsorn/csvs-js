@@ -379,13 +379,13 @@ export const testCasesSow = [
     branch: "saydate",
     expected: mocks.record2001Sow,
   },
-  //{
-  //  name: "grain to array",
-  //  initial: mocks.datasetDefault,
-  //  record: mocks.recordArray,
-  //  grain: mocks.grainArray,
-  //  trunk: "export_tags",
-  //  branch: "export1_tag",
-  //  expected: [mocks.recordArraySow],
-  //},
+  {
+    name: "grain to array",
+    initial: mocks.datasetDefault,
+    record: mocks.recordArray,
+    grain: mocks.grainArray,
+    trunk: "export_tags",
+    branch: "export1_tag",
+    expected: mocks.recordArraySow,
+  },
 ];

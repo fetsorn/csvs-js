@@ -220,16 +220,16 @@ describe("mow()", () => {
   });
 });
 
-describe.only("sow()", () => {
+describe("sow()", () => {
   testCasesSow.forEach((testCase) => {
     test(testCase.name, async () => {
-      const data = sow(testCase.record, testCase.grain);
+      const data = sow(testCase.record, testCase.grain, testCase.trunk, testCase.branch);
 
       const dataSorted = sortObject(data);
 
       const expected = sortObject(testCase.expected);
 
-      console.log(JSON.stringify(dataSorted, undefined, 2));
+      // console.log(JSON.stringify(dataSorted, undefined, 2));
 
       expect(dataSorted).toStrictEqual(expected);
     });
