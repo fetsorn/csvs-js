@@ -404,6 +404,65 @@ const recordSemicolon = {
   datum: "df; af; ha; ka; ad",
 };
 
+const grain2001 = {
+  _: "datum",
+  datum: "value1",
+  saydate: "2001-01-01",
+};
+
+const record2001Sow = {
+  _: "datum",
+  datum: "value1",
+  filepath: { _: "filepath", filepath: "path/to/1", moddate: "2001-01-01" },
+  saydate: ["2001-01-01", "2001-01-01"],
+  sayname: "name1",
+  actdate: "2001-01-01",
+  actname: "name1",
+};
+
+const grainArray = {
+  _: "export_tags",
+  export_tags:
+  "9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f",
+  export1_tag: "a4bac6f8dacc74155b54e1a7855bd92d5054d6ca9d4086194eb8e6bb35f4324d"
+};
+
+const recordArraySow = {
+  _: "datum",
+  datum: "value1",
+  actdate: "2001-01-01",
+  actname: "name1",
+  export_tags: {
+    _: "export_tags",
+    export_tags:
+      "9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f",
+    export1_tag: [
+      {
+        _: "export1_tag",
+        export1_tag:
+          "1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42",
+        export1_channel: "https://channel1.url",
+        export1_key: "longkey1",
+      },
+      {
+        _: "export1_tag",
+        export1_tag:
+          "fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77",
+        export1_channel: "https://channel2.url",
+        export1_key: "longkey2",
+      },
+      "a4bac6f8dacc74155b54e1a7855bd92d5054d6ca9d4086194eb8e6bb35f4324d"
+    ],
+    export2_tag: {
+      _: "export2_tag",
+      export2_tag:
+        "de0bb32caddc0c5685f46b54ed3409649a48643b90e7a3d27980ed2d017be579",
+      export2_username: "username",
+      export2_password: "password",
+    },
+  },
+};
+
 export default {
   record2001,
   record2002,
@@ -429,4 +488,8 @@ export default {
   recordNewline,
   recordPipe,
   recordSemicolon,
+  grain2001,
+  record2001Sow,
+  grainArray,
+  recordArraySow,
 };

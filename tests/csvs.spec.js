@@ -12,14 +12,16 @@ import {
   insertRecord,
   deleteRecord,
   toSchema,
-  winnow,
+  mow,
+  sow,
 } from "../src/index.js";
 import {
   testCasesSelect,
   testCasesUpdate,
   testCasesInsert,
   testCasesDelete,
-  testCasesWinnow,
+  testCasesMow,
+  testCasesSow,
 } from "./cases.js";
 
 function sortObject(a) {
@@ -198,10 +200,10 @@ describe("deleteRecord()", () => {
   });
 });
 
-describe("winnow()", () => {
-  testCasesWinnow.forEach((testCase) => {
+describe("mow()", () => {
+  testCasesMow.forEach((testCase) => {
     test(testCase.name, async () => {
-      const data = winnow(testCase.record, testCase.trunk, testCase.branch)
+      const data = mow(testCase.record, testCase.trunk, testCase.branch);
 
       const dataSorted = data
         .map(sortObject)
@@ -212,6 +214,22 @@ describe("winnow()", () => {
         .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
 
       // console.log(JSON.stringify(dataSorted, undefined, 2));
+
+      expect(dataSorted).toStrictEqual(expected);
+    });
+  });
+});
+
+describe.only("sow()", () => {
+  testCasesSow.forEach((testCase) => {
+    test(testCase.name, async () => {
+      const data = sow(testCase.record, testCase.grain);
+
+      const dataSorted = sortObject(data);
+
+      const expected = sortObject(testCase.expected);
+
+      console.log(JSON.stringify(dataSorted, undefined, 2));
 
       expect(dataSorted).toStrictEqual(expected);
     });

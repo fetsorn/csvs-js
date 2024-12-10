@@ -6,7 +6,7 @@ import {
   TransformStream,
 } from "@swimburger/isomorphic-streams";
 import { isEmpty, createLineStream } from "../stream.js";
-import { winnow } from "../record.js";
+import { mow } from "../record.js";
 
 function updateSchemaStream(query) {
   return new TransformStream({
@@ -28,7 +28,7 @@ function updateSchemaStream(query) {
 }
 
 function updateLineStream(query, tablet) {
-  const grains = winnow(query, tablet.trunk, tablet.branch);
+  const grains = mow(query, tablet.trunk, tablet.branch);
 
   // get the keys and all values for each key, all sorted
   let keys = [...(new Set(grains.map((grain) => grain[tablet.trunk])))].sort();

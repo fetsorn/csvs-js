@@ -338,7 +338,7 @@ export const testCasesDelete = [
   },
 ];
 
-export const testCasesWinnow = [
+export const testCasesMow = [
   {
     name: "grain from simple event",
     initial: mocks.datasetDefault,
@@ -367,4 +367,25 @@ export const testCasesWinnow = [
       "export1_channel": "https://channel2.url",
     }],
   },
+];
+
+export const testCasesSow = [
+  {
+    name: "grain to array",
+    initial: mocks.datasetDefault,
+    record: mocks.record2001,
+    grain: mocks.grain2001,
+    trunk: "datum",
+    branch: "saydate",
+    expected: mocks.record2001Sow,
+  },
+  //{
+  //  name: "grain to array",
+  //  initial: mocks.datasetDefault,
+  //  record: mocks.recordArray,
+  //  grain: mocks.grainArray,
+  //  trunk: "export_tags",
+  //  branch: "export1_tag",
+  //  expected: [mocks.recordArraySow],
+  //},
 ];

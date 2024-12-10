@@ -19,7 +19,8 @@ import {
   enrichBranchRecords,
   extractSchemaRecords,
   searchParamsToQuery,
-  winnow,
+  mow,
+  sow,
 } from "./record.js";
 import { findCrown, toSchema } from "./schema.js";
 
@@ -44,7 +45,8 @@ export {
   searchParamsToQuery,
   findCrown,
   toSchema,
-  winnow,
+  mow,
+  sow,
 };
 
 export default {
@@ -68,5 +70,6 @@ export default {
   searchParamsToQuery,
   findCrown,
   toSchema,
-  winnow,
+  mow,
+  sow,
 };
