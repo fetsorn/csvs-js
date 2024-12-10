@@ -43,13 +43,15 @@ export async function selectSchemaStream({ fs, dir }) {
         queryStream,
       );
 
-      await schemaStream.pipeTo(new WritableStream({
-        async write(record) {
-          controllerOuter.enqueue(record)
-        }
-      }))
-    }
-  })
+      await schemaStream.pipeTo(
+        new WritableStream({
+          async write(record) {
+            controllerOuter.enqueue(record);
+          },
+        }),
+      );
+    },
+  });
 }
 
 /**
@@ -101,7 +103,7 @@ export async function selectRecordStream({ fs, dir }) {
       const queryStrategy = planQuery(schema, query);
 
       const baseStrategy =
-            queryStrategy.length > 0 ? queryStrategy : planOptions(schema, base);
+        queryStrategy.length > 0 ? queryStrategy : planOptions(schema, base);
 
       const valueStrategy = planValues(schema, query);
 
@@ -116,7 +118,7 @@ export async function selectRecordStream({ fs, dir }) {
       const leaderStream = new TransformStream({
         transform(state, controllerInner) {
           const record =
-                leader && leader !== base ? state.record[leader] : state.record;
+            leader && leader !== base ? state.record[leader] : state.record;
 
           // TODO account for nested leader
           // TODO account for a list of leader values
@@ -131,13 +133,15 @@ export async function selectRecordStream({ fs, dir }) {
         queryStream,
       );
 
-      await schemaStream.pipeTo(new WritableStream({
-        async write(record) {
-          controllerOuter.enqueue(record)
-        }
-      }))
-    }
-  })
+      await schemaStream.pipeTo(
+        new WritableStream({
+          async write(record) {
+            controllerOuter.enqueue(record);
+          },
+        }),
+      );
+    },
+  });
 }
 
 /**
@@ -287,19 +291,22 @@ export async function selectRecord({ fs, dir, query }) {
   // TODO exit if no base field or invalid base value
   const base = queries[0]._;
 
-  const selectStream = base === "_"
-        ? await selectSchemaStream({ fs, dir })
-        : await selectRecordStream({ fs, dir });
+  const selectStream =
+    base === "_"
+      ? await selectSchemaStream({ fs, dir })
+      : await selectRecordStream({ fs, dir });
 
   const records = [];
 
-  await ReadableStream.from(queries).pipeThrough(selectStream).pipeTo(
-    new WritableStream({
-      write(record) {
-        records.push(record);
-      },
-    })
-  );
+  await ReadableStream.from(queries)
+    .pipeThrough(selectStream)
+    .pipeTo(
+      new WritableStream({
+        write(record) {
+          records.push(record);
+        },
+      }),
+    );
 
   return records;
 }

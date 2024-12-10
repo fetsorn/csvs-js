@@ -45,7 +45,7 @@ export function selectTabletStream(fs, dir, tablet) {
         // );
 
         // assume the record is new because it has been checked against stream map upstream
-        controller.enqueue({ record: state.record });
+        controller.enqueue({ record: state.record, query: state.query });
 
         return;
       }
@@ -55,16 +55,21 @@ export function selectTabletStream(fs, dir, tablet) {
       }
 
       // value tablets drop query and require a record
-      if (!tablet.accumulating && tablet.querying === undefined && state.record === undefined) {
+      if (
+        !tablet.accumulating &&
+        tablet.querying === undefined &&
+        state.record === undefined
+      ) {
         return;
       }
 
       // this will stream state after file reader streams
-      let stateIntermediary = tablet.accumulating
-          ? { initial: state.query, current: state.query }
-          : {
-        initial: state.query ?? state.record,
-        current: state.query ?? state.record,
+      let stateIntermediary = {
+        initial: state.record ?? { _: state.query._ },
+        current: state.record ?? { _: state.query._ },
+        query: tablet.passthrough
+          ? state.record
+          : (state.query ?? state.record),
       };
 
       let matchMap = state.map ?? new Map();
@@ -106,12 +111,18 @@ export function selectTabletStream(fs, dir, tablet) {
               //   JSON.stringify(stateIntermediary.complete, undefined, 2),
               // );
 
-              controller.enqueue({ record: stateIntermediary.complete });
+              controller.enqueue({
+                record: stateIntermediary.complete,
+                query: state.query,
+              });
 
               matchMap.set(value, true);
             }
           } else {
-            controller.enqueue({ record: stateIntermediary.complete });
+            controller.enqueue({
+              record: stateIntermediary.complete,
+              query: state.query,
+            });
 
             hasMatch = true;
           }
@@ -120,9 +131,12 @@ export function selectTabletStream(fs, dir, tablet) {
         }
       }
 
-      const { [tablet.trait]: omitted, ...completeWithoutTrait } = stateIntermediary.current;
+      const { [tablet.trait]: omitted, ...completeWithoutTrait } =
+        stateIntermediary.current;
 
-      const complete = tablet.querying ? completeWithoutTrait : stateIntermediary.current;
+      const complete = tablet.querying
+        ? completeWithoutTrait
+        : stateIntermediary.current;
 
       // push if tablet wasn't eager or if eager matched
       const pushEnd = !tablet.eager || stateIntermediary.isMatch;
@@ -149,12 +163,18 @@ export function selectTabletStream(fs, dir, tablet) {
           const newMatch = matchMap.get(value) === undefined;
 
           if (newMatch) {
-            controller.enqueue({ record: stateIntermediary.complete });
+            controller.enqueue({
+              record: stateIntermediary.complete,
+              query: state.query,
+            });
 
             matchMap.set(value, true);
           }
         } else {
-          controller.enqueue({ record: stateIntermediary.complete });
+          controller.enqueue({
+            record: stateIntermediary.complete,
+            query: state.query,
+          });
 
           hasMatch = true;
         }
@@ -183,7 +203,7 @@ export function selectTabletStream(fs, dir, tablet) {
         //   JSON.stringify(state.record, undefined, 2),
         // );
 
-        controller.enqueue({ record: state.query ?? state.record });
+        controller.enqueue({ record: state.record, query: state.query });
       }
     },
   });
