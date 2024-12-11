@@ -49,7 +49,7 @@ function updateLineStream(query, tablet) {
   }, {});
 
   // if (tablet.filename === "export_tags-export1_tag.csv")
-  //   console.log(JSON.stringify(query.query, null, 2), grains, keys, values)
+  //   console.log(JSON.stringify(state.query, null, 2), grains, keys, values)
 
   function insertAndForget(key, controller) {
     for (const value of values[key] ?? []) {
@@ -129,9 +129,9 @@ export function updateTabletStream(fs, dir, tablet) {
   const filepath = path.join(dir, tablet.filename);
 
   return new TransformStream({
-    async transform(query, controller) {
+    async transform(state, controller) {
       // pass the query early on to start other tablet streams
-      controller.enqueue(query);
+      controller.enqueue(state);
 
       const fileStream = (await isEmpty(fs, filepath))
         ? ReadableStream.from([""])
@@ -140,8 +140,8 @@ export function updateTabletStream(fs, dir, tablet) {
       const isSchema = tablet.filename === "_-_.csv";
 
       const updateStream = isSchema
-        ? updateSchemaStream(query.query)
-        : updateLineStream(query.query, tablet);
+        ? updateSchemaStream(state.query)
+        : updateLineStream(state.query, tablet);
 
       const tmpdir = await fs.promises.mkdtemp(path.join(dir, "update-"));
 

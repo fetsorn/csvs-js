@@ -23,15 +23,16 @@ export async function updateRecordStream({ fs, dir }) {
         updateTabletStream(fs, dir, tablet),
       );
 
-      const updateStream = [...streams].reduce(
+      const updateStream = streams.reduce(
         (withStream, stream) => withStream.pipeThrough(stream),
         queryStream,
       );
 
       await updateStream.pipeTo(
         new WritableStream({
-          async write(record) {
-            controller.enqueue(record);
+          async write(state) {
+            // push query as entry
+            controller.enqueue(state.query);
           },
         }),
       );
@@ -60,8 +61,8 @@ export async function updateRecord({ fs, dir, query }) {
     .pipeThrough(updateStream)
     .pipeTo(
       new WritableStream({
-        write(record) {
-          entries.push(record);
+        write(entry) {
+          entries.push(entry);
         },
       }),
     );
