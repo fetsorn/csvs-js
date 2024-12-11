@@ -38,6 +38,8 @@ export async function selectRecordStream({ fs, dir }) {
 
       const strategy = planSelect(schema, query);
 
+      // console.log(strategy);
+
       const streams = strategy.map((tablet) =>
         selectTabletStream(fs, dir, tablet),
       );
@@ -75,6 +77,7 @@ export async function selectRecordStream({ fs, dir }) {
       await selectStream.pipeTo(
         new WritableStream({
           async write(state) {
+            // console.log(state);
             controller.enqueue(state.entry);
           },
         }),
@@ -112,6 +115,8 @@ export async function selectRecord({ fs, dir, query }) {
         },
       }),
     );
+
+  // console.log(entries);
 
   return entries;
 }

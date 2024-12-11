@@ -40,6 +40,22 @@ function selectSchemaStream({ query }) {
 }
 
 function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tablet) {
+  // const logTablet = true;
+  // const logTablet = tablet.filename === "datum-filepath.csv";
+
+  // if (logTablet)
+  //   console.log(
+  //     Date.now() - start,
+  //     "tablet in",
+  //     source,
+  //     tablet,
+  //     "\n",
+  //     JSON.stringify(query, undefined, 2),
+  //     JSON.stringify(entry, undefined, 2),
+  //     matchMap,
+  //     thingQuerying,
+  //   );
+
   // in a querying tablet, set initial entry to the base of the tablet
   // and preserve the received entry for sowing grains later
   // if tablet base is different from previous entry base
@@ -98,20 +114,17 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
     thingQuerying: thingQueryingInitial,
   };
 
-  // const logTablet = true;
-  const logTablet = tablet.filename === "datum-filepath.csv";
-
-  if (logTablet)
-    console.log(
-      Date.now() - start,
-      "tablet",
-      source,
-      tablet,
-      "\n",
-      JSON.stringify(state, undefined, 2),
-      state.matchMap,
-      state.thingQuerying,
-    );
+  // if (logTablet)
+  //   console.log(
+  //     Date.now() - start,
+  //     "tablet",
+  //     source,
+  //     tablet,
+  //     "\n",
+  //     JSON.stringify(state, undefined, 2),
+  //     state.matchMap,
+  //     state.thingQuerying,
+  //   );
 
   // value tablets receive a matchMap from accumulating tablets
   // but don't need to do anything with it or with the accompanying entry
@@ -138,16 +151,16 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
   // and will need to invalidate matchMap
 
   if (forwardAccumulating) {
-    if (logTablet)
-      console.log(
-        Date.now() - start,
-        "acc forward",
-        source,
-        tablet,
-        "\n",
-        JSON.stringify(state, undefined, 2),
-        state.matchMap,
-      );
+    // if (logTablet)
+    //   console.log(
+    //     Date.now() - start,
+    //     "acc forward",
+    //     source,
+    //     tablet,
+    //     "\n",
+    //     JSON.stringify(state, undefined, 2),
+    //     state.matchMap,
+    //   );
 
     return new TransformStream({
       start(controller) {
@@ -187,17 +200,17 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
       const pushEndOfGroup = isEndOfGroup && isComplete;
 
       if (pushEndOfGroup) {
-        if (logTablet)
-          console.log(
-            Date.now() - start,
-            "push match",
-            source,
-            tablet,
-            "\n",
-            JSON.stringify(state, undefined, 2),
-            state.matchMap,
-            state.thingQuerying,
-          );
+        // if (logTablet)
+        //   console.log(
+        //     Date.now() - start,
+        //     "push match",
+        //     source,
+        //     tablet,
+        //     "\n",
+        //     JSON.stringify(state, undefined, 2),
+        //     state.matchMap,
+        //     state.thingQuerying,
+        //   );
 
         // don't push matchMap here because accumulating is not yet finished
         controller.enqueue({
@@ -227,6 +240,9 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
       const grains = mow(state.query, tablet.trait, tablet.thing);
 
       // console.log(grains);
+
+      // if (logTablet)
+      //   console.log(grains);
 
       const grainsNew = grains
         .map((grain) => {
@@ -276,14 +292,14 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
         })
         .filter(Boolean);
 
-      // console.log(grainsNew);
+      // if (logTablet)
+      //   console.log(grainsNew);
 
       state.entry = grainsNew.reduce(
         (withGrain, grain) => sow(withGrain, grain, tablet.trait, tablet.thing),
         state.entry,
       );
 
-      // if (logTablet) console.log("tail", tablet.filename, line, state);
       if (tablet.querying) {
         // in querying tablet we should sow the grain into the query as well
         state.query = grainsNew.reduce(
@@ -292,6 +308,7 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
         )
       }
 
+      // if (logTablet) console.log("tail", tablet.filename, line, state);
     },
 
     flush(controller) {
@@ -308,16 +325,17 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
       // TODO this pushes when has match but it has to push when the group is over
       // TODO check that the group is new in fstIsNew doesn't work for some reason
       if (isComplete) {
-        if (logTablet)
-          console.log(
-            Date.now() - start,
-            "push end",
-            source,
-            tablet,
-            "\n",
-            JSON.stringify(state, undefined, 2),
-            state.matchMap,
-          );
+        // if (logTablet)
+        //   console.log(
+        //     Date.now() - start,
+        //     "push end",
+        //     source,
+        //     tablet,
+        //     "\n",
+        //     JSON.stringify(state, undefined, 2),
+        //     state.matchMap,
+        //     state.thingQuerying,
+        //   );
 
         // don't push matchMap here because accumulating is not yet finished
         controller.enqueue({
@@ -342,16 +360,16 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
       if (tablet.accumulating) {
         // TODO in accumulating by trunk this pushes entryInitial
         //      to output and yields extra search result
-        if (logTablet)
-          console.log(
-            Date.now() - start,
-            "acc push map",
-            source,
-            tablet,
-            "\n",
-            JSON.stringify(state, undefined, 2),
-            state.matchMap,
-          );
+        // if (logTablet)
+        //   console.log(
+        //     Date.now() - start,
+        //     "acc push map",
+        //     source,
+        //     tablet,
+        //     "\n",
+        //     JSON.stringify(state, undefined, 2),
+        //     state.matchMap,
+        //   );
 
         controller.enqueue({
           query: state.query,
@@ -361,16 +379,16 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
           thingQuerying: state.thingQuerying,
         });
       } else if (isEmptyPassthrough) {
-        if (logTablet)
-          console.log(
-            Date.now() - start,
-            "push through",
-            source,
-            tablet,
-            "\n",
-            JSON.stringify(state, undefined, 2),
-            state.matchMap,
-          );
+        // if (logTablet)
+        //   console.log(
+        //     Date.now() - start,
+        //     "push through",
+        //     source,
+        //     tablet,
+        //     "\n",
+        //     JSON.stringify(state, undefined, 2),
+        //     state.matchMap,
+        //   );
 
         // if no match and tablet is not a filter
         // push initial record to the next passthrough value tablet
@@ -393,16 +411,16 @@ export function selectTabletStream(fs, dir, tablet) {
 
   return new TransformStream({
     async transform(state, controller) {
-      if (logTablet)
-        console.log(
-          Date.now() - start,
-          "selectTabletStream",
-          source,
-          tablet,
-          "\n",
-          JSON.stringify(state, undefined, 2),
-          state.matchMap,
-        );
+      // if (logTablet)
+      //   console.log(
+      //     Date.now() - start,
+      //     "selectTabletStream",
+      //     source,
+      //     tablet,
+      //     "\n",
+      //     JSON.stringify(state, undefined, 2),
+      //     state.matchMap,
+      //   );
 
       const fileStream = (await isEmpty(fs, filepath))
         ? ReadableStream.from([""])

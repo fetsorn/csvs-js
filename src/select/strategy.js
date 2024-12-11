@@ -113,6 +113,8 @@ export function planValues(schema, query) {
   // should the crown include base?
   const crown = findCrown(schema, base).sort(sortNestingDescending(schema)).filter((b) => b !== base);
 
+  // console.log("planValues", schema, base, crown);
+
   const valueTablets = crown.map((branch) => {
     const trunkList = [schema[branch].trunk].flat();
 

@@ -107,7 +107,7 @@ export const testCasesSelect = [
   },
   {
     name: "options name",
-    query: { _: "actname", actname: "" },
+    query: { _: "actname" },
     initial: mocks.datasetAdded,
     expected: mocks.optionsActname,
   },

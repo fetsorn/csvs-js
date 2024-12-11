@@ -361,6 +361,8 @@ function mowTraitIsNested(record, trait, thing) {
 }
 
 export function mow(record, trait, thing) {
+  // console.log("mow", record, trait, thing)
+
   const { _: base } = record;
 
   const baseIsThing = base === thing;
@@ -497,6 +499,8 @@ function sowTraitIsNested(record, grain, trait, thing) {
 }
 
 export function sow(record, grain, trait, thing) {
+  // console.log("sow", record, grain);
+
   const { _: base } = record;
 
   const baseIsThing = base === thing;
