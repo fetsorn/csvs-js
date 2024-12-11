@@ -44,16 +44,45 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
   // and preserve the received entry for sowing grains later
   // if tablet base is different from previous entry base
   // sow previous entry into the initial entry
-  const entryInitial = entry === undefined || tablet.querying
-        ? entry === undefined ? { _: tablet.base } : tablet.base === query._ ? { _: tablet.base } : sow({ _: tablet.base }, entry, tablet.base, entry._)
+  // const entryInitial = doSetEntry
+  //       ? entryBaseChanged ? sow({ _: tablet.base }, entry, tablet.base, entry._) : { _: tablet.base }
+  //       : entry;
+
+  // const entryInitial = entry === undefined || tablet.querying
+  //       ? entry === undefined
+  //           ? { _: tablet.base }
+  //           : tablet.base === query._
+  //               ? { _: tablet.base }
+  //               : sow({ _: tablet.base }, entry, tablet.base, entry._)
+  //       : entry;
+
+  // const doSetEntry = entry === undefined || tablet.querying;
+
+  // const  = tablet.base !== query._;
+
+  const doDiscard = entry === undefined || ( tablet.querying && tablet.base === query._ );
+
+  const entryFallback = doDiscard
+        ? { _: tablet.base }
         : entry;
+
+  const doSow = tablet.querying && !doDiscard;
+
+  const entryInitial = doSow
+        ? sow({ _: tablet.base }, entry, tablet.base, entry._)
+        : entryFallback;
+
+  const entryBaseChanged = entry === undefined || entry._ !== entryInitial._;
+
+  // TODO if entry base changed forget thingQuerying
+  const thingQueryingInitial = entryBaseChanged ? undefined : thingQuerying;
 
   const isValueTablet = !tablet.accumulating && !tablet.querying;
 
   // in a value tablet use entry as a query
   const doSwap = isValueTablet;
 
-  const queryInitial = doSwap ? entryInitial : query
+  const queryInitial = doSwap ? entryInitial : query;
 
   let state = {
     query: queryInitial,
@@ -62,7 +91,7 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
     isMatch: false,
     hasMatch: false,
     matchMap,
-    thingQuerying,
+    thingQuerying: thingQueryingInitial,
   };
 
   // const logTablet = true;
@@ -77,7 +106,7 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
       "\n",
       JSON.stringify(state, undefined, 2),
       state.matchMap,
-      thingQuerying,
+      state.thingQuerying,
     );
 
   // value tablets receive a matchMap from accumulating tablets
@@ -202,13 +231,13 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
 
           // TODO when querying also match literal trait from the query
           // otherwise always true
-          const doDiff = tablet.querying && thingQuerying !== undefined;
+          const doDiff = tablet.querying && state.thingQuerying !== undefined;
 
           // TODO should this address the entryInitial?
           //      right now the thing is dropped from entryInitial so that sow works below
           // TODO what if the thing is nested and can't be accessed at the top level?
           //      is that impossible due to sow in entryInitial?
-          const isMatchQuerying = doDiff ? thingQuerying === thing : true;
+          const isMatchQuerying = doDiff ? state.thingQuerying === thing : true;
 
           const isMatch = isMatchGrain && isMatchQuerying;
 
