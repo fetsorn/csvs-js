@@ -192,6 +192,7 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
             "\n",
             JSON.stringify(state, undefined, 2),
             state.matchMap,
+            state.thingQuerying,
           );
 
         // don't push matchMap here because accumulating is not yet finished
@@ -231,13 +232,13 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
 
           // TODO when querying also match literal trait from the query
           // otherwise always true
-          const doDiff = tablet.querying && state.thingQuerying !== undefined;
+          const doDiff = tablet.querying && thingQueryingInitial !== undefined;
 
           // TODO should this address the entryInitial?
           //      right now the thing is dropped from entryInitial so that sow works below
           // TODO what if the thing is nested and can't be accessed at the top level?
           //      is that impossible due to sow in entryInitial?
-          const isMatchQuerying = doDiff ? state.thingQuerying === thing : true;
+          const isMatchQuerying = doDiff ? thingQueryingInitial === thing : true;
 
           const isMatch = isMatchGrain && isMatchQuerying;
 
