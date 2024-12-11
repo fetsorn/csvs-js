@@ -6,8 +6,6 @@ import os from "os";
 import {
   selectRecord,
   selectSchema,
-  selectBase,
-  selectBody,
   updateRecord,
   insertRecord,
   deleteRecord,
@@ -108,34 +106,6 @@ describe("selectRecord()", () => {
 
         expect(dataSorted).toStrictEqual(expected);
       });
-    });
-  });
-});
-
-describe("selectBase()", () => {
-  testCasesSelect.forEach((testCase) => {
-    test(testCase.name, async () => {
-      const baseRecords = await selectBase({
-        fs: nodefs,
-        dir: testCase.initial,
-        query: testCase.query,
-      });
-
-      const records = await Promise.all(
-        baseRecords.map((baseRecord) =>
-          selectBody({ fs: nodefs, dir: testCase.initial, query: baseRecord }),
-        ),
-      );
-
-      const dataSorted = records
-        .map(sortObject)
-        .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
-
-      const expected = testCase.expected
-        .map(sortObject)
-        .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
-
-      expect(dataSorted).toStrictEqual(expected);
     });
   });
 });

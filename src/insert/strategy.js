@@ -1,6 +1,4 @@
-import {
-  findCrown,
-} from "../schema.js";
+import { findCrown } from "../schema.js";
 
 export function planInsert(schema, query) {
   const base = query._;
@@ -13,9 +11,9 @@ export function planInsert(schema, query) {
     return {
       filename: `${trunk}-${branch}.csv`,
       trunk,
-      branch
-    }
-  })
+      branch,
+    };
+  });
 
-  return tablets
+  return tablets;
 }

@@ -29,15 +29,19 @@ export async function insertRecordStream({ fs, dir }) {
         queryStream,
       );
 
-      await insertStream.pipeTo(new WritableStream({
-        async write(record) {
-          controller.enqueue(record)
-        }
-      }));
+      await insertStream.pipeTo(
+        new WritableStream({
+          async write(record) {
+            controller.enqueue(record);
+          },
+        }),
+      );
     },
 
     async flush() {
-      const promises = isInserted.entries().map(([filename]) => sortFile(fs, dir, filename));
+      const promises = isInserted
+        .entries()
+        .map(([filename]) => sortFile(fs, dir, filename));
 
       await Promise.all(promises);
     },
@@ -54,13 +58,15 @@ export async function insertRecord({ fs, dir, query }) {
 
   const entries = [];
 
-  await ReadableStream.from(queries).pipeThrough(insertStream).pipeTo(
-    new WritableStream({
-      write(record) {
-        entries.push(record);
-      },
-    })
-  );
+  await ReadableStream.from(queries)
+    .pipeThrough(insertStream)
+    .pipeTo(
+      new WritableStream({
+        write(record) {
+          entries.push(record);
+        },
+      }),
+    );
 
-  return entries
+  return entries;
 }

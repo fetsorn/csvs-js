@@ -13,7 +13,10 @@ export function insertTablet(fs, dir, tablet, schema) {
 
       const grains = mow(query, tablet.trunk, tablet.branch);
 
-      const lines = grains.map(({ [tablet.trunk]: key, [tablet.branch]: value }) => csv.unparse([[key, value]], { delimiter: ",", newline: "\n" }));
+      const lines = grains.map(
+        ({ [tablet.trunk]: key, [tablet.branch]: value }) =>
+          csv.unparse([[key, value]], { delimiter: ",", newline: "\n" }),
+      );
 
       const insertStream = ReadableStream.from(lines);
 
@@ -24,6 +27,6 @@ export function insertTablet(fs, dir, tablet, schema) {
       });
 
       await insertStream.pipeTo(writeStream);
-    }
-  })
+    },
+  });
 }

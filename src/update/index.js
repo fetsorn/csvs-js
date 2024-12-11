@@ -20,7 +20,7 @@ export async function updateRecordStream({ fs, dir }) {
       const strategy = planUpdate(schema, query);
 
       const streams = strategy.map((tablet) =>
-        updateTabletStream(fs, dir, tablet)
+        updateTabletStream(fs, dir, tablet),
       );
 
       const updateStream = [...streams].reduce(
@@ -28,11 +28,13 @@ export async function updateRecordStream({ fs, dir }) {
         queryStream,
       );
 
-      await updateStream.pipeTo(new WritableStream({
-        async write(record) {
-          controller.enqueue(record)
-        }
-      }))
+      await updateStream.pipeTo(
+        new WritableStream({
+          async write(record) {
+            controller.enqueue(record);
+          },
+        }),
+      );
     },
   });
 }
@@ -54,15 +56,17 @@ export async function updateRecord({ fs, dir, query }) {
 
   const entries = [];
 
-  await ReadableStream.from(queries).pipeThrough(updateStream).pipeTo(
-    new WritableStream({
-      write(record) {
-        entries.push(record);
-      },
-    })
-  );
+  await ReadableStream.from(queries)
+    .pipeThrough(updateStream)
+    .pipeTo(
+      new WritableStream({
+        write(record) {
+          entries.push(record);
+        },
+      }),
+    );
 
   // wait for all streams to finish updating tablets
 
-  return entries
+  return entries;
 }

@@ -45,7 +45,7 @@ export function selectTabletStream(fs, dir, tablet) {
         // );
 
         // assume the record is new because it has been checked against stream map upstream
-        controller.enqueue({ record: state.record, query: state.query });
+        controller.enqueue({ record: state.record });
 
         return;
       }
@@ -64,13 +64,12 @@ export function selectTabletStream(fs, dir, tablet) {
       }
 
       // this will stream state after file reader streams
-      let stateIntermediary = {
-        initial: state.record ?? { _: state.query._ },
-        current: state.record ?? { _: state.query._ },
-        query: tablet.passthrough
-          ? state.record
-          : (state.query ?? state.record),
-      };
+      let stateIntermediary = tablet.accumulating
+        ? { initial: state.query, current: state.query }
+        : {
+            initial: state.query ?? state.record,
+            current: state.query ?? state.record,
+          };
 
       let matchMap = state.map ?? new Map();
 
@@ -111,18 +110,12 @@ export function selectTabletStream(fs, dir, tablet) {
               //   JSON.stringify(stateIntermediary.complete, undefined, 2),
               // );
 
-              controller.enqueue({
-                record: stateIntermediary.complete,
-                query: state.query,
-              });
+              controller.enqueue({ record: stateIntermediary.complete });
 
               matchMap.set(value, true);
             }
           } else {
-            controller.enqueue({
-              record: stateIntermediary.complete,
-              query: state.query,
-            });
+            controller.enqueue({ record: stateIntermediary.complete });
 
             hasMatch = true;
           }
@@ -163,18 +156,12 @@ export function selectTabletStream(fs, dir, tablet) {
           const newMatch = matchMap.get(value) === undefined;
 
           if (newMatch) {
-            controller.enqueue({
-              record: stateIntermediary.complete,
-              query: state.query,
-            });
+            controller.enqueue({ record: stateIntermediary.complete });
 
             matchMap.set(value, true);
           }
         } else {
-          controller.enqueue({
-            record: stateIntermediary.complete,
-            query: state.query,
-          });
+          controller.enqueue({ record: stateIntermediary.complete });
 
           hasMatch = true;
         }
@@ -203,7 +190,7 @@ export function selectTabletStream(fs, dir, tablet) {
         //   JSON.stringify(state.record, undefined, 2),
         // );
 
-        controller.enqueue({ record: state.record, query: state.query });
+        controller.enqueue({ record: state.query ?? state.record });
       }
     },
   });

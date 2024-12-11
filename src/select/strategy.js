@@ -133,19 +133,35 @@ export function planValues(schema, query) {
   return valueTablets;
 }
 
-export function planSchema() {
-  const schemaTablet = {
-    // what branch to set?
-    thing: "_",
-    // what branch to match?
-    trait: "_",
-    // do we set first column?
-    thingIsFirst: false,
-    // do we match first column?
-    traitIsFirst: true,
-    filename: `_-_.csv`,
-    // should it have constraints?
-  };
+export function planSelect(schema, query) {
+  const base = query._;
 
-  return [schemaTablet];
+  const isSchema = base === "_";
+
+  if (isSchema)
+    return [
+      {
+        // what branch to set?
+        thing: "_",
+        // what branch to match?
+        trait: "_",
+        // do we set first column?
+        thingIsFirst: false,
+        // do we match first column?
+        traitIsFirst: true,
+        filename: `_-_.csv`,
+        // should it have constraints?
+      },
+    ];
+
+  const queryStrategy = planQuery(schema, query);
+
+  const baseStrategy =
+    queryStrategy.length > 0 ? queryStrategy : planOptions(schema, base);
+
+  const valueStrategy = planValues(schema, query);
+
+  const strategy = [...baseStrategy, ...valueStrategy];
+
+  return strategy;
 }

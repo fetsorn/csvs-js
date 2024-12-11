@@ -50,15 +50,9 @@ export function parseLine(state, tablet, line) {
   const completePartial = isComplete ? { complete } : {};
 
   // if fst is new, reset record for query
-  const entry = pushEager ? state.initial : state.current;
+  const record = pushEager ? state.initial : state.current;
 
-  const { isMatch, entry: current } = step(
-    tablet,
-    state.query,
-    entry,
-    trait,
-    thing,
-  );
+  const { isMatch, record: current } = step(tablet, record, trait, thing);
 
   // remember previous isMatch inside a group of fst
   const isMatchNew =
@@ -66,7 +60,6 @@ export function parseLine(state, tablet, line) {
 
   const stateNew = {
     initial: state.initial,
-    query: state.query,
     ...completePartial,
     current,
     fst,

@@ -1,15 +1,16 @@
-import {
-  findCrown,
-} from "../schema.js";
+import { findCrown } from "../schema.js";
 
 export function planUpdate(schema, query) {
   const base = query._;
 
   const isSchema = base === "_";
 
-  if (isSchema) return [{
-    filename: `_-_.csv`
-  }];
+  if (isSchema)
+    return [
+      {
+        filename: `_-_.csv`,
+      },
+    ];
 
   const crown = findCrown(schema, base);
 
@@ -19,9 +20,9 @@ export function planUpdate(schema, query) {
     return {
       filename: `${trunk}-${branch}.csv`,
       trunk,
-      branch
-    }
-  })
+      branch,
+    };
+  });
 
-  return tablets
+  return tablets;
 }

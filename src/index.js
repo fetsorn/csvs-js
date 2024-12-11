@@ -1,10 +1,7 @@
 import {
-  selectSchemaStream,
   selectRecordStream,
-  selectSchema,
   selectRecord,
-  selectBase,
-  selectBody,
+  selectSchema,
 } from "./select/index.js";
 import {
   updateRecord,
@@ -25,12 +22,9 @@ import {
 import { findCrown, toSchema } from "./schema.js";
 
 export {
-  selectSchemaStream,
   selectRecordStream,
-  selectSchema,
   selectRecord,
-  selectBase,
-  selectBody,
+  selectSchema,
   updateRecord,
   updateRecordStream,
   insertRecord,
@@ -50,12 +44,9 @@ export {
 };
 
 export default {
-  selectSchemaStream,
   selectRecordStream,
-  selectSchema,
   selectRecord,
-  selectBase,
-  selectBody,
+  selectSchema,
   updateRecord,
   updateRecordStream,
   insertRecord,
