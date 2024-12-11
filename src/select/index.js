@@ -16,6 +16,7 @@ import { selectTabletStream } from "./tablet.js";
 export async function selectRecordStream({ fs, dir }) {
   return new TransformStream({
     async transform(query, controllerOuter) {
+      // check schema inside transform to skip it when query is schema
       const isSchema = query._ === "_";
 
       const schema = isSchema
