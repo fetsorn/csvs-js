@@ -248,54 +248,52 @@ export function searchParamsToQuery(schema, searchParams) {
   return query;
 }
 
-// TODO what if trait-thing relation appears elswhere deeper in the record?
+// TODO what if trait-thing relation appears elsewhere deeper in the record?
 function mowBaseIsThing(record, trait, thing) {
   const { _: base } = record;
 
   // assume base is single value
-  const baseValue = record[base];
+  const basePartial =
+    record[base] === undefined ? {} : { [base]: record[base] };
 
   // take values
   const branchItems = Array.isArray(record[trait])
-        ? record[trait]
-        : [record[trait]].filter(Boolean);
+    ? record[trait]
+    : [record[trait]].filter(Boolean);
 
-  const grains = branchItems.map((branchItem) => {
-    const isObject = typeof branchItem === "object";
+  const grains = branchItems
+    .map((branchItem) => {
+      const isObject = typeof branchItem === "object";
 
-    const branchValue = isObject ? branchItem[trait] : branchItem;
+      const branchValue = isObject ? branchItem[trait] : branchItem;
 
-    if (branchValue === undefined) return undefined;
+      if (branchValue === undefined) return undefined;
 
-    return { _: base, [base]: baseValue, [trait]: branchValue };
-  }).filter(Boolean);
+      return { _: base, ...basePartial, [trait]: branchValue };
+    })
+    .filter(Boolean);
 
-  return grains
+  return grains;
 }
 
-// TODO what if trait-thing relation appears elswhere deeper in the record?
+// TODO what if trait-thing relation appears elsewhere deeper in the record?
 function mowBaseIsTrait(record, trait, thing) {
-  const { _: base } = record;
-
-  // assume base is single value
-  const baseValue = record[base];
-
   // take values
   const branchItems = Array.isArray(record[thing])
-        ? record[thing]
-        : [record[thing]].filter(Boolean);
+    ? record[thing]
+    : [record[thing]].filter(Boolean);
+
+  if (branchItems.length === 0) return [{ _: trait, [trait]: record[trait] }];
 
   const grains = branchItems.map((branchItem) => {
     const isObject = typeof branchItem === "object";
 
     const branchValue = isObject ? branchItem[thing] : branchItem;
 
-    if (branchValue === undefined) return undefined;
+    return { _: base, ...basePartial, [thing]: branchValue };
+  });
 
-    return { _: base, [base]: baseValue, [thing]: branchValue };
-  }).filter(Boolean);
-
-  return grains
+  return grains;
 }
 
 // TODO what if trait-thing relation appears elswhere deeper in the record?
@@ -308,32 +306,30 @@ function mowTraitIsObject(record, trait, thing) {
   const grains = trunkItems.reduce((withTrunkItem, trunkItem) => {
     const isObject = typeof trunkItem === "object";
 
-    const trunkObject = isObject
-          ? trunkItem
-          : { _: trait, [trait]: trunkItem };
+    const trunkObject = isObject ? trunkItem : { _: trait, [trait]: trunkItem };
 
     const trunkValue = isObject ? trunkItem[trait] : trunkItem;
 
     const branchItems = Array.isArray(trunkObject[thing])
-          ? trunkObject[thing]
-          : [trunkObject[thing]];
+      ? trunkObject[thing]
+      : [trunkObject[thing]];
 
     const trunkItemGrains = branchItems.map((branchItem) => {
       const branchItemIsObject = typeof branchItem === "object";
 
       const branchValue = branchItemIsObject ? branchItem[thing] : branchItem;
 
-      if (branchValue === undefined) return undefined;
+      if (branchValue === undefined) return { _: trait, [trait]: trunkValue };
 
-      const grain = { _: trait, [trait]: trunkValue, [thing]: branchValue};
+      const grain = { _: trait, [trait]: trunkValue, [thing]: branchValue };
 
       return grain;
-    }).filter(Boolean);
+    });
 
     return [...withTrunkItem, ...trunkItemGrains];
-  }, []).filter(Boolean);
+  }, []);
 
-  return grains
+  return grains;
 }
 
 function mowTraitIsNested(record, trait, thing) {
@@ -343,28 +339,24 @@ function mowTraitIsNested(record, trait, thing) {
   const entries = Object.entries(recordWithoutBase);
 
   // reduce each key-value pair to match trait and set thing
-  const grains = entries.reduce(
-    (withEntry, [leaf, leafValue]) => {
-      // TODO should we take from omitted or leafValue here?
-      const leafItems = Array.isArray(leafValue) ? leafValue : [leafValue];
+  const grains = entries.reduce((withEntry, [leaf, leafValue]) => {
+    // TODO should we take from omitted or leafValue here?
+    const leafItems = Array.isArray(leafValue) ? leafValue : [leafValue];
 
-      const grainsLeaf = leafItems.reduce((withLeafItem, leafItem) => {
-        const isObject =
-              !Array.isArray(leafItem) && typeof leafItem === "object";
+    const grainsLeaf = leafItems.reduce((withLeafItem, leafItem) => {
+      const isObject = !Array.isArray(leafItem) && typeof leafItem === "object";
 
-        const leafObject = isObject
-              ? leafItem
-              : { _: leaf, [leaf]: leafItem };
+      const leafObject = isObject ? leafItem : { _: leaf, [leaf]: leafItem };
 
-        const grainsLeafItem = mow(leafObject, trait, thing);
+      const grainsLeafItem = mow(leafObject, trait, thing);
 
-        return [...withLeafItem, ...grainsLeafItem]
-      }, []);
-
-      return [...withEntry, ...grainsLeaf];
+      return [...withLeafItem, ...grainsLeafItem];
     }, []);
 
-  return grains
+    return [...withEntry, ...grainsLeaf];
+  }, []);
+
+  return grains;
 }
 
 export function mow(record, trait, thing) {
@@ -387,51 +379,66 @@ export function mow(record, trait, thing) {
 }
 
 function sowBaseIsThing(record, grain, trait, thing) {
-  const thingExisting = record[thing];
 
-  const thingValue = [thingExisting, grain[thing]].flat();
+  const existingPartial =
+    record[thing] === undefined ? [] : [record[thing]].flat();
 
-  const recordNew = { ...record, [thing]: thingValue };
+  // what if grain does not have thing?
+  if (grain[thing] === undefined) return record;
+
+  const thingValue = [...existingPartial, grain[thing]];
+
+  const recordNew = {
+    ...record,
+    [thing]: thingValue.length === 1 ? thingValue[0] : thingValue,
+  };
 
   return recordNew;
 }
 
 function sowBaseIsTrait(record, grain, trait, thing) {
-  const thingExisting = record[thing];
 
-  const thingValue = [thingExisting, grain[thing]].flat();
+  const existingPartial =
+    record[thing] === undefined ? [] : [record[thing]].flat();
 
-  const recordNew = { ...record, [thing]: thingValue };
+  // what if grain does not have thing?
+  if (grain[thing] === undefined) return record;
+
+  const thingValue = [...existingPartial, grain[thing]];
+
+  const recordNew = {
+    ...record,
+    [thing]: thingValue.length === 1 ? thingValue[0] : thingValue,
+  };
 
   return recordNew;
 }
 
 function sowTraitIsObject(record, grain, trait, thing) {
+
   const trunkItems = Array.isArray(record[trait])
-        ? record[trait]
-        : record[trait];
+    ? record[trait]
+    : [record[trait]];
 
   const traitItems = trunkItems.map((trunkItem) => {
     const isObject = !Array.isArray(trunkItem) && typeof trunkItem === "object";
 
-    const trunkValue = isObject ? trunkItem[trunk] : trunkItem;
+    const trunkValue = isObject ? trunkItem[trait] : trunkItem;
 
-    const trunkObject = isObject
-          ? trunkItem
-          : { _: trunk, [trunk]: trunkItem };
+    const trunkObject = isObject ? trunkItem : { _: trait, [trait]: trunkItem };
 
-    const existingLeafValue = trunkObject[thing]
+    const existingLeafValue = trunkObject[thing];
 
     const leafValues =
-        existingLeafValue === undefined
-          ? grain[thing]
-          : [existingLeafValue, grain[thing]].flat();
+      existingLeafValue === undefined
+        ? grain[thing]
+        : [existingLeafValue, grain[thing]].flat();
 
     const isMatch = trunkValue === grain[trait];
 
     const trunkItemNew = isMatch
-          ? { ...trunkObject, [leaf]: leafValues }
-          : trunkItem;
+      ? { ...trunkObject, [thing]: leafValues }
+      : trunkItem;
 
     // append if another trunk value already exists
     // const existingTrunkValue = recordWithTrunk[trunk];
@@ -440,10 +447,13 @@ function sowTraitIsObject(record, grain, trait, thing) {
     //       existingTrunkValue === undefined
     //       ? trunkItemNew
     //       : [existingTrunkValue, trunkItemNew].flat();
-    return trunkItemNew
+    return trunkItemNew;
   });
 
-  const recordNew = { ...record, [trait]: traitItems };
+  const recordNew = {
+    ...record,
+    [trait]: traitItems.length === 1 ? traitItems[0] : traitItems,
+  };
 
   return recordNew;
 }
@@ -453,37 +463,31 @@ function sowTraitIsNested(record, grain, trait, thing) {
 
   const entries = Object.entries(recordWithoutBase);
 
-  const entriesNew = entries.map(
-    ([leaf, leafValue]) => {
-      const leafItems = Array.isArray(leafValue) ? leafValue : [leafValue];
+  const entriesNew = entries.map(([leaf, leafValue]) => {
+    const leafItems = Array.isArray(leafValue) ? leafValue : [leafValue];
 
-      const leafItemsNew = leafItems.map(
-        (leafItem) => {
-          const isObject =
-            !Array.isArray(leafItem) && typeof leafItem === "object";
+    const leafItemsNew = leafItems.map((leafItem) => {
+      const isObject = !Array.isArray(leafItem) && typeof leafItem === "object";
 
-          const leafObject = isObject
-            ? leafItem
-            : { _: leaf, [leaf]: leafItem };
+      const leafObject = isObject ? leafItem : { _: leaf, [leaf]: leafItem };
 
-          const leafItemNew = isObject ? sow(leafObject, grain, trait, thing) : leafItem;
+      const leafItemNew = isObject
+        ? sow(leafObject, grain, trait, thing)
+        : leafItem;
 
-          return leafItemNew;
-        }
-      );
+      return leafItemNew;
+    });
 
-      const leafValueNew = leafItemsNew.length === 1
-            ? leafItemsNew[0]
-            : leafItemsNew;
+    const leafValueNew =
+      leafItemsNew.length === 1 ? leafItemsNew[0] : leafItemsNew;
 
-      return [leaf, leafValueNew]
-    }
-  );
+    return [leaf, leafValueNew];
+  });
 
   const recordNew = {
     _: base,
     [base]: baseValueOmitted,
-    ...Object.fromEntries(entriesNew)
+    ...Object.fromEntries(entriesNew),
   };
 
   return recordNew;
@@ -500,7 +504,7 @@ export function sow(record, grain, trait, thing) {
 
   if (baseIsTrait) return sowBaseIsTrait(record, grain, trait, thing);
 
-  const recordHasTrait = Object.hasOwn(record, grain, trait);
+  const recordHasTrait = Object.hasOwn(record, trait);
 
   if (recordHasTrait) return sowTraitIsObject(record, grain, trait, thing);
 

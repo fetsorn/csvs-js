@@ -8,42 +8,6 @@ import {
 import { isEmpty, createLineStream } from "../stream.js";
 import { mow, sow } from "../record.js";
 
-export function step(tablet, query, entry, trait, thing) {
-  const grains = mow(query, tablet.trait, tablet.thing);
-
-  const grainNew = {
-    _: tablet.trait,
-    [tablet.trait]: trait,
-    [tablet.thing]: thing,
-  };
-
-  const { isMatch, grains: grainsNew } = grains.reduce(
-    (withGrain, grain) => {
-      const isMatch = tablet.traitIsRegex
-        ? new RegExp(grain[tablet.trait]).test(trait)
-        : grain[tablet.trait] === trait;
-
-      const isMatchPartial = {
-        isMatch: withGrain.isMatch ? withGrain.isMatch : isMatch,
-      };
-
-      const grainPartial = {
-        grains: isMatch ? [...withGrain.grains, grainNew] : withGrain.grains,
-      };
-
-      return { ...isMatchPartial, ...grainPartial };
-    },
-    { isMatch: false, grains: [] },
-  );
-
-  const entryNew = grainsNew.reduce(
-    (withGrain, grain) => sow(withGrain, grain, tablet.trait, tablet.thing),
-    entry,
-  );
-
-  return { isMatch, entry: entryNew };
-}
-
 function selectSchemaStream(query, entry) {
   let state = {
     entry: entry,
@@ -75,9 +39,11 @@ function selectSchemaStream(query, entry) {
 
 function selectLineStream(query, entry, tablet) {
   let state = {
+    query: tablet.passthrough ? entry : query,
     entry: entry,
     fst: undefined,
     isMatch: false,
+    hasMatch: false, // replace with matchMap
   };
 
   return new TransformStream({
@@ -93,31 +59,60 @@ function selectLineStream(query, entry, tablet) {
       state.fst = fst;
 
       if (fstIsNew && state.isMatch) {
-        controller.enqueue({ query, entry: state.entry });
+        controller.enqueue({ query: state.query, entry: state.entry });
 
         state.entry = entry;
+
+        state.isMatch = false;
       }
 
       const trait = tablet.traitIsFirst ? fst : snd;
 
       const thing = tablet.thingIsFirst ? fst : snd;
 
-      const { isMatch, entry: entryNew } = step(
-        tablet,
-        query,
+      const grainNew = {
+        _: tablet.trait,
+        [tablet.trait]: trait,
+        [tablet.thing]: thing,
+      };
+
+      const grains = mow(state.query, tablet.trait, tablet.thing);
+
+      const grainsNew = grains
+        .map((grain) => {
+          const isMatch = tablet.traitIsRegex
+            ? new RegExp(grain[tablet.trait]).test(trait)
+            : grain[tablet.trait] === trait;
+
+          state.isMatch = state.isMatch ? state.isMatch : isMatch;
+
+          // TODO rewrite to use accumulating matchMap
+          state.hasMatch = state.hasMatch ? state.hasMatch : isMatch;
+
+          if (isMatch) {
+            return grainNew;
+          }
+
+          return undefined;
+        })
+        .filter(Boolean);
+
+      state.entry = grainsNew.reduce(
+        (withGrain, grain) => sow(withGrain, grain, tablet.trait, tablet.thing),
         state.entry,
-        trait,
-        thing,
       );
 
-      state.entry = entryNew;
-
-      state.isMatch = isMatch;
     },
 
     flush(controller) {
-      if (state.isMatch) {
-        controller.enqueue({ query, entry: state.entry });
+      const isComplete = state.isMatch;
+
+      const isEmptyPassthrough = tablet.passthrough && state.hasMatch !== true;
+
+      const pushAtTheEnd = isComplete || isEmptyPassthrough;
+
+      if (pushAtTheEnd) {
+        controller.enqueue({ query: state.query, entry: state.entry });
       }
     },
   });
