@@ -46,8 +46,7 @@ export async function selectRecordStream({ fs, dir }) {
 
       const leaderStream = new TransformStream({
         async transform(state, controllerLeader) {
-          console.log("leader stream", state, base)
-          //// TODO should we set base to query in accumulating by trunk?
+          // TODO should we set base to query in accumulating by trunk?
           const baseNew = state.entry._ !== base
                 ? base
                 : state.entry._;

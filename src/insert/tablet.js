@@ -11,7 +11,8 @@ export function insertTablet(fs, dir, tablet, schema) {
       // pass the query early on to start other tablet streams
       controller.enqueue(query);
 
-      const grains = mow(query, tablet.trunk, tablet.branch);
+      // filter out the { _: a, a: undefined } that mow returns when there's no connections
+      const grains = mow(query, tablet.trunk, tablet.branch).filter((grain) => grain[tablet.branch] !== undefined);
 
       const lines = grains.map(
         ({ [tablet.trunk]: key, [tablet.branch]: value }) =>

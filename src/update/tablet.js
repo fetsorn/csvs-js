@@ -31,6 +31,9 @@ function updateSchemaStream(query) {
 }
 
 function updateLineStream(query, tablet) {
+  // const logTablet = true;
+  // const logTablet = tablet.filename === "export_tags-export1_tag.csv";
+
   const grains = mow(query, tablet.trunk, tablet.branch);
 
   // get the keys and all values for each key, all sorted
@@ -41,6 +44,9 @@ function updateLineStream(query, tablet) {
 
     const value = grain[tablet.branch];
 
+    // filter out the { _: a, a: undefined } that mow returns when there's no connections
+    if (value === undefined) return acc;
+
     const valuesOld = acc[key] ?? [];
 
     const valuesNew = [...valuesOld, value].sort();
@@ -48,8 +54,8 @@ function updateLineStream(query, tablet) {
     return { ...acc, [key]: valuesNew };
   }, {});
 
-  // if (tablet.filename === "export_tags-export1_tag.csv")
-  //   console.log(JSON.stringify(state.query, null, 2), grains, keys, values)
+  // if (logTablet)
+  //   console.log(tablet, JSON.stringify(query, null, 2), grains, keys, values)
 
   function insertAndForget(key, controller) {
     for (const value of values[key] ?? []) {

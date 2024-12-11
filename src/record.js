@@ -279,6 +279,12 @@ function mowBaseIsThing(record, trait, thing) {
 
 // TODO what if trait-thing relation appears elsewhere deeper in the record?
 function mowBaseIsTrait(record, trait, thing) {
+  const { _: base } = record;
+
+  // assume base is single value
+  const basePartial =
+    record[base] === undefined ? {} : { [base]: record[base] };
+
   // take values
   const branchItems = Array.isArray(record[thing])
     ? record[thing]
@@ -291,8 +297,10 @@ function mowBaseIsTrait(record, trait, thing) {
 
     const branchValue = isObject ? branchItem[thing] : branchItem;
 
+    if (branchValue === undefined) return undefined;
+
     return { _: base, ...basePartial, [thing]: branchValue };
-  });
+  }).filter(Boolean);
 
   return grains;
 }
