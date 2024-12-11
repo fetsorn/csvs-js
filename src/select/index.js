@@ -15,7 +15,7 @@ import { selectTabletStream } from "./tablet.js";
  */
 export async function selectRecordStream({ fs, dir }) {
   return new TransformStream({
-    async transform(query, controllerOuter) {
+    async transform(query, controller) {
       // there can be only one root base in search query
       // TODO: validate against arrays of multiple bases, do not return [], throw error
       const base = query._;
@@ -42,7 +42,30 @@ export async function selectRecordStream({ fs, dir }) {
         selectTabletStream(fs, dir, tablet),
       );
 
-      const selectStream = streams.reduce(
+      const leaderStream = new TransformStream({
+        async transform(state, controller) {
+          console.log("leader stream", state, base)
+          //// TODO should we set base to query in accumulating by trunk?
+          const baseNew = state.entry._ !== base
+                ? base
+                : state.entry._;
+
+          const entryNew = {
+            ...state.entry,
+            _: baseNew
+          }
+
+          // do not return search result
+          // if state comes from the end of accumulating
+          if (state.matchMap) {
+            return
+          }
+
+          controller.enqueue({ entry: entryNew });
+        }
+      });
+
+      const selectStream = [...streams, leaderStream].reduce(
         (withStream, stream) => withStream.pipeThrough(stream),
         queryStream,
       );
@@ -50,7 +73,7 @@ export async function selectRecordStream({ fs, dir }) {
       await selectStream.pipeTo(
         new WritableStream({
           async write(state) {
-            controllerOuter.enqueue(state.entry);
+            controller.enqueue(state.entry);
           },
         }),
       );

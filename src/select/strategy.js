@@ -74,7 +74,7 @@ export function planOptions(schema, base) {
     thingIsFirst: false,
     // do we match first column?
     traitIsFirst: false,
-    base,
+    base: trunk,
     filename: `${trunk}-${base}.csv`,
     traitIsRegex: true,
     // should it have constraints?
@@ -110,7 +110,8 @@ export function planOptions(schema, base) {
 export function planValues(schema, query) {
   const base = query._;
 
-  const crown = findCrown(schema, base).sort(sortNestingDescending(schema));
+  // should the crown include base?
+  const crown = findCrown(schema, base).sort(sortNestingDescending(schema)).filter((b) => b !== base);
 
   const valueTablets = crown.map((branch) => {
     const trunkList = [schema[branch].trunk].flat();

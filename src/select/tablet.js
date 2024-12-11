@@ -77,11 +77,13 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
   // TODO if entry base changed forget thingQuerying
   const thingQueryingInitial = entryBaseChanged ? undefined : thingQuerying;
 
-  const isValueTablet = !tablet.accumulating && !tablet.querying;
+  const isValueTablet = !tablet.querying;
 
   // in a value tablet use entry as a query
   const doSwap = isValueTablet;
 
+  // TODO in options accumulating when we search by parent
+  //      should we set query base to parent?
   const queryInitial = doSwap ? entryInitial : query;
 
   let state = {
@@ -336,6 +338,8 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
       // push the matchMap so that other accumulating tablets
       // can search for new values
       if (tablet.accumulating) {
+        // TODO in accumulating by trunk this pushes entryInitial
+        //      to output and yields extra search result
         if (logTablet)
           console.log(
             Date.now() - start,
