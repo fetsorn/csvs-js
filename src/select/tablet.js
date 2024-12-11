@@ -77,10 +77,12 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
   // TODO if entry base changed forget thingQuerying
   const thingQueryingInitial = entryBaseChanged ? undefined : thingQuerying;
 
-  const isValueTablet = !tablet.querying;
+  const isValueTablet = !tablet.accumulating && !tablet.querying;
+
+  const isAccumulatingByTrunk = tablet.accumulating && !tablet.thingIsFirst;
 
   // in a value tablet use entry as a query
-  const doSwap = isValueTablet;
+  const doSwap = isValueTablet || isAccumulatingByTrunk;
 
   // TODO in options accumulating when we search by parent
   //      should we set query base to parent?

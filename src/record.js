@@ -260,6 +260,8 @@ function mowBaseIsThing(record, trait, thing) {
     ? record[trait]
     : [record[trait]].filter(Boolean);
 
+  if (branchItems.length === 0) return [{ _: base, ...basePartial }];
+
   const grains = branchItems
     .map((branchItem) => {
       const isObject = typeof branchItem === "object";

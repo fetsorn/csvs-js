@@ -43,25 +43,27 @@ export async function selectRecordStream({ fs, dir }) {
       );
 
       const leaderStream = new TransformStream({
-        async transform(state, controller) {
+        async transform(state, controllerLeader) {
           console.log("leader stream", state, base)
           //// TODO should we set base to query in accumulating by trunk?
           const baseNew = state.entry._ !== base
                 ? base
                 : state.entry._;
 
-          const entryNew = {
+          // if query has __, return leader
+          // TODO what if leader is nested? what if many leaders? use mow
+          const entryNew = query.__ !== undefined
+                ? state.query[query.__]
+                : {
             ...state.entry,
             _: baseNew
           }
 
           // do not return search result
           // if state comes from the end of accumulating
-          if (state.matchMap) {
-            return
+          if (state.matchMap === undefined) {
+            controllerLeader.enqueue({ entry: entryNew });
           }
-
-          controller.enqueue({ entry: entryNew });
         }
       });
 
