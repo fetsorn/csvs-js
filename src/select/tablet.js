@@ -40,8 +40,10 @@ function selectSchemaStream(query, entry) {
 }
 
 function selectLineStream(query, entry, matchMap, tablet, source) {
+  const valueTablet = !tablet.accumulating && !tablet.querying;
+
   let state = {
-    query: tablet.passthrough ? entry : query,
+    query: valueTablet ? entry : query,
     entry,
     fst: undefined,
     isMatch: false,
@@ -63,6 +65,8 @@ function selectLineStream(query, entry, matchMap, tablet, source) {
       state.matchMap,
     );
 
+  // value tablets receive a matchMap from accumulating tablets
+  // but don't need to do anything with it or with the accompanying entry
   const dropMatchMap = tablet.passthrough && matchMap !== undefined
 
   if (dropMatchMap) {
@@ -80,6 +84,10 @@ function selectLineStream(query, entry, matchMap, tablet, source) {
   // until the entry reaches non-accumulating value tablets
   // assume the entry is new because it has been checked against the match map upstream
   const forwardAccumulating = tablet.accumulating && matchMap === undefined;
+
+  // TODO what if the thing branch changes
+  // from one group of accumulating tablets to another
+  // and will need to invalidate matchMap
 
   if (forwardAccumulating) {
     if (logTablet)
@@ -122,11 +130,17 @@ function selectLineStream(query, entry, matchMap, tablet, source) {
 
       state.fst = fst;
 
-      const isComplete = fstIsNew && state.isMatch;
+      const isComplete = state.isMatch;
+
+      // only push here if tablet is eager
+      // otherwise wait until the end of file, maybe other groups also match
+      const isEndOfGroup = tablet.eager && fstIsNew;
+
+      const pushEndOfGroup = isEndOfGroup && isComplete;
 
       // TODO querying tablet must drop trait from entry before pushing
 
-      if (isComplete) {
+      if (pushEndOfGroup) {
         if (logTablet)
           console.log(
             Date.now() - start,
@@ -207,6 +221,12 @@ function selectLineStream(query, entry, matchMap, tablet, source) {
 
     flush(controller) {
       const isComplete = state.isMatch;
+
+      // we push at the end of non-eager tablet
+      // because a non-eager tablet looks for all possible matches until end of file
+      // and doesn't push earlier than the end
+      // push if tablet wasn't eager or if eager matched
+      const pushEnd = !tablet.eager || isComplete;
 
       // TODO querying tablet must drop trait from entry before pushing
 
