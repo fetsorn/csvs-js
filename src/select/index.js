@@ -31,7 +31,7 @@ export async function selectRecordStream({ fs, dir }) {
         : toSchema((await selectSchema({ fs, dir }))[0]);
 
       const queryStream = ReadableStream.from([
-        { query, entry: { _: query._ } },
+        { query, entry: { _: query._ }, matchMap: new Map() },
       ]);
 
       const strategy = planSelect(schema, query);

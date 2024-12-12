@@ -8,6 +8,8 @@ import {
 import { isEmpty, createLineStream } from "../stream.js";
 import { mow, sow } from "../record.js";
 
+const start = Date.now();
+
 function selectSchemaStream(query, entry) {
   let state = {
     entry: entry,
@@ -37,17 +39,79 @@ function selectSchemaStream(query, entry) {
   });
 }
 
-function selectLineStream(query, entry, tablet) {
+function selectLineStream(query, entry, matchMap, tablet, source) {
   let state = {
     query: tablet.passthrough ? entry : query,
-    entry: entry,
+    entry,
     fst: undefined,
     isMatch: false,
-    hasMatch: false, // replace with matchMap
+    hasMatch: false,
+    matchMap,
   };
+
+  // const logTablet = true;
+  const logTablet = tablet.filename === "datum-filepath.csv";
+
+  if (logTablet)
+    console.log(
+      Date.now() - start,
+      "tablet",
+      source,
+      tablet,
+      "\n",
+      JSON.stringify(state, undefined, 2),
+      state.matchMap,
+    );
+
+  const dropMatchMap = tablet.passthrough && matchMap !== undefined
+
+  if (dropMatchMap) {
+    return new TransformStream({
+      transform(line, controller) {
+        // do nothing
+      },
+    });
+  }
+
+  // accumulating tablets find all values matched at least once across the dataset
+  // to do this they track matches in a shared match map
+  // when a new entry is found, it is sent forward without a matchMap
+  // and each accumulating tablet forwards the entry as is
+  // until the entry reaches non-accumulating value tablets
+  // assume the entry is new because it has been checked against the match map upstream
+  const forwardAccumulating = tablet.accumulating && matchMap === undefined;
+
+  if (forwardAccumulating) {
+    if (logTablet)
+      console.log(
+        Date.now() - start,
+        "acc forward",
+        source,
+        tablet,
+        "\n",
+        JSON.stringify(state, undefined, 2),
+        state.matchMap,
+      );
+
+    return new TransformStream({
+      start(controller) {
+        controller.enqueue({
+          query: state.query,
+          entry: state.entry,
+          source: tablet.filename,
+        });
+      },
+
+      transform(line, controller) {
+        // do nothing
+      },
+    });
+  }
 
   return new TransformStream({
     async transform(line, controller) {
+      // if (logTablet) console.log("head", tablet.filename, line, state);
+
       if (line === "") return;
 
       const {
@@ -58,8 +122,28 @@ function selectLineStream(query, entry, tablet) {
 
       state.fst = fst;
 
-      if (fstIsNew && state.isMatch) {
-        controller.enqueue({ query: state.query, entry: state.entry });
+      const isComplete = fstIsNew && state.isMatch;
+
+      // TODO querying tablet must drop trait from entry before pushing
+
+      if (isComplete) {
+        if (logTablet)
+          console.log(
+            Date.now() - start,
+            "push match",
+            source,
+            tablet,
+            "\n",
+            JSON.stringify(state, undefined, 2),
+            state.matchMap,
+          );
+
+        // don't push matchMap here because accumulating is not yet finished
+        controller.enqueue({
+          query: state.query,
+          entry: state.entry,
+          source: tablet.filename,
+        });
 
         state.entry = entry;
 
@@ -78,18 +162,32 @@ function selectLineStream(query, entry, tablet) {
 
       const grains = mow(state.query, tablet.trait, tablet.thing);
 
+      // console.log(grains);
+
       const grainsNew = grains
         .map((grain) => {
           const isMatch = tablet.traitIsRegex
             ? new RegExp(grain[tablet.trait]).test(trait)
             : grain[tablet.trait] === trait;
 
-          state.isMatch = state.isMatch ? state.isMatch : isMatch;
+          // accumulating tablets find all values matched at least once across the dataset
+          // check here if thing was matched before
+          // this will always be true for non-accumulating maps so will be ignored
+          // TODO will this fail when matchMap is undefined?
+          const matchIsNew =
+                state.matchMap === undefined || state.matchMap.get(thing) === undefined;
 
-          // TODO rewrite to use accumulating matchMap
-          state.hasMatch = state.hasMatch ? state.hasMatch : isMatch;
+          // TODO factor in matchIsnew in isMatch
 
-          if (isMatch) {
+          state.isMatch = state.isMatch ? state.isMatch : (isMatch && matchIsNew);
+
+          if (isMatch && matchIsNew && tablet.accumulating) {
+            state.matchMap.set(thing, true);
+          }
+
+          state.hasMatch = state.hasMatch ? state.hasMatch : state.isMatch;
+
+          if (isMatch && matchIsNew) {
             return grainNew;
           }
 
@@ -97,22 +195,89 @@ function selectLineStream(query, entry, tablet) {
         })
         .filter(Boolean);
 
+      // console.log(grainsNew);
+
       state.entry = grainsNew.reduce(
         (withGrain, grain) => sow(withGrain, grain, tablet.trait, tablet.thing),
         state.entry,
       );
 
+      // if (logTablet) console.log("tail", tablet.filename, line, state);
     },
 
     flush(controller) {
       const isComplete = state.isMatch;
 
-      const isEmptyPassthrough = tablet.passthrough && state.hasMatch !== true;
+      // TODO querying tablet must drop trait from entry before pushing
 
-      const pushAtTheEnd = isComplete || isEmptyPassthrough;
+      // TODO this pushes when has match but it has to push when the group is over
+      // TODO check that the group is new in fstIsNew doesn't work for some reason
+      if (isComplete) {
+        if (logTablet)
+          console.log(
+            Date.now() - start,
+            "push end",
+            source,
+            tablet,
+            "\n",
+            JSON.stringify(state, undefined, 2),
+            state.matchMap,
+          );
 
-      if (pushAtTheEnd) {
-        controller.enqueue({ query: state.query, entry: state.entry });
+        // don't push matchMap here because accumulating is not yet finished
+        controller.enqueue({
+          query: state.query,
+          entry: state.entry,
+          source: tablet.filename,
+        });
+      }
+
+      // TODO the error right now is because in accumulating tablet
+      // we send an entry in push end, and then we send it again in push map
+      // right now whatever is passed in pushMap
+
+      const isEmptyPassthrough = tablet.passthrough && state.hasMatch === false;
+
+      // after all records have been pushed for forwarding
+      // push the matchMap so that other accumulating tablets
+      // can search for new values
+      if (tablet.accumulating) {
+        if (logTablet)
+          console.log(
+            Date.now() - start,
+            "acc push map",
+            source,
+            tablet,
+            "\n",
+            JSON.stringify(state, undefined, 2),
+            state.matchMap,
+          );
+
+        controller.enqueue({
+          query: state.query,
+          entry,
+          matchMap: state.matchMap,
+          source: tablet.filename,
+        });
+      } else if (isEmptyPassthrough) {
+        if (logTablet)
+          console.log(
+            Date.now() - start,
+            "push through",
+            source,
+            tablet,
+            "\n",
+            JSON.stringify(state, undefined, 2),
+            state.matchMap,
+          );
+
+        // if no match and tablet is not a filter
+        // push initial record to the next passthrough value tablet
+        controller.enqueue({
+          query: state.query,
+          entry: state.entry,
+          source: tablet.filename,
+        });
       }
     },
   });
@@ -121,8 +286,22 @@ function selectLineStream(query, entry, tablet) {
 export function selectTabletStream(fs, dir, tablet) {
   const filepath = path.join(dir, tablet.filename);
 
+  const logTablet = false;
+  // const logTablet = tablet.filename = "datum-actdate.csv";
+
   return new TransformStream({
     async transform(state, controller) {
+      if (logTablet)
+        console.log(
+          Date.now() - start,
+          "selectTabletStream",
+          source,
+          tablet,
+          "\n",
+          JSON.stringify(state, undefined, 2),
+          state.matchMap,
+        );
+
       const fileStream = (await isEmpty(fs, filepath))
         ? ReadableStream.from([""])
         : ReadableStream.from(fs.createReadStream(filepath));
@@ -131,18 +310,32 @@ export function selectTabletStream(fs, dir, tablet) {
 
       const selectStream = isSchema
         ? selectSchemaStream(state.query, state.entry)
-        : selectLineStream(state.query, state.entry, tablet);
-
-      const enqueueStream = new WritableStream({
-        async write(state) {
-          controller.enqueue(state);
-        },
-      });
+        : selectLineStream(
+            state.query,
+            state.entry,
+            state.matchMap,
+            tablet,
+            state.source,
+          );
 
       await fileStream
         .pipeThrough(createLineStream())
         .pipeThrough(selectStream)
-        .pipeTo(enqueueStream);
+        .pipeTo(
+          new WritableStream({
+            async write(state) {
+              // console.log(
+              //   Date.now() - start,
+              //   "enqueue",
+              //   tablet.filename,
+              //   JSON.stringify(state, undefined, 2),
+              //   state.matchMap,
+              // );
+
+              controller.enqueue(state);
+            },
+          }),
+        );
     },
   });
 }
