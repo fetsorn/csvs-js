@@ -10,7 +10,7 @@ import { mow, sow } from "../record.js";
 
 const start = Date.now();
 
-function selectSchemaStream({ query, entry }) {
+function selectSchemaStream({ query }) {
   let state = {
     entry: { _: "_" },
   };
@@ -40,12 +40,21 @@ function selectSchemaStream({ query, entry }) {
 }
 
 function selectLineStream({ query, entry, matchMap, source }, tablet) {
-  const valueTablet = !tablet.accumulating && !tablet.querying;
+  const isValueTablet = !tablet.accumulating && !tablet.querying;
 
-  const entryInitial = entry === undefined ? { _: query._ } : entry;
+  // in a value tablet use entry as a query
+  const doSwap = isValueTablet;
+
+  // in a querying tablet, set initial entry to the base of the tablet
+  // and preserve the received entry for sowing grains later
+  // if tablet base is different from previous entry base
+  // sow previous entry into the initial entry
+  const entryInitial = entry === undefined || (tablet.querying && entry._ !== tablet.base)
+        ? entry === undefined ? { _: tablet.base } : tablet.base === query._ ? { _: tablet.base } : sow({ _: tablet.base }, entry, tablet.base, entry._)
+        : entry;
 
   let state = {
-    query: valueTablet ? entry : query,
+    query: doSwap ? entryInitial : query,
     entry: entryInitial,
     fst: undefined,
     isMatch: false,
@@ -218,6 +227,14 @@ function selectLineStream({ query, entry, matchMap, source }, tablet) {
       );
 
       // if (logTablet) console.log("tail", tablet.filename, line, state);
+      if (tablet.querying) {
+        // in querying tablet we should sow the grain into the query as well
+        state.query = grainsNew.reduce(
+          (withGrain, grain) => sow(withGrain, grain, tablet.trait, tablet.thing),
+          state.query,
+        )
+      }
+
     },
 
     flush(controller) {

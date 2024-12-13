@@ -49,6 +49,7 @@ export function planQuery(schema, query) {
     thingIsFirst: true,
     // do we match first column?
     traitIsFirst: false,
+    base: schema[branch].trunk,
     filename: `${schema[branch].trunk}-${branch}.csv`,
     traitIsRegex: true,
     querying: true,
@@ -73,6 +74,7 @@ export function planOptions(schema, base) {
     thingIsFirst: false,
     // do we match first column?
     traitIsFirst: false,
+    base,
     filename: `${trunk}-${base}.csv`,
     traitIsRegex: true,
     // should it have constraints?
@@ -94,6 +96,7 @@ export function planOptions(schema, base) {
     thingIsFirst: true,
     // do we match first column?
     traitIsFirst: true,
+    base,
     filename: `${base}-${leaf}.csv`,
     traitIsRegex: true,
     accumulating: true,
@@ -124,6 +127,7 @@ export function planValues(schema, query) {
       thingIsFirst: false,
       // do we match first column?
       traitIsFirst: true,
+      base: trunk,
       filename: `${trunk}-${branch}.csv`,
       passthrough: true,
       eager: trunk === base, // push as soon as trait changes in the tablet
