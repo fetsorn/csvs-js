@@ -423,8 +423,9 @@ const record2001Sow = {
 const grainArray = {
   _: "export_tags",
   export_tags:
-  "9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f",
-  export1_tag: "a4bac6f8dacc74155b54e1a7855bd92d5054d6ca9d4086194eb8e6bb35f4324d"
+    "9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f",
+  export1_tag:
+    "a4bac6f8dacc74155b54e1a7855bd92d5054d6ca9d4086194eb8e6bb35f4324d",
 };
 
 const recordArraySow = {
@@ -451,7 +452,7 @@ const recordArraySow = {
         export1_channel: "https://channel2.url",
         export1_key: "longkey2",
       },
-      "a4bac6f8dacc74155b54e1a7855bd92d5054d6ca9d4086194eb8e6bb35f4324d"
+      "a4bac6f8dacc74155b54e1a7855bd92d5054d6ca9d4086194eb8e6bb35f4324d",
     ],
     export2_tag: {
       _: "export2_tag",
