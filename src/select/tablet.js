@@ -40,11 +40,6 @@ function selectSchemaStream({ query }) {
 }
 
 function selectLineStream({ query, entry, matchMap, source }, tablet) {
-  const isValueTablet = !tablet.accumulating && !tablet.querying;
-
-  // in a value tablet use entry as a query
-  const doSwap = isValueTablet;
-
   // in a querying tablet, set initial entry to the base of the tablet
   // and preserve the received entry for sowing grains later
   // if tablet base is different from previous entry base
@@ -53,8 +48,15 @@ function selectLineStream({ query, entry, matchMap, source }, tablet) {
         ? entry === undefined ? { _: tablet.base } : tablet.base === query._ ? { _: tablet.base } : sow({ _: tablet.base }, entry, tablet.base, entry._)
         : entry;
 
+  const isValueTablet = !tablet.accumulating && !tablet.querying;
+
+  // in a value tablet use entry as a query
+  const doSwap = isValueTablet;
+
+  const queryInitial = doSwap ? entryInitial : query
+
   let state = {
-    query: doSwap ? entryInitial : query,
+    query: queryInitial,
     entry: entryInitial,
     fst: undefined,
     isMatch: false,
@@ -169,6 +171,8 @@ function selectLineStream({ query, entry, matchMap, source }, tablet) {
         });
 
         state.entry = entryInitial;
+
+        state.query = queryInitial;
 
         state.isMatch = false;
       }
