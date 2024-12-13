@@ -345,11 +345,13 @@ export const testCasesMow = [
     record: mocks.record2001,
     trunk: "datum",
     branch: "actdate",
-    expected: [{
-      "_": "datum",
-      "actdate": "2001-01-01",
-      "datum": "value1",
-    }],
+    expected: [
+      {
+        _: "datum",
+        actdate: "2001-01-01",
+        datum: "value1",
+      },
+    ],
   },
   {
     name: "grain from array",
@@ -357,22 +359,26 @@ export const testCasesMow = [
     record: mocks.recordArray,
     trunk: "export1_tag",
     branch: "export1_channel",
-    expected: [{
-      "_": "export1_tag",
-      "export1_tag": "1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42",
-      "export1_channel": "https://channel1.url",
-    },{
-      "_": "export1_tag",
-      "export1_tag": "fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77",
-      "export1_channel": "https://channel2.url",
-    }],
+    expected: [
+      {
+        _: "export1_tag",
+        export1_tag:
+          "1c42c99eab4eba24719bf22ae9f2132e914679f4503d1b22652aa515c0bace42",
+        export1_channel: "https://channel1.url",
+      },
+      {
+        _: "export1_tag",
+        export1_tag:
+          "fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77",
+        export1_channel: "https://channel2.url",
+      },
+    ],
   },
 ];
 
 export const testCasesSow = [
   {
-    name: "grain to array",
-    initial: mocks.datasetDefault,
+    name: "grain to a simple record",
     record: mocks.record2001,
     grain: mocks.grain2001,
     trunk: "datum",
@@ -381,7 +387,6 @@ export const testCasesSow = [
   },
   {
     name: "grain to array",
-    initial: mocks.datasetDefault,
     record: mocks.recordArray,
     grain: mocks.grainArray,
     trunk: "export_tags",

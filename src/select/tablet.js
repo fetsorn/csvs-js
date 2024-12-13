@@ -10,9 +10,9 @@ import { mow, sow } from "../record.js";
 
 const start = Date.now();
 
-function selectSchemaStream(query, entry) {
+function selectSchemaStream({ query, entry }) {
   let state = {
-    entry: entry,
+    entry: { _: "_" },
   };
 
   return new TransformStream({
@@ -39,12 +39,14 @@ function selectSchemaStream(query, entry) {
   });
 }
 
-function selectLineStream(query, entry, matchMap, tablet, source) {
+function selectLineStream({ query, entry, matchMap, source }, tablet) {
   const valueTablet = !tablet.accumulating && !tablet.querying;
+
+  const entryInitial = entry === undefined ? { _: query._ } : entry;
 
   let state = {
     query: valueTablet ? entry : query,
-    entry,
+    entry: entryInitial,
     fst: undefined,
     isMatch: false,
     hasMatch: false,
@@ -67,7 +69,7 @@ function selectLineStream(query, entry, matchMap, tablet, source) {
 
   // value tablets receive a matchMap from accumulating tablets
   // but don't need to do anything with it or with the accompanying entry
-  const dropMatchMap = tablet.passthrough && matchMap !== undefined
+  const dropMatchMap = tablet.passthrough && matchMap !== undefined;
 
   if (dropMatchMap) {
     return new TransformStream({
@@ -138,8 +140,6 @@ function selectLineStream(query, entry, matchMap, tablet, source) {
 
       const pushEndOfGroup = isEndOfGroup && isComplete;
 
-      // TODO querying tablet must drop trait from entry before pushing
-
       if (pushEndOfGroup) {
         if (logTablet)
           console.log(
@@ -159,7 +159,7 @@ function selectLineStream(query, entry, matchMap, tablet, source) {
           source: tablet.filename,
         });
 
-        state.entry = entry;
+        state.entry = entryInitial;
 
         state.isMatch = false;
       }
@@ -189,11 +189,12 @@ function selectLineStream(query, entry, matchMap, tablet, source) {
           // this will always be true for non-accumulating maps so will be ignored
           // TODO will this fail when matchMap is undefined?
           const matchIsNew =
-                state.matchMap === undefined || state.matchMap.get(thing) === undefined;
+            state.matchMap === undefined ||
+            state.matchMap.get(thing) === undefined;
 
           // TODO factor in matchIsnew in isMatch
 
-          state.isMatch = state.isMatch ? state.isMatch : (isMatch && matchIsNew);
+          state.isMatch = state.isMatch ? state.isMatch : isMatch && matchIsNew;
 
           if (isMatch && matchIsNew && tablet.accumulating) {
             state.matchMap.set(thing, true);
@@ -275,7 +276,7 @@ function selectLineStream(query, entry, matchMap, tablet, source) {
 
         controller.enqueue({
           query: state.query,
-          entry,
+          entry: entryInitial,
           matchMap: state.matchMap,
           source: tablet.filename,
         });
@@ -329,14 +330,8 @@ export function selectTabletStream(fs, dir, tablet) {
       const isSchema = tablet.filename === "_-_.csv";
 
       const selectStream = isSchema
-        ? selectSchemaStream(state.query, state.entry)
-        : selectLineStream(
-            state.query,
-            state.entry,
-            state.matchMap,
-            tablet,
-            state.source,
-          );
+        ? selectSchemaStream(state)
+        : selectLineStream(state, tablet);
 
       await fileStream
         .pipeThrough(createLineStream())

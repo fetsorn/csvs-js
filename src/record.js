@@ -1,5 +1,4 @@
 import { URLSearchParams } from "node:url";
-import { isConnected } from "./schema.js";
 
 /**
  * This function is true when branch has no leaves
@@ -379,7 +378,6 @@ export function mow(record, trait, thing) {
 }
 
 function sowBaseIsThing(record, grain, trait, thing) {
-
   const existingPartial =
     record[thing] === undefined ? [] : [record[thing]].flat();
 
@@ -397,7 +395,6 @@ function sowBaseIsThing(record, grain, trait, thing) {
 }
 
 function sowBaseIsTrait(record, grain, trait, thing) {
-
   const existingPartial =
     record[thing] === undefined ? [] : [record[thing]].flat();
 
@@ -484,9 +481,13 @@ function sowTraitIsNested(record, grain, trait, thing) {
     return [leaf, leafValueNew];
   });
 
+  const baseValuePartial = baseValueOmitted === undefined
+        ? {}
+        : { [base]: baseValueOmitted };
+
   const recordNew = {
     _: base,
-    [base]: baseValueOmitted,
+    ...baseValuePartial,
     ...Object.fromEntries(entriesNew),
   };
 

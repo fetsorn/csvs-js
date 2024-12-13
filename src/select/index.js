@@ -30,9 +30,10 @@ export async function selectRecordStream({ fs, dir }) {
         ? undefined
         : toSchema((await selectSchema({ fs, dir }))[0]);
 
-      const queryStream = ReadableStream.from([
-        { query, entry: { _: query._ }, matchMap: new Map() },
-      ]);
+      // TODO should rewrite to remove matchMap from here
+      // we need to pass matchMap here
+      // because accumulating tablets depend on whether it is defined or not
+      const queryStream = ReadableStream.from([{ query, matchMap: new Map() }]);
 
       const strategy = planSelect(schema, query);
 

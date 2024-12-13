@@ -5,7 +5,6 @@ import nodefs from "fs";
 import os from "os";
 import {
   selectRecord,
-  selectSchema,
   updateRecord,
   insertRecord,
   deleteRecord,
@@ -193,7 +192,12 @@ describe("mow()", () => {
 describe("sow()", () => {
   testCasesSow.forEach((testCase) => {
     test(testCase.name, async () => {
-      const data = sow(testCase.record, testCase.grain, testCase.trunk, testCase.branch);
+      const data = sow(
+        testCase.record,
+        testCase.grain,
+        testCase.trunk,
+        testCase.branch,
+      );
 
       const dataSorted = sortObject(data);
 
