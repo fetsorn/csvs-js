@@ -39,12 +39,12 @@ function selectSchemaStream({ query }) {
   });
 }
 
-function selectLineStream({ query, entry, matchMap, source }, tablet) {
+function selectLineStream({ query, entry, matchMap, matchMapQuerying, source }, tablet) {
   // in a querying tablet, set initial entry to the base of the tablet
   // and preserve the received entry for sowing grains later
   // if tablet base is different from previous entry base
   // sow previous entry into the initial entry
-  const entryInitial = entry === undefined || (tablet.querying && entry._ !== tablet.base)
+  const entryInitial = entry === undefined || tablet.querying
         ? entry === undefined ? { _: tablet.base } : tablet.base === query._ ? { _: tablet.base } : sow({ _: tablet.base }, entry, tablet.base, entry._)
         : entry;
 
@@ -62,6 +62,7 @@ function selectLineStream({ query, entry, matchMap, source }, tablet) {
     isMatch: false,
     hasMatch: false,
     matchMap,
+    matchMapQuerying,
   };
 
   // const logTablet = true;
@@ -193,10 +194,21 @@ function selectLineStream({ query, entry, matchMap, source }, tablet) {
 
       const grainsNew = grains
         .map((grain) => {
-          const isMatch = tablet.traitIsRegex
+          const isMatchGrain = tablet.traitIsRegex
             ? new RegExp(grain[tablet.trait]).test(trait)
             : grain[tablet.trait] === trait;
 
+          // TODO when querying also match literal trait from the query
+          // otherwise always true
+          const doDiff = tablet.querying && matchMapQuerying === undefined;
+
+          // TODO should this address the entryInitial?
+          //      right now the thing is dropped from entryInitial so that sow works below
+          // TODO what if the thing is nested and can't be accessed at the top level?
+          //      is that impossible due to sow in entryInitial?
+          const isMatchQuerying = doDiff ? entry[tablet.thing] === thing : true;
+
+          const isMatch = isMatchGrain && isMatchQuerying;
           // accumulating tablets find all values matched at least once across the dataset
           // check here if thing was matched before
           // this will always be true for non-accumulating maps so will be ignored
@@ -279,6 +291,8 @@ function selectLineStream({ query, entry, matchMap, source }, tablet) {
       // right now whatever is passed in pushMap
 
       const isEmptyPassthrough = tablet.passthrough && state.hasMatch === false;
+
+      // TODO pass matchMapQuerying at the end
 
       // after all records have been pushed for forwarding
       // push the matchMap so that other accumulating tablets
