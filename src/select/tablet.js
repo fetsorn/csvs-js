@@ -170,6 +170,7 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
           query: state.query,
           entry: state.entry,
           source: tablet.filename,
+          thingQuerying: state.thingQuerying,
         });
 
         state.entry = entryInitial;
@@ -210,6 +211,7 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
           const isMatchQuerying = doDiff ? thingQuerying === thing : true;
 
           const isMatch = isMatchGrain && isMatchQuerying;
+
           // accumulating tablets find all values matched at least once across the dataset
           // check here if thing was matched before
           // this will always be true for non-accumulating maps so will be ignored
@@ -288,6 +290,7 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
           query: state.query,
           entry: state.entry,
           source: tablet.filename,
+          thingQuerying: state.thingQuerying,
         });
       }
 
@@ -319,6 +322,7 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
           entry: entryInitial,
           matchMap: state.matchMap,
           source: tablet.filename,
+          thingQuerying: state.thingQuerying,
         });
       } else if (isEmptyPassthrough) {
         if (logTablet)
@@ -338,6 +342,7 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
           query: state.query,
           entry: state.entry,
           source: tablet.filename,
+          thingQuerying: state.thingQuerying,
         });
       }
     },
