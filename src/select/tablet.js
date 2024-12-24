@@ -39,7 +39,7 @@ function selectSchemaStream({ query }) {
   });
 }
 
-function selectLineStream({ query, entry, matchMap, matchMapQuerying, source }, tablet) {
+function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tablet) {
   // in a querying tablet, set initial entry to the base of the tablet
   // and preserve the received entry for sowing grains later
   // if tablet base is different from previous entry base
@@ -62,7 +62,7 @@ function selectLineStream({ query, entry, matchMap, matchMapQuerying, source }, 
     isMatch: false,
     hasMatch: false,
     matchMap,
-    matchMapQuerying,
+    thingQuerying,
   };
 
   // const logTablet = true;
@@ -77,6 +77,7 @@ function selectLineStream({ query, entry, matchMap, matchMapQuerying, source }, 
       "\n",
       JSON.stringify(state, undefined, 2),
       state.matchMap,
+      thingQuerying,
     );
 
   // value tablets receive a matchMap from accumulating tablets
@@ -200,13 +201,13 @@ function selectLineStream({ query, entry, matchMap, matchMapQuerying, source }, 
 
           // TODO when querying also match literal trait from the query
           // otherwise always true
-          const doDiff = tablet.querying && matchMapQuerying === undefined;
+          const doDiff = tablet.querying && thingQuerying !== undefined;
 
           // TODO should this address the entryInitial?
           //      right now the thing is dropped from entryInitial so that sow works below
           // TODO what if the thing is nested and can't be accessed at the top level?
           //      is that impossible due to sow in entryInitial?
-          const isMatchQuerying = doDiff ? entry[tablet.thing] === thing : true;
+          const isMatchQuerying = doDiff ? thingQuerying === thing : true;
 
           const isMatch = isMatchGrain && isMatchQuerying;
           // accumulating tablets find all values matched at least once across the dataset
@@ -220,6 +221,10 @@ function selectLineStream({ query, entry, matchMap, matchMapQuerying, source }, 
           // TODO factor in matchIsnew in isMatch
 
           state.isMatch = state.isMatch ? state.isMatch : isMatch && matchIsNew;
+
+          if (tablet.querying && state.isMatch) {
+            state.thingQuerying = thing;
+          }
 
           if (isMatch && matchIsNew && tablet.accumulating) {
             state.matchMap.set(thing, true);
@@ -292,7 +297,7 @@ function selectLineStream({ query, entry, matchMap, matchMapQuerying, source }, 
 
       const isEmptyPassthrough = tablet.passthrough && state.hasMatch === false;
 
-      // TODO pass matchMapQuerying at the end
+      // TODO pass thingQuerying at the end?
 
       // after all records have been pushed for forwarding
       // push the matchMap so that other accumulating tablets

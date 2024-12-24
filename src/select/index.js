@@ -34,7 +34,7 @@ export async function selectRecordStream({ fs, dir }) {
       // we need to pass matchMap here
       // because accumulating tablets depend on whether it is defined or not
       const queryStream = ReadableStream.from([
-        { query, matchMap: new Map(), matchMapQuerying: new Map() }]);
+        { query, matchMap: new Map() }]);
 
       const strategy = planSelect(schema, query);
 
