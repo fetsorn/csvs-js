@@ -60,22 +60,6 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
   // and preserve the received entry for sowing grains later
   // if tablet base is different from previous entry base
   // sow previous entry into the initial entry
-  // const entryInitial = doSetEntry
-  //       ? entryBaseChanged ? sow({ _: tablet.base }, entry, tablet.base, entry._) : { _: tablet.base }
-  //       : entry;
-
-  // const entryInitial = entry === undefined || tablet.querying
-  //       ? entry === undefined
-  //           ? { _: tablet.base }
-  //           : tablet.base === query._
-  //               ? { _: tablet.base }
-  //               : sow({ _: tablet.base }, entry, tablet.base, entry._)
-  //       : entry;
-
-  // const doSetEntry = entry === undefined || tablet.querying;
-
-  // const  = tablet.base !== query._;
-
   const doDiscard = entry === undefined || ( tablet.querying && tablet.base === query._ );
 
   const entryFallback = doDiscard
@@ -90,7 +74,7 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
 
   const entryBaseChanged = entry === undefined || entry._ !== entryInitial._;
 
-  // TODO if entry base changed forget thingQuerying
+  // if entry base changed forget thingQuerying
   const thingQueryingInitial = entryBaseChanged ? undefined : thingQuerying;
 
   const isValueTablet = !tablet.accumulating && !tablet.querying;
@@ -100,8 +84,6 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
   // in a value tablet use entry as a query
   const doSwap = isValueTablet || isAccumulatingByTrunk;
 
-  // TODO in options accumulating when we search by parent
-  //      should we set query base to parent?
   const queryInitial = doSwap ? entryInitial : query;
 
   let state = {
@@ -248,14 +230,10 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
             ? new RegExp(grain[tablet.trait]).test(trait)
             : grain[tablet.trait] === trait;
 
-          // TODO when querying also match literal trait from the query
+          // when querying also match literal trait from the query
           // otherwise always true
           const doDiff = tablet.querying && thingQueryingInitial !== undefined;
 
-          // TODO should this address the entryInitial?
-          //      right now the thing is dropped from entryInitial so that sow works below
-          // TODO what if the thing is nested and can't be accessed at the top level?
-          //      is that impossible due to sow in entryInitial?
           const isMatchQuerying = doDiff ? thingQueryingInitial === thing : true;
 
           const isMatch = isMatchGrain && isMatchQuerying;
@@ -263,12 +241,9 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
           // accumulating tablets find all values matched at least once across the dataset
           // check here if thing was matched before
           // this will always be true for non-accumulating maps so will be ignored
-          // TODO will this fail when matchMap is undefined?
           const matchIsNew =
             state.matchMap === undefined ||
             state.matchMap.get(thing) === undefined;
-
-          // TODO factor in matchIsnew in isMatch
 
           state.isMatch = state.isMatch ? state.isMatch : isMatch && matchIsNew;
 
@@ -318,10 +293,6 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
       // push if tablet wasn't eager or if eager matched
       const pushEnd = !tablet.eager || isComplete;
 
-      // TODO querying tablet must drop trait from entry before pushing
-
-      // TODO this pushes when has match but it has to push when the group is over
-      // TODO check that the group is new in fstIsNew doesn't work for some reason
       if (isComplete) {
         // if (logTablet)
         //   console.log(
@@ -344,20 +315,14 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
         });
       }
 
-      // TODO the error right now is because in accumulating tablet
-      // we send an entry in push end, and then we send it again in push map
-      // right now whatever is passed in pushMap
-
       const isEmptyPassthrough = tablet.passthrough && state.hasMatch === false;
-
-      // TODO pass thingQuerying at the end?
 
       // after all records have been pushed for forwarding
       // push the matchMap so that other accumulating tablets
       // can search for new values
       if (tablet.accumulating) {
-        // TODO in accumulating by trunk this pushes entryInitial
-        //      to output and yields extra search result
+        // in accumulating by trunk this pushes entryInitial
+        // to output and yields extra search result
         // if (logTablet)
         //   console.log(
         //     Date.now() - start,
