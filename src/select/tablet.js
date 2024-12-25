@@ -177,6 +177,8 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
     });
   }
 
+  const grains = mow(state.query, tablet.trait, tablet.thing);
+
   return new TransformStream({
     async transform(line, controller) {
       // if (logTablet) console.log("head", tablet.filename, line, state);
@@ -236,10 +238,6 @@ function selectLineStream({ query, entry, matchMap, thingQuerying, source }, tab
         [tablet.trait]: trait,
         [tablet.thing]: thing,
       };
-
-      const grains = mow(state.query, tablet.trait, tablet.thing);
-
-      // console.log(grains);
 
       // if (logTablet)
       //   console.log(grains);
