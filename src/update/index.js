@@ -67,7 +67,5 @@ export async function updateRecord({ fs, dir, query }) {
       }),
     );
 
-  // wait for all streams to finish updating tablets
-
   return entries;
 }

@@ -17,13 +17,15 @@ export async function selectRecordStream({ fs, dir }) {
   return new TransformStream({
     async transform(query, controller) {
       // there can be only one root base in search query
-      // TODO: validate against arrays of multiple bases, do not return [], throw error
+      // TODO: validate against arrays of multiple bases,
+      //       do not return [], throw error
       const base = query._;
 
       // if no base is provided, return empty
       if (base === undefined) return undefined;
 
-      // check schema inside the transform to skip it when query is schema
+      // check schema inside the transform to skip it
+      // when query is schema
       const isSchema = base === "_";
 
       const schema = isSchema
@@ -32,13 +34,12 @@ export async function selectRecordStream({ fs, dir }) {
 
       // TODO should rewrite to remove matchMap from here
       // we need to pass matchMap here
-      // because accumulating tablets depend on whether it is defined or not
+      // because accumulating tablets depend
+      // on whether it is defined or not
       const queryStream = ReadableStream.from([
         { query, matchMap: new Map() }]);
 
       const strategy = planSelect(schema, query);
-
-      // console.log(strategy);
 
       const streams = strategy.map((tablet) =>
         selectTabletStream(fs, dir, tablet),
@@ -76,7 +77,6 @@ export async function selectRecordStream({ fs, dir }) {
       await selectStream.pipeTo(
         new WritableStream({
           async write(state) {
-            // console.log(state);
             controller.enqueue(state.entry);
           },
         }),
@@ -114,8 +114,6 @@ export async function selectRecord({ fs, dir, query }) {
         },
       }),
     );
-
-  // console.log(entries);
 
   return entries;
 }

@@ -4,31 +4,17 @@ import {
   TransformStream,
 } from "@swimburger/isomorphic-streams";
 import path from "path";
-import csv from "papaparse";
 import { isEmpty, createLineStream } from "../stream.js";
+import { pruneLineStream } from "./line.js";
 
 export async function pruneTablet(fs, dir, tablet) {
   const filepath = path.join(dir, tablet.filename);
 
-  if (await isEmpty(fs, filepath)) return;
+  if (await isEmpty(fs, filepath)) return undefined;
 
   const fileStream = ReadableStream.from(fs.createReadStream(filepath));
 
-  const pruneStream = new TransformStream({
-    transform(line, controller) {
-      const {
-        data: [[fst, snd]],
-      } = csv.parse(line, { delimiter: "," });
-
-      const trait = tablet.traitIsFirst ? fst : snd;
-
-      const isMatch = line !== "" && trait === tablet.trait;
-
-      if (!isMatch) {
-        controller.enqueue(line);
-      }
-    },
-  });
+  const pruneStream = pruneLineStream(tablet);
 
   const tmpdir = await fs.promises.mkdtemp(path.join(dir, "prune-"));
 

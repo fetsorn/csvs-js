@@ -106,3 +106,155 @@ console.log(query4)
 
 
 [[https://github.com/fetsorn/wasm-grep][wasm-grep]] - ripgrep compiled to WASM
+
+
+# Getting Started
+
+This documentation describes the library for searching and updating [CSVS](https://csvs-format.docs.norcivilianlabs.org/) datasets.
+
+Install from the NPM registry
+```shell
+yarn install @fetsorn/csvs-js
+```
+
+Import the library
+```js
+import { CSVS } from @fetsorn/csvs-js;
+```
+
+Clone a sample csvs dataset
+```shell
+git clone https://gitlab.com/norcivilian-labs/csvs-template-en
+```
+
+Point the `dir` variable to the dataset. In NodeJS, that would be the path to a dataset directory.
+```js
+import fs from 'fs';
+
+const dir = "/path/to/csvs-template-en"
+
+const query = new CSVS({ fs, dir });
+```
+
+And search the records
+```js
+const records = await query.select(new URLSearchParams());
+// [{
+//   _: 'datum',
+//   UUID: '...',
+//   datum: 'value1',
+//   actdate: '2001-01-01'
+// }]
+```
+
+Next, learn more about csvs integration in the [Tutorial](./tutorial.md) and the [User Guides](./user_guides.md).
+
+
+# Tutorial
+
+Let's nodejs query, update, delete
+
+Install from the NPM registry
+```shell
+yarn install @fetsorn/csvs-js
+```
+
+Import the library
+```js
+import { CSVS } from @fetsorn/csvs-js;
+```
+
+Clone a sample csvs dataset
+```shell
+git clone https://gitlab.com/norcivilian-labs/csvs-template-en
+```
+
+Point the dir variable to the dataset. In NodeJS, that would be the path to a dataset directory.
+```js
+import fs from 'fs';
+
+const dir = "/path/to/csvs-template-en"
+```
+
+And query the records
+```js
+const records = await new CSVS({ fs, dir }).select(new URLSearchParams());
+// [{
+//   _: 'datum',
+//   UUID: '...',
+//   datum: 'value1',
+//   actdate: '2001-01-01'
+// }]
+```
+
+To edit a record, change its json and pass it back to csvs
+```js
+const recordNew = { datum: 'value2', ...records[0] }
+
+await new CSVS({ fs, dir }).update(recordNew);
+```
+
+To add a new record, pass a json object without a UUID to `CSVS.update(record)`. The function will return the new record with a generated UUID.
+```js
+const recordNew = await new CSVS({ fs, dir }).update({
+  _: 'datum',
+  datum: 'value2',
+  actdate: '2003-03-03'
+});
+```
+
+To delete an record, pass it to `CSVS.delete(record)` and the library will remove record UUID from the dataset.
+```js
+await new CSVS({ fs, dir }).delete(record);
+```
+
+Learn more about csvs in the [User Guides](./user_guides.md).
+
+
+# CSVS in the Browser
+
+Csvs-lib changes a csvs dataset by passing filepaths to the methods on an FS interface. The simplest way is to import from the `fs` Node module to interact with local filesystem.
+The browser is barred from filesystem access, but can emulate it using [LightningFS](https://github.com/isomorphic-git/lightning-fs), which stores data in [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API).
+
+> See [BrowserFS](https://github.com/jvilk/BrowserFS) and [filer](https://github.com/filerjs/filer) for other examples of emulating a filesystem in the browser.
+
+First, initialize the FS instance. The name 'virtualfs' is used to determine the IndexedDb store name. It is recommended to only create one of these instances for the entire lifetime of the application.
+```js
+const fs = new LightningFS('virtualfs');
+```
+
+Now, let's populate the filesystem with a dataset by cloning it with [isomorphic-git](https://isomorphic-git.org/).
+```js
+const { clone } = await import('isomorphic-git');
+
+const http = await import('isomorphic-git/http/web/index.cjs');
+
+const dir = '/csvs-template-en';
+
+const url = 'https://gitlab.com/norcivilian-labs/csvs-template-en';
+
+await clone({
+  fs,
+  http,
+  dir,
+  url
+})
+```
+
+At this point there is an IndexedDB store called 'virtualfs' that stores a csvs dataste at '/csvs-template-en'. Let's point the dir variable there.
+```js
+const dir = "/csvs-template-en"
+```
+
+Now query the dataset
+```js
+const CSVS = await import('@fetsorn/csvs-js');
+
+const entries = await new CSVS({ fs, dir }).select(new URLSearchParams());
+// [{
+//   _: 'datum',
+//   UUID: '...',
+//   datum: 'value1',
+//   actdate: '2001-01-01'
+// }]
+```

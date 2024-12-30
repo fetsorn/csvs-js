@@ -307,7 +307,7 @@ function mowBaseIsTrait(record, trait, thing) {
   return grains;
 }
 
-// TODO what if trait-thing relation appears elswhere deeper in the record?
+// TODO what if trait-thing relation appears elsewhere deeper in the record?
 function mowTraitIsObject(record, trait, thing) {
   // TODO what if trunk is undefined here?
   const { [trait]: omitted, ...recordWithoutTrunk } = record;
