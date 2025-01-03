@@ -15,7 +15,7 @@ export async function updateRecordStream({ fs, dir }) {
 
   return new TransformStream({
     async transform(query, controller) {
-      const queryStream = ReadableStream.from([{ query }]);
+      const queryStream = ReadableStream.from([query]);
 
       const strategy = planUpdate(schema, query);
 
@@ -30,9 +30,9 @@ export async function updateRecordStream({ fs, dir }) {
 
       await updateStream.pipeTo(
         new WritableStream({
-          async write(state) {
+          async write(query) {
             // push query as entry
-            controller.enqueue(state.query);
+            controller.enqueue(query);
           },
         }),
       );

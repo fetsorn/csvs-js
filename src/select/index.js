@@ -7,6 +7,32 @@ import { toSchema } from "../schema.js";
 import { planSelect } from "./strategy.js";
 import { selectTabletStream } from "./tablet.js";
 
+function leaderStream(base, query) {
+  return new TransformStream({
+    async transform(state, controller) {
+      // TODO should we set base to query in accumulating by trunk?
+      const baseNew = state.entry._ !== base
+            ? base
+            : state.entry._;
+
+      // if query has __, return leader
+      // TODO what if leader is nested? what if many leaders? use mow
+      const entryNew = query.__ !== undefined
+            ? state.query[query.__]
+            : {
+              ...state.entry,
+              _: baseNew
+            }
+
+      // do not return search result
+      // if state comes from the end of accumulating
+      if (state.matchMap === undefined) {
+        controller.enqueue({ entry: entryNew });
+      }
+    }
+  });
+}
+
 /**
  * This returns a Transform stream
  * @name selectRecordStream
@@ -45,31 +71,7 @@ export async function selectRecordStream({ fs, dir }) {
         selectTabletStream(fs, dir, tablet),
       );
 
-      const leaderStream = new TransformStream({
-        async transform(state, controllerLeader) {
-          // TODO should we set base to query in accumulating by trunk?
-          const baseNew = state.entry._ !== base
-                ? base
-                : state.entry._;
-
-          // if query has __, return leader
-          // TODO what if leader is nested? what if many leaders? use mow
-          const entryNew = query.__ !== undefined
-                ? state.query[query.__]
-                : {
-            ...state.entry,
-            _: baseNew
-          }
-
-          // do not return search result
-          // if state comes from the end of accumulating
-          if (state.matchMap === undefined) {
-            controllerLeader.enqueue({ entry: entryNew });
-          }
-        }
-      });
-
-      const selectStream = [...streams, leaderStream].reduce(
+      const selectStream = [...streams, leaderStream(base, query)].reduce(
         (withStream, stream) => withStream.pipeThrough(stream),
         queryStream,
       );
@@ -125,5 +127,6 @@ export async function selectRecord({ fs, dir, query }) {
  * @returns {Object[]}
  */
 export async function selectSchema({ fs, dir }) {
+  // TODO return only one object
   return selectRecord({ fs, dir, query: { _: "_" } });
 }

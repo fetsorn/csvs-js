@@ -23,13 +23,11 @@ export function insertTablet(fs, dir, tablet, schema) {
 
       const insertStream = ReadableStream.from(lines);
 
-      const writeStream = new WritableStream({
+      await insertStream.pipeTo(new WritableStream({
         async write(line) {
           await fs.promises.appendFile(filepath, line + "\n");
         },
-      });
-
-      await insertStream.pipeTo(writeStream);
+      }))
     },
   });
 }

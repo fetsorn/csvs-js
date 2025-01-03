@@ -20,16 +20,14 @@ export async function pruneTablet(fs, dir, tablet) {
 
   const tmpPath = path.join(tmpdir, tablet.filename);
 
-  const writeStream = new WritableStream({
-    async write(line) {
-      await fs.promises.appendFile(tmpPath, line);
-    },
-  });
-
   await fileStream
     .pipeThrough(createLineStream())
     .pipeThrough(pruneStream)
-    .pipeTo(writeStream);
+    .pipeTo(new WritableStream({
+      async write(line) {
+        await fs.promises.appendFile(tmpPath, line);
+      },
+    }));
 
   if (!(await isEmpty(fs, filepath))) {
     // use copyFile because rename doesn't work with external drives

@@ -10,19 +10,15 @@ export async function insertRecordStream({ fs, dir }) {
 
   const schema = toSchema(schemaRecord);
 
-  const isInserted = new Map();
+  let strategy = [];
 
   return new TransformStream({
     async transform(query, controller) {
       const queryStream = ReadableStream.from([{ query }]);
 
-      const strategy = planInsert(schema, query);
+      strategy = planInsert(schema, query);
 
-      const streams = strategy.map((tablet) => {
-        isInserted.set(tablet.filename, true);
-
-        return insertTablet(fs, dir, tablet, schema);
-      });
+      const streams = strategy.map((tablet) => insertTablet(fs, dir, tablet, schema));
 
       const insertStream = [...streams].reduce(
         (withStream, stream) => withStream.pipeThrough(stream),
@@ -39,9 +35,8 @@ export async function insertRecordStream({ fs, dir }) {
     },
 
     async flush() {
-      const promises = isInserted
-        .entries()
-        .map(([filename]) => sortFile(fs, dir, filename));
+      // we use isInserted here to not cache the strategy
+      const promises = strategy.map(({filename}) => sortFile(fs, dir, filename));
 
       await Promise.all(promises);
     },

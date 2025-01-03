@@ -7,7 +7,9 @@ export function updateSchemaStream(query) {
         .filter(([key]) => key !== "_")
         .sort()
         .forEach(([trunk, leafValue]) => {
-          const leaves = Array.isArray(leafValue) ? leafValue : [leafValue];
+          const leaves = Array.isArray(leafValue)
+                ? leafValue
+                : [leafValue];
 
           leaves.sort().forEach((leaf) => {
             const line = csv.unparse([[trunk, leaf]], {

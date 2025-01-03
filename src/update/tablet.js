@@ -13,9 +13,9 @@ export function updateTabletStream(fs, dir, tablet) {
   const filepath = path.join(dir, tablet.filename);
 
   return new TransformStream({
-    async transform(state, controller) {
+    async transform(query, controller) {
       // pass the query early on to start other tablet streams
-      controller.enqueue(state);
+      controller.enqueue(query);
 
       const fileStream = (await isEmpty(fs, filepath))
         ? ReadableStream.from([""])
@@ -24,8 +24,8 @@ export function updateTabletStream(fs, dir, tablet) {
       const isSchema = tablet.filename === "_-_.csv";
 
       const updateStream = isSchema
-        ? updateSchemaStream(state.query)
-        : updateLineStream(state.query, tablet);
+        ? updateSchemaStream(query)
+        : updateLineStream(query, tablet);
 
       const tmpdir = await fs.promises.mkdtemp(path.join(dir, "update-"));
 

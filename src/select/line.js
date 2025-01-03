@@ -256,3 +256,49 @@ export function parseLineStream({
     },
   });
 }
+
+export function selectLineStream(state, tablet) {
+  // value tablets receive a matchMap from accumulating tablets
+  // but don't need to do anything with it or with the accompanying entry
+  const dropMatchMap = tablet.passthrough && state.matchMap !== undefined;
+
+  if (dropMatchMap) {
+    return new TransformStream({
+      transform(state, controller) {
+        // do nothing
+      },
+    });
+  }
+
+  // accumulating tablets find all values
+  // matched at least once across the dataset
+  // to do this they track matches in a shared match map
+  // when a new entry is found, it is sent forward without a matchMap
+  // and each accumulating tablet forwards the entry as is
+  // until the entry reaches non-accumulating value tablets
+  // assume the entry is new
+  // because it has been checked against the match map upstream
+  const forwardAccumulating = tablet.accumulating && state.matchMap === undefined;
+
+  // TODO what if the thing branch changes
+  // from one group of accumulating tablets to another
+  // and will need to invalidate matchMap
+
+  if (forwardAccumulating) {
+    return new TransformStream({
+      start(controller) {
+        controller.enqueue({
+          query: state.query,
+          entry: state.entry,
+          source: tablet.filename,
+        });
+      },
+
+      transform(state, controller) {
+        // do nothing
+      },
+    });
+  }
+
+  return parseLineStream(state, tablet);
+}

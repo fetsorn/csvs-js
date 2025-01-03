@@ -9,17 +9,8 @@ import {
 } from "./update/index.js";
 import { deleteRecord, deleteRecordStream } from "./delete/index.js";
 import { insertRecord, insertRecordStream } from "./insert/index.js";
-import {
-  condense,
-  expand,
-  isTwig,
-  enrichBranchRecords,
-  extractSchemaRecords,
-  searchParamsToQuery,
-  mow,
-  sow,
-} from "./record.js";
 import { findCrown, toSchema } from "./schema.js";
+import { mow, sow } from "./record.js";
 
 export {
   selectRecordStream,
@@ -31,12 +22,6 @@ export {
   insertRecordStream,
   deleteRecord,
   deleteRecordStream,
-  condense,
-  expand,
-  isTwig,
-  enrichBranchRecords,
-  extractSchemaRecords,
-  searchParamsToQuery,
   findCrown,
   toSchema,
   mow,
@@ -53,12 +38,6 @@ export default {
   insertRecordStream,
   deleteRecord,
   deleteRecordStream,
-  condense,
-  expand,
-  isTwig,
-  enrichBranchRecords,
-  extractSchemaRecords,
-  searchParamsToQuery,
   findCrown,
   toSchema,
   mow,
