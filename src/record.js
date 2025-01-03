@@ -11,7 +11,7 @@ function mowBaseIsThing(record, trait, thing) {
     ? record[trait]
     : [record[trait]].filter(Boolean);
 
-  // TODO replace this with a check on empty grain list outside mow
+  // this is needed to add things to grains without thing with sow
   if (branchItems.length === 0) return [{ _: base, ...basePartial }];
 
   const grains = branchItems
@@ -42,7 +42,7 @@ function mowBaseIsTrait(record, trait, thing) {
     ? record[thing]
     : [record[thing]].filter(Boolean);
 
-  // TODO replace this with a check on empty grain list outside mow
+  // this is needed to add things to grains without thing with sow
   if (branchItems.length === 0) return [{ _: trait, [trait]: record[trait] }];
 
   const grains = branchItems.map((branchItem) => {
@@ -81,6 +81,7 @@ function mowTraitIsObject(record, trait, thing) {
 
       const branchValue = branchItemIsObject ? branchItem[thing] : branchItem;
 
+      // this is needed to add things to grains without thing with sow
       if (branchValue === undefined) return { _: trait, [trait]: trunkValue };
 
       const grain = { _: trait, [trait]: trunkValue, [thing]: branchValue };
