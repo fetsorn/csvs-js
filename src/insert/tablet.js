@@ -3,7 +3,7 @@ import csv from "papaparse";
 import { WritableStream, ReadableStream } from "@swimburger/isomorphic-streams";
 import { mow } from "../record.js";
 
-export function insertTablet(fs, dir, tablet, schema) {
+export function insertTablet(fs, dir, tablet) {
   const filepath = path.join(dir, tablet.filename);
 
   return new TransformStream({

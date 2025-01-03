@@ -18,7 +18,7 @@ export async function insertRecordStream({ fs, dir }) {
 
       strategy = planInsert(schema, query);
 
-      const streams = strategy.map((tablet) => insertTablet(fs, dir, tablet, schema));
+      const streams = strategy.map((tablet) => insertTablet(fs, dir, tablet));
 
       const insertStream = [...streams].reduce(
         (withStream, stream) => withStream.pipeThrough(stream),

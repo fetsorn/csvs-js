@@ -134,7 +134,14 @@ export function sortNestingDescending(schema) {
   };
 }
 
-export function toSchema(schemaRecord) {
+function append(list, item) {
+  const isEmpty = list === undefined || list.length === 0;
+
+  // use flat instead of spread here in case list is one item
+  return isEmpty ? [item] : [list, item].flat();
+}
+
+export function toSchema0(schemaRecord) {
   const { _: omit, ...record } = schemaRecord;
 
   return Object.entries(record).reduce((withEntry, [trunk, value]) => {
@@ -147,6 +154,54 @@ export function toSchema(schemaRecord) {
           : trunk;
 
       return { ...withLeaf, [leaf]: { trunk: trunkValue } };
+    }, withEntry);
+  }, {});
+}
+
+export function toSchema(schemaRecord) {
+  const invalidRecord = !Object.hasOwn(schemaRecord, "_") || schemaRecord._ !== "_";
+
+  if (invalidRecord) return {}
+
+  const { _: omit, ...record } = schemaRecord;
+
+  return Object.entries(record).reduce((withEntry, [trunk, value]) => {
+    const leaves = Array.isArray(value) ? value : [value];
+
+    return leaves.reduce((withLeaf, leaf) => {
+      const trunkOld = withLeaf[trunk] ?? {};
+
+      const trunkTrunks = trunkOld.trunk ?? [];
+
+      const trunkLeaves =
+            withLeaf[trunk] !== undefined
+            ? append(withLeaf[trunk].leaves, leaf)
+            : [ leaf ];
+
+      const trunkPartial = {
+        [trunk]: {
+          leaves: trunkLeaves,
+          trunk: trunkTrunks,
+        }
+      };
+
+      const leafOld = withLeaf[leaf] ?? {};
+
+      const leafTrunks =
+        withLeaf[leaf] !== undefined
+            ? append(withLeaf[leaf].trunk, trunk)
+            : [ trunk ];
+
+      const leafLeaves = leafOld.leaves ?? [];
+
+      const leafPartial = {
+        [leaf]: {
+          trunk: leafTrunks,
+          leaves: leafLeaves,
+        }
+      };
+
+      return { ...withLeaf, ...trunkPartial, ...leafPartial };
     }, withEntry);
   }, {});
 }

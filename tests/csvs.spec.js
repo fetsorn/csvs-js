@@ -19,6 +19,7 @@ import {
   testCasesDelete,
   testCasesMow,
   testCasesSow,
+  testCasesToSchema,
 } from "./cases.js";
 
 function sortObject(a) {
@@ -198,6 +199,22 @@ describe("sow()", () => {
         testCase.trunk,
         testCase.branch,
       );
+
+      const dataSorted = sortObject(data);
+
+      const expected = sortObject(testCase.expected);
+
+      // console.log(JSON.stringify(dataSorted, undefined, 2));
+
+      expect(dataSorted).toStrictEqual(expected);
+    });
+  });
+});
+
+describe("toSchema()", () => {
+  testCasesToSchema.forEach((testCase) => {
+    test(testCase.name, async () => {
+      const data = toSchema(testCase.initial);
 
       const dataSorted = sortObject(data);
 

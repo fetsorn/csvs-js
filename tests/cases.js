@@ -394,3 +394,24 @@ export const testCasesSow = [
     expected: mocks.recordArraySow,
   },
 ];
+
+export const testCasesToSchema = [
+  {
+    name: "empty record",
+    initial: {},
+    expected: {},
+  },
+  {
+    name: "record without base",
+    initial: { a: "b" },
+    expected: {},
+  },
+  {
+    name: "one leaf",
+    initial: { _: "_", datum: "date" },
+    expected: {
+      datum: { trunk: [], leaves: [ "date" ] },
+      date: { trunk: [ "datum" ], leaves: [] }
+    },
+  },
+]

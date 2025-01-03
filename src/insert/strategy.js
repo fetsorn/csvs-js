@@ -7,15 +7,18 @@ export function planInsert(schema, query) {
 
   const crown = findCrown(schema, base);
 
-  const tablets = crown.map((branch) => {
+  const tablets = crown.reduce((withBranch, branch) => {
     const { trunk } = schema[branch];
 
-    return {
+    const tabletsNew = trunk.map((t) => ({
       filename: `${trunk}-${branch}.csv`,
-      trunk,
+      trunk: t,
       branch,
-    };
-  });
+    }))
+
+    return [...withBranch, tabletsNew].flat()
+  }, []);
+  console.log(tablets)
 
   return tablets;
 }
