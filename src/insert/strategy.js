@@ -18,7 +18,6 @@ export function planInsert(schema, query) {
 
     return [...withBranch, tabletsNew].flat()
   }, []);
-  console.log(tablets)
 
   return tablets;
 }

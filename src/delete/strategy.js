@@ -5,21 +5,17 @@ export function planPrune(schema, record) {
   // { _: a, a: [ { _: a, a: a1 }, { _: a, a: a1 } ] }
   const { _: base, [base]: baseValue } = record;
 
-  const trunk = schema[base] !== undefined
-        ? schema[base].trunk
-        : undefined;
+  const trunks = schema[base].trunk;
 
-  const trunkTablet = {
-    filename: `${trunk}-${base}.csv`,
-    trait: baseValue,
-    traitIsFirst: false,
-  };
+  const trunkTablets = trunks.map((trunk) => {
+    return {
+      filename: `${trunk}-${base}.csv`,
+      trait: baseValue,
+      traitIsFirst: false,
+    }
+  });
 
-  const trunkPartial = trunk !== undefined ? [trunkTablet] : [];
-
-  const leaves = Object.keys(schema).filter(
-    (branch) => schema[branch].trunk === base,
-  );
+  const { leaves } = schema[base];
 
   const leafTablets = leaves.map((leaf) => ({
     filename: `${base}-${leaf}.csv`,
@@ -27,5 +23,5 @@ export function planPrune(schema, record) {
     traitIsFirst: true,
   }));
 
-  return [...trunkPartial, ...leafTablets];
+  return [...trunkTablets, ...leafTablets];
 }
