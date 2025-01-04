@@ -61,7 +61,7 @@ export function findCrown(schema, base) {
  * @returns {number} - number of leaves
  */
 export function countLeaves(schema, branch) {
-  const leaves = Object.keys(schema).filter((b) => schema[b].trunk === branch);
+  const { leaves } = schema[branch];
 
   return leaves.length;
 }
@@ -80,11 +80,11 @@ export function sortNestingAscending(schema) {
 
     const { trunk: trunkB } = schema[b];
 
-    if (trunkA === b) {
+    if (trunkA.includes(b)) {
       return -1;
     }
 
-    if (trunkB === a) {
+    if (trunkB.includes(a)) {
       return 1;
     }
 
@@ -114,11 +114,11 @@ export function sortNestingDescending(schema) {
 
     const { trunk: trunkB } = schema[b];
 
-    if (trunkB === a) {
+    if (trunkB.includes(a)) {
       return -1;
     }
 
-    if (trunkA === b) {
+    if (trunkA.includes(b)) {
       return 1;
     }
 
@@ -139,23 +139,6 @@ function append(list, item) {
 
   // use flat instead of spread here in case list is one item
   return isEmpty ? [item] : [list, item].flat();
-}
-
-export function toSchema0(schemaRecord) {
-  const { _: omit, ...record } = schemaRecord;
-
-  return Object.entries(record).reduce((withEntry, [trunk, value]) => {
-    const leaves = Array.isArray(value) ? value : [value];
-
-    return leaves.reduce((withLeaf, leaf) => {
-      const trunkValue =
-        withLeaf[leaf] !== undefined && withLeaf[leaf].trunk !== undefined
-          ? [withLeaf[leaf].trunk, trunk].flat()
-          : trunk;
-
-      return { ...withLeaf, [leaf]: { trunk: trunkValue } };
-    }, withEntry);
-  }, {});
 }
 
 export function toSchema(schemaRecord) {

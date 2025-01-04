@@ -5,6 +5,24 @@ import {
   sortNestingDescending,
 } from "../schema.js";
 
+function planSelectSchema() {
+
+  return [
+    {
+      // what branch to set?
+      thing: "_",
+      // what branch to match?
+      trait: "_",
+      // do we set first column?
+      thingIsFirst: false,
+      // do we match first column?
+      traitIsFirst: true,
+      filename: `_-_.csv`,
+      // should it have constraints?
+    }
+  ];
+}
+
 // in order of query,
 // first queried twigs
 // then queried trunks
@@ -40,52 +58,53 @@ export function planQuery(schema, query) {
   const queriedBranches = gatherKeys(query).sort(sortNestingAscending(schema));
 
   // TODO rewrite to using schema record
-  const queriedTablets = queriedBranches.map((branch) => ({
-    // what branch to set?
-    thing: schema[branch].trunk,
-    // what branch to match?
-    trait: branch,
-    // do we set first column?
-    thingIsFirst: true,
-    // do we match first column?
-    traitIsFirst: false,
-    base: schema[branch].trunk,
-    filename: `${schema[branch].trunk}-${branch}.csv`,
-    traitIsRegex: true,
-    querying: true,
-    eager: true, // push as soon as trait changes in the tablet
-  }));
+  const queriedTablets = queriedBranches.reduce((withBranch, branch) => {
+    const { trunk } = schema[branch];
+
+    const tabletsNew = trunk.map((t) => ({
+      // what branch to set?
+      thing: t,
+      // what branch to match?
+      trait: branch,
+      // do we set first column?
+      thingIsFirst: true,
+      // do we match first column?
+      traitIsFirst: false,
+      base: t,
+      filename: `${t}-${branch}.csv`,
+      traitIsRegex: true,
+      querying: true,
+      eager: true, // push as soon as trait changes in the tablet
+    }));
+
+    return [...withBranch, ...tabletsNew]
+  }, []);
 
   return queriedTablets;
 }
 
 export function planOptions(schema, base) {
-  const trunk = schema[base] !== undefined ? schema[base].trunk : undefined;
-
-  const baseHasTrunk = trunk !== undefined;
+  const { trunk } = schema[base];
 
   // if base is leaf, parse the trunk relationship
-  const trunkTablet = {
+  const trunkTablets = trunk.map((t) => ({
     // what branch to set?
     thing: base,
     // what branch to match?
-    trait: trunk,
+    trait: t,
     // do we set first column?
     thingIsFirst: false,
     // do we match first column?
     traitIsFirst: false,
-    base: trunk,
-    filename: `${trunk}-${base}.csv`,
+    base: t,
+    filename: `${t}-${base}.csv`,
     traitIsRegex: true,
     // should it have constraints?
     eager: true, // push as soon as trait changes in the tablet
     accumulating: true,
-  };
+  }));
 
-  // const baseGroups = baseHasTrunk ? [[trunkTablet]] : [leafTablets];
-  const basePartial = baseHasTrunk ? [trunkTablet] : [];
-
-  const leaves = Object.keys(schema).filter((b) => schema[b].trunk === base);
+  const { leaves } = schema[base];
 
   const leafTablets = leaves.map((leaf) => ({
     // what branch to set?
@@ -104,7 +123,7 @@ export function planOptions(schema, base) {
     eager: true, // push as soon as trait changes in the tablet
   }));
 
-  return [...leafTablets, ...basePartial];
+  return [...leafTablets, ...trunkTablets];
 }
 
 export function planValues(schema, query) {
@@ -113,49 +132,28 @@ export function planValues(schema, query) {
   // should the crown include base?
   const crown = findCrown(schema, base).sort(sortNestingDescending(schema)).filter((b) => b !== base);
 
-  // console.log("planValues", schema, base, crown);
+  const valueTablets = crown.reduce((withBranch, branch) => {
+    const { trunk } = schema[branch];
 
-  const valueTablets = crown.map((branch) => {
-    const trunkList = [schema[branch].trunk].flat();
-
-    // TODO what if more than one trunk is connected to base?
-    const trunk = trunkList.find((trunk) => isConnected(schema, base, trunk));
-
-    return {
+    const tabletsNew = trunk.map((t) => ({
       // what branch to set?
       thing: branch,
       // what branch to match?
-      trait: trunk,
+      trait: t,
       // do we set first column?
       thingIsFirst: false,
       // do we match first column?
       traitIsFirst: true,
-      base: trunk,
-      filename: `${trunk}-${branch}.csv`,
+      base: t,
+      filename: `${t}-${branch}.csv`,
       passthrough: true,
-      eager: trunk === base, // push as soon as trait changes in the tablet
-    };
-  });
+      eager: t === base, // push as soon as trait changes in the tablet
+    }))
+
+    return [...withBranch, ...tabletsNew];
+  }, []);
 
   return valueTablets;
-}
-
-function planSelectSchema() {
-
-  return [
-    {
-      // what branch to set?
-      thing: "_",
-      // what branch to match?
-      trait: "_",
-      // do we set first column?
-      thingIsFirst: false,
-      // do we match first column?
-      traitIsFirst: true,
-      filename: `_-_.csv`,
-      // should it have constraints?
-    }
-  ];
 }
 
 export function planSelect(schema, query) {
