@@ -410,8 +410,8 @@ export const testCasesToSchema = [
     name: "one leaf",
     initial: { _: "_", datum: "date" },
     expected: {
-      datum: { trunk: [], leaves: [ "date" ] },
-      date: { trunk: [ "datum" ], leaves: [] }
+      datum: { trunks: [], leaves: [ "date" ] },
+      date: { trunks: [ "datum" ], leaves: [] }
     },
   },
 ]

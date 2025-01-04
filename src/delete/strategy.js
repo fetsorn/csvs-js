@@ -5,7 +5,7 @@ export function planPrune(schema, record) {
   // { _: a, a: [ { _: a, a: a1 }, { _: a, a: a1 } ] }
   const { _: base, [base]: baseValue } = record;
 
-  const trunks = schema[base].trunk;
+  const { trunks } = schema[base];
 
   const trunkTablets = trunks.map((trunk) => {
     return {

@@ -59,19 +59,19 @@ export function planQuery(schema, query) {
 
   // TODO rewrite to using schema record
   const queriedTablets = queriedBranches.reduce((withBranch, branch) => {
-    const { trunk } = schema[branch];
+    const { trunks } = schema[branch];
 
-    const tabletsNew = trunk.map((t) => ({
+    const tabletsNew = trunks.map((trunk) => ({
       // what branch to set?
-      thing: t,
+      thing: trunk,
       // what branch to match?
       trait: branch,
       // do we set first column?
       thingIsFirst: true,
       // do we match first column?
       traitIsFirst: false,
-      base: t,
-      filename: `${t}-${branch}.csv`,
+      base: trunk,
+      filename: `${trunk}-${branch}.csv`,
       traitIsRegex: true,
       querying: true,
       eager: true, // push as soon as trait changes in the tablet
@@ -84,20 +84,20 @@ export function planQuery(schema, query) {
 }
 
 export function planOptions(schema, base) {
-  const { trunk } = schema[base];
+  const { trunks } = schema[base];
 
   // if base is leaf, parse the trunk relationship
-  const trunkTablets = trunk.map((t) => ({
+  const trunkTablets = trunks.map((trunk) => ({
     // what branch to set?
     thing: base,
     // what branch to match?
-    trait: t,
+    trait: trunk,
     // do we set first column?
     thingIsFirst: false,
     // do we match first column?
     traitIsFirst: false,
-    base: t,
-    filename: `${t}-${base}.csv`,
+    base: trunk,
+    filename: `${trunk}-${base}.csv`,
     traitIsRegex: true,
     // should it have constraints?
     eager: true, // push as soon as trait changes in the tablet
@@ -133,21 +133,21 @@ export function planValues(schema, query) {
   const crown = findCrown(schema, base).sort(sortNestingDescending(schema)).filter((b) => b !== base);
 
   const valueTablets = crown.reduce((withBranch, branch) => {
-    const { trunk } = schema[branch];
+    const { trunks } = schema[branch];
 
-    const tabletsNew = trunk.map((t) => ({
+    const tabletsNew = trunks.map((trunk) => ({
       // what branch to set?
       thing: branch,
       // what branch to match?
-      trait: t,
+      trait: trunk,
       // do we set first column?
       thingIsFirst: false,
       // do we match first column?
       traitIsFirst: true,
-      base: t,
-      filename: `${t}-${branch}.csv`,
+      base: trunk,
+      filename: `${trunk}-${branch}.csv`,
       passthrough: true,
-      eager: t === base, // push as soon as trait changes in the tablet
+      eager: trunk === base, // push as soon as trait changes in the tablet
     }))
 
     return [...withBranch, ...tabletsNew];

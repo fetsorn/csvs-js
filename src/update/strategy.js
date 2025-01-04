@@ -19,11 +19,11 @@ export function planUpdate(schema, query) {
   const crown = findCrown(schema, base);
 
   const tablets = crown.reduce((withBranch, branch) => {
-    const { trunk } = schema[branch];
+    const { trunks } = schema[branch];
 
-    const tabletsNew = trunk.map((t) => ({
+    const tabletsNew = trunks.map((trunk) => ({
       filename: `${trunk}-${branch}.csv`,
-      trunk: t,
+      trunk,
       branch,
     }))
 

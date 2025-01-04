@@ -13,12 +13,9 @@ export function isConnected(schema, base, branch) {
     return true;
   }
 
-  const trunkValue =
-    schema[branch] !== undefined ? schema[branch].trunk : undefined;
+  const { trunks } = schema[branch];
 
-  const trunkList = Array.isArray(trunkValue) ? trunkValue : [trunkValue];
-
-  for (const trunk of trunkList) {
+  for (const trunk of trunks) {
     if (trunk === undefined) {
       // if schema root is reached, leaf is not connected to base
       continue;
@@ -76,9 +73,9 @@ export function countLeaves(schema, branch) {
  */
 export function sortNestingAscending(schema) {
   return (a, b) => {
-    const { trunk: trunkA } = schema[a];
+    const { trunks: trunkA } = schema[a];
 
-    const { trunk: trunkB } = schema[b];
+    const { trunks: trunkB } = schema[b];
 
     if (trunkA.includes(b)) {
       return -1;
@@ -110,9 +107,9 @@ export function sortNestingAscending(schema) {
  */
 export function sortNestingDescending(schema) {
   return (a, b) => {
-    const { trunk: trunkA } = schema[a];
+    const { trunks: trunkA } = schema[a];
 
-    const { trunk: trunkB } = schema[b];
+    const { trunks: trunkB } = schema[b];
 
     if (trunkB.includes(a)) {
       return -1;
@@ -154,7 +151,7 @@ export function toSchema(schemaRecord) {
     return leaves.reduce((withLeaf, leaf) => {
       const trunkOld = withLeaf[trunk] ?? {};
 
-      const trunkTrunks = trunkOld.trunk ?? [];
+      const trunkTrunks = trunkOld.trunks ?? [];
 
       const trunkLeaves =
             withLeaf[trunk] !== undefined
@@ -164,7 +161,7 @@ export function toSchema(schemaRecord) {
       const trunkPartial = {
         [trunk]: {
           leaves: trunkLeaves,
-          trunk: trunkTrunks,
+          trunks: trunkTrunks,
         }
       };
 
@@ -172,14 +169,14 @@ export function toSchema(schemaRecord) {
 
       const leafTrunks =
         withLeaf[leaf] !== undefined
-            ? append(withLeaf[leaf].trunk, trunk)
+            ? append(withLeaf[leaf].trunks, trunk)
             : [ trunk ];
 
       const leafLeaves = leafOld.leaves ?? [];
 
       const leafPartial = {
         [leaf]: {
-          trunk: leafTrunks,
+          trunks: leafTrunks,
           leaves: leafLeaves,
         }
       };
