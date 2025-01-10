@@ -142,11 +142,13 @@ export function mow(record, trait, thing) {
 }
 
 function sowBaseIsThing(record, grain, trait, thing) {
-  const existingPartial =
-    record[thing] === undefined ? [] : [record[thing]].flat();
-
   // what if grain does not have thing?
   if (grain[thing] === undefined) return record;
+
+  if (record[thing] !== undefined) throw "record already has base value";
+
+  const existingPartial =
+    record[thing] === undefined ? [] : [record[thing]].flat();
 
   const thingValue = [...existingPartial, grain[thing]];
 

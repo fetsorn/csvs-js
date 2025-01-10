@@ -123,6 +123,17 @@ export function makeStateLine(
   );
 
   if (tablet.querying) {
+    if (thing === stateInitial.thingQuerying) {
+      // if previous querying tablet already matched thing
+      // the trait in this record is likely to be the same
+      // and might duplicate in the entry after sow
+      // return ({
+      //   _: tablet.trait,
+      //   [tablet.thing]: thing,
+      // })
+      return state
+    }
+
     // in querying tablet we should sow the grain into the query as well
     state.query = grainsNew.reduce(
       (withGrain, grain) => sow(
