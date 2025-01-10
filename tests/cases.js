@@ -341,22 +341,20 @@ export const testCasesDelete = [
 export const testCasesMow = [
   {
     name: "grain from simple event",
-    initial: mocks.datasetDefault,
-    record: mocks.record2001,
+    initial: mocks.record2001,
     trunk: "datum",
     branch: "actdate",
     expected: [
       {
         _: "datum",
-        actdate: "2001-01-01",
         datum: "value1",
+        actdate: "2001-01-01",
       },
     ],
   },
   {
     name: "grain from array",
-    initial: mocks.datasetArray,
-    record: mocks.recordArray,
+    initial: mocks.recordArray,
     trunk: "export1_tag",
     branch: "export1_channel",
     expected: [
@@ -374,12 +372,39 @@ export const testCasesMow = [
       },
     ],
   },
+  {
+    name: "empty grain when trait has no leaf",
+    initial: {
+      _: "datum",
+      export_tags: {
+        _: "export_tags",
+        export_tags:
+        "9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f",
+        export1_tag: [
+          {
+            _: "export1_tag",
+            export1_tag:
+            "fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77",
+            export1_key: "longkey2",
+          },
+        ],
+      },
+    },
+    trunk: "export1_tag",
+    branch: "export1_channel",
+    expected: [
+      {
+        _: "export1_tag",
+        "export1_tag": "fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77"
+      },
+    ],
+  },
 ];
 
 export const testCasesSow = [
   {
     name: "grain to a simple record",
-    record: mocks.record2001,
+    initial: mocks.record2001,
     grain: mocks.grain2001,
     trunk: "datum",
     branch: "saydate",
@@ -387,7 +412,7 @@ export const testCasesSow = [
   },
   {
     name: "grain to array",
-    record: mocks.recordArray,
+    initial: mocks.recordArray,
     grain: mocks.grainArray,
     trunk: "export_tags",
     branch: "export1_tag",

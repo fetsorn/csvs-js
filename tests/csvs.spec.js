@@ -173,7 +173,7 @@ describe("deleteRecord()", () => {
 describe("mow()", () => {
   testCasesMow.forEach((testCase) => {
     test(testCase.name, async () => {
-      const data = mow(testCase.record, testCase.trunk, testCase.branch);
+      const data = mow(testCase.initial, testCase.trunk, testCase.branch);
 
       const dataSorted = data
         .map(sortObject)
@@ -194,7 +194,7 @@ describe("sow()", () => {
   testCasesSow.forEach((testCase) => {
     test(testCase.name, async () => {
       const data = sow(
-        testCase.record,
+        testCase.initial,
         testCase.grain,
         testCase.trunk,
         testCase.branch,
