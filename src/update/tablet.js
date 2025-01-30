@@ -41,8 +41,11 @@ export function updateTabletStream(fs, dir, tablet) {
         }));
 
       if (!(await isEmpty(fs, tmpPath))) {
-        // use copyFile because rename doesn't work with external drives
-        await fs.promises.copyFile(tmpPath, filepath);
+        // fs.rename doesn't work with external drives
+        // fs.copyFile doesn't work with lightning fs
+        const file = await fs.promises.readFile(tmpPath);
+
+        await fs.promises.writeFile(filepath, file);
 
         // unlink to rmdir later
         await fs.promises.unlink(tmpPath);

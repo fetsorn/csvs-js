@@ -23,7 +23,12 @@ export function makeStateInitial({
   const doSow = tablet.querying && !doDiscard;
 
   const entryInitial = doSow
-        ? sow({ _: tablet.base }, entry, tablet.base, entry._)
+        ? sow(
+          { _: tablet.base },
+          { _: entry._, [entry._]: entry[entry._] },
+          tablet.base,
+          entry._
+        )
         : entryFallback;
 
   const entryBaseChanged = entry === undefined || entry._ !== entryInitial._;
@@ -41,8 +46,8 @@ export function makeStateInitial({
   const queryInitial = doSwap ? entryInitial : query;
 
   const state = {
-    query: queryInitial,
     entry: entryInitial,
+    query: queryInitial,
     fst: undefined,
     isMatch: false,
     hasMatch: false,
@@ -61,6 +66,7 @@ export function makeStateLine(
   trait,
   thing
 ) {
+  // if (tablet.filename === "datum-filepath.csv") console.log(tablet.filename, JSON.stringify(grains, null, 2))
   let state = { ...stateOld };
 
   const grainNew = {
@@ -69,11 +75,18 @@ export function makeStateLine(
     [tablet.thing]: thing,
   };
 
+  // if (tablet.filename === "datum-filepath.csv") console.log(tablet.filename, JSON.stringify(grainNew, null, 2))
   const grainsNew = grains
         .map((grain) => {
+          //console.log(tablet.filename, JSON.stringify(grain, null, 2))
+          // if (tablet.filename === "datum-filepath.csv") console.log(tablet.filename, tablet.traitIsFirst, grain[tablet.trait])
+
+          // if grain[tablet.trait] is undefined, regex is ""
           const isMatchGrain = tablet.traitIsRegex
                 ? new RegExp(grain[tablet.trait]).test(trait)
                 : grain[tablet.trait] === trait;
+
+          // if (tablet.filename === "datum-filepath.csv") console.log(tablet.filename, grain[tablet.trait], trait, new RegExp(grain[tablet.trait]).test(trait))
 
           // when querying also match literal trait from the query
           // otherwise always true
@@ -112,15 +125,32 @@ export function makeStateLine(
         })
         .filter(Boolean);
 
+  // if (tablet.filename === "datum-filepath.csv") console.log(tablet.filename, JSON.stringify(grainsNew, null, 2))
+
   state.entry = grainsNew.reduce(
-    (withGrain, grain) => sow(
-      withGrain,
-      grain,
-      tablet.trait,
-      tablet.thing
-    ),
+    (withGrain, grain) => {
+      const bar = sow(
+        withGrain,
+        grain,
+        tablet.trait,
+        tablet.thing
+      );
+
+      //if (tablet.filename === "datum-filepath.csv") console.log(
+      //  JSON.stringify(withGrain, null, 2),
+      //  JSON.stringify(grain, null, 2),
+      //  tablet.trait,
+      //  tablet.thing,
+      //  JSON.stringify(bar, null, 2)
+      //);
+
+      return bar
+    },
     state.entry,
   );
+
+  // if (tablet.filename === "datum-filepath.csv")
+    // console.log(tablet.filename, JSON.stringify(state.entry, null, 2))
 
   if (tablet.querying) {
     if (thing === stateInitial.thingQuerying) {
@@ -156,27 +186,38 @@ export function parseLineStream({
   thingQuerying,
   source
 }, tablet) {
+  // if (tablet.filename === "datum-filepath.csv")
+  // console.log(tablet.filename, { query, entry, matchMap, thingQuerying, source });
   const stateInitial = makeStateInitial({
-    query,
     entry,
+    query,
     matchMap,
     thingQuerying,
     source
   }, tablet);
 
+  // if (tablet.filename === "datum-filepath.csv") console.log(tablet.filename, stateInitial);
+
   let state = { ...stateInitial };
 
   const grains = mow(state.query, tablet.trait, tablet.thing);
 
+  // if (tablet.filename === "datum-filepath.csv") console.log(tablet.filename, grains)
+
   return new TransformStream({
     async transform(line, controller) {
+      // console.log("line start", tablet.filename, line)
       if (line === "") return;
 
       const {
         data: [[fst, snd]],
       } = csv.parse(line, { delimiter: "," });
 
+      // console.log(tablet.filename, fst, snd);
+
       const fstIsNew = state.fst !== undefined && state.fst !== fst;
+
+      // if (tablet.filename === "datum-filepath.csv") console.log(tablet.filename, fst, snd, fstIsNew)
 
       state.fst = fst;
 
@@ -189,15 +230,24 @@ export function parseLineStream({
 
       const pushEndOfGroup = isEndOfGroup && isComplete;
 
+      // if (tablet.filename === "datum-filepath.csv") console.log(tablet.filename, pushEndOfGroup)
+
       if (pushEndOfGroup) {
+        // if (tablet.filename === "datum-filepath.csv")
         // don't push matchMap here
         // because accumulating is not yet finished
-        controller.enqueue({
-          query: state.query,
+        const stateToPush = {
           entry: state.entry,
+          query: state.query,
           source: tablet.filename,
           thingQuerying: state.thingQuerying,
-        });
+        };
+
+        // if (tablet.accumulating) console.log("push end of group", tablet.filename, line, JSON.stringify(stateToPush, null, 2));
+
+        controller.enqueue(stateToPush);
+
+        // if (tablet.accumulating) console.log("?")
 
         state.entry = stateInitial.entry;
 
@@ -210,6 +260,8 @@ export function parseLineStream({
 
       const thing = tablet.thingIsFirst ? fst : snd;
 
+      // console.log(tablet.filename, trait, thing)
+
       state = makeStateLine(
         stateInitial,
         state,
@@ -218,6 +270,9 @@ export function parseLineStream({
         trait,
         thing
       );
+
+      // if (tablet.filename === "datum-filepath.csv")
+      // console.log(tablet.filename, JSON.stringify(state, null, 2))
     },
 
     flush(controller) {
@@ -231,14 +286,19 @@ export function parseLineStream({
       const pushEnd = !tablet.eager || isComplete;
 
       if (isComplete) {
+        // if (tablet.filename === "datum-filepath.csv") console.log("C", tablet.filename, JSON.stringify(state, null, 2));
         // don't push matchMap here
         // because accumulating is not yet finished
-        controller.enqueue({
+        const stateToPush = {
           query: state.query,
           entry: state.entry,
           source: tablet.filename,
           thingQuerying: state.thingQuerying,
-        });
+        };
+
+        // if (tablet.accumulating) console.log("push end of file", tablet.filename, JSON.stringify(stateToPush, null, 2));
+
+        controller.enqueue(stateToPush);
       }
 
       const isEmptyPassthrough = tablet.passthrough && state.hasMatch === false;
@@ -247,33 +307,45 @@ export function parseLineStream({
       // push the matchMap so that other accumulating tablets
       // can search for new values
       if (tablet.accumulating) {
+        // if (tablet.filename === "datum-filepath.csv") console.log("A", tablet.filename, JSON.stringify(state, null, 2));
         // in accumulating by trunk this pushes entryInitial
         // to output and yields extra search result
-        controller.enqueue({
+        const stateToPush = {
           query: state.query,
           entry: stateInitial.entry,
           matchMap: state.matchMap,
           source: tablet.filename,
-        });
+        };
+
+        // console.log("push matchMap", tablet.filename, JSON.stringify(stateToPush, null, 2));
+
+        controller.enqueue(stateToPush);
       } else if (isEmptyPassthrough) {
+        // if (tablet.filename === "datum-filepath.csv") console.log("P", tablet.filename, JSON.stringify(state, null, 2));
         // if no match and tablet is not a filter
         // push initial record to the next passthrough value tablet
-        controller.enqueue({
+        const stateToPush = {
           query: state.query,
           entry: state.entry,
           source: tablet.filename,
-        });
+        };
+
+        // if (tablet.accumulating) console.log("forward empty", tablet.filename, JSON.stringify(state, null, 2));
+
+        controller.enqueue(stateToPush);
       }
     },
   });
 }
 
 export function selectLineStream(state, tablet) {
+  // console.log("tablet", JSON.stringify(tablet, null, 2), "\n", JSON.stringify(state, null, 2));
   // value tablets receive a matchMap from accumulating tablets
   // but don't need to do anything with it or with the accompanying entry
   const dropMatchMap = tablet.passthrough && state.matchMap !== undefined;
 
   if (dropMatchMap) {
+    // console.log("tablet drop", tablet.filename, JSON.stringify(state, null, 2))
     return new TransformStream({
       transform(state, controller) {
         // do nothing
@@ -296,6 +368,7 @@ export function selectLineStream(state, tablet) {
   // and will need to invalidate matchMap
 
   if (forwardAccumulating) {
+    // console.log("tablet forward", tablet.filename, JSON.stringify(state, null, 2))
     return new TransformStream({
       start(controller) {
         controller.enqueue({

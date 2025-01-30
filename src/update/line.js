@@ -80,8 +80,11 @@ export function updateLineStream(query, tablet) {
       // match this fst against all keys
       const isMatch = keys.includes(fst);
 
-      // if match, set doInsert and prune line
-      if (!isMatch) {
+      if (isMatch) {
+        // if keys include this key, prune line
+        // it will be inserted again before the next key
+      } else  {
+        // otherwise write line unchanged
         controller.enqueue(line);
       }
 

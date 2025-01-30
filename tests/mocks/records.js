@@ -464,6 +464,12 @@ const recordArraySow = {
   },
 };
 
+const recordBaseNone = {};
+
+const recordBaseIsTrait = { _: 'datum', datum: 'value1' };
+
+const grainBaseIsTrait = { _: 'datum', datum: 'value1', filepath: 'path/to/1' };
+
 export default {
   record2001,
   record2002,
@@ -493,4 +499,7 @@ export default {
   record2001Sow,
   grainArray,
   recordArraySow,
+  recordBaseNone,
+  recordBaseIsTrait,
+  grainBaseIsTrait,
 };

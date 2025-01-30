@@ -101,7 +101,12 @@ export async function sortFile(fs, dir, filename) {
   await linesStream.pipeTo(writeStream);
 
   if (!(await isEmpty(fs, tmpPath))) {
-    await fs.promises.copyFile(tmpPath, filepath);
+    // use copyFile because rename doesn't work with external drives
+    // fs.rename doesn't work with external drives
+    // fs.copyFile doesn't work with lightning fs
+    const file = await fs.promises.readFile(tmpPath);
+
+    await fs.promises.writeFile(filepath, file);
 
     await fs.promises.unlink(tmpPath);
   }

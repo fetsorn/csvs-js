@@ -50,17 +50,14 @@ export function findCrown(schema, base) {
   );
 }
 
-/**
- * counts number of leaves.
- * @name countLeaves
- * @export function
- * @param {string} branch - dataset entity.
- * @returns {number} - number of leaves
- */
-export function countLeaves(schema, branch) {
-  const { leaves } = schema[branch];
+export function getNestingLevel(schema, branch) {
+  const { trunks } = schema[branch];
 
-  return leaves.length;
+  const trunkLevels = trunks.map((trunk) => getNestingLevel(schema, trunk));
+
+  const level = trunkLevels.reduce((a, b) => Math.max(a, b), -1);
+
+  return level+1
 }
 
 /**
@@ -73,27 +70,19 @@ export function countLeaves(schema, branch) {
  */
 export function sortNestingAscending(schema) {
   return (a, b) => {
-    const { trunks: trunkA } = schema[a];
+    const levelA = getNestingLevel(schema, a);
 
-    const { trunks: trunkB } = schema[b];
+    const levelB = getNestingLevel(schema, b);
 
-    if (trunkA.includes(b)) {
-      return -1;
+    if (levelA > levelB) {
+      return -1
     }
 
-    if (trunkB.includes(a)) {
-      return 1;
+    if (levelA < levelB) {
+      return 1
     }
 
-    if (countLeaves(schema, a) < countLeaves(schema, b)) {
-      return -1;
-    }
-
-    if (countLeaves(schema, a) > countLeaves(schema, b)) {
-      return 1;
-    }
-
-    return 0;
+    return b.localeCompare(a);
   };
 }
 
@@ -107,27 +96,19 @@ export function sortNestingAscending(schema) {
  */
 export function sortNestingDescending(schema) {
   return (a, b) => {
-    const { trunks: trunkA } = schema[a];
+    const levelA = getNestingLevel(schema, a);
 
-    const { trunks: trunkB } = schema[b];
+    const levelB = getNestingLevel(schema, b);
 
-    if (trunkB.includes(a)) {
-      return -1;
+    if (levelA < levelB) {
+      return -1
     }
 
-    if (trunkA.includes(b)) {
-      return 1;
+    if (levelA > levelB) {
+      return 1
     }
 
-    if (countLeaves(schema, a) > countLeaves(schema, b)) {
-      return -1;
-    }
-
-    if (countLeaves(schema, a) < countLeaves(schema, b)) {
-      return 1;
-    }
-
-    return 0;
+    return a.localeCompare(b);
   };
 }
 
@@ -145,7 +126,7 @@ export function toSchema(schemaRecord) {
 
   const { _: omit, ...record } = schemaRecord;
 
-  return Object.entries(record).reduce((withEntry, [trunk, value]) => {
+  return Object.entries(record).reduce((withTrunk, [trunk, value]) => {
     const leaves = Array.isArray(value) ? value : [value];
 
     return leaves.reduce((withLeaf, leaf) => {
@@ -182,6 +163,6 @@ export function toSchema(schemaRecord) {
       };
 
       return { ...withLeaf, ...trunkPartial, ...leafPartial };
-    }, withEntry);
+    }, withTrunk);
   }, {});
 }

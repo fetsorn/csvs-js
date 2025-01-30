@@ -205,18 +205,6 @@ export const testCasesUpdate = [
     expected: mocks.datasetAdded,
   },
   {
-    name: "adds record with random uuid",
-    query: mocks.recordAdded,
-    initial: mocks.datasetDefault,
-    expected: mocks.datasetAdded,
-  },
-  {
-    name: "falls back to random UUID if callback is not specified",
-    query: mocks.recordAdded,
-    initial: mocks.datasetDefault,
-    expected: mocks.datasetAdded,
-  },
-  {
     name: "adds record with array",
     query: mocks.recordArrayAdded,
     initial: mocks.datasetArray,
@@ -417,6 +405,14 @@ export const testCasesSow = [
     trunk: "export_tags",
     branch: "export1_tag",
     expected: mocks.recordArraySow,
+  },
+  {
+    name: "grain to array",
+    initial: mocks.recordBaseIsTrait,
+    grain: mocks.grainBaseIsTrait,
+    trunk: "datum",
+    branch: "filepath",
+    expected: mocks.grainBaseIsTrait,
   },
 ];
 
