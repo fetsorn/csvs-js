@@ -29,7 +29,7 @@ export async function pruneTablet(fs, dir, tablet) {
       },
     }));
 
-  if (!(await isEmpty(fs, filepath))) {
+  if (!(await isEmpty(fs, tmpPath))) {
     // use copyFile because rename doesn't work with external drives
     // fs.rename doesn't work with external drives
     // fs.copyFile doesn't work with lightning fs

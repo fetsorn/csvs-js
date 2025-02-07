@@ -1,0 +1,14 @@
+branch,cognate
+branch,description_en
+branch,description_ru
+branch,task
+branch,trunk
+remote_tag,remote_token
+remote_tag,remote_url
+repo,branch
+repo,category
+repo,local_tag
+repo,remote_tag
+repo,reponame
+repo,sync_tag
+sync_tag,sync_tag_search

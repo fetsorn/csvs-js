@@ -470,6 +470,32 @@ const recordBaseIsTrait = { _: 'datum', datum: 'value1' };
 
 const grainBaseIsTrait = { _: 'datum', datum: 'value1', filepath: 'path/to/1' };
 
+const recordSchemaBig = {
+  "_": "_",
+  "repo": [
+    "reponame",
+    "category",
+    "branch",
+    "local_tag",
+    "remote_tag",
+    "sync_tag"
+  ],
+  "branch": [
+    "trunk",
+    "task",
+    "cognate",
+    "description_en",
+    "description_ru"
+  ],
+  "remote_tag": [
+    "remote_url",
+    "remote_token"
+  ],
+  "sync_tag": [
+    "sync_tag_search"
+  ]
+}
+
 export default {
   record2001,
   record2002,
@@ -502,4 +528,5 @@ export default {
   recordBaseNone,
   recordBaseIsTrait,
   grainBaseIsTrait,
+  recordSchemaBig,
 };

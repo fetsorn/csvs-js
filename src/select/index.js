@@ -39,7 +39,7 @@ function leaderStream(base, query) {
  * @function
  * @returns {Transform}
  */
-export async function selectRecordStream({ fs, dir }) {
+export function selectRecordStream({ fs, dir }) {
   return new TransformStream({
     async transform(query, controller) {
       // there can be only one root base in search query
@@ -57,6 +57,9 @@ export async function selectRecordStream({ fs, dir }) {
       const schema = isSchema
         ? undefined
         : toSchema((await selectSchema({ fs, dir }))[0]);
+
+      // if schema does not have base return empty
+      if (schema !== undefined && schema[base] === undefined) return undefined;
 
       // TODO should rewrite to remove matchMap from here
       // we need to pass matchMap here
@@ -103,7 +106,7 @@ export async function selectRecord({ fs, dir, query }) {
   // TODO exit if no base field or invalid base value
   const base = queries[0]._;
 
-  const selectStream = await selectRecordStream({ fs, dir });
+  const selectStream = selectRecordStream({ fs, dir });
 
   const entries = [];
 

@@ -2,6 +2,7 @@ import csv from "papaparse";
 
 export function updateSchemaStream(query) {
   return new TransformStream({
+    transform() {},
     flush(controller) {
       Object.entries(query)
         .filter(([key]) => key !== "_")

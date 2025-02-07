@@ -288,6 +288,12 @@ export const testCasesUpdate = [
     initial: mocks.datasetPipe,
     expected: mocks.datasetPipe,
   },
+  {
+    name: "schema does nothing",
+    query: mocks.recordSchemaBig,
+    initial: mocks.datasetSchemaBig,
+    expected: mocks.datasetSchemaBig,
+  },
 ];
 
 export const testCasesInsert = [

@@ -5,7 +5,7 @@ export function updateLineStream(query, tablet) {
   const grains = mow(query, tablet.trunk, tablet.branch);
 
   // get the keys and all values for each key, all sorted
-  let keys = [...new Set(grains.map((grain) => grain[tablet.trunk]))].sort();
+  let keys = [...new Set(grains.map((grain) => grain[tablet.trunk]))].filter(Boolean).sort();
 
   const values = grains.reduce((acc, grain) => {
     const key = grain[tablet.trunk];

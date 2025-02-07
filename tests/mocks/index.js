@@ -44,6 +44,7 @@ export function loadMocks() {
     datasetDuplicate: locate("duplicate"),
     datasetDuplicateLeaf: locate("duplicate_leaf"),
     datasetTwoRoots: locate("two_roots"),
+    datasetSchemaBig: locate("schema_big"),
     ...options,
     ...records,
     ...schemas,
