@@ -65,8 +65,13 @@ export function selectRecordStream({ fs, dir }) {
       // we need to pass matchMap here
       // because accumulating tablets depend
       // on whether it is defined or not
-      const queryStream = ReadableStream.from([
-        { query, matchMap: new Map() }]);
+      const queryStream = new ReadableStream({
+        start(controller) {
+          controller.enqueue({ query, matchMap: new Map() })
+
+          controller.close()
+        }
+      })
 
       const strategy = planSelect(schema, query);
 
@@ -102,6 +107,16 @@ export async function selectRecord({ fs, dir, query }) {
 
   const queries = Array.isArray(query) ? query : [query];
 
+  const queryStream = new ReadableStream({
+    start(controller) {
+      for (const q of queries) {
+        controller.enqueue(q)
+      }
+
+      controller.close()
+    }
+  })
+
   // TODO find base value if _ is object or array
   // TODO exit if no base field or invalid base value
   const base = queries[0]._;
@@ -110,7 +125,7 @@ export async function selectRecord({ fs, dir, query }) {
 
   const entries = [];
 
-  await ReadableStream.from(queries)
+  await queryStream
     .pipeThrough(selectStream)
     .pipeTo(
       new WritableStream({

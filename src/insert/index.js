@@ -14,7 +14,12 @@ export async function insertRecordStream({ fs, dir }) {
 
   return new TransformStream({
     async transform(query, controller) {
-      const queryStream = ReadableStream.from([{ query }]);
+      const queryStream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(query)
+          controller.close()
+        }
+      })
 
       strategy = planInsert(schema, query);
 
@@ -49,11 +54,21 @@ export async function insertRecord({ fs, dir, query }) {
 
   const queries = Array.isArray(query) ? query : [query];
 
+  const queryStream = new ReadableStream({
+    start(controller) {
+      for (const q of queries) {
+        controller.enqueue(q)
+      }
+
+      controller.close()
+    }
+  })
+
   const insertStream = await insertRecordStream({ fs, dir });
 
   const entries = [];
 
-  await ReadableStream.from(queries)
+  await queryStream
     .pipeThrough(insertStream)
     .pipeTo(
       new WritableStream({

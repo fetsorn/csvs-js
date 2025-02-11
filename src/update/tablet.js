@@ -17,9 +17,19 @@ export function updateTabletStream(fs, dir, tablet) {
       // pass the query early on to start other tablet streams
       controller.enqueue(query);
 
-      const fileStream = (await isEmpty(fs, filepath))
-        ? ReadableStream.from([""])
-        : ReadableStream.from(fs.createReadStream(filepath));
+      const fileStream = new ReadableStream({
+        async start(controller) {
+          if (await isEmpty(fs, filepath)) {
+            controller.enqueue("")
+          } else {
+            for await (const a of fs.createReadStream(filepath)) {
+              controller.enqueue(a)
+            }
+          }
+
+          controller.close()
+        }
+      })
 
       const isSchema = tablet.filename === "_-_.csv";
 

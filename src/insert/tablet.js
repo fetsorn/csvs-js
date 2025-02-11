@@ -20,7 +20,15 @@ export function insertTablet(fs, dir, tablet) {
           csv.unparse([[key, value]], { delimiter: ",", newline: "\n" }),
       );
 
-      const insertStream = ReadableStream.from(lines);
+      const insertStream = new ReadableStream({
+        start(controller) {
+          for (const line of lines) {
+            controller.enqueue(line)
+          }
+
+          controller.close()
+        }
+      });
 
       await insertStream.pipeTo(new WritableStream({
         async write(line) {

@@ -12,7 +12,15 @@ export async function pruneTablet(fs, dir, tablet) {
 
   if (await isEmpty(fs, filepath)) return undefined;
 
-  const fileStream = ReadableStream.from(fs.createReadStream(filepath));
+  const fileStream = new ReadableStream({
+    async start(controller) {
+      for await (const a of fs.createReadStream(filepath)) {
+        controller.enqueue(a)
+      }
+
+      controller.close()
+    }
+  })
 
   const pruneStream = pruneLineStream(tablet);
 

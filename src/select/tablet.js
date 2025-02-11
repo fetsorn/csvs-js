@@ -14,9 +14,19 @@ export function selectTabletStream(fs, dir, tablet) {
 
   return new TransformStream({
     async transform(state, controller) {
-      const fileStream = (await isEmpty(fs, filepath))
-        ? ReadableStream.from([""])
-        : ReadableStream.from(fs.createReadStream(filepath));
+      const fileStream = new ReadableStream({
+        async start(controller) {
+          if (await isEmpty(fs, filepath)) {
+            controller.enqueue("")
+          } else {
+            for await (const a of fs.createReadStream(filepath)) {
+              controller.enqueue(a)
+            }
+          }
+
+          controller.close()
+        }
+      })
 
       const isSchema = tablet.filename === "_-_.csv";
 

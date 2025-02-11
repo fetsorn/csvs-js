@@ -74,9 +74,19 @@ export async function sortFile(fs, dir, filename) {
 
   const tmpPath = path.join(tmpdir, filename);
 
-  const fileStream = (await isEmpty(fs, filepath))
-    ? ReadableStream.from([""])
-    : ReadableStream.from(fs.createReadStream(filepath));
+  const fileStream = new ReadableStream({
+    async start(controller) {
+      if (await isEmpty(fs, filepath)) {
+        controller.enqueue("")
+      } else {
+        for await (const a of fs.createReadStream(filepath)) {
+          controller.enqueue(a)
+        }
+      }
+
+      controller.close()
+    }
+  })
 
   const lines = [];
 
@@ -90,7 +100,15 @@ export async function sortFile(fs, dir, filename) {
 
   const linesSorted = lines.sort();
 
-  const linesStream = ReadableStream.from(linesSorted);
+  const linesStream = new ReadableStream({
+    start(controller) {
+      for (const line of linesSorted) {
+        controller.enqueue(line)
+      }
+
+      controller.close()
+    }
+  });
 
   const writeStream = new WritableStream({
     async write(line) {

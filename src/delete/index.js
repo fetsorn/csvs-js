@@ -36,9 +36,17 @@ export async function deleteRecord({ fs, dir, query }) {
   // exit if record is undefined
   if (query === undefined) return;
 
-  const records = Array.isArray(query) ? query : [query];
+  const queries = Array.isArray(query) ? query : [query];
 
-  const queryStream = ReadableStream.from(records);
+  const queryStream = new ReadableStream({
+    start(controller) {
+      for (const q of queries) {
+        controller.enqueue(q)
+      }
+
+      controller.close()
+    }
+  })
 
   const writeStream = await deleteRecordStream({ fs, dir });
 
