@@ -3,7 +3,7 @@
 
 Create, read, update and delete records in a csvs database, run powerful search queries.
 
-[Docs](https://norcivilianlabs.org/csvs)
+[[https://norcivilianlabs.org/csvs][Docs]]
 
 * Setup
 #+begin_src sh
