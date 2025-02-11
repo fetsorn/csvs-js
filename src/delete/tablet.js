@@ -8,6 +8,7 @@ import { isEmpty, createLineStream } from "../stream.js";
 import { pruneLineStream } from "./line.js";
 
 export async function pruneTablet(fs, dir, tablet) {
+
   const filepath = path.join(dir, tablet.filename);
 
   if (await isEmpty(fs, filepath)) return undefined;
@@ -37,7 +38,13 @@ export async function pruneTablet(fs, dir, tablet) {
       },
     }));
 
-  if (!(await isEmpty(fs, tmpPath))) {
+  if (await isEmpty(fs, tmpPath)) {
+    try {
+      await fs.promises.unlink(filepath);
+    } catch {
+      // do nothing
+    }
+  } else {
     // use copyFile because rename doesn't work with external drives
     // fs.rename doesn't work with external drives
     // fs.copyFile doesn't work with lightning fs

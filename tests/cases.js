@@ -330,6 +330,12 @@ export const testCasesDelete = [
     initial: mocks.datasetArray,
     expected: mocks.datasetDeletedLeaf,
   },
+  {
+    name: "deletes to an empty dir",
+    query: mocks.recordBaseIsTrait,
+    initial: mocks.datasetDeletedLeaf,
+    expected: mocks.datasetDeletedLeafEmpty,
+  },
 ];
 
 export const testCasesMow = [

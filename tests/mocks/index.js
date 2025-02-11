@@ -33,6 +33,7 @@ export function loadMocks() {
     datasetArrayLiteral: locate("array_literal"),
     datasetArrayFree: locate("array_free"),
     datasetDeletedLeaf: locate("deleted_leaf"),
+    datasetDeletedLeafEmpty: locate("deleted_leaf_empty"),
     datasetSchema: locate("schema"),
     datasetSchemaNone: locate("schema_none"),
     datasetSchemaLiteral: locate("schema_literal"),
