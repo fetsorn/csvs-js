@@ -11,25 +11,24 @@ function leaderStream(base, query) {
   return new TransformStream({
     async transform(state, controller) {
       // TODO should we set base to query in accumulating by trunk?
-      const baseNew = state.entry._ !== base
-            ? base
-            : state.entry._;
+      const baseNew = state.entry._ !== base ? base : state.entry._;
 
       // if query has __, return leader
       // TODO what if leader is nested? what if many leaders? use mow
-      const entryNew = query.__ !== undefined
-            ? state.query[query.__]
-            : {
+      const entryNew =
+        query.__ !== undefined
+          ? state.query[query.__]
+          : {
               ...state.entry,
-              _: baseNew
-            }
+              _: baseNew,
+            };
 
       // do not return search result
       // if state comes from the end of accumulating
       if (state.matchMap === undefined) {
         controller.enqueue({ entry: entryNew });
       }
-    }
+    },
   });
 }
 
@@ -67,11 +66,11 @@ export function selectRecordStream({ fs, dir }) {
       // on whether it is defined or not
       const queryStream = new ReadableStream({
         start(controller) {
-          controller.enqueue({ query, matchMap: new Map() })
+          controller.enqueue({ query, matchMap: new Map() });
 
-          controller.close()
-        }
-      })
+          controller.close();
+        },
+      });
 
       const strategy = planSelect(schema, query);
 
@@ -110,12 +109,12 @@ export async function selectRecord({ fs, dir, query }) {
   const queryStream = new ReadableStream({
     start(controller) {
       for (const q of queries) {
-        controller.enqueue(q)
+        controller.enqueue(q);
       }
 
-      controller.close()
-    }
-  })
+      controller.close();
+    },
+  });
 
   // TODO find base value if _ is object or array
   // TODO exit if no base field or invalid base value
@@ -125,15 +124,13 @@ export async function selectRecord({ fs, dir, query }) {
 
   const entries = [];
 
-  await queryStream
-    .pipeThrough(selectStream)
-    .pipeTo(
-      new WritableStream({
-        write(entry) {
-          entries.push(entry);
-        },
-      }),
-    );
+  await queryStream.pipeThrough(selectStream).pipeTo(
+    new WritableStream({
+      write(entry) {
+        entries.push(entry);
+      },
+    }),
+  );
 
   return entries;
 }

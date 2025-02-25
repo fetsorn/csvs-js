@@ -9,7 +9,7 @@ function mowBaseIsThing(record, trait, thing) {
   // take values
   const branchItems = Array.isArray(record[trait])
     ? record[trait]
-    : [record[trait]].filter(Boolean);
+    : [record[trait]].filter((item) => item !== undefined);
 
   // this is needed to add things to grains without thing with sow
   if (branchItems.length === 0) return [{ _: base, ...basePartial }];
@@ -24,7 +24,7 @@ function mowBaseIsThing(record, trait, thing) {
 
       return { _: base, ...basePartial, [trait]: branchValue };
     })
-    .filter(Boolean);
+    .filter((grain) => grain !== undefined);
 
   return grains;
 }
@@ -40,20 +40,22 @@ function mowBaseIsTrait(record, trait, thing) {
   // take values
   const branchItems = Array.isArray(record[thing])
     ? record[thing]
-    : [record[thing]].filter(Boolean);
+    : [record[thing]].filter((item) => item !== undefined);
 
   // this is needed to add things to grains without thing with sow
   if (branchItems.length === 0) return [{ _: trait, [trait]: record[trait] }];
 
-  const grains = branchItems.map((branchItem) => {
-    const isObject = typeof branchItem === "object";
+  const grains = branchItems
+    .map((branchItem) => {
+      const isObject = typeof branchItem === "object";
 
-    const branchValue = isObject ? branchItem[thing] : branchItem;
+      const branchValue = isObject ? branchItem[thing] : branchItem;
 
-    if (branchValue === undefined) return undefined;
+      if (branchValue === undefined) return undefined;
 
-    return { _: base, ...basePartial, [thing]: branchValue };
-  }).filter(Boolean);
+      return { _: base, ...basePartial, [thing]: branchValue };
+    })
+    .filter((grain) => grain !== undefined);
 
   return grains;
 }
@@ -178,7 +180,6 @@ function sowBaseIsTrait(record, grain, trait, thing) {
 }
 
 function sowTraitIsObject(record, grain, trait, thing) {
-
   const trunkItems = Array.isArray(record[trait])
     ? record[trait]
     : [record[trait]];
@@ -247,9 +248,8 @@ function sowTraitIsNested(record, grain, trait, thing) {
     return [leaf, leafValueNew];
   });
 
-  const baseValuePartial = baseValueOmitted === undefined
-        ? {}
-        : { [base]: baseValueOmitted };
+  const baseValuePartial =
+    baseValueOmitted === undefined ? {} : { [base]: baseValueOmitted };
 
   const recordNew = {
     _: base,

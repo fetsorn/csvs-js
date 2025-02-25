@@ -1,5 +1,4 @@
 import path from "path";
-import csv from "papaparse";
 import {
   WritableStream,
   ReadableStream,
@@ -20,16 +19,16 @@ export function updateTabletStream(fs, dir, tablet) {
       const fileStream = new ReadableStream({
         async start(controller) {
           if (await isEmpty(fs, filepath)) {
-            controller.enqueue("")
+            controller.enqueue("");
           } else {
             for await (const a of fs.createReadStream(filepath)) {
-              controller.enqueue(a)
+              controller.enqueue(a);
             }
           }
 
-          controller.close()
-        }
-      })
+          controller.close();
+        },
+      });
 
       const isSchema = tablet.filename === "_-_.csv";
 
@@ -44,11 +43,13 @@ export function updateTabletStream(fs, dir, tablet) {
       await fileStream
         .pipeThrough(createLineStream())
         .pipeThrough(updateStream)
-        .pipeTo(new WritableStream({
-          async write(line) {
-            await fs.promises.appendFile(tmpPath, line);
-          },
-        }));
+        .pipeTo(
+          new WritableStream({
+            async write(line) {
+              await fs.promises.appendFile(tmpPath, line);
+            },
+          }),
+        );
 
       if (!(await isEmpty(fs, tmpPath))) {
         // fs.rename doesn't work with external drives

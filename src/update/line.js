@@ -5,7 +5,9 @@ export function updateLineStream(query, tablet) {
   const grains = mow(query, tablet.trunk, tablet.branch);
 
   // get the keys and all values for each key, all sorted
-  let keys = [...new Set(grains.map((grain) => grain[tablet.trunk]))].filter(Boolean).sort();
+  let keys = [...new Set(grains.map((grain) => grain[tablet.trunk]))]
+    .filter((key) => key !== undefined)
+    .sort();
 
   const values = grains.reduce((acc, grain) => {
     const key = grain[tablet.trunk];
@@ -83,7 +85,7 @@ export function updateLineStream(query, tablet) {
       if (isMatch) {
         // if keys include this key, prune line
         // it will be inserted again before the next key
-      } else  {
+      } else {
         // otherwise write line unchanged
         controller.enqueue(line);
       }

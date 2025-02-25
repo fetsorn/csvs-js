@@ -17,11 +17,11 @@ export async function updateRecordStream({ fs, dir }) {
     async transform(query, controller) {
       const queryStream = new ReadableStream({
         start(controller) {
-          controller.enqueue(query)
+          controller.enqueue(query);
 
-          controller.close()
-        }
-      })
+          controller.close();
+        },
+      });
 
       const strategy = planUpdate(schema, query);
 
@@ -62,26 +62,24 @@ export async function updateRecord({ fs, dir, query }) {
   const queryStream = new ReadableStream({
     start(controller) {
       for (const q of queries) {
-        controller.enqueue(q)
+        controller.enqueue(q);
       }
 
-      controller.close()
-    }
-  })
+      controller.close();
+    },
+  });
 
   const updateStream = await updateRecordStream({ fs, dir });
 
   const entries = [];
 
-  await queryStream
-    .pipeThrough(updateStream)
-    .pipeTo(
-      new WritableStream({
-        write(entry) {
-          entries.push(entry);
-        },
-      }),
-    );
+  await queryStream.pipeThrough(updateStream).pipeTo(
+    new WritableStream({
+      write(entry) {
+        entries.push(entry);
+      },
+    }),
+  );
 
   return entries;
 }

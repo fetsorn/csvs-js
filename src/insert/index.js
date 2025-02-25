@@ -1,6 +1,6 @@
 import { WritableStream, ReadableStream } from "@swimburger/isomorphic-streams";
 import { selectSchema } from "../select/index.js";
-import { toSchema, findCrown } from "../schema.js";
+import { toSchema } from "../schema.js";
 import { sortFile } from "../stream.js";
 import { insertTablet } from "./tablet.js";
 import { planInsert } from "./strategy.js";
@@ -16,10 +16,10 @@ export async function insertRecordStream({ fs, dir }) {
     async transform(query, controller) {
       const queryStream = new ReadableStream({
         start(controller) {
-          controller.enqueue(query)
-          controller.close()
-        }
-      })
+          controller.enqueue(query);
+          controller.close();
+        },
+      });
 
       strategy = planInsert(schema, query);
 
@@ -41,7 +41,9 @@ export async function insertRecordStream({ fs, dir }) {
 
     async flush() {
       // we use isInserted here to not cache the strategy
-      const promises = strategy.map(({filename}) => sortFile(fs, dir, filename));
+      const promises = strategy.map(({ filename }) =>
+        sortFile(fs, dir, filename),
+      );
 
       await Promise.all(promises);
     },
@@ -57,26 +59,24 @@ export async function insertRecord({ fs, dir, query }) {
   const queryStream = new ReadableStream({
     start(controller) {
       for (const q of queries) {
-        controller.enqueue(q)
+        controller.enqueue(q);
       }
 
-      controller.close()
-    }
-  })
+      controller.close();
+    },
+  });
 
   const insertStream = await insertRecordStream({ fs, dir });
 
   const entries = [];
 
-  await queryStream
-    .pipeThrough(insertStream)
-    .pipeTo(
-      new WritableStream({
-        write(record) {
-          entries.push(record);
-        },
-      }),
-    );
+  await queryStream.pipeThrough(insertStream).pipeTo(
+    new WritableStream({
+      write(record) {
+        entries.push(record);
+      },
+    }),
+  );
 
   return entries;
 }

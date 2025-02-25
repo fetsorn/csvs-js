@@ -1,35 +1,30 @@
 import csv from "papaparse";
 import { mow, sow } from "../record.js";
 
-export function makeStateInitial({
-  query,
-  entry,
-  matchMap,
-  thingQuerying,
-  source
-}, tablet) {
+export function makeStateInitial(
+  { query, entry, matchMap, thingQuerying, source },
+  tablet,
+) {
   // in a querying tablet, set initial entry to the base of the tablet
   // and preserve the received entry for sowing grains later
   // if tablet base is different from previous entry base
   // sow previous entry into the initial entry
-  const isSameBase = tablet.querying && tablet.base === query._
+  const isSameBase = tablet.querying && tablet.base === query._;
 
   const doDiscard = entry === undefined || isSameBase;
 
-  const entryFallback = doDiscard
-        ? { _: tablet.base }
-        : entry;
+  const entryFallback = doDiscard ? { _: tablet.base } : entry;
 
   const doSow = tablet.querying && !doDiscard;
 
   const entryInitial = doSow
-        ? sow(
-          { _: tablet.base },
-          { _: entry._, [entry._]: entry[entry._] },
-          tablet.base,
-          entry._
-        )
-        : entryFallback;
+    ? sow(
+        { _: tablet.base },
+        { _: entry._, [entry._]: entry[entry._] },
+        tablet.base,
+        entry._,
+      )
+    : entryFallback;
 
   const entryBaseChanged = entry === undefined || entry._ !== entryInitial._;
 
@@ -55,7 +50,7 @@ export function makeStateInitial({
     thingQuerying: thingQueryingInitial,
   };
 
-  return state
+  return state;
 }
 
 export function makeStateLine(
@@ -64,7 +59,7 @@ export function makeStateLine(
   tablet,
   grains,
   trait,
-  thing
+  thing,
 ) {
   // if (tablet.filename === "datum-filepath.csv") console.log(tablet.filename, JSON.stringify(grains, null, 2))
   let state = { ...stateOld };
@@ -77,80 +72,74 @@ export function makeStateLine(
 
   // if (tablet.filename === "datum-filepath.csv") console.log(tablet.filename, JSON.stringify(grainNew, null, 2))
   const grainsNew = grains
-        .map((grain) => {
-          //console.log(tablet.filename, JSON.stringify(grain, null, 2))
-          // if (tablet.filename === "datum-filepath.csv") console.log(tablet.filename, tablet.traitIsFirst, grain[tablet.trait])
+    .map((grain) => {
+      //console.log(tablet.filename, JSON.stringify(grain, null, 2))
+      // if (tablet.filename === "datum-filepath.csv") console.log(tablet.filename, tablet.traitIsFirst, grain[tablet.trait])
 
-          // if grain[tablet.trait] is undefined, regex is ""
-          const isMatchGrain = tablet.traitIsRegex
-                ? new RegExp(grain[tablet.trait]).test(trait)
-                : grain[tablet.trait] === trait;
+      // if grain[tablet.trait] is undefined, regex is ""
+      const isMatchGrain = tablet.traitIsRegex
+        ? new RegExp(grain[tablet.trait]).test(trait)
+        : grain[tablet.trait] === trait;
 
-          // if (tablet.filename === "datum-filepath.csv") console.log(tablet.filename, grain[tablet.trait], trait, new RegExp(grain[tablet.trait]).test(trait))
+      // if (tablet.filename === "datum-filepath.csv") console.log(tablet.filename, grain[tablet.trait], trait, new RegExp(grain[tablet.trait]).test(trait))
 
-          // when querying also match literal trait from the query
-          // otherwise always true
-          const doDiff = tablet.querying && stateInitial.thingQuerying !== undefined;
+      // when querying also match literal trait from the query
+      // otherwise always true
+      const doDiff =
+        tablet.querying && stateInitial.thingQuerying !== undefined;
 
-          const isMatchQuerying = doDiff ? stateInitial.thingQuerying === thing : true;
+      const isMatchQuerying = doDiff
+        ? stateInitial.thingQuerying === thing
+        : true;
 
-          const isMatch = isMatchGrain && isMatchQuerying;
+      const isMatch = isMatchGrain && isMatchQuerying;
 
-          // accumulating tablets find all values
-          // matched at least once across the dataset
-          // check here if thing was matched before
-          // this will always be true for non-accumulating maps
-          // so will be ignored
-          const matchIsNew =
-                state.matchMap === undefined ||
-                state.matchMap.get(thing) === undefined;
+      // accumulating tablets find all values
+      // matched at least once across the dataset
+      // check here if thing was matched before
+      // this will always be true for non-accumulating maps
+      // so will be ignored
+      const matchIsNew =
+        state.matchMap === undefined || state.matchMap.get(thing) === undefined;
 
-          state.isMatch = state.isMatch ? state.isMatch : isMatch && matchIsNew;
+      state.isMatch = state.isMatch ? state.isMatch : isMatch && matchIsNew;
 
-          if (tablet.querying && state.isMatch) {
-            state.thingQuerying = thing;
-          }
+      if (tablet.querying && state.isMatch) {
+        state.thingQuerying = thing;
+      }
 
-          if (isMatch && matchIsNew && tablet.accumulating) {
-            state.matchMap.set(thing, true);
-          }
+      if (isMatch && matchIsNew && tablet.accumulating) {
+        state.matchMap.set(thing, true);
+      }
 
-          state.hasMatch = state.hasMatch ? state.hasMatch : state.isMatch;
+      state.hasMatch = state.hasMatch ? state.hasMatch : state.isMatch;
 
-          if (isMatch && matchIsNew) {
-            return grainNew;
-          }
+      if (isMatch && matchIsNew) {
+        return grainNew;
+      }
 
-          return undefined;
-        })
-        .filter(Boolean);
+      return undefined;
+    })
+    .filter((grain) => grain !== undefined);
 
   // if (tablet.filename === "datum-filepath.csv") console.log(tablet.filename, JSON.stringify(grainsNew, null, 2))
 
-  state.entry = grainsNew.reduce(
-    (withGrain, grain) => {
-      const bar = sow(
-        withGrain,
-        grain,
-        tablet.trait,
-        tablet.thing
-      );
+  state.entry = grainsNew.reduce((withGrain, grain) => {
+    const bar = sow(withGrain, grain, tablet.trait, tablet.thing);
 
-      //if (tablet.filename === "datum-filepath.csv") console.log(
-      //  JSON.stringify(withGrain, null, 2),
-      //  JSON.stringify(grain, null, 2),
-      //  tablet.trait,
-      //  tablet.thing,
-      //  JSON.stringify(bar, null, 2)
-      //);
+    //if (tablet.filename === "datum-filepath.csv") console.log(
+    //  JSON.stringify(withGrain, null, 2),
+    //  JSON.stringify(grain, null, 2),
+    //  tablet.trait,
+    //  tablet.thing,
+    //  JSON.stringify(bar, null, 2)
+    //);
 
-      return bar
-    },
-    state.entry,
-  );
+    return bar;
+  }, state.entry);
 
   // if (tablet.filename === "datum-filepath.csv")
-    // console.log(tablet.filename, JSON.stringify(state.entry, null, 2))
+  // console.log(tablet.filename, JSON.stringify(state.entry, null, 2))
 
   if (tablet.querying) {
     if (thing === stateInitial.thingQuerying) {
@@ -161,40 +150,35 @@ export function makeStateLine(
       //   _: tablet.trait,
       //   [tablet.thing]: thing,
       // })
-      return state
+      return state;
     }
 
     // in querying tablet we should sow the grain into the query as well
     state.query = grainsNew.reduce(
-      (withGrain, grain) => sow(
-        withGrain,
-        grain,
-        tablet.trait,
-        tablet.thing
-      ),
+      (withGrain, grain) => sow(withGrain, grain, tablet.trait, tablet.thing),
       state.query,
-    )
+    );
   }
 
-  return state
+  return state;
 }
 
-export function parseLineStream({
-  query,
-  entry,
-  matchMap,
-  thingQuerying,
-  source
-}, tablet) {
+export function parseLineStream(
+  { query, entry, matchMap, thingQuerying, source },
+  tablet,
+) {
   // if (tablet.filename === "datum-filepath.csv")
   // console.log(tablet.filename, { query, entry, matchMap, thingQuerying, source });
-  const stateInitial = makeStateInitial({
-    entry,
-    query,
-    matchMap,
-    thingQuerying,
-    source
-  }, tablet);
+  const stateInitial = makeStateInitial(
+    {
+      entry,
+      query,
+      matchMap,
+      thingQuerying,
+      source,
+    },
+    tablet,
+  );
 
   // if (tablet.filename === "datum-filepath.csv") console.log(tablet.filename, stateInitial);
 
@@ -262,14 +246,7 @@ export function parseLineStream({
 
       // console.log(tablet.filename, trait, thing)
 
-      state = makeStateLine(
-        stateInitial,
-        state,
-        tablet,
-        grains,
-        trait,
-        thing
-      );
+      state = makeStateLine(stateInitial, state, tablet, grains, trait, thing);
 
       // if (tablet.filename === "datum-filepath.csv")
       // console.log(tablet.filename, JSON.stringify(state, null, 2))
@@ -361,7 +338,8 @@ export function selectLineStream(state, tablet) {
   // until the entry reaches non-accumulating value tablets
   // assume the entry is new
   // because it has been checked against the match map upstream
-  const forwardAccumulating = tablet.accumulating && state.matchMap === undefined;
+  const forwardAccumulating =
+    tablet.accumulating && state.matchMap === undefined;
 
   // TODO what if the thing branch changes
   // from one group of accumulating tablets to another

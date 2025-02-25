@@ -188,73 +188,73 @@ export const testCasesSelect = [
 export const testCasesUpdate = [
   {
     name: "does nothing on no change",
-    query: mocks.record2001,
+    query: [mocks.record2001],
     initial: mocks.datasetDefault,
     expected: mocks.datasetDefault,
   },
   {
     name: "edits record",
-    query: mocks.record2003Edited,
+    query: [mocks.record2003Edited],
     initial: mocks.datasetDefault,
     expected: mocks.datasetEdited,
   },
   {
     name: "adds record",
-    query: mocks.recordAdded,
+    query: [mocks.recordAdded],
     initial: mocks.datasetDefault,
     expected: mocks.datasetAdded,
   },
   {
     name: "adds record with array",
-    query: mocks.recordArrayAdded,
+    query: [mocks.recordArrayAdded],
     initial: mocks.datasetArray,
     expected: mocks.datasetArrayAdded,
   },
   {
     name: "adds record with array to empty dataset",
-    query: mocks.recordArray,
+    query: [mocks.recordArray],
     initial: mocks.datasetArrayEmpty,
     expected: mocks.datasetArray,
   },
   {
     name: "adds array item to record",
-    query: mocks.recordAddedArrayItem,
+    query: [mocks.recordAddedArrayItem],
     initial: mocks.datasetArray,
     expected: mocks.datasetAddedArrayItem,
   },
   {
     name: "edits array item",
-    query: mocks.recordEditedArrayItem,
+    query: [mocks.recordEditedArrayItem],
     initial: mocks.datasetArray,
     expected: mocks.datasetEditedArrayItem,
   },
   {
     name: "removes array item",
-    query: mocks.recordDeletedArrayItem,
+    query: [mocks.recordDeletedArrayItem],
     initial: mocks.datasetArray,
     expected: mocks.datasetDeletedArrayItem,
   },
   {
     name: "edits array item of type object",
-    query: mocks.recordEditedArrayItemObject,
+    query: [mocks.recordEditedArrayItemObject],
     initial: mocks.datasetArray,
     expected: mocks.datasetEditedArrayItemObject,
   },
   {
     name: "adds relation between two schema entities",
-    query: mocks.recordSchema,
+    query: [mocks.recordSchema],
     initial: mocks.datasetSchemaNone,
     expected: mocks.datasetSchema,
   },
   {
     name: "adds schema with literal value",
-    query: mocks.recordSchemaLiteral,
+    query: [mocks.recordSchemaLiteral],
     initial: mocks.datasetSchemaNone,
     expected: mocks.datasetSchemaLiteral,
   },
   {
     name: "ignores record without base field",
-    query: mocks.recordBaseNone,
+    query: [mocks.recordBaseNone],
     initial: mocks.datasetEmpty,
     expected: mocks.datasetEmpty,
   },
@@ -266,33 +266,39 @@ export const testCasesUpdate = [
   },
   {
     name: "adds record with array of literal values",
-    query: mocks.recordArrayLiteral,
+    query: [mocks.recordArrayLiteral],
     initial: mocks.datasetDefault,
     expected: mocks.datasetArrayLiteral,
   },
   {
     name: "adds existing record with quotes",
-    query: mocks.recordQuotes,
+    query: [mocks.recordQuotes],
     initial: mocks.datasetQuotes,
     expected: mocks.datasetQuotes,
   },
   {
     name: "adds existing record with newline",
-    query: mocks.recordNewline,
+    query: [mocks.recordNewline],
     initial: mocks.datasetNewline,
     expected: mocks.datasetNewline,
   },
   {
     name: "adds existing record with pipe",
-    query: mocks.recordPipe,
+    query: [mocks.recordPipe],
     initial: mocks.datasetPipe,
     expected: mocks.datasetPipe,
   },
   {
     name: "schema does nothing",
-    query: mocks.recordSchemaBig,
+    query: [mocks.recordSchemaBig],
     initial: mocks.datasetSchemaBig,
     expected: mocks.datasetSchemaBig,
+  },
+  {
+    name: "adds three records",
+    query: [mocks.record2001, mocks.record2002, mocks.record2003Unedited],
+    initial: mocks.datasetEmpty,
+    expected: mocks.datasetDefault,
   },
 ];
 
@@ -379,12 +385,12 @@ export const testCasesMow = [
       export_tags: {
         _: "export_tags",
         export_tags:
-        "9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f",
+          "9bd029a8136649623e645a70938b4dc00e6d1c640a5293425e5eee82a8a21f7f",
         export1_tag: [
           {
             _: "export1_tag",
             export1_tag:
-            "fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77",
+              "fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77",
             export1_key: "longkey2",
           },
         ],
@@ -395,7 +401,8 @@ export const testCasesMow = [
     expected: [
       {
         _: "export1_tag",
-        "export1_tag": "fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77"
+        export1_tag:
+          "fcd10e054b600a2ace70c0cf9d9ebf11c4df86c4ed029000f509d6ebaf473d77",
       },
     ],
   },
@@ -443,8 +450,8 @@ export const testCasesToSchema = [
     name: "one leaf",
     initial: { _: "_", datum: "date" },
     expected: {
-      datum: { trunks: [], leaves: [ "date" ] },
-      date: { trunks: [ "datum" ], leaves: [] }
+      datum: { trunks: [], leaves: ["date"] },
+      date: { trunks: ["datum"], leaves: [] },
     },
   },
-]
+];
