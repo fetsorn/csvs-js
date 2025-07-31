@@ -118,7 +118,7 @@ export async function selectRecord({ fs, dir, query }) {
 
   // TODO find base value if _ is object or array
   // TODO exit if no base field or invalid base value
-  const base = queries[0]._;
+  // const base = queries[0]._;
 
   const selectStream = selectRecordStream({ fs, dir });
 

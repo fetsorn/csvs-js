@@ -466,35 +466,24 @@ const recordArraySow = {
 
 const recordBaseNone = {};
 
-const recordBaseIsTrait = { _: 'datum', datum: 'value1' };
+const recordBaseIsTrait = { _: "datum", datum: "value1" };
 
-const grainBaseIsTrait = { _: 'datum', datum: 'value1', filepath: 'path/to/1' };
+const grainBaseIsTrait = { _: "datum", datum: "value1", filepath: "path/to/1" };
 
 const recordSchemaBig = {
-  "_": "_",
-  "repo": [
+  _: "_",
+  repo: [
     "reponame",
     "category",
     "branch",
     "local_tag",
     "remote_tag",
-    "sync_tag"
+    "sync_tag",
   ],
-  "branch": [
-    "trunk",
-    "task",
-    "cognate",
-    "description_en",
-    "description_ru"
-  ],
-  "remote_tag": [
-    "remote_url",
-    "remote_token"
-  ],
-  "sync_tag": [
-    "sync_tag_search"
-  ]
-}
+  branch: ["trunk", "task", "cognate", "description_en", "description_ru"],
+  remote_tag: ["remote_url", "remote_token"],
+  sync_tag: ["sync_tag_search"],
+};
 
 export default {
   record2001,
