@@ -6,7 +6,7 @@ export async function isEmpty(fs, filepath) {
   try {
     const stats = await fs.promises.stat(filepath);
 
-    if (stats.size > 0) {
+    if (stats.size > 1) {
       return false;
     }
 
