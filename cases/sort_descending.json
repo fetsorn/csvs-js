@@ -1,5 +1,6 @@
 [
   {
+    "name": "descending",
     "schema": "record_schema_array",
     "initial": [
       "filepath",

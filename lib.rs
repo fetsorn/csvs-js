@@ -8,6 +8,10 @@ pub fn read_record(loadname: &str) -> Value {
     json
 }
 
+pub fn read_records(loadname: &Vec<&str>) -> Vec<Value> {
+    test.expected.iter().map(|r| read_record(r)).collect()
+}
+
 pub fn read_dataset_dir(loadname: &str) -> Path {
     let path = format!("./datasets/{}.json", loadname);
 
