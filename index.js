@@ -1,9 +1,8 @@
 import nodefs from "fs";
-import path from "path";
+import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 
-// won't work in the browser
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 function findpath(base, pathFragment) {
   const loadpath = join(base, pathFragment);
@@ -25,7 +24,7 @@ function findpath(base, pathFragment) {
   }
 }
 
-function loadContents(pathFragment) {
+export function loadContents(pathFragment) {
   const base = "/";
 
   const paths = findpath(base, pathFragment);
@@ -44,7 +43,7 @@ function loadContents(pathFragment) {
 }
 
 export function readDir(loadname) {
-  const filePath = path.join(
+  const filePath = join(
     __dirname,
     "datasets",
     loadname,
@@ -53,30 +52,24 @@ export function readDir(loadname) {
   return filePath;
 }
 
-export function readDataset(loadname) {
-  const filePath = dir(loadname);
-
-  return loadContents(filePath)
-}
-
 export function readTestCase(loadname) {
-  const filePath = path.join(
+  const filePath = join(
     __dirname,
     "cases",
-    loadname,
+    `${loadname}.json`,
   );
 
-  return JSON.parse(nodejs.readFileSync(filePath));
+  return JSON.parse(nodefs.readFileSync(filePath));
 }
 
 export function readRecord(loadname) {
-  const filePath = path.join(
+  const filePath = join(
     __dirname,
     "records",
-    loadname,
+    `${loadname}.json`,
   );
 
-  return JSON.parse(nodejs.readFileSync(filePath));
+  return JSON.parse(nodefs.readFileSync(filePath));
 }
 
 export function sortObject(a) {
@@ -85,8 +78,8 @@ export function sortObject(a) {
     .reduce((obj, key) => ({ ...obj, [key]: a[key] }), {});
 }
 
-export function sortList(as) {
-  return as
+export function sortList(objects) {
+  return objects
     .map(sortObject)
     .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
 }
@@ -107,6 +100,6 @@ export function copy(_path, path) {
   }
 
   for (const file of nodefs.readdirSync(_path)) {
-    copy(join(_path, file), join(path, file));
+      copy(join(_path, file), join(path, file));
   }
 }
