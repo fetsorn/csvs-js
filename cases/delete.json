@@ -1,0 +1,20 @@
+[
+  {
+    "name": "deletes a record",
+    "initial": "default",
+    "query": ["record2003_unedited"],
+    "expected": "deleted"
+  },
+  {
+    "name": "deletes a record with a trunk",
+    "initial": "array",
+    "query": ["record_export1_tag"],
+    "expected": "deleted_leaf"
+  },
+  {
+    "name": "deletes to an empty dir",
+    "initial": "deleted_leaf",
+    "query": ["record_sow_base_is_trait"],
+    "expected": "deleted_leaf_empty"
+  }
+]

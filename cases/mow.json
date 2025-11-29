@@ -1,0 +1,23 @@
+[
+  {
+    "name": "grain from simple event",
+    "initial": "record2001",
+    "trunk": "datum",
+    "branch": "actdate",
+    "expected": [ "grain2001" ]
+  },
+  {
+    "name": "grain from array",
+    "initial": "record_array",
+    "trunk": "export1_tag",
+    "branch": "export1_channel",
+    "expected": [ "grain_channel1", "grain_channel2" ]
+  },
+  {
+    "name": "empty grain when trait has no leaf",
+    "initial": "record_mow_empty",
+    "trunk": "export1_tag",
+    "branch": "export1_channel",
+    "expected": [ "grain_empty" ]
+  }
+]

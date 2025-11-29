@@ -1,0 +1,4 @@
+{
+    "datum": { "trunks": [], "leaves": ["date"] },
+    "date": { "trunks": ["datum"], "leaves": [] }
+}

@@ -1,0 +1,12 @@
+{
+    "name": "csvs-test",
+    "description": "test suite for csvs",
+    "version": "1.0.0",
+    "author": "Anton Davydov <fetsorn@gmail.com>",
+    "license": "AGPL",
+    "scripts": {
+
+    },
+    "dependencies": {},
+    "devDependencies": {}
+}

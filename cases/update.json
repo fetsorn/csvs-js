@@ -1,0 +1,116 @@
+[
+  {
+    "name": "does nothing on no change",
+    "initial": "default",
+    "query": [ "record2001" ],
+    "expected": "default"
+  },
+  {
+    "name": "edits record",
+    "initial": "default",
+    "query": [ "record2003_edited" ],
+    "expected": "edited"
+  },
+  {
+    "name": "adds record",
+    "initial": "default",
+    "query": [ "record_added" ],
+    "expected": "added"
+  },
+  {
+    "name": "adds record with array",
+    "initial": "array",
+    "query": [ "record_array_added" ],
+    "expected": "array_added"
+  },
+  {
+    "name": "adds record with array to empty dataset",
+    "initial": "array_empty",
+    "query": [ "record_array" ],
+    "expected": "array"
+  },
+  {
+    "name": "adds array item to record",
+    "initial": "array",
+    "query": [ "record_added_array_item" ],
+    "expected": "added_array_item"
+  },
+  {
+    "name": "edits array item",
+    "initial": "array",
+    "query": [ "record_edited_array_item" ],
+    "expected": "edited_array_item"
+  },
+  {
+    "name": "removes array item",
+    "initial": "array",
+    "query": [ "record_deleted_array_item" ],
+    "expected": "deleted_array_item"
+  },
+  {
+    "name": "edits array item of type object",
+    "initial": "array",
+    "query": [ "record_edited_array_item_object" ],
+    "expected": "edited_array_item_object"
+  },
+  {
+    "name": "adds relation between two schema entities",
+    "initial": "schema_none",
+    "query": [ "record_schema" ],
+    "expected": "schema"
+  },
+  {
+    "name": "adds schema with literal value",
+    "initial": "schema_none",
+    "query": [ "record_schema_literal" ],
+    "expected": "schema_literal"
+  },
+  {
+    "name": "ignores record with values that don't fit base",
+    "initial": "empty",
+    "query": [ "record_base_ignored_array_items" ],
+    "expected": "empty"
+  },
+  {
+    "name": "ignores record without base field",
+    "initial": "empty",
+    "query": [ "record_base_none" ],
+    "expected": "empty"
+  },
+  {
+    "name": "adds record with array of literal values",
+    "initial": "default",
+    "query": [ "record_array_literal" ],
+    "expected": "array_literal"
+  },
+  {
+    "name": "adds existing record with quotes",
+    "initial": "quotes",
+    "query": [ "record_quotes" ],
+    "expected": "quotes"
+  },
+  {
+    "name": "adds existing record with newline",
+    "initial": "newline",
+    "query": [ "record_newline" ],
+    "expected": "newline"
+  },
+  {
+    "name": "adds existing record with pipe",
+    "initial": "pipe",
+    "query": [ "record_pipe" ],
+    "expected": "pipe"
+  },
+  {
+    "name": "schema does nothing",
+    "initial": "schema_big",
+    "query": [ "record_schema_big" ],
+    "expected": "schema_big"
+  },
+  {
+    "name": "adds three records",
+    "initial": "empty",
+    "query": [ "record2001", "record2002", "record2003_unedited" ],
+    "expected": "default"
+  }
+]

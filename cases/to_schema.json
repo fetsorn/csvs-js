@@ -1,0 +1,17 @@
+[
+  {
+    "name": "empty record",
+    "initial": "record_empty",
+    "expected": "record_empty"
+  },
+  {
+    "name": "record without base",
+    "initial": "record_schema_invalid",
+    "expected": "record_empty"
+  },
+  {
+    "name": "one leaf",
+    "initial": "record_schema_simple",
+    "expected": "schema_simple"
+  }
+]

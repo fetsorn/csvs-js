@@ -1,0 +1,27 @@
+[
+  {
+    "entry": {
+      "base": "_",
+      "base_value": "_",
+      "leaves": {
+        "datum": [
+          {
+            "base": "datum",
+            "base_value": "date",
+            "leaves": {}
+          },
+          {
+            "base": "datum",
+            "base_value": "name",
+            "leaves": {}
+          }
+        ]
+      }
+    },
+    "schema": {
+        "datum": { "trunks": [], "leaves": ["date", "name"]},
+        "date": { "trunks": ["datum"], "leaves": []},
+        "name": { "trunks": ["datum"], "leaves": []}
+    }
+  }
+]
