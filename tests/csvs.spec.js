@@ -1,8 +1,17 @@
 /* eslint-disable no-console */
 import { describe, expect, test } from "@jest/globals";
-import { join } from "path";
 import nodefs from "fs";
+import { join } from "path";
 import os from "os";
+import {
+  readDir,
+  readTestCase,
+  readRecord,
+  loadContents,
+  sortList,
+  copy,
+  sortObject,
+} from "@fetsorn/csvs-test";
 import {
   selectRecord,
   updateRecord,
@@ -12,178 +21,124 @@ import {
   mow,
   sow,
 } from "../src/index.js";
-import {
-  testCasesSelect,
-  testCasesUpdate,
-  testCasesInsert,
-  testCasesDelete,
-  testCasesMow,
-  testCasesSow,
-  testCasesToSchema,
-} from "./cases.js";
-
-function sortObject(a) {
-  return Object.keys(a)
-    .sort()
-    .reduce((obj, key) => ({ ...obj, [key]: a[key] }), {});
-}
-
-function findpath(fs, base, loadname) {
-  const loadpath = join(base, loadname);
-
-  const loadtype = fs.statSync(loadpath);
-
-  if (loadtype.isFile()) {
-    return [loadname];
-  } else if (loadtype.isDirectory()) {
-    const filenames = fs.readdirSync(loadpath);
-
-    const entries = filenames.map((filename) => {
-      const filepath = join(loadname, filename);
-
-      return findpath(fs, base, filepath);
-    });
-
-    return entries.flat();
-  }
-}
-
-function loadContents(fs, loadname) {
-  const base = "/";
-
-  const paths = findpath(fs, base, loadname);
-
-  const entries = paths.map((filename) => {
-    const filepath = join(base, filename);
-
-    const contents = fs.readFileSync(filepath, { encoding: "utf8" });
-
-    const filenameRelative = filename.replace(new RegExp(`${loadname}/`), "");
-
-    return [filenameRelative, contents];
-  });
-
-  return Object.fromEntries(entries);
-}
-
-function copy(_path, path) {
-  const stats = nodefs.statSync(_path);
-
-  if (!stats.isDirectory()) {
-    const content = nodefs.readFileSync(_path, "utf8");
-
-    nodefs.writeFileSync(path, content);
-
-    return;
-  }
-
-  if (path != "/" && !nodefs.existsSync(path)) {
-    nodefs.mkdirSync(path);
-  }
-
-  for (const file of nodefs.readdirSync(_path)) {
-    copy(join(_path, file), join(path, file));
-  }
-}
 
 describe("selectRecord()", () => {
-  testCasesSelect.forEach((testCase) => {
-    test(testCase.name, () => {
-      return selectRecord({
+  readTestCase("select").forEach((testCase) => {
+    test(testCase.name, async () => {
+      testCase = {
+        initial: readDir(testCase.initial),
+        query: testCase.query.map(readRecord),
+        expected: testCase.expected.map(readRecord),
+      };
+
+      const data = await selectRecord({
         fs: nodefs,
         dir: testCase.initial,
         query: testCase.query,
-      }).then((data) => {
-        const dataSorted = data
-          .map(sortObject)
-          .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
-
-        const expected = testCase.expected
-          .map(sortObject)
-          .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
-
-        // console.log(JSON.stringify(dataSorted, undefined, 2));
-
-        expect(dataSorted).toStrictEqual(expected);
       });
+
+      const dataSorted = sortList(data);
+
+      const expected = sortList(testCase.expected);
+
+      expect(dataSorted).toStrictEqual(expected);
     });
   });
 });
 
 describe("updateRecord()", () => {
-  testCasesUpdate.forEach((testCase) => {
-    test(testCase.name, () => {
+  readTestCase("update").forEach((testCase) => {
+    test(testCase.name, async () => {
+      testCase = {
+        initial: readDir(testCase.initial),
+        query: testCase.query.map(readRecord),
+        expected: readDir(testCase.expected),
+      };
+
       const tmpdir = nodefs.mkdtempSync(join(os.tmpdir(), "csvs-"));
 
       copy(testCase.initial, tmpdir);
 
-      return updateRecord({
+      await updateRecord({
         fs: nodefs,
         dir: tmpdir,
         query: testCase.query,
-      }).then(() => {
-        expect(loadContents(nodefs, tmpdir)).toStrictEqual(
-          loadContents(nodefs, testCase.expected),
-        );
       });
+
+      expect(loadContents(tmpdir)).toStrictEqual(
+        loadContents(testCase.expected),
+      );
     });
   });
 });
 
 describe("insertRecord()", () => {
-  testCasesInsert.forEach((testCase) => {
-    test(testCase.name, () => {
+  readTestCase("insert").forEach((testCase) => {
+    test(testCase.name, async () => {
+      testCase = {
+        initial: readDir(testCase.initial),
+        query: testCase.query.map(readRecord),
+        expected: readDir(testCase.expected),
+      };
+
       const tmpdir = nodefs.mkdtempSync(join(os.tmpdir(), "csvs-"));
 
       copy(testCase.initial, tmpdir);
 
-      return insertRecord({
+      await insertRecord({
         fs: nodefs,
         dir: tmpdir,
         query: testCase.query,
-      }).then(() => {
-        expect(loadContents(nodefs, tmpdir)).toStrictEqual(
-          loadContents(nodefs, testCase.expected),
-        );
       });
+
+      expect(loadContents(tmpdir)).toStrictEqual(
+        loadContents(testCase.expected),
+      );
     });
   });
 });
 
 describe("deleteRecord()", () => {
-  testCasesDelete.forEach((testCase) => {
+  readTestCase("delete").forEach((testCase) => {
     test(testCase.name, async () => {
+      testCase = {
+        initial: readDir(testCase.initial),
+        query: testCase.query.map(readRecord),
+        expected: readDir(testCase.expected),
+      };
+
       const tmpdir = nodefs.mkdtempSync(join(os.tmpdir(), "csvs-"));
 
       copy(testCase.initial, tmpdir);
 
-      return deleteRecord({
+      await deleteRecord({
         fs: nodefs,
         dir: tmpdir,
         query: testCase.query,
-      }).then(() => {
-        expect(loadContents(nodefs, tmpdir)).toStrictEqual(
-          loadContents(nodefs, testCase.expected),
-        );
       });
+
+      expect(loadContents(tmpdir)).toStrictEqual(
+        loadContents(testCase.expected),
+      );
     });
   });
 });
 
 describe("mow()", () => {
-  testCasesMow.forEach((testCase) => {
+  readTestCase("mow").forEach((testCase) => {
     test(testCase.name, async () => {
+      testCase = {
+        initial: readRecord(testCase.initial),
+        trunk: testCase.trunk,
+        branch: testCase.branch,
+        expected: testCase.expected.map(readRecord),
+      };
+
       const data = mow(testCase.initial, testCase.trunk, testCase.branch);
 
-      const dataSorted = data
-        .map(sortObject)
-        .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
+      const dataSorted = sortList(data);
 
-      const expected = testCase.expected
-        .map(sortObject)
-        .sort((a, b) => (a[a._] < b[b._] ? -1 : 1));
-
-      // console.log(JSON.stringify(dataSorted, undefined, 2));
+      const expected = sortList(testCase.expected);
 
       expect(dataSorted).toStrictEqual(expected);
     });
@@ -191,8 +146,16 @@ describe("mow()", () => {
 });
 
 describe("sow()", () => {
-  testCasesSow.forEach((testCase) => {
+  readTestCase("sow").forEach((testCase) => {
     test(testCase.name, async () => {
+      testCase = {
+        initial: readRecord(testCase.initial),
+        grain: readRecord(testCase.grain),
+        trunk: testCase.trunk,
+        branch: testCase.branch,
+        expected: readRecord(testCase.expected),
+      };
+
       const data = sow(
         testCase.initial,
         testCase.grain,
@@ -204,23 +167,24 @@ describe("sow()", () => {
 
       const expected = sortObject(testCase.expected);
 
-      // console.log(JSON.stringify(dataSorted, undefined, 2));
-
       expect(dataSorted).toStrictEqual(expected);
     });
   });
 });
 
 describe("toSchema()", () => {
-  testCasesToSchema.forEach((testCase) => {
+  readTestCase("to_schema").forEach((testCase) => {
     test(testCase.name, async () => {
+      testCase = {
+        initial: readRecord(testCase.initial),
+        expected: readRecord(testCase.expected),
+      };
+
       const data = toSchema(testCase.initial);
 
       const dataSorted = sortObject(data);
 
       const expected = sortObject(testCase.expected);
-
-      // console.log(JSON.stringify(dataSorted, undefined, 2));
 
       expect(dataSorted).toStrictEqual(expected);
     });

@@ -348,6 +348,11 @@
   dependencies:
     levn "^0.4.1"
 
+"@fetsorn/csvs-test@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@fetsorn/csvs-test/-/csvs-test-1.0.1.tgz#98404ef301919ae7631bf1a0b35d6872493cd395"
+  integrity sha512-5ODgtCUTFysjIYspk50WvZk9b2MFThQzCzBItk3lpa6gOctwmQZZkzADNqstQI8vk1uRqa6CmG2mhS2rtOIXAQ==
+
 "@humanfs/core@^0.19.0":
   version "0.19.0"
   resolved "https://registry.yarnpkg.com/@humanfs/core/-/core-0.19.0.tgz#08db7a8c73bb07673d9ebd925f2dad746411fcec"
