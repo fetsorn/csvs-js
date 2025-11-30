@@ -1,5 +1,6 @@
 import csv from "papaparse";
 import { mow } from "../record.js";
+import { escape, unescape } from "../escape.js";
 
 export function updateLineStream(query, tablet) {
   const grains = mow(query, tablet.trunk, tablet.branch);
@@ -28,7 +29,11 @@ export function updateLineStream(query, tablet) {
 
   function insertAndForget(key, controller) {
     for (const value of values[key] ?? []) {
-      const line = csv.unparse([[key, value]], {
+      const keyEscaped = escape(key);
+
+      const valueEscaped = escape(value);
+
+      const line = csv.unparse([[keyEscaped, valueEscaped]], {
         delimiter: ",",
         newline: "\n",
       });
@@ -47,9 +52,11 @@ export function updateLineStream(query, tablet) {
     async transform(line, controller) {
       if (line === "") return;
 
-      const {
-        data: [[fst, snd]],
+      let {
+        data: [[fstEscaped, snd]],
       } = csv.parse(line, { delimiter: "," });
+
+      const fst = unescape(fstEscaped);
 
       const fstIsNew =
         stateIntermediary.fst === undefined || stateIntermediary.fst !== fst;

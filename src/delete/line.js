@@ -1,11 +1,16 @@
 import csv from "papaparse";
+import { escape, unescape } from "../escape.js";
 
 export function pruneLineStream(tablet) {
   return new TransformStream({
     transform(line, controller) {
       const {
-        data: [[fst, snd]],
+        data: [[fstEscaped, sndEscaped]],
       } = csv.parse(line, { delimiter: "," });
+
+      const fst = unescape(fstEscaped);
+
+      const snd = unescape(sndEscaped);
 
       const trait = tablet.traitIsFirst ? fst : snd;
 

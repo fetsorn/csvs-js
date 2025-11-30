@@ -1,5 +1,6 @@
 import csv from "papaparse";
 import { mow, sow } from "../record.js";
+import { unescape } from "../escape.js";
 
 export function makeStateInitial(
   { query, entry, matchMap, thingQuerying, source },
@@ -194,8 +195,12 @@ export function parseLineStream(
       if (line === "") return;
 
       const {
-        data: [[fst, snd]],
+        data: [[fstEscaped, sndEscaped]],
       } = csv.parse(line, { delimiter: "," });
+
+      const fst = unescape(fstEscaped);
+
+      const snd = unescape(sndEscaped);
 
       // console.log(tablet.filename, fst, snd);
 
