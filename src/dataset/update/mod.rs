@@ -263,7 +263,19 @@ fn update_tablet<S: Stream<Item = Result<Entry>>>(
     try_stream! {
         // must assign a variable to create the directory
         // must assign inside the stream scope to keep the directory
-        let temp_d = TempDir::new()?;
+        let temp_d = TempDir::new();
+        
+        // on android <13 std::env::temp_dir() returns /data/local/tmp
+        // which is inaccessible on some android systems
+        let temp_d = match temp_d {
+           Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied => {
+              TempDir::from_path(path)
+           }
+           Err(e) => Err(e),
+           Ok(td) => Ok(td)
+        };
+
+        let temp_d = temp_d?;
 
         // wrap in result here for try_stream! proc to pick up error from ?
         let filename = match filepath.file_name() {

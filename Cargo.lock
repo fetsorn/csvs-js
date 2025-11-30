@@ -317,7 +317,7 @@ dependencies = [
 
 [[package]]
 name = "csvs"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "assert-json-diff",
  "async-stream",
@@ -939,8 +939,7 @@ dependencies = [
 [[package]]
 name = "temp-dir"
 version = "0.1.16"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83176759e9416cf81ee66cb6508dbfe9c96f20b8b56265a39917551c23c70964"
+source = "git+https://codeberg.org/fetsorn/temp-dir#8d8be11f182c523f752cf8ded08e536a8eb058a6"
 
 [[package]]
 name = "tempfile"
