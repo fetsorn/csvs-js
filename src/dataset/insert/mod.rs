@@ -113,7 +113,7 @@ fn insert_tablet<S: Stream<Item = Result<Entry>>>(
             }).collect();
 
             for line in lines.iter() {
-                wtr.serialize(line)?;
+                wtr.serialize(line.escape())?;
             }
         }
     }

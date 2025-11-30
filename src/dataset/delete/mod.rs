@@ -103,7 +103,7 @@ pub async fn delete_tablet(path: PathBuf, tablet: Tablet) -> Result<()> {
     for result in rdr.records() {
         let record = result?;
 
-        let line = Line {
+        let line_escaped = Line {
             key: match record.get(0) {
                 None => String::from(""),
                 Some(s) => s.to_owned(),
@@ -113,6 +113,8 @@ pub async fn delete_tablet(path: PathBuf, tablet: Tablet) -> Result<()> {
                 Some(s) => s.to_owned(),
             },
         };
+
+        let line = line_escaped.unescape();
 
         let trait_ = if tablet.trait_is_first {
             line.key.to_owned()

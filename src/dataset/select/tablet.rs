@@ -28,10 +28,12 @@ fn line_stream(filepath: PathBuf) -> impl Stream<Item = Result<Line>> {
         for result in rdr.records() {
             let record = result?;
 
-            let line = Line {
+            let line_escaped = Line {
                 key: match record.get(0) { None => String::from(""), Some(s) => s.to_owned() },
                 value: match record.get(1) { None => String::from(""), Some(s) => s.to_owned() }
             };
+
+            let line = line_escaped.unescape();
 
             yield line;
         }

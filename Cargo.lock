@@ -339,7 +339,8 @@ dependencies = [
 
 [[package]]
 name = "csvs-test"
-version = "0.0.1"
+version = "1.0.1"
+source = "git+https://codeberg.org/norcivilianlabs/csvs-test#db76f4ae0e2318cf5394cfa0cc00c559af8f007f"
 dependencies = [
  "include_dir",
  "serde",
