@@ -1,6 +1,6 @@
-use super::read_record;
 use assert_json_diff::assert_json_eq;
 use csvs::{Entry, Grain, IntoValue, Result};
+use csvs_test::{read_record, read_records, read_testcase};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs;
@@ -8,29 +8,23 @@ use std::fs;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct MowTest {
     initial: String,
-    trait_: String,
-    thing: String,
+    trunk: String,
+    branch: String,
     expected: Vec<String>,
 }
 
 #[test]
 fn mow_test() -> Result<()> {
-    let file = fs::File::open("./src/test/cases/mow.json").expect("file should open read only");
-
-    let tests: Vec<MowTest> = serde_json::from_reader(file).expect("file should be proper JSON");
+    let tests: Vec<MowTest> = read_testcase("mow");
 
     for test in tests.iter() {
         let entry: Entry = read_record(&test.initial).try_into()?;
 
-        let result: Vec<Grain> = entry.mow(&test.trait_, &test.thing);
+        let result: Vec<Grain> = entry.mow(&test.trunk, &test.branch);
 
         let result_json: Vec<Value> = result.into_iter().map(|i| i.into_value()).collect();
 
-        let expected_json: Vec<Value> = test
-            .expected
-            .iter()
-            .map(|grain| read_record(grain))
-            .collect();
+        let expected_json: Vec<Value> = read_records(&test.expected);
 
         assert_json_eq!(result_json, expected_json);
     }

@@ -1,9 +1,9 @@
 extern crate dir_diff;
 use crate::{Entry, Result, Dataset};
-use super::read_record;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use temp_dir::TempDir;
+use csvs_test::{read_record, copy, read_testcase, assert_dir};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct DeleteTest {
@@ -14,38 +14,16 @@ struct DeleteTest {
 
 #[tokio::test]
 async fn delete_test() -> Result<()> {
-    let file = fs::File::open("./src/test/cases/delete.json").expect("file should open read only");
-
-    let tests: Vec<DeleteTest> = serde_json::from_reader(file).expect("file should be proper JSON");
+    let tests: Vec<DeleteTest> = read_testcase("delete");
 
     for test in tests.iter() {
         let temp_path = TempDir::new()?;
 
-        let initial_path = format!("./src/test/datasets/{}", test.initial);
+        copy(&test.initial, temp_path.path());
 
-        for file_entry in fs::read_dir(&initial_path)? {
-            let file_entry = file_entry?;
-
-            let file_type = file_entry.file_type()?;
-
-            if file_type.is_dir() {
-            } else {
-                fs::copy(
-                    file_entry.path(),
-                    temp_path.as_ref().join(file_entry.file_name()),
-                )?;
-            }
-        }
-
-        let expected_str = format!("./src/test/datasets/{}", test.expected);
-
-        let expected_path = std::path::Path::new(&expected_str);
-
-        // parse query to Entry
         let queries: Vec<Entry> = test
             .query
-            .clone()
-            .into_iter()
+            .iter()
             .map(|query| read_record(&query).try_into())
             .collect::<Result<Vec<Entry>>>()?;
 
@@ -53,24 +31,7 @@ async fn delete_test() -> Result<()> {
 
         dataset.delete_record(queries).await;
 
-        if dir_diff::is_different(temp_path.path(), expected_path)? {
-            for file_entry in fs::read_dir(temp_path.path())? {
-                let file_entry = file_entry?;
-
-                let file_type = file_entry.file_type()?;
-
-                if file_type.is_dir() {
-                } else {
-                    let received = fs::read_to_string(file_entry.path())?;
-
-                    let expected = fs::read_to_string(expected_path.join(file_entry.file_name()))?;
-
-                    assert_eq!(received, expected);
-                }
-            }
-        }
-
-        assert!(!dir_diff::is_different(temp_path.path(), expected_path)?);
+        assert_dir!(temp_path, &test.expected);
     }
 
     Ok(())

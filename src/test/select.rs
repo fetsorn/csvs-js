@@ -1,58 +1,45 @@
 use assert_json_diff::assert_json_eq;
+use temp_dir::TempDir;
 use serde_json::Value;
-extern crate dir_diff;
 use csvs::{
     Result,
     Entry, IntoValue, Dataset
 };
-use super::read_record;
+use csvs_test::{read_record, read_records, copy, read_testcase};
 use serde::{Deserialize, Serialize};
 use std::fs;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct SelectTest {
+    name: String,
     initial: String,
-    query: Vec<Value>,
+    query: Vec<String>,
     expected: Vec<String>,
 }
 
 #[tokio::test]
 async fn select_test() -> Result<()> {
-    let file = fs::File::open("./src/test/cases/select.json").expect("file should open read only");
-
-    let tests: Vec<SelectTest> = serde_json::from_reader(file).expect("file should be proper JSON");
+    let tests: Vec<SelectTest> = read_testcase("select");
 
     for test in tests.iter() {
-        let initial_path = format!("./src/test/datasets/{}", test.initial);
+        let temp_path = TempDir::new()?;
 
-        let initial_path = std::path::Path::new(&initial_path);
+        copy(&test.initial, temp_path.path());
 
         // parse query to Entry
         let queries: Vec<Entry> = test
             .query
             .iter()
-            .map(|query| query.clone().try_into())
+            .map(|query| read_record(&query).try_into())
             .collect::<Result<Vec<Entry>>>()?;
 
-        println!(
-            "ask: {:#?}",
-            queries.clone().into_iter().map(|query| query.into_value())
-        );
-
-        let dataset = Dataset::new(&initial_path.to_owned());
+        let dataset = Dataset::new(&temp_path.path().to_owned());
 
         let entries = dataset.select_record(queries).await?;
 
         let entries_json: Vec<Value> = entries.iter().map(|i| i.clone().into_value()).collect();
 
-        let expected_json: Vec<Value> = test
-            .expected
-            .iter()
-            .map(|grain| read_record(grain))
-            .collect();
-
-        println!("want: {:#?}", expected_json);
-        println!("got: {:#?}", entries_json);
+        let expected_json: Vec<Value> = read_records(&test.expected);
 
         assert_json_eq!(entries_json, expected_json);
     }

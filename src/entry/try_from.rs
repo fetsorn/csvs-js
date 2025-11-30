@@ -127,3 +127,19 @@ impl TryFrom<&str> for Entry {
         value_json.try_into()
     }
 }
+
+impl TryFrom<&Value> for Entry {
+    type Error = Error;
+
+    fn try_from(value: &Value) -> Result<Self> {
+        value.clone().try_into()
+    }
+}
+
+//impl TryFrom<&Value> for Entry {
+//    type Error = Error;
+//
+//    fn try_from(values: Vec<Value>) -> Result<Self> {
+//        values.iter().map(|value| value.try_into()).collect()
+//    }
+//}

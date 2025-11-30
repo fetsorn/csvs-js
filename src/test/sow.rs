@@ -1,6 +1,6 @@
-use super::read_record;
 use assert_json_diff::assert_json_eq;
 use csvs::{Entry, Grain, IntoValue, Result};
+use csvs_test::{read_record, read_testcase};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs;
@@ -9,23 +9,21 @@ use std::fs;
 struct SowTest {
     initial: String,
     grain: String,
-    trait_: String,
-    thing: String,
+    trunk: String,
+    branch: String,
     expected: String,
 }
 
 #[test]
 fn sow_test() -> Result<()> {
-    let file = fs::File::open("./src/test/cases/sow.json").expect("file should open read only");
-
-    let tests: Vec<SowTest> = serde_json::from_reader(file).expect("file should be proper JSON");
+    let tests: Vec<SowTest> = read_testcase("sow");
 
     for test in tests.iter() {
         let entry: Entry = read_record(&test.initial).try_into()?;
 
         let grain: Grain = read_record(&test.grain).try_into()?;
 
-        let result: Entry = entry.sow(&grain, &test.trait_, &test.thing);
+        let result: Entry = entry.sow(&grain, &test.trunk, &test.branch);
 
         let result_json: Value = result.into_value();
 

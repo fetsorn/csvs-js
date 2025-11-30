@@ -1,5 +1,6 @@
 use assert_json_diff::assert_json_eq;
 use csvs::{Entry, IntoValue, Result};
+use csvs_test::read_testcase;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs;
@@ -12,9 +13,7 @@ struct EntryTest {
 
 #[test]
 fn entry_try_from_test() -> Result<()> {
-    let file = fs::File::open("./src/test/cases/entry.json").expect("file should open read only");
-
-    let tests: Vec<EntryTest> = serde_json::from_reader(file).expect("file should be proper JSON");
+    let tests: Vec<EntryTest> = read_testcase("entry");
 
     for test in tests.iter() {
         let result: Entry = test.value.clone().try_into()?;
@@ -31,9 +30,7 @@ fn entry_try_from_test() -> Result<()> {
 
 #[test]
 fn entry_into_test() -> Result<()> {
-    let file = fs::File::open("./src/test/cases/entry.json").expect("file should open read only");
-
-    let tests: Vec<EntryTest> = serde_json::from_reader(file).expect("file should be proper JSON");
+    let tests: Vec<EntryTest> = read_testcase("entry");
 
     for test in tests.iter() {
         let entry_string = serde_json::to_string(&test.entry)?;

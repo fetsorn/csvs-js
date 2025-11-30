@@ -1,6 +1,6 @@
-use super::read_record;
 use assert_json_diff::assert_json_eq;
 use csvs::{Entry, Result, Schema};
+use csvs_test::{read_record, read_testcase};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs;
@@ -14,10 +14,7 @@ struct LevelTest {
 
 #[test]
 fn level_test() -> Result<()> {
-    let file = fs::File::open("./src/test/cases/get_nesting_level.json")
-        .expect("file should open read only");
-
-    let tests: Vec<LevelTest> = serde_json::from_reader(file).expect("file should be proper JSON");
+    let tests: Vec<LevelTest> = read_testcase("get_nesting_level");
 
     for test in tests.iter() {
         let schema_record = read_record(&test.schema);
@@ -41,10 +38,7 @@ struct SortTest {
 
 #[test]
 fn sort_descending_test() -> Result<()> {
-    let file = fs::File::open("./src/test/cases/sort_descending.json")
-        .expect("file should open read only");
-
-    let tests: Vec<SortTest> = serde_json::from_reader(file).expect("file should be proper JSON");
+    let tests: Vec<SortTest> = read_testcase("sort_descending");
 
     for test in tests.iter() {
         let schema_record = read_record(&test.schema);
@@ -63,10 +57,7 @@ fn sort_descending_test() -> Result<()> {
 
 #[test]
 fn sort_ascending_test() -> Result<()> {
-    let file =
-        fs::File::open("./src/test/cases/sort_ascending.json").expect("file should open read only");
-
-    let tests: Vec<SortTest> = serde_json::from_reader(file).expect("file should be proper JSON");
+    let tests: Vec<SortTest> = read_testcase("sort_ascending");
 
     for test in tests.iter() {
         let schema_record = read_record(&test.schema);

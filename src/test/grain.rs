@@ -1,5 +1,6 @@
 use assert_json_diff::assert_json_eq;
 use csvs::{Grain, IntoValue, Result};
+use csvs_test::read_testcase;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs;
@@ -12,9 +13,7 @@ struct GrainTest {
 
 #[test]
 fn grain_try_from_test() -> Result<()> {
-    let file = fs::File::open("./src/test/cases/grain.json").expect("file should open read only");
-
-    let tests: Vec<GrainTest> = serde_json::from_reader(file).expect("file should be proper JSON");
+    let tests: Vec<GrainTest> = read_testcase("grain");
 
     for test in tests.iter() {
         let result: Grain = test.value.clone().try_into()?;
@@ -31,9 +30,7 @@ fn grain_try_from_test() -> Result<()> {
 
 #[test]
 fn grain_into_test() -> Result<()> {
-    let file = fs::File::open("./src/test/cases/grain.json").expect("file should open read only");
-
-    let tests: Vec<GrainTest> = serde_json::from_reader(file).expect("file should be proper JSON");
+    let tests: Vec<GrainTest> = read_testcase("grain");
 
     for test in tests.iter() {
         let grain_string = serde_json::to_string(&test.grain)?;

@@ -1,5 +1,6 @@
 use assert_json_diff::assert_json_eq;
 use csvs::{Branch, Entry, Leaves, Result, Schema, Trunks};
+use csvs_test::read_testcase;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -13,9 +14,7 @@ struct SchemaTest {
 
 #[test]
 fn entry_into_test() -> Result<()> {
-    let file = fs::File::open("./src/test/cases/schema.json").expect("file should open read only");
-
-    let tests: Vec<SchemaTest> = serde_json::from_reader(file).expect("file should be proper JSON");
+    let tests: Vec<SchemaTest> = read_testcase("schema");
 
     for test in tests.iter() {
         let entry_string = serde_json::to_string(&test.entry)?;
