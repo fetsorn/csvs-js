@@ -16,5 +16,11 @@
     "initial": "default",
     "query": ["record_added"],
     "expected": "added"
+  },
+  {
+    "name": "adds record with a newline",
+    "initial": "default",
+    "query": ["record_newline"],
+    "expected": "added_newline"
   }
 ]

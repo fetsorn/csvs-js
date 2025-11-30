@@ -199,5 +199,11 @@
     "initial": "two_roots",
     "query": [ "query_name1" ],
     "expected": [ "record2001" ]
+  },
+  {
+    "name": "finds value with a newline",
+    "initial": "newline",
+    "query": [ "query_newline" ],
+    "expected": [ "record_newline" ]
   }
 ]

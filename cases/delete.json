@@ -16,5 +16,11 @@
     "initial": "deleted_leaf",
     "query": ["record_sow_base_is_trait"],
     "expected": "deleted_leaf_empty"
+  },
+  {
+    "name": "deletes a record with a newline",
+    "initial": "newline",
+    "query": ["record_newline"],
+    "expected": "deleted_newline"
   }
 ]
