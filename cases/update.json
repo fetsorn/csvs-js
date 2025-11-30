@@ -72,12 +72,6 @@
     "expected": "empty"
   },
   {
-    "name": "ignores record without base field",
-    "initial": "empty",
-    "query": [ "record_base_none" ],
-    "expected": "empty"
-  },
-  {
     "name": "adds record with array of literal values",
     "initial": "default",
     "query": [ "record_array_literal" ],

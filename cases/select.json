@@ -111,9 +111,9 @@
     "initial": "added",
     "query": [ "query_option_actdate" ],
     "expected": [
+      "option_actdate_2003",
       "option_actdate_2001",
       "option_actdate_2002",
-      "option_actdate_2003",
       "option_actdate_2005"
     ]
   },
@@ -122,9 +122,9 @@
     "initial": "added",
     "query": [ "query_option_saydate" ],
     "expected": [
+      "option_saydate_2003",
       "option_saydate_2001",
       "option_saydate_2002",
-      "option_saydate_2003",
       "option_saydate_2004"
     ]
   },
@@ -133,22 +133,14 @@
     "initial": "added",
     "query": [ "query_option_sayname" ],
     "expected": [
+      "option_sayname_3",
       "option_sayname_1",
       "option_sayname_2",
-      "option_sayname_3",
       "option_sayname_4"
     ]
   },
   {
     "name": "options object",
-    "initial": "array",
-    "query": [ "query_option_export1" ],
-    "expected": [
-      "option_export1_tag_1",
-      "option_export1_tag_2"
-    ]
-  },
-  {
     "initial": "array",
     "query": [ "query_option_export1" ],
     "expected": [

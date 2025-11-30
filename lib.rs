@@ -1,45 +1,90 @@
+extern crate include_dir;
+extern crate serde_json;
+extern crate temp_dir;
+use include_dir::{include_dir, Dir};
+use serde_json::Value;
+use std::fs;
+use std::fs::File;
+use std::io::prelude::*;
+use std::path::{Path, PathBuf};
+use temp_dir::TempDir;
+
+pub static CASES_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/cases");
+pub static RECORDS_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/records");
+pub static DATASETS_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/datasets");
+
 pub fn read_record(loadname: &str) -> Value {
-    let path = format!("./records/{}.json", loadname);
+    let filename = format!("{}.json", loadname);
 
-    let file = fs::File::open(entry_path).expect("file should open read only");
+    let file = RECORDS_DIR
+        .get_file(filename)
+        .expect("should be a json file");
 
-    let json: Value = serde_json::from_reader(entry_file).expect("file should be proper JSON");
+    let json: Value = serde_json::from_reader(file.contents()).expect("file should be proper JSON");
 
     json
 }
 
-pub fn read_records(loadname: &Vec<&str>) -> Vec<Value> {
-    test.expected.iter().map(|r| read_record(r)).collect()
+pub fn read_records(loadnames: &Vec<String>) -> Vec<Value> {
+    loadnames.iter().map(|r| read_record(r)).collect()
 }
 
-pub fn read_dataset_dir(loadname: &str) -> Path {
-    let path = format!("./datasets/{}.json", loadname);
+pub fn read_testcase<R: serde::de::DeserializeOwned>(loadname: &str) -> Vec<R> {
+    let filename = format!("{}.json", loadname);
 
-    path
-}
+    let file = CASES_DIR.get_file(filename).expect("should be a json file");
 
-pub fn read_testcase<R>(loadname: &str) -> Vec<R> {
-    let path = format!("./cases/{}.json", loadname);
-
-    let file = fs::File::open(path).expect("file should open read only");
-
-    let tests: Vec<R> = serde_json::from_reader(file).expect("file should be proper JSON");
+    let tests: Vec<R> =
+        serde_json::from_reader(file.contents()).expect("file should be proper JSON");
 
     tests
 }
 
-pub fn copy(initial_path: Path, temp_path: Path) {
-    for file_entry in fs::read_dir(&initial_path)? {
-        let file_entry = file_entry?;
+pub fn copy(loadname: &str, temp_path: &Path) -> Result<(), std::io::Error> {
+    let dataset = DATASETS_DIR.get_dir(loadname).unwrap();
 
-        let file_type = file_entry.file_type()?;
+    for file_entry in dataset.files() {
+        let file_name = file_entry
+            .path()
+            .file_name()
+            .expect("should not terminate in ..");
 
-        if file_type.is_dir() {
-        } else {
-            fs::copy(
-                file_entry.path(),
-                temp_path.as_ref().join(file_entry.file_name()),
-            )?;
-        }
+        let mut file = fs::File::create(temp_path.join(file_name))?;
+
+        file.write_all(file_entry.contents())?;
     }
+
+    Ok(())
+}
+
+#[macro_export]
+macro_rules! assert_dir {
+    ($temp_path:expr, $expected_path:expr) => {
+        let check_path = TempDir::new()?;
+
+        copy($expected_path, check_path.path());
+
+        if dir_diff::is_different($temp_path.path(), check_path.path())? {
+            for file_entry in fs::read_dir($temp_path.path())? {
+                let file_entry = file_entry?;
+
+                let file_type = file_entry.file_type()?;
+
+                if file_type.is_dir() {
+                } else {
+                    let received = fs::read_to_string(file_entry.path())?;
+
+                    let expected =
+                        fs::read_to_string(check_path.path().join(file_entry.file_name()))?;
+
+                    assert_eq!(received, expected);
+                }
+            }
+        }
+
+        assert!(!dir_diff::is_different(
+            $temp_path.path(),
+            check_path.path()
+        )?);
+    };
 }
