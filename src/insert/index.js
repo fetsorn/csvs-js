@@ -1,82 +1,25 @@
-import { WritableStream, ReadableStream } from "@swimburger/isomorphic-streams";
+import { sortFile } from "../stream.js";
 import { selectSchema } from "../select/index.js";
 import { toSchema } from "../schema.js";
-import { sortFile } from "../stream.js";
-import { insertTablet } from "./tablet.js";
 import { planInsert } from "./strategy.js";
-
-export async function insertRecordStream({ fs, dir }) {
-  const [schemaRecord] = await selectSchema({ fs, dir });
-
-  const schema = toSchema(schemaRecord);
-
-  let strategy = [];
-
-  return new TransformStream({
-    async transform(query, controller) {
-      const queryStream = new ReadableStream({
-        start(controller) {
-          controller.enqueue(query);
-          controller.close();
-        },
-      });
-
-      strategy = planInsert(schema, query);
-
-      const streams = strategy.map((tablet) => insertTablet(fs, dir, tablet));
-
-      const insertStream = [...streams].reduce(
-        (withStream, stream) => withStream.pipeThrough(stream),
-        queryStream,
-      );
-
-      await insertStream.pipeTo(
-        new WritableStream({
-          async write(record) {
-            controller.enqueue(record);
-          },
-        }),
-      );
-    },
-
-    async flush() {
-      // we use isInserted here to not cache the strategy
-      const promises = strategy.map(({ filename }) =>
-        sortFile(fs, dir, filename),
-      );
-
-      await Promise.all(promises);
-    },
-  });
-}
+import { insertTablet } from "./tablet.js";
 
 export async function insertRecord({ fs, dir, query }) {
-  // exit if record is undefined
-  if (query === undefined) return;
+    const queries = Array.isArray(query) ? query : [query];
 
-  const queries = Array.isArray(query) ? query : [query];
+    const [schemaRecord] = await selectSchema({ fs, dir });
 
-  const queryStream = new ReadableStream({
-    start(controller) {
-      for (const q of queries) {
-        controller.enqueue(q);
-      }
+    const schema = toSchema(schemaRecord);
 
-      controller.close();
-    },
-  });
+    for (const query of queries) {
 
-  const insertStream = await insertRecordStream({ fs, dir });
+        const strategy = planInsert(schema, query);
 
-  const entries = [];
+        for (const tablet of strategy) {
+            await insertTablet(fs, dir, tablet, query);
 
-  await queryStream.pipeThrough(insertStream).pipeTo(
-    new WritableStream({
-      write(record) {
-        entries.push(record);
-      },
-    }),
-  );
+            await sortFile(fs, dir, tablet.filename);
+        }
+    }
 
-  return entries;
 }
