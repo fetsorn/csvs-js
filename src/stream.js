@@ -131,3 +131,39 @@ export async function sortFile(fs, dir, filename) {
 
   await fs.promises.rmdir(tmpdir);
 }
+
+/**
+ * @param chunkIterable An asynchronous or synchronous iterable
+ * over “chunks” (arbitrary strings)
+ * @returns An asynchronous iterable over “lines”
+ * (strings with at most one newline that always appears at the end)
+ * https://2ality.com/2019/11/nodejs-streams-async-iteration.html
+ */
+export async function* chunksToLines(chunkIterable) {
+  let previous = '';
+
+  for await (const chunk of chunkIterable) {
+    let startSearch = previous.length;
+
+    previous += chunk;
+
+    while (true) {
+      const eolIndex = previous.indexOf('\n', startSearch);
+
+      if (eolIndex < 0) break;
+
+      // line does not include the EOL
+      const line = previous.slice(0, eolIndex + 1);
+
+      yield line;
+
+      previous = previous.slice(eolIndex+1);
+
+      startSearch = 0;
+    }
+  }
+
+  if (previous.length > 0) {
+    yield previous;
+  }
+}

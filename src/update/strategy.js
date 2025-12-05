@@ -1,7 +1,6 @@
 import { findCrown } from "../schema.js";
 
 function planUpdateSchema() {
-
   return [
     {
       filename: `_-_.csv`,

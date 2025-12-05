@@ -12,7 +12,6 @@ export async function insertRecord({ fs, dir, query }) {
     const schema = toSchema(schemaRecord);
 
     for (const query of queries) {
-
         const strategy = planInsert(schema, query);
 
         for (const tablet of strategy) {
