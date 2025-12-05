@@ -63,7 +63,7 @@ async function appendTablet(fs, dir, tablet, query, tmpPath) {
     for await (const line of lineStream) {
         if (line === "") continue;
 
-        if (keys.length === 0) {
+        if (state.keys.length === 0) {
             await fs.promises.appendFile(tmpPath, line);
 
             continue;

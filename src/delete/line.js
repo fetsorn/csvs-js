@@ -1,24 +1,18 @@
 import csv from "papaparse";
-import { escape, unescape } from "../escape.js";
+import { unescape } from "../escape.js";
 
-export function pruneLineStream(tablet) {
-  return new TransformStream({
-    transform(line, controller) {
-      const {
+export function pruneLine(tablet, line) {
+    const {
         data: [[fstEscaped, sndEscaped]],
-      } = csv.parse(line, { delimiter: "," });
+    } = csv.parse(line, { delimiter: "," });
 
-      const fst = unescape(fstEscaped);
+    const fst = unescape(fstEscaped);
 
-      const snd = unescape(sndEscaped);
+    const snd = unescape(sndEscaped);
 
-      const trait = tablet.traitIsFirst ? fst : snd;
+    const trait = tablet.traitIsFirst ? fst : snd;
 
-      const isMatch = line !== "" && trait === tablet.trait;
+    const isMatch = line !== "" && trait === tablet.trait;
 
-      if (!isMatch) {
-        controller.enqueue(line);
-      }
-    },
-  });
+    return isMatch;
 }

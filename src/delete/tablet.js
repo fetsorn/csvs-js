@@ -1,61 +1,49 @@
-import {
-  WritableStream,
-  ReadableStream,
-  TransformStream,
-} from "@swimburger/isomorphic-streams";
 import path from "path";
-import { isEmpty, createLineStream } from "../stream.js";
-import { pruneLineStream } from "./line.js";
+import { isEmpty, chunksToLines } from "../stream.js";
+import { pruneLine } from "./line.js";
+
+async function foo(fs, dir, tablet, tmpPath) {
+    const filepath = path.join(dir, tablet.filename);
+
+    if (await isEmpty(fs, filepath)) return undefined;
+
+    const lineStream = chunksToLines(fs.createReadStream(filepath));
+
+    for await (const line of lineStream) {
+        const isMatch = pruneLine(tablet, line)
+
+      if (!isMatch) {
+        await fs.promises.appendFile(tmpPath, line);
+      }
+    }
+}
 
 export async function pruneTablet(fs, dir, tablet) {
+    const filepath = path.join(dir, tablet.filename);
 
-  const filepath = path.join(dir, tablet.filename);
+    const tmpdir = await fs.promises.mkdtemp(path.join(dir, "prune-"));
 
-  if (await isEmpty(fs, filepath)) return undefined;
+    const tmpPath = path.join(tmpdir, tablet.filename);
 
-  const fileStream = new ReadableStream({
-    async start(controller) {
-      for await (const a of fs.createReadStream(filepath)) {
-        controller.enqueue(a)
-      }
+    await foo(fs, dir, tablet, tmpPath);
 
-      controller.close()
+    if (await isEmpty(fs, tmpPath)) {
+        try {
+            await fs.promises.unlink(filepath);
+        } catch {
+            // do nothing
+        }
+    } else {
+        // fs.rename doesn't work with external drives
+        // fs.copyFile doesn't work with lightning fs
+        const file = await fs.promises.readFile(tmpPath);
+
+        await fs.promises.writeFile(filepath, file);
+
+        // unlink to rmdir later
+        await fs.promises.unlink(tmpPath);
     }
-  })
 
-  const pruneStream = pruneLineStream(tablet);
-
-  const tmpdir = await fs.promises.mkdtemp(path.join(dir, "prune-"));
-
-  const tmpPath = path.join(tmpdir, tablet.filename);
-
-  await fileStream
-    .pipeThrough(createLineStream())
-    .pipeThrough(pruneStream)
-    .pipeTo(new WritableStream({
-      async write(line) {
-        await fs.promises.appendFile(tmpPath, line);
-      },
-    }));
-
-  if (await isEmpty(fs, tmpPath)) {
-    try {
-      await fs.promises.unlink(filepath);
-    } catch {
-      // do nothing
-    }
-  } else {
-    // use copyFile because rename doesn't work with external drives
-    // fs.rename doesn't work with external drives
-    // fs.copyFile doesn't work with lightning fs
-    const file = await fs.promises.readFile(tmpPath);
-
-    await fs.promises.writeFile(filepath, file);
-
-    // unlink to rmdir later
-    await fs.promises.unlink(tmpPath);
-  }
-
-  // keep rmdir because lightningfs doesn't support rm
-  await fs.promises.rmdir(tmpdir);
+    // use rmdir because lightningfs doesn't support rm
+    await fs.promises.rmdir(tmpdir);
 }

@@ -4,7 +4,7 @@ import {
   selectSchema,
 } from "./select/index.js";
 import { updateRecord } from "./update/index.js";
-import { deleteRecord, deleteRecordStream } from "./delete/index.js";
+import { deleteRecord } from "./delete/index.js";
 import { insertRecord } from "./insert/index.js";
 import {
   findCrown,
@@ -21,7 +21,6 @@ export {
   updateRecord,
   insertRecord,
   deleteRecord,
-  deleteRecordStream,
   findCrown,
   toSchema,
   sortNestingAscending,
@@ -37,7 +36,6 @@ export default {
   updateRecord,
   insertRecord,
   deleteRecord,
-  deleteRecordStream,
   findCrown,
   toSchema,
   sortNestingAscending,
