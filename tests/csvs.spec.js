@@ -49,7 +49,7 @@ describe("buildRecord()", () => {
   });
 });
 
-describe("queryRecord()", () => {
+describe.only("queryRecord()", () => {
   readTestCase("select").forEach((testCase) => {
     test(testCase.name, async () => {
       testCase = {
@@ -64,7 +64,7 @@ describe("queryRecord()", () => {
         query: testCase.query,
       });
 
-        console.log(data)
+        console.log("result", data)
 
       const dataSorted = sortList(data);
 
@@ -75,7 +75,7 @@ describe("queryRecord()", () => {
   });
 });
 
-describe.only("selectOption()", () => {
+describe("selectOption()", () => {
   readTestCase("select").forEach((testCase) => {
     test(testCase.name, async () => {
       testCase = {

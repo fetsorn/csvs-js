@@ -3,7 +3,7 @@ import { mow, sow } from "../record.js";
 import { unescape } from "../escape.js";
 
 export function makeStateInitial(
-  { query, entry, thingQuerying, source },
+  { query, entry, thingQuerying },
   tablet,
 ) {
   // in a querying tablet, set initial entry to the base of the tablet
@@ -39,7 +39,6 @@ export function makeStateInitial(
     query: queryInitial,
     fst: undefined,
     isMatch: false,
-    hasMatch: false,
     thingQuerying: thingQueryingInitial,
   };
 
@@ -85,8 +84,6 @@ export function makeStateLine(
         state.thingQuerying = thing;
       }
 
-      state.hasMatch = state.hasMatch ? state.hasMatch : state.isMatch;
-
       if (isMatch) {
         return grainNew;
       }
@@ -121,8 +118,8 @@ export function makeStateLine(
   return state;
 }
 
-export function parseLineStream(
-  { query, entry, thingQuerying, source },
+export function selectLineStream(
+  { query, entry, thingQuerying },
   tablet,
 ) {
   const stateInitial = makeStateInitial(
@@ -130,7 +127,6 @@ export function parseLineStream(
       entry,
       query,
       thingQuerying,
-      source,
     },
     tablet,
   );
@@ -155,20 +151,12 @@ export function parseLineStream(
 
       state.fst = fst;
 
-      const isComplete = state.isMatch;
-
-      // only push here if tablet is eager
-      // otherwise wait until the end of file,
-      // maybe other groups also match
-      const isEndOfGroup = tablet.eager && fstIsNew;
-
-      const pushEndOfGroup = isEndOfGroup && isComplete;
+      const pushEndOfGroup = fstIsNew && state.isMatch;
 
       if (pushEndOfGroup) {
         const stateToPush = {
           entry: state.entry,
           query: state.query,
-          source: tablet.filename,
           thingQuerying: state.thingQuerying,
         };
 
@@ -191,18 +179,10 @@ export function parseLineStream(
     flush(controller) {
       const isComplete = state.isMatch;
 
-      // we push at the end of non-eager tablet
-      // because a non-eager tablet looks
-      // for all possible matches until end of file
-      // and doesn't push earlier than the end
-      // push if tablet wasn't eager or if eager matched
-      const pushEnd = !tablet.eager || isComplete;
-
       if (isComplete) {
         const stateToPush = {
           query: state.query,
           entry: state.entry,
-          source: tablet.filename,
           thingQuerying: state.thingQuerying,
         };
 
@@ -210,8 +190,4 @@ export function parseLineStream(
       }
     },
   });
-}
-
-export function selectLineStream(state, tablet) {
-  return parseLineStream(state, tablet);
 }

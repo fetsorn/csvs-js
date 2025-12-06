@@ -54,7 +54,7 @@ export function selectRecordStream({ fs, dir }) {
 
       const queryStream = new ReadableStream({
         start(controller) {
-          controller.enqueue({ query, matchMap: new Map() });
+          controller.enqueue({ query });
 
           controller.close();
         },

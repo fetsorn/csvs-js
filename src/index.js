@@ -11,7 +11,7 @@ import {
 } from "./build/index.js";
 import {
    queryRecord
-} from "./query/index.js";
+} from "./query_tbn/index.js";
 import { updateRecord } from "./update/index.js";
 import { deleteRecord } from "./delete/index.js";
 import { insertRecord } from "./insert/index.js";

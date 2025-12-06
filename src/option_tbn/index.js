@@ -41,7 +41,7 @@ async function selectOptionStream({ fs, dir, query }) {
                 await nextTablet();
 
                 if (tabletsOver) {
-                    return null
+                    return null;
                 }
 
                 return pullTablet();
@@ -56,9 +56,9 @@ async function selectOptionStream({ fs, dir, query }) {
             const option = await pullTablet();
 
             if (option === null) {
-                controller.close()
+                controller.close();
             } else {
-                controller.enqueue(option.entry)
+                controller.enqueue(option.entry);
             }
         }
     });
@@ -74,15 +74,15 @@ export async function selectOption({ fs, dir, query }) {
 
     const schema = toSchema(schemaRecord);
 
-    let entries = []
+    let entries = [];
 
     for (const query of queries) {
         let optionStream = await selectOptionStream({ fs, dir, query });
 
         for await (const option of optionStream) {
-            entries.push(option)
+            entries.push(option);
         }
     }
 
-    return entries
+    return entries;
 }

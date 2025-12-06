@@ -41,8 +41,6 @@ export async function optionTabletStream(fs, dir, tablet, { query, matchMap }) {
 
             if (done) {
                 if (value.isMatch) {
-                    console.log(value)
-
                     controller.enqueue(value);
                 }
 
@@ -50,8 +48,6 @@ export async function optionTabletStream(fs, dir, tablet, { query, matchMap }) {
             }
 
             if (value.last) {
-                console.log(value.last)
-
                 controller.enqueue(value.last);
 
                 value.last = false;
