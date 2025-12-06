@@ -1,6 +1,7 @@
 import path from "path";
 import { ReadableStream } from "@swimburger/isomorphic-streams";
 import { isEmpty, chunksToLines } from "../stream.js";
+import { mow, sow } from "../record.js";
 import { queryLine } from "./line.js";
 
 export function makeStateInitial(
@@ -53,7 +54,11 @@ export async function queryTabletStream(fs, dir, tablet, { query, entry, thingQu
 
     const lineIterator = lineStream[Symbol.asyncIterator]();
 
-    let stateSaved = makeStateInitial({ query, entry, thingQuerying }, tablet);
+    const stateInitial = makeStateInitial({ query, entry, thingQuerying }, tablet)
+
+    let stateSaved = stateInitial;
+
+    const grains = mow(stateSaved.query, tablet.trait, tablet.thing);
 
     async function pullLine(state) {
         const { done, value } = await lineIterator.next();
@@ -62,7 +67,7 @@ export async function queryTabletStream(fs, dir, tablet, { query, entry, thingQu
             return { done: true, value: state };
         }
 
-        const stateLine = queryLine(tablet, state, value);
+        const stateLine = queryLine(tablet, grains, stateInitial, state, value);
 
         if (stateLine.last) {
             return { done: false, value: stateLine };
