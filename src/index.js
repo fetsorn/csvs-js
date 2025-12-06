@@ -3,6 +3,12 @@ import {
   selectRecord,
   selectSchema,
 } from "./select/index.js";
+import {
+  selectOption,
+} from "./option/index.js";
+import {
+   buildRecord
+} from "./build/index.js";
 import { updateRecord } from "./update/index.js";
 import { deleteRecord } from "./delete/index.js";
 import { insertRecord } from "./insert/index.js";
@@ -18,6 +24,8 @@ export {
   selectRecordStream,
   selectRecord,
   selectSchema,
+  selectOption,
+  buildRecord,
   updateRecord,
   insertRecord,
   deleteRecord,
@@ -33,6 +41,8 @@ export default {
   selectRecordStream,
   selectRecord,
   selectSchema,
+  selectOption,
+  buildRecord,
   updateRecord,
   insertRecord,
   deleteRecord,

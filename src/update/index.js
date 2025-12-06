@@ -4,6 +4,9 @@ import { planUpdate } from "./strategy.js";
 import { updateTablet } from "./tablet.js";
 
 export async function updateRecord({ fs, dir, query }) {
+    // exit if record is undefined
+    if (query === undefined) return;
+
     const queries = Array.isArray(query) ? query : [query];
 
     const [schemaRecord] = await selectSchema({ fs, dir });
