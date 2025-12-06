@@ -95,6 +95,7 @@ export async function buildTablet(fs, dir, tablet, { entry, source }) {
 
         state = makeStateLine(stateInitial, state, tablet, grains, trait, thing);
     }
+
     const isComplete = state.isMatch;
 
     if (isComplete) {

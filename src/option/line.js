@@ -3,25 +3,15 @@ import { mow, sow } from "../record.js";
 import { unescape } from "../escape.js";
 
 export function makeStateInitial(
-  { query, entry, matchMap, source },
+  { matchMap, source },
   tablet,
 ) {
-  const doDiscard = entry === undefined;
-
-  const entryFallback = doDiscard ? { _: tablet.base } : entry;
-
-  const entryInitial = entryFallback;
-
-  const entryBaseChanged = entry === undefined || entry._ !== entryInitial._;
-
-  const queryInitial = entryInitial;
+  const entryInitial = { _: tablet.base };
 
   const state = {
     entry: entryInitial,
-    query: queryInitial,
     fst: undefined,
     isMatch: false,
-    hasMatch: false,
     matchMap,
   };
 
@@ -29,70 +19,42 @@ export function makeStateInitial(
 }
 
 export function makeStateLine(
-  stateInitial,
   stateOld,
   tablet,
-  grains,
   trait,
   thing,
 ) {
-  let state = { ...stateOld };
+    let state = { ...stateOld };
 
-  const grainNew = {
-    _: tablet.trait,
-    [tablet.trait]: trait,
-    [tablet.thing]: thing,
-  };
+    // accumulating tablets find all values
+    // matched at least once across the dataset
+    // check here if thing was matched before
+    const matchIsNew =
+          state.matchMap === undefined || state.matchMap.get(thing) === undefined;
 
-  const grainsNew = grains
-    .map((grain) => {
+    state.isMatch = state.isMatch ? state.isMatch : matchIsNew;
 
-      // if grain[tablet.trait] is undefined, regex is ""
-      const isMatch = tablet.traitIsRegex
-        ? new RegExp(grain[tablet.trait]).test(trait)
-        : grain[tablet.trait] === trait;
-
-      // accumulating tablets find all values
-      // matched at least once across the dataset
-      // check here if thing was matched before
-      // this will always be true for non-accumulating maps
-      // so will be ignored
-      const matchIsNew =
-        state.matchMap === undefined || state.matchMap.get(thing) === undefined;
-
-      state.isMatch = state.isMatch ? state.isMatch : isMatch && matchIsNew;
-
-      if (isMatch && matchIsNew) {
+    if (matchIsNew) {
         state.matchMap.set(thing, true);
-      }
+    }
 
-      state.hasMatch = state.hasMatch ? state.hasMatch : state.isMatch;
-
-      if (isMatch && matchIsNew) {
-        return grainNew;
-      }
-
-      return undefined;
-    })
-    .filter((grain) => grain !== undefined);
-
-  state.entry = grainsNew.reduce((withGrain, grain) => {
-    const bar = sow(withGrain, grain, tablet.trait, tablet.thing);
-
-    return bar;
-  }, state.entry);
+    if (matchIsNew) {
+        state.entry = {
+            _: tablet.trait,
+            [tablet.trait]: trait,
+            [tablet.thing]: thing,
+        };
+    }
 
   return state;
 }
 
 export function parseLineStream(
-  { query, entry, matchMap, source },
+  { matchMap, source },
   tablet,
 ) {
   const stateInitial = makeStateInitial(
     {
-      entry,
-      query,
       matchMap,
       source,
     },
@@ -100,8 +62,6 @@ export function parseLineStream(
   );
 
   let state = { ...stateInitial };
-
-  const grains = mow(state.query, tablet.trait, tablet.thing);
 
   return new TransformStream({
     async transform(line, controller) {
@@ -121,10 +81,7 @@ export function parseLineStream(
 
       const isComplete = state.isMatch;
 
-      // only push here if tablet is eager
-      // otherwise wait until the end of file,
-      // maybe other groups also match
-      const isEndOfGroup = tablet.eager && fstIsNew;
+      const isEndOfGroup = fstIsNew;
 
       const pushEndOfGroup = isEndOfGroup && isComplete;
 
@@ -133,15 +90,12 @@ export function parseLineStream(
         // because accumulating is not yet finished
         const stateToPush = {
           entry: state.entry,
-          query: state.query,
           source: tablet.filename,
         };
 
         controller.enqueue(stateToPush);
 
         state.entry = stateInitial.entry;
-
-        state.query = stateInitial.query;
 
         state.isMatch = false;
       }
@@ -150,24 +104,16 @@ export function parseLineStream(
 
       const thing = tablet.thingIsFirst ? fst : snd;
 
-      state = makeStateLine(stateInitial, state, tablet, grains, trait, thing);
+        state = makeStateLine(state, tablet, [state.entry], trait, thing);
     },
 
     flush(controller) {
       const isComplete = state.isMatch;
 
-      // we push at the end of non-eager tablet
-      // because a non-eager tablet looks
-      // for all possible matches until end of file
-      // and doesn't push earlier than the end
-      // push if tablet wasn't eager or if eager matched
-      const pushEnd = !tablet.eager || isComplete;
-
       if (isComplete) {
         // don't push matchMap here
         // because accumulating is not yet finished
         const stateToPush = {
-          query: state.query,
           entry: state.entry,
           source: tablet.filename,
         };
@@ -178,16 +124,15 @@ export function parseLineStream(
       // after all records have been pushed for forwarding
       // push the matchMap so that other accumulating tablets
       // can search for new values
-        // in accumulating by trunk this pushes entryInitial
-        // to output and yields extra search result
-        const stateToPush = {
-          query: state.query,
-          entry: stateInitial.entry,
-          matchMap: state.matchMap,
-          source: tablet.filename,
-        };
+      // in accumulating by trunk this pushes entryInitial
+      // to output and yields extra search result
+      const stateToPush = {
+        entry: stateInitial.entry,
+        matchMap: state.matchMap,
+        source: tablet.filename,
+      };
 
-        controller.enqueue(stateToPush);
+      controller.enqueue(stateToPush);
     },
   });
 }
@@ -211,7 +156,6 @@ export function selectLineStream(state, tablet) {
     return new TransformStream({
       start(controller) {
         controller.enqueue({
-          query: state.query,
           entry: state.entry,
           source: tablet.filename,
         });

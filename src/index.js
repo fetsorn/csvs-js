@@ -5,7 +5,7 @@ import {
 } from "./select/index.js";
 import {
   selectOption,
-} from "./option/index.js";
+} from "./option_tbn/index.js";
 import {
    buildRecord
 } from "./build/index.js";
