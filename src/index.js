@@ -9,6 +9,9 @@ import {
 import {
    buildRecord
 } from "./build/index.js";
+import {
+   queryRecord
+} from "./query/index.js";
 import { updateRecord } from "./update/index.js";
 import { deleteRecord } from "./delete/index.js";
 import { insertRecord } from "./insert/index.js";
@@ -29,6 +32,7 @@ export {
   updateRecord,
   insertRecord,
   deleteRecord,
+  queryRecord,
   findCrown,
   toSchema,
   sortNestingAscending,
@@ -46,6 +50,7 @@ export default {
   updateRecord,
   insertRecord,
   deleteRecord,
+  queryRecord,
   findCrown,
   toSchema,
   sortNestingAscending,

@@ -18,6 +18,7 @@ import {
   updateRecord,
   insertRecord,
   deleteRecord,
+  queryRecord,
   buildRecord,
   toSchema,
   mow,
@@ -40,6 +41,32 @@ describe("buildRecord()", () => {
       });
 
       const dataSorted = [data];
+
+      const expected = sortList(testCase.expected);
+
+      expect(dataSorted).toStrictEqual(expected);
+    });
+  });
+});
+
+describe.only("queryRecord()", () => {
+  readTestCase("select").forEach((testCase) => {
+    test(testCase.name, async () => {
+      testCase = {
+        initial: readDir(testCase.initial),
+        query: testCase.query.map(readRecord),
+        expected: testCase.expected.map(readRecord),
+      };
+
+      const data = await queryRecord({
+        fs: nodefs,
+        dir: testCase.initial,
+        query: testCase.query,
+      });
+
+        console.log(data)
+
+      const dataSorted = sortList(data);
 
       const expected = sortList(testCase.expected);
 
