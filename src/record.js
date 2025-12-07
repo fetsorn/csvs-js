@@ -147,7 +147,8 @@ function sowBaseIsThing(record, grain, trait, thing) {
   // what if grain does not have thing?
   if (grain[thing] === undefined) return record;
 
-  if (record[thing] !== undefined) throw "record already has base value";
+    // if record already has a base value, set it from grain
+    if (record[thing] !== undefined) return { ...record, [thing]: record[thing] };
 
   const existingPartial =
     record[thing] === undefined ? [] : [record[thing]].flat();

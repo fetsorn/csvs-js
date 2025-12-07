@@ -16,7 +16,7 @@ function gatherKeys(record) {
     (key) => key !== "_" && key !== "__" && key !== record._,
   );
 
-  return leaves.reduce((keys, key) => {
+  const bar = leaves.reduce((keys, key) => {
     const { [key]: leafValue } = record;
 
     const leafValues = Array.isArray(leafValue) ? leafValue : [leafValue];
@@ -33,17 +33,22 @@ function gatherKeys(record) {
 
     return [...keys, key, ...keysLeaf];
   }, []);
+
+    if (record[record._] !== undefined) {
+        return [ ...bar, record._ ]
+    }
+
+    return bar
 }
 
 export function planQuery(schema, query) {
   // queried keys in ascending order minus the base
   const queriedBranches = gatherKeys(query).sort(sortNestingAscending(schema));
 
-  // TODO rewrite to using schema record
   const queriedTablets = queriedBranches.reduce((withBranch, branch) => {
     const { trunks } = schema[branch];
 
-    const tabletsNew = trunks.map((trunk) => ({
+    const trunkTablets = trunks.map((trunk) => ({
       // what branch to set?
       thing: trunk,
       // what branch to match?
@@ -59,7 +64,26 @@ export function planQuery(schema, query) {
       eager: true, // push as soon as trait changes in the tablet
     }));
 
-    return [...withBranch, ...tabletsNew]
+    const { leaves } = schema[branch];
+
+  const leafTablets = leaves.map((leaf) => ({
+    // what branch to set?
+    thing: branch,
+    // what branch to match?
+    trait: branch,
+    // do we set first column?
+    thingIsFirst: true,
+    // do we match first column?
+    traitIsFirst: true,
+      base: branch,
+    filename: `${branch}-${leaf}.csv`,
+    traitIsRegex: true,
+    querying: true,
+    // should it have constraints?
+    eager: true, // push as soon as trait changes in the tablet
+  }));
+
+      return [...withBranch, ...trunkTablets, ...leafTablets]
   }, []);
 
   return queriedTablets;

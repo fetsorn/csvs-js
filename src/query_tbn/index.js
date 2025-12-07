@@ -34,7 +34,9 @@ async function queryRecordStream({ fs, dir, query }) {
 
             const { done, value } = await iterator.next();
 
-            state = value;
+            if (!done) {
+                state = value;
+            }
 
             const isFirstTablet = strategyCounter === 0;
 

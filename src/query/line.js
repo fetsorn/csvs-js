@@ -92,11 +92,14 @@ export function makeStateLine(
     })
     .filter((grain) => grain !== undefined);
 
-  state.entry = grainsNew.reduce((withGrain, grain) => {
-    const bar = sow(withGrain, grain, tablet.trait, tablet.thing);
+    if (tablet.thing === tablet.base) {
+    } else {
+        state.entry = grainsNew.reduce((withGrain, grain) => {
+            const bar = sow(withGrain, grain, tablet.trait, tablet.thing);
 
-    return bar;
-  }, state.entry);
+            return bar;
+        }, state.entry);
+    }
 
     if (thing === stateInitial.thingQuerying) {
       // if previous querying tablet already matched thing
@@ -109,11 +112,13 @@ export function makeStateLine(
       return state;
     }
 
-    // in querying tablet we should sow the grain into the query as well
-    state.query = grainsNew.reduce(
-      (withGrain, grain) => sow(withGrain, grain, tablet.trait, tablet.thing),
-      state.query,
-    );
+    if (tablet.thing !== tablet.base) {
+        // in querying tablet we should sow the grain into the query as well
+        state.query = grainsNew.reduce(
+            (withGrain, grain) => sow(withGrain, grain, tablet.trait, tablet.thing),
+            state.query,
+        );
+    }
 
   return state;
 }
