@@ -26,8 +26,6 @@ async function queryRecordStream({ fs, dir, query }) {
 
     async function pullTablet() {
         while (true) {
-            const isFirstTablet = strategyCounter === 0;
-
             if (iteratorMap.get(strategyCounter) === undefined) {
                 await initIterator(strategyCounter);
             }
@@ -38,27 +36,43 @@ async function queryRecordStream({ fs, dir, query }) {
 
             state = value;
 
+            const isFirstTablet = strategyCounter === 0;
+
             const isLastTablet = strategyCounter === (strategy.length - 1);
 
-            if (done) {
-                if (isFirstTablet) {
+            if (isFirstTablet) {
+                if (done) {
                     // if first tablet is over, close stream
                     return null
-                } else if (isLastTablet) {
-                    // unreachable if only one tablet
-                    iteratorMap.set(strategyCounter, undefined);
-                    // if last tablet is over, start over
-                    strategyCounter = 0;
                 } else {
+                    if (isLastTablet) {
+                        // if only one tablet, yield value
+                        return value;
+                    }
+                }
+            } else if (isLastTablet) {
+                if (done) {
+                    // if last tablet is over, unset and start over
+                    // should be unreachable if only one tablet
                     iteratorMap.set(strategyCounter, undefined);
-                    // otherwise pass state to the next tablet
-                    strategyCounter++;
+
+                    strategyCounter = 0;
+
+                    continue;
+                } else {
+                    // if last tablet matches, yield value
+                    strategyCounter = 0;
+
+                    return value;
                 }
             }
 
-            if (isLastTablet) {
-                return value
+            // if a middle tablet is over, unset and pass state to the next
+            if (done) {
+                iteratorMap.set(strategyCounter, undefined);
             }
+
+            strategyCounter++;
         }
     }
 

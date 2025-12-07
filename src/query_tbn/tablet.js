@@ -64,6 +64,10 @@ export async function queryTabletStream(fs, dir, tablet, { query, entry, thingQu
         const { done, value } = await lineIterator.next();
 
         if (done) {
+            if (state.isMatch) {
+                state.last = state;
+            }
+
             return { done: true, value: state };
         }
 
@@ -80,18 +84,14 @@ export async function queryTabletStream(fs, dir, tablet, { query, entry, thingQu
         async pull(controller) {
             const { done, value } = await pullLine(stateSaved);
 
-            if (done) {
-                if (value.isMatch) {
-                    controller.enqueue(value);
-                }
-
-                controller.close()
-            }
-
             if (value.last) {
                 controller.enqueue(value.last);
 
                 value.last = false;
+            }
+
+            if (done) {
+                controller.close()
             }
 
             stateSaved = value;
