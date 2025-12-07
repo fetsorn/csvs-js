@@ -3,8 +3,6 @@ import { findCrown } from "../schema.js";
 export function planInsert(schema, query) {
   const base = query._;
 
-  // TODO schema strategy
-
   const crown = findCrown(schema, base);
 
   const tablets = crown.reduce((withBranch, branch) => {

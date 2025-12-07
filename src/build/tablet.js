@@ -101,8 +101,6 @@ export async function buildTablet(fs, dir, tablet, { entry }) {
   const isComplete = state.isMatch;
 
   if (isComplete) {
-    // don't push matchMap here
-    // because accumulating is not yet finished
     const stateToPush = {
       entry: state.entry,
       source: tablet.filename,
@@ -114,8 +112,8 @@ export async function buildTablet(fs, dir, tablet, { entry }) {
   const isEmptyPassthrough = tablet.passthrough && state.hasMatch === false;
 
   if (isEmptyPassthrough) {
-    // if no match and tablet is not a filter
-    // push initial record to the next passthrough value tablet
+    // if no match push initial record
+    // to the next passthrough value tablet
     const stateToPush = {
       entry: state.entry,
       source: tablet.filename,

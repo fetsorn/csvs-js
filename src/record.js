@@ -100,7 +100,7 @@ function mowTraitIsObject(record, trait, thing) {
 function mowTraitIsNested(record, trait, thing) {
   const { _: base, [base]: baseValueOmitted, ...recordWithoutBase } = record;
 
-  // TODO can we guess here which of the remaining leaves leads to the.trait?
+  // TODO can we guess here which of the remaining leaves leads to the trait?
   const entries = Object.entries(recordWithoutBase);
 
   // reduce each key-value pair to match trait and set thing
