@@ -8,16 +8,35 @@ async function queryRecordStream({ fs, dir, query }) {
 
   const strategy = planQuery(schema, query);
 
-  let state = { query };
-
   let iteratorMap = new Map();
 
+  let stateMap = new Map();
+
+  let strategyCounter = 0;
+
+  function getPreviousState(counter) {
+    let resumed = stateMap.get(counter);
+
+    if (resumed !== undefined) {
+      return resumed;
+    }
+
+    if (counter === 0) return { query };
+
+    return getPreviousState(counter - 1);
+  }
+
   async function initIterator(counter) {
+    let state = getPreviousState(counter);
+
+    const isFirstTablet = counter === 0;
+
     const tabletStream = await queryTabletStream(
       fs,
       dir,
       strategy[counter],
       state,
+      isFirstTablet,
     );
 
     const tabletIterator = tabletStream[Symbol.asyncIterator]();
@@ -25,7 +44,11 @@ async function queryRecordStream({ fs, dir, query }) {
     iteratorMap.set(counter, tabletIterator);
   }
 
-  let strategyCounter = 0;
+  function stopIterator(counter) {
+    iteratorMap.set(counter, undefined);
+
+    stateMap.set(counter, undefined);
+  }
 
   async function pullTablet() {
     while (true) {
@@ -38,46 +61,36 @@ async function queryRecordStream({ fs, dir, query }) {
       const { done, value } = await iterator.next();
 
       if (!done) {
-        state = value;
+        const { last: omitted, ...stateNew } = value;
+
+        stateMap.set(strategyCounter, stateNew);
       }
 
       const isFirstTablet = strategyCounter === 0;
 
       const isLastTablet = strategyCounter === strategy.length - 1;
 
-      if (isFirstTablet) {
-        if (done) {
+      if (done) {
+        if (isFirstTablet) {
           // if first tablet is over, close stream
           return null;
         } else {
-          if (isLastTablet) {
-            // if only one tablet, yield value
-            return value;
-          }
-        }
-      } else if (isLastTablet) {
-        if (done) {
-          // if last tablet is over, unset and start over
-          // should be unreachable if only one tablet
-          iteratorMap.set(strategyCounter, undefined);
+          stopIterator(strategyCounter);
 
-          strategyCounter = 0;
+          strategyCounter--;
 
           continue;
-        } else {
-          // if last tablet matches, yield value
-          strategyCounter = 0;
-
+        }
+      } else {
+        if (isLastTablet) {
+          // if only one tablet, yield value
           return value;
+        } else {
+          strategyCounter++;
+
+          continue;
         }
       }
-
-      // if a middle tablet is over, unset and pass state to the next
-      if (done) {
-        iteratorMap.set(strategyCounter, undefined);
-      }
-
-      strategyCounter++;
     }
   }
 

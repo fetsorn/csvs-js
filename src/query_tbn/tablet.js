@@ -49,10 +49,15 @@ export async function queryTabletStream(
   dir,
   tablet,
   { query, entry, thingQuerying },
+  first,
 ) {
   const filepath = path.join(dir, tablet.filename);
 
-  const lineStream = (await isEmpty(fs, filepath))
+  const empty = await isEmpty(fs, filepath);
+
+  let isDone = false;
+
+  const lineStream = empty
     ? ReadableStream.from([])
     : chunksToLines(fs.createReadStream(filepath));
 
@@ -68,14 +73,33 @@ export async function queryTabletStream(
   const grains = mow(stateSaved.query, tablet.trait, tablet.thing);
 
   async function pullLine(state) {
+    if (isDone) {
+      return { done: true, value: undefined };
+    }
+
+    // first tablet loves lines
+    // empty file is the same as "no matches"
+    // later tablet hates lines
+    // empty file is the same as "matching all"
+    if (!first && empty) {
+      isDone = true;
+
+      return {
+        done: false,
+        value: { last: { query, entry, thingQuerying } },
+      };
+    }
+
     const { done, value } = await lineIterator.next();
 
     if (done) {
+      isDone = true;
+
       if (state.isMatch) {
         state.last = state;
       }
 
-      return { done: true, value: state };
+      return { done: false, value: state };
     }
 
     const stateLine = queryLine(tablet, grains, stateInitial, state, value);
@@ -91,14 +115,14 @@ export async function queryTabletStream(
     async pull(controller) {
       const { done, value } = await pullLine(stateSaved);
 
+      if (done) {
+        controller.close();
+      }
+
       if (value.last) {
         controller.enqueue(value.last);
 
         value.last = false;
-      }
-
-      if (done) {
-        controller.close();
       }
 
       stateSaved = value;

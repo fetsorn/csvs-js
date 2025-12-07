@@ -3,10 +3,14 @@ import { ReadableStream } from "@swimburger/isomorphic-streams";
 import { isEmpty, chunksToLines } from "../stream.js";
 import { optionLine } from "./line.js";
 
-export async function optionTabletStream(fs, dir, tablet, { query, matchMap }) {
+export async function optionTabletStream(fs, dir, tablet, { matchMap }) {
   const filepath = path.join(dir, tablet.filename);
 
-  const lineStream = (await isEmpty(fs, filepath))
+  let isDone = false;
+
+  const empty = await isEmpty(fs, filepath);
+
+  const lineStream = empty
     ? ReadableStream.from([])
     : chunksToLines(fs.createReadStream(filepath));
 
@@ -22,10 +26,20 @@ export async function optionTabletStream(fs, dir, tablet, { query, matchMap }) {
   };
 
   async function pullLine(state) {
+    if (isDone) {
+      return { done: true, value: undefined };
+    }
+
     const { done, value } = await lineIterator.next();
 
     if (done) {
-      return { done: true, value: state };
+      isDone = true;
+
+      if (state.isMatch) {
+        state.last = state;
+      }
+
+      return { done: false, value: state };
     }
 
     const stateLine = optionLine(tablet, state, value);
@@ -42,10 +56,6 @@ export async function optionTabletStream(fs, dir, tablet, { query, matchMap }) {
       const { done, value } = await pullLine(stateSaved);
 
       if (done) {
-        if (value.isMatch) {
-          controller.enqueue(value);
-        }
-
         controller.close();
       }
 
