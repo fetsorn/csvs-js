@@ -165,12 +165,6 @@
     "expected": [ "record_schema" ]
   },
   {
-    "name": "name1 with leader filepath",
-    "initial": "default",
-    "query": [ "query_leader" ],
-    "expected": [ "record2001_filepath" ]
-  },
-  {
     "name": "name1 with array of literal values",
     "initial": "array_literal",
     "query": [ "query_name1" ],
@@ -205,5 +199,11 @@
     "initial": "newline",
     "query": [ "query_newline" ],
     "expected": [ "record_newline" ]
+  },
+  {
+    "name": "query version",
+    "initial": "default",
+    "query": [ "query_version" ],
+    "expected": [ "record_version" ]
   }
 ]
