@@ -106,5 +106,11 @@
     "initial": "empty",
     "query": [ "record2001", "record2002", "record2003_unedited" ],
     "expected": "default"
+  },
+  {
+    "name": "updates dataset version",
+    "initial": "default",
+    "query": [ "record_version_3" ],
+    "expected": "version_3"
   }
 ]
