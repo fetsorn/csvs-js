@@ -3,6 +3,19 @@ import { selectOption } from "../option_tbn/index.js";
 import { buildRecord } from "../build/index.js";
 import { selectSchema } from "../schema/index.js";
 
+// for backwards compatibility with push streams
+export function selectRecordStream({ fs, dir }) {
+  return new TransformStream({
+    async transform(query, controller) {
+      const entries = await selectRecord({ fs, dir, query });
+
+      for (const entry of entries) {
+        controller.enqueue(entry);
+      }
+    },
+  });
+}
+
 export async function selectRecord({ fs, dir, query }) {
   // exit if record is undefined
   if (query === undefined) return;
