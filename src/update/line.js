@@ -1,5 +1,5 @@
 import csv from "papaparse";
-import { unescape } from "../escape.js";
+import { unescapeNewline } from "../escape.js";
 
 // returns keys to insert
 export function updateLine(state, line) {
@@ -9,7 +9,7 @@ export function updateLine(state, line) {
     data: [[fstEscaped, snd]],
   } = csv.parse(line, { delimiter: "," });
 
-  const fst = unescape(fstEscaped);
+  const fst = unescapeNewline(fstEscaped);
 
   const fstIsNew = state.fst === undefined || state.fst !== fst;
 

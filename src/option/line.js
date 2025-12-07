@@ -1,6 +1,6 @@
 import csv from "papaparse";
 import { sow } from "../record.js";
-import { unescape } from "../escape.js";
+import { unescapeNewline } from "../escape.js";
 
 export function optionLine(tablet, state, line) {
   if (line === "") return;
@@ -9,9 +9,9 @@ export function optionLine(tablet, state, line) {
     data: [[fstEscaped, sndEscaped]],
   } = csv.parse(line, { delimiter: "," });
 
-  const fst = unescape(fstEscaped);
+  const fst = unescapeNewline(fstEscaped);
 
-  const snd = unescape(sndEscaped);
+  const snd = unescapeNewline(sndEscaped);
 
   // if fst is new, last group has ended
   const fstIsNew = state.fst !== undefined && state.fst !== fst;

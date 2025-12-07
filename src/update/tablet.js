@@ -2,15 +2,17 @@ import path from "path";
 import csv from "papaparse";
 import { isEmpty, chunksToLines } from "../stream.js";
 import { mow } from "../record.js";
-import { escape } from "../escape.js";
+import { escapeNewline } from "../escape.js";
 import { updateSchema } from "./schema.js";
 import { updateLine } from "./line.js";
 
 async function appendTablet(fs, dir, tablet, query, tmpPath) {
   const filepath = path.join(dir, tablet.filename);
 
-  const lineStream = (await isEmpty(fs, filepath))
-    ? []
+  const empty = await isEmpty(fs, filepath);
+
+  const lineStream = empty
+    ? ReadableStream.from([])
     : chunksToLines(fs.createReadStream(filepath));
 
   const grains = mow(query, tablet.trunk, tablet.branch);
@@ -43,9 +45,9 @@ async function appendTablet(fs, dir, tablet, query, tmpPath) {
 
   async function insertAndForget(key) {
     for (const value of values[key] ?? []) {
-      const keyEscaped = escape(key);
+      const keyEscaped = escapeNewline(key);
 
-      const valueEscaped = escape(value);
+      const valueEscaped = escapeNewline(value);
 
       const line = csv.unparse([[keyEscaped, valueEscaped]], {
         delimiter: ",",

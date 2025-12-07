@@ -1,10 +1,3 @@
-import {
-  findCrown,
-  isConnected,
-  sortNestingAscending,
-  sortNestingDescending,
-} from "../schema.js";
-
 export function planOptions(schema, base) {
   const { trunks } = schema[base];
 

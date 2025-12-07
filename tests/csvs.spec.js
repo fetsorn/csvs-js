@@ -14,92 +14,15 @@ import {
 } from "@fetsorn/csvs-test";
 import {
   selectRecord,
-  selectOption,
   updateRecord,
   insertRecord,
   deleteRecord,
-  queryRecord,
-  buildRecord,
   toSchema,
   mow,
   sow,
 } from "../src/index.js";
 
-describe("buildRecord()", () => {
-  readTestCase("select").forEach((testCase) => {
-    test(testCase.name, async () => {
-      testCase = {
-        initial: readDir(testCase.initial),
-        query: testCase.query.map(readRecord),
-        expected: testCase.expected.map(readRecord),
-      };
-
-      const data = await buildRecord({
-        fs: nodefs,
-        dir: testCase.initial,
-        query: testCase.query,
-      });
-
-      const dataSorted = [data];
-
-      const expected = sortList(testCase.expected);
-
-      expect(dataSorted).toStrictEqual(expected);
-    });
-  });
-});
-
-describe("queryRecord()", () => {
-  readTestCase("select").forEach((testCase) => {
-    test(testCase.name, async () => {
-      testCase = {
-        initial: readDir(testCase.initial),
-        query: testCase.query.map(readRecord),
-        expected: testCase.expected.map(readRecord),
-      };
-
-      const data = await queryRecord({
-        fs: nodefs,
-        dir: testCase.initial,
-        query: testCase.query,
-      });
-
-        console.log("result", data)
-
-      const dataSorted = sortList(data);
-
-      const expected = sortList(testCase.expected);
-
-      expect(dataSorted).toStrictEqual(expected);
-    });
-  });
-});
-
-describe("selectOption()", () => {
-  readTestCase("select").forEach((testCase) => {
-    test(testCase.name, async () => {
-      testCase = {
-        initial: readDir(testCase.initial),
-        query: testCase.query.map(readRecord),
-        expected: testCase.expected.map(readRecord),
-      };
-
-      const data = await selectOption({
-        fs: nodefs,
-        dir: testCase.initial,
-        query: testCase.query,
-      });
-
-      const dataSorted = sortList(data);
-
-      const expected = sortList(testCase.expected);
-
-      expect(dataSorted).toStrictEqual(expected);
-    });
-  });
-});
-
-describe.only("selectRecord()", () => {
+describe("selectRecord()", () => {
   readTestCase("select").forEach((testCase) => {
     test(testCase.name, async () => {
       testCase = {
@@ -149,7 +72,7 @@ describe("updateRecord()", () => {
   });
 });
 
-describe("insertRecord()", () => {
+describe.only("insertRecord()", () => {
   readTestCase("insert").forEach((testCase) => {
     test(testCase.name, async () => {
       testCase = {

@@ -1,6 +1,4 @@
 export function planPrune(schema, record) {
-  // TODO schema strategy
-
   // TODO: handle case when value is array
   // { _: a, a: [ { _: a, a: a1 }, { _: a, a: a1 } ] }
   const { _: base, [base]: baseValue } = record;

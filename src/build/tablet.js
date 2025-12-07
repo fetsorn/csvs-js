@@ -1,6 +1,6 @@
 import csv from "papaparse";
 import path from "path";
-import { unescape } from "../escape.js";
+import { unescapeNewline } from "../escape.js";
 import { mow, sow } from "../record.js";
 import { isEmpty, chunksToLines } from "../stream.js";
 
@@ -43,11 +43,11 @@ export function makeStateLine(
   return state;
 }
 
-export async function buildTablet(fs, dir, tablet, { entry, source }) {
+export async function buildTablet(fs, dir, tablet, { entry }) {
   const filepath = path.join(dir, tablet.filename);
 
   const lineStream = (await isEmpty(fs, filepath))
-    ? []
+    ? ReadableStream.from([])
     : chunksToLines(fs.createReadStream(filepath));
 
   const stateInitial = {
@@ -68,9 +68,9 @@ export async function buildTablet(fs, dir, tablet, { entry, source }) {
       data: [[fstEscaped, sndEscaped]],
     } = csv.parse(line, { delimiter: "," });
 
-    const fst = unescape(fstEscaped);
+    const fst = unescapeNewline(fstEscaped);
 
-    const snd = unescape(sndEscaped);
+    const snd = unescapeNewline(sndEscaped);
 
     const fstIsNew = state.fst !== undefined && state.fst !== fst;
 

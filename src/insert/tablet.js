@@ -1,5 +1,6 @@
 import path from "path";
 import csv from "papaparse";
+import { escapeNewline } from "../escape.js";
 import { mow } from "../record.js";
 
 export async function insertTablet(fs, dir, tablet, query) {
@@ -13,9 +14,9 @@ export async function insertTablet(fs, dir, tablet, query) {
 
   const lines = grains.map(
     ({ [tablet.trunk]: key, [tablet.branch]: value }) => {
-      const keyEscaped = escape(key);
+      const keyEscaped = escapeNewline(key);
 
-      const valueEscaped = escape(value);
+      const valueEscaped = escapeNewline(value);
 
       return csv.unparse([[keyEscaped, valueEscaped]], {
         delimiter: ",",
