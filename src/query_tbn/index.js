@@ -60,12 +60,6 @@ async function queryRecordStream({ fs, dir, query }) {
 
       const { done, value } = await iterator.next();
 
-      if (!done) {
-        const { last: omitted, ...stateNew } = value;
-
-        stateMap.set(strategyCounter, stateNew);
-      }
-
       const isFirstTablet = strategyCounter === 0;
 
       const isLastTablet = strategyCounter === strategy.length - 1;
@@ -75,18 +69,24 @@ async function queryRecordStream({ fs, dir, query }) {
           // if first tablet is over, close stream
           return null;
         } else {
+          // if later tablet is over, close iterator
           stopIterator(strategyCounter);
 
+          // and resume the previous tablet
           strategyCounter--;
 
           continue;
         }
       } else {
         if (isLastTablet) {
-          // if only one tablet, yield value
+          // if last tablet, yield value
           return value;
         } else {
+          // if earlier tablet, start the next tablet
           strategyCounter++;
+
+          // pass state to the next tablet
+          stateMap.set(strategyCounter, value);
 
           continue;
         }

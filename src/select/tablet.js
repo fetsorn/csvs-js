@@ -1,5 +1,4 @@
 import path from "path";
-import csv from "papaparse";
 import {
   WritableStream,
   ReadableStream,
@@ -7,7 +6,7 @@ import {
 } from "@swimburger/isomorphic-streams";
 import { isEmpty, createLineStream } from "../stream.js";
 import { selectSchemaStream } from "./schema.js";
-import { selectLineStream, parseLineStream } from "./line.js";
+import { selectLineStream } from "./line.js";
 
 export function selectTabletStream(fs, dir, tablet) {
   const filepath = path.join(dir, tablet.filename);

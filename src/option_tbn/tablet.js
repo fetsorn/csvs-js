@@ -57,6 +57,8 @@ export async function optionTabletStream(fs, dir, tablet, { matchMap }) {
 
       if (done) {
         controller.close();
+
+        return;
       }
 
       if (value.last) {

@@ -1,9 +1,4 @@
-import {
-  findCrown,
-  isConnected,
-  sortNestingAscending,
-  sortNestingDescending,
-} from "../schema.js";
+import { sortNestingAscending } from "../schema.js";
 
 // in order of query,
 // first queried twigs
@@ -34,10 +29,6 @@ function gatherKeys(record) {
     return [...keys, key, ...keysLeaf];
   }, []);
 
-  if (record[record._] !== undefined) {
-    return [...bar, record._];
-  }
-
   return bar;
 }
 
@@ -48,7 +39,7 @@ export function planQuery(schema, query) {
   const queriedTablets = queriedBranches.reduce((withBranch, branch) => {
     const { trunks } = schema[branch];
 
-    const trunkTablets = trunks.map((trunk) => ({
+    const branchIsLeafTablets = trunks.map((trunk) => ({
       // what branch to set?
       thing: trunk,
       // what branch to match?
@@ -64,27 +55,33 @@ export function planQuery(schema, query) {
       eager: true, // push as soon as trait changes in the tablet
     }));
 
-    const { leaves } = schema[branch];
-
-    const leafTablets = leaves.map((leaf) => ({
-      // what branch to set?
-      thing: branch,
-      // what branch to match?
-      trait: branch,
-      // do we set first column?
-      thingIsFirst: true,
-      // do we match first column?
-      traitIsFirst: true,
-      base: branch,
-      filename: `${branch}-${leaf}.csv`,
-      traitIsRegex: true,
-      querying: true,
-      // should it have constraints?
-      eager: true, // push as soon as trait changes in the tablet
-    }));
-
-    return [...withBranch, ...trunkTablets, ...leafTablets];
+    return [...withBranch, ...branchIsLeafTablets];
   }, []);
 
-  return queriedTablets;
+  const base = query._;
+
+  const { leaves } = schema[base];
+
+  const baseIsTrunkTablets = leaves.map((leaf) => ({
+    // what branch to set?
+    thing: base,
+    // what branch to match?
+    trait: base,
+    // do we set first column?
+    thingIsFirst: true,
+    // do we match first column?
+    traitIsFirst: true,
+    base,
+    filename: `${base}-${leaf}.csv`,
+    traitIsRegex: true,
+    querying: true,
+    // should it have constraints?
+    eager: true, // push as soon as trait changes in the tablet
+  }));
+
+  const hasBase = query[base] !== undefined;
+
+  const baseIsTrunkPartial = hasBase ? baseIsTrunkTablets : [];
+
+  return [...queriedTablets, ...baseIsTrunkPartial];
 }

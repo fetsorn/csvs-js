@@ -96,7 +96,8 @@ export async function queryTabletStream(
       isDone = true;
 
       if (state.isMatch) {
-        state.last = state;
+        // shallow clone to avoid a circular object
+        state.last = { ...state };
       }
 
       return { done: false, value: state };
@@ -117,6 +118,8 @@ export async function queryTabletStream(
 
       if (done) {
         controller.close();
+
+        return;
       }
 
       if (value.last) {
