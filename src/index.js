@@ -1,7 +1,7 @@
 import { selectSchema } from "./schema/index.js";
-import { selectRecord, selectRecordStream } from "./select_tbn/index.js";
-import { selectOption } from "./option_tbn/index.js";
-import { queryRecord } from "./query_tbn/index.js";
+import { selectRecord, selectRecordStream } from "./select/index.js";
+import { selectOption } from "./option/index.js";
+import { queryRecord } from "./query/index.js";
 import { buildRecord } from "./build/index.js";
 import { updateRecord } from "./update/index.js";
 import { deleteRecord } from "./delete/index.js";
