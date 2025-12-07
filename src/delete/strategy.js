@@ -12,7 +12,7 @@ export function planPrune(schema, record) {
       filename: `${trunk}-${base}.csv`,
       trait: baseValue,
       traitIsFirst: false,
-    }
+    };
   });
 
   const { leaves } = schema[base];

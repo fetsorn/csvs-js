@@ -49,72 +49,69 @@ export function makeStateLine(
     })
     .filter((grain) => grain !== undefined);
 
-        state.entry = grainsNew.reduce((withGrain, grain) => {
-            const bar = sow(withGrain, grain, tablet.trait, tablet.thing);
+  state.entry = grainsNew.reduce((withGrain, grain) => {
+    const bar = sow(withGrain, grain, tablet.trait, tablet.thing);
 
-            return bar;
-        }, state.entry);
+    return bar;
+  }, state.entry);
 
-    if (thing === stateInitial.thingQuerying) {
-      // if previous querying tablet already matched thing
-      // the trait in this record is likely to be the same
-      // and might duplicate in the entry after sow
-      // return ({
-      //   _: tablet.trait,
-      //   [tablet.thing]: thing,
-      // })
-      return state;
-    }
-
-    // in querying tablet we should sow the grain into the query as well
-        state.query = grainsNew.reduce(
-            (withGrain, grain) => {
-                const bar = sow(withGrain, grain, tablet.trait, tablet.thing)
-
-                return bar;
-            },
-            state.query,
-        );
-
+  if (thing === stateInitial.thingQuerying) {
+    // if previous querying tablet already matched thing
+    // the trait in this record is likely to be the same
+    // and might duplicate in the entry after sow
+    // return ({
+    //   _: tablet.trait,
+    //   [tablet.thing]: thing,
+    // })
     return state;
+  }
+
+  // in querying tablet we should sow the grain into the query as well
+  state.query = grainsNew.reduce((withGrain, grain) => {
+    const bar = sow(withGrain, grain, tablet.trait, tablet.thing);
+
+    return bar;
+  }, state.query);
+
+  return state;
 }
 
 export function queryLine(tablet, grains, stateInitial, state, line) {
-    if (line === "") return state;
+  if (line === "") return state;
 
-    const {
-        data: [[fstEscaped, sndEscaped]],
-    } = csv.parse(line, { delimiter: "," });
+  const {
+    data: [[fstEscaped, sndEscaped]],
+  } = csv.parse(line, { delimiter: "," });
 
-      const fst = unescape(fstEscaped);
+  const fst = unescape(fstEscaped);
 
-      const snd = unescape(sndEscaped);
+  const snd = unescape(sndEscaped);
 
-      const fstIsNew = state.fst !== undefined && state.fst !== fst;
+  const fstIsNew = state.fst !== undefined && state.fst !== fst;
 
-      state.fst = fst;
+  state.fst = fst;
 
-      const pushEndOfGroup = fstIsNew && state.isMatch;
+  const pushEndOfGroup = fstIsNew && state.isMatch;
 
-      if (pushEndOfGroup) {
-        const stateToPush = {
-          entry: state.entry,
-          query: state.query,
-          thingQuerying: state.thingQuerying,
-        };
+  if (pushEndOfGroup) {
+    const stateToPush = {
+      entry: state.entry,
+      query: state.query,
+      thingQuerying: state.thingQuerying,
+    };
 
-        state.last = stateToPush;
+    state.last = stateToPush;
 
-        state.entry = stateInitial.entry;
+    state.entry = stateInitial.entry;
 
-        state.query = stateInitial.query;
+    state.query = stateInitial.query;
 
-        state.isMatch = false;
-      }
+    state.isMatch = false;
+  }
 
-      const trait = tablet.traitIsFirst ? fst : snd;
+  const trait = tablet.traitIsFirst ? fst : snd;
 
-      const thing = tablet.thingIsFirst ? fst : snd;
+  const thing = tablet.thingIsFirst ? fst : snd;
 
-      return makeStateLine(stateInitial, state, tablet, grains, trait, thing);
+  return makeStateLine(stateInitial, state, tablet, grains, trait, thing);
 }

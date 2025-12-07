@@ -57,7 +57,7 @@ export function getNestingLevel(schema, branch) {
 
   const level = trunkLevels.reduce((a, b) => Math.max(a, b), -1);
 
-  return level+1
+  return level + 1;
 }
 
 /**
@@ -75,11 +75,11 @@ export function sortNestingAscending(schema) {
     const levelB = getNestingLevel(schema, b);
 
     if (levelA > levelB) {
-      return -1
+      return -1;
     }
 
     if (levelA < levelB) {
-      return 1
+      return 1;
     }
 
     return b.localeCompare(a);
@@ -101,11 +101,11 @@ export function sortNestingDescending(schema) {
     const levelB = getNestingLevel(schema, b);
 
     if (levelA < levelB) {
-      return -1
+      return -1;
     }
 
     if (levelA > levelB) {
-      return 1
+      return 1;
     }
 
     return a.localeCompare(b);
@@ -120,9 +120,10 @@ function append(list, item) {
 }
 
 export function toSchema(schemaRecord) {
-  const invalidRecord = !Object.hasOwn(schemaRecord, "_") || schemaRecord._ !== "_";
+  const invalidRecord =
+    !Object.hasOwn(schemaRecord, "_") || schemaRecord._ !== "_";
 
-  if (invalidRecord) return {}
+  if (invalidRecord) return {};
 
   const { _: omit, ...record } = schemaRecord;
 
@@ -135,23 +136,23 @@ export function toSchema(schemaRecord) {
       const trunkTrunks = trunkOld.trunks ?? [];
 
       const trunkLeaves =
-            withLeaf[trunk] !== undefined
-            ? append(withLeaf[trunk].leaves, leaf)
-            : [ leaf ];
+        withLeaf[trunk] !== undefined
+          ? append(withLeaf[trunk].leaves, leaf)
+          : [leaf];
 
       const trunkPartial = {
         [trunk]: {
           leaves: trunkLeaves,
           trunks: trunkTrunks,
-        }
+        },
       };
 
       const leafOld = withLeaf[leaf] ?? {};
 
       const leafTrunks =
         withLeaf[leaf] !== undefined
-            ? append(withLeaf[leaf].trunks, trunk)
-            : [ trunk ];
+          ? append(withLeaf[leaf].trunks, trunk)
+          : [trunk];
 
       const leafLeaves = leafOld.leaves ?? [];
 
@@ -159,7 +160,7 @@ export function toSchema(schemaRecord) {
         [leaf]: {
           trunks: leafTrunks,
           leaves: leafLeaves,
-        }
+        },
       };
 
       return { ...withLeaf, ...trunkPartial, ...leafPartial };

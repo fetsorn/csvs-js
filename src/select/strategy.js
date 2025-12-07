@@ -6,7 +6,6 @@ import {
 } from "../schema.js";
 
 function planSelectSchema() {
-
   return [
     {
       // what branch to set?
@@ -19,7 +18,7 @@ function planSelectSchema() {
       traitIsFirst: true,
       filename: `_-_.csv`,
       // should it have constraints?
-    }
+    },
   ];
 }
 
@@ -77,7 +76,7 @@ export function planQuery(schema, query) {
       eager: true, // push as soon as trait changes in the tablet
     }));
 
-    return [...withBranch, ...tabletsNew]
+    return [...withBranch, ...tabletsNew];
   }, []);
 
   return queriedTablets;
@@ -130,7 +129,9 @@ export function planValues(schema, query) {
   const base = query._;
 
   // should the crown include base?
-  const crown = findCrown(schema, base).sort(sortNestingDescending(schema)).filter((b) => b !== base);
+  const crown = findCrown(schema, base)
+    .sort(sortNestingDescending(schema))
+    .filter((b) => b !== base);
 
   const valueTablets = crown.reduce((withBranch, branch) => {
     const { trunks } = schema[branch];
@@ -148,7 +149,7 @@ export function planValues(schema, query) {
       filename: `${trunk}-${branch}.csv`,
       passthrough: true,
       eager: trunk === base, // push as soon as trait changes in the tablet
-    }))
+    }));
 
     return [...withBranch, ...tabletsNew];
   }, []);

@@ -34,11 +34,11 @@ function gatherKeys(record) {
     return [...keys, key, ...keysLeaf];
   }, []);
 
-    if (record[record._] !== undefined) {
-        return [ ...bar, record._ ]
-    }
+  if (record[record._] !== undefined) {
+    return [...bar, record._];
+  }
 
-    return bar
+  return bar;
 }
 
 export function planQuery(schema, query) {
@@ -66,24 +66,24 @@ export function planQuery(schema, query) {
 
     const { leaves } = schema[branch];
 
-  const leafTablets = leaves.map((leaf) => ({
-    // what branch to set?
-    thing: branch,
-    // what branch to match?
-    trait: branch,
-    // do we set first column?
-    thingIsFirst: true,
-    // do we match first column?
-    traitIsFirst: true,
+    const leafTablets = leaves.map((leaf) => ({
+      // what branch to set?
+      thing: branch,
+      // what branch to match?
+      trait: branch,
+      // do we set first column?
+      thingIsFirst: true,
+      // do we match first column?
+      traitIsFirst: true,
       base: branch,
-    filename: `${branch}-${leaf}.csv`,
-    traitIsRegex: true,
-    querying: true,
-    // should it have constraints?
-    eager: true, // push as soon as trait changes in the tablet
-  }));
+      filename: `${branch}-${leaf}.csv`,
+      traitIsRegex: true,
+      querying: true,
+      // should it have constraints?
+      eager: true, // push as soon as trait changes in the tablet
+    }));
 
-      return [...withBranch, ...trunkTablets, ...leafTablets]
+    return [...withBranch, ...trunkTablets, ...leafTablets];
   }, []);
 
   return queriedTablets;

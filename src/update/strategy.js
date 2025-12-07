@@ -4,8 +4,8 @@ function planUpdateSchema() {
   return [
     {
       filename: `_-_.csv`,
-    }
-  ]
+    },
+  ];
 }
 
 export function planUpdate(schema, query) {
@@ -24,9 +24,9 @@ export function planUpdate(schema, query) {
       filename: `${trunk}-${branch}.csv`,
       trunk,
       branch,
-    }))
+    }));
 
-    return [...withBranch, tabletsNew].flat()
+    return [...withBranch, tabletsNew].flat();
   }, []);
 
   return tablets;

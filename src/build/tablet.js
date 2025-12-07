@@ -44,84 +44,86 @@ export function makeStateLine(
 }
 
 export async function buildTablet(fs, dir, tablet, { entry, source }) {
-    const filepath = path.join(dir, tablet.filename);
+  const filepath = path.join(dir, tablet.filename);
 
-    const lineStream = await isEmpty(fs, filepath) ? [] : chunksToLines(fs.createReadStream(filepath));
+  const lineStream = (await isEmpty(fs, filepath))
+    ? []
+    : chunksToLines(fs.createReadStream(filepath));
 
-    const stateInitial = {
-        entry,
-        fst: undefined,
-        isMatch: false,
-        hasMatch: false,
-    };
+  const stateInitial = {
+    entry,
+    fst: undefined,
+    isMatch: false,
+    hasMatch: false,
+  };
 
-    let state = { ...stateInitial };
+  let state = { ...stateInitial };
 
-    const grains = mow(state.entry, tablet.trait, tablet.thing);
+  const grains = mow(state.entry, tablet.trait, tablet.thing);
 
-    for await (const line of lineStream) {
-      if (line === "") continue;
+  for await (const line of lineStream) {
+    if (line === "") continue;
 
-      const {
-        data: [[fstEscaped, sndEscaped]],
-      } = csv.parse(line, { delimiter: "," });
+    const {
+      data: [[fstEscaped, sndEscaped]],
+    } = csv.parse(line, { delimiter: "," });
 
-      const fst = unescape(fstEscaped);
+    const fst = unescape(fstEscaped);
 
-      const snd = unescape(sndEscaped);
+    const snd = unescape(sndEscaped);
 
-      const fstIsNew = state.fst !== undefined && state.fst !== fst;
+    const fstIsNew = state.fst !== undefined && state.fst !== fst;
 
-      state.fst = fst;
-
-      const isComplete = state.isMatch;
-
-      const isEndOfGroup = tablet.eager && fstIsNew;
-
-      const pushEndOfGroup = isEndOfGroup && isComplete;
-
-        if (pushEndOfGroup) {
-            const stateToPush = {
-                entry: state.entry,
-                source: tablet.filename,
-            };
-
-            return stateToPush
-        }
-
-        const trait = tablet.traitIsFirst ? fst : snd;
-
-        const thing = tablet.thingIsFirst ? fst : snd;
-
-        state = makeStateLine(stateInitial, state, tablet, grains, trait, thing);
-    }
+    state.fst = fst;
 
     const isComplete = state.isMatch;
 
-    if (isComplete) {
-        // don't push matchMap here
-        // because accumulating is not yet finished
-        const stateToPush = {
-          entry: state.entry,
-          source: tablet.filename,
-        };
+    const isEndOfGroup = tablet.eager && fstIsNew;
 
-        return stateToPush
+    const pushEndOfGroup = isEndOfGroup && isComplete;
+
+    if (pushEndOfGroup) {
+      const stateToPush = {
+        entry: state.entry,
+        source: tablet.filename,
+      };
+
+      return stateToPush;
     }
 
-    const isEmptyPassthrough = tablet.passthrough && state.hasMatch === false;
+    const trait = tablet.traitIsFirst ? fst : snd;
 
-    if (isEmptyPassthrough) {
-        // if no match and tablet is not a filter
-        // push initial record to the next passthrough value tablet
-        const stateToPush = {
-            entry: state.entry,
-            source: tablet.filename,
-        };
+    const thing = tablet.thingIsFirst ? fst : snd;
 
-        return stateToPush;
-    }
+    state = makeStateLine(stateInitial, state, tablet, grains, trait, thing);
+  }
 
-    // should be unreachable
-    return undefined
+  const isComplete = state.isMatch;
+
+  if (isComplete) {
+    // don't push matchMap here
+    // because accumulating is not yet finished
+    const stateToPush = {
+      entry: state.entry,
+      source: tablet.filename,
+    };
+
+    return stateToPush;
+  }
+
+  const isEmptyPassthrough = tablet.passthrough && state.hasMatch === false;
+
+  if (isEmptyPassthrough) {
+    // if no match and tablet is not a filter
+    // push initial record to the next passthrough value tablet
+    const stateToPush = {
+      entry: state.entry,
+      source: tablet.filename,
+    };
+
+    return stateToPush;
+  }
+
+  // should be unreachable
+  return undefined;
 }

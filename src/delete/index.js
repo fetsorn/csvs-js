@@ -9,18 +9,18 @@ import { pruneTablet } from "./tablet.js";
  * @function
  */
 export async function deleteRecord({ fs, dir, query }) {
-    // exit if record is undefined
-    if (query === undefined) return;
+  // exit if record is undefined
+  if (query === undefined) return;
 
-    const queries = Array.isArray(query) ? query : [query];
+  const queries = Array.isArray(query) ? query : [query];
 
-    const schema = await buildSchema({ fs, dir });
+  const schema = await buildSchema({ fs, dir });
 
-    for (const query of queries) {
-        const strategy = planPrune(schema, query);
+  for (const query of queries) {
+    const strategy = planPrune(schema, query);
 
-        for (const tablet of strategy) {
-            await pruneTablet(fs, dir, tablet);
-        }
+    for (const tablet of strategy) {
+      await pruneTablet(fs, dir, tablet);
     }
+  }
 }

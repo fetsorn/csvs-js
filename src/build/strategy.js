@@ -1,13 +1,12 @@
-import {
-  findCrown,
-  sortNestingDescending,
-} from "../schema.js";
+import { findCrown, sortNestingDescending } from "../schema.js";
 
 export function planBuild(schema, query) {
   const base = query._;
 
   // should the crown include base?
-  const crown = findCrown(schema, base).sort(sortNestingDescending(schema)).filter((b) => b !== base);
+  const crown = findCrown(schema, base)
+    .sort(sortNestingDescending(schema))
+    .filter((b) => b !== base);
 
   const valueTablets = crown.reduce((withBranch, branch) => {
     const { trunks } = schema[branch];
@@ -25,7 +24,7 @@ export function planBuild(schema, query) {
       filename: `${trunk}-${branch}.csv`,
       passthrough: true,
       eager: trunk === base, // push as soon as trait changes in the tablet
-    }))
+    }));
 
     return [...withBranch, ...tabletsNew];
   }, []);

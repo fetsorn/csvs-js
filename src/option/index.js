@@ -15,9 +15,9 @@ function leaderStream(base, query) {
       //const baseNew = state.entry._ !== base ? base : state.entry._;
 
       const entryNew = {
-              ...state.entry,
-              //_: baseNew,
-            };
+        ...state.entry,
+        //_: baseNew,
+      };
 
       // do not return search result
       // if state comes from the end of accumulating

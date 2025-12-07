@@ -16,16 +16,16 @@ export function selectTabletStream(fs, dir, tablet) {
       const fileStream = new ReadableStream({
         async start(controller) {
           if (await isEmpty(fs, filepath)) {
-            controller.enqueue("")
+            controller.enqueue("");
           } else {
             for await (const a of fs.createReadStream(filepath)) {
-              controller.enqueue(a)
+              controller.enqueue(a);
             }
           }
 
-          controller.close()
-        }
-      })
+          controller.close();
+        },
+      });
 
       const selectStream = selectLineStream(state, tablet);
 

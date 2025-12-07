@@ -2,10 +2,7 @@ import csv from "papaparse";
 import { mow, sow } from "../record.js";
 import { unescape } from "../escape.js";
 
-export function makeStateInitial(
-  { query, entry, thingQuerying },
-  tablet,
-) {
+export function makeStateInitial({ query, entry, thingQuerying }, tablet) {
   // in a querying tablet, set initial entry to the base of the tablet
   // and preserve the received entry for sowing grains later
   // if tablet base is different from previous entry base
@@ -92,41 +89,38 @@ export function makeStateLine(
     })
     .filter((grain) => grain !== undefined);
 
-    if (tablet.thing === tablet.base) {
-    } else {
-        state.entry = grainsNew.reduce((withGrain, grain) => {
-            const bar = sow(withGrain, grain, tablet.trait, tablet.thing);
+  if (tablet.thing === tablet.base) {
+  } else {
+    state.entry = grainsNew.reduce((withGrain, grain) => {
+      const bar = sow(withGrain, grain, tablet.trait, tablet.thing);
 
-            return bar;
-        }, state.entry);
-    }
+      return bar;
+    }, state.entry);
+  }
 
-    if (thing === stateInitial.thingQuerying) {
-      // if previous querying tablet already matched thing
-      // the trait in this record is likely to be the same
-      // and might duplicate in the entry after sow
-      // return ({
-      //   _: tablet.trait,
-      //   [tablet.thing]: thing,
-      // })
-      return state;
-    }
+  if (thing === stateInitial.thingQuerying) {
+    // if previous querying tablet already matched thing
+    // the trait in this record is likely to be the same
+    // and might duplicate in the entry after sow
+    // return ({
+    //   _: tablet.trait,
+    //   [tablet.thing]: thing,
+    // })
+    return state;
+  }
 
-    if (tablet.thing !== tablet.base) {
-        // in querying tablet we should sow the grain into the query as well
-        state.query = grainsNew.reduce(
-            (withGrain, grain) => sow(withGrain, grain, tablet.trait, tablet.thing),
-            state.query,
-        );
-    }
+  if (tablet.thing !== tablet.base) {
+    // in querying tablet we should sow the grain into the query as well
+    state.query = grainsNew.reduce(
+      (withGrain, grain) => sow(withGrain, grain, tablet.trait, tablet.thing),
+      state.query,
+    );
+  }
 
   return state;
 }
 
-export function selectLineStream(
-  { query, entry, thingQuerying },
-  tablet,
-) {
+export function selectLineStream({ query, entry, thingQuerying }, tablet) {
   const stateInitial = makeStateInitial(
     {
       entry,

@@ -4,10 +4,7 @@ import { isEmpty, chunksToLines } from "../stream.js";
 import { mow, sow } from "../record.js";
 import { queryLine } from "./line.js";
 
-export function makeStateInitial(
-  { query, entry, thingQuerying },
-  tablet,
-) {
+export function makeStateInitial({ query, entry, thingQuerying }, tablet) {
   // in a querying tablet, set initial entry to the base of the tablet
   // and preserve the received entry for sowing grains later
   // if tablet base is different from previous entry base
@@ -47,55 +44,64 @@ export function makeStateInitial(
   return state;
 }
 
-export async function queryTabletStream(fs, dir, tablet, { query, entry, thingQuerying }) {
-    const filepath = path.join(dir, tablet.filename);
+export async function queryTabletStream(
+  fs,
+  dir,
+  tablet,
+  { query, entry, thingQuerying },
+) {
+  const filepath = path.join(dir, tablet.filename);
 
-    const lineStream = await isEmpty(fs, filepath) ? ReadableStream.from([]) : chunksToLines(fs.createReadStream(filepath));
+  const lineStream = (await isEmpty(fs, filepath))
+    ? ReadableStream.from([])
+    : chunksToLines(fs.createReadStream(filepath));
 
-    const lineIterator = lineStream[Symbol.asyncIterator]();
+  const lineIterator = lineStream[Symbol.asyncIterator]();
 
-    const stateInitial = makeStateInitial({ query, entry, thingQuerying }, tablet)
+  const stateInitial = makeStateInitial(
+    { query, entry, thingQuerying },
+    tablet,
+  );
 
-    let stateSaved = stateInitial;
+  let stateSaved = stateInitial;
 
-    const grains = mow(stateSaved.query, tablet.trait, tablet.thing);
+  const grains = mow(stateSaved.query, tablet.trait, tablet.thing);
 
-    async function pullLine(state) {
-        const { done, value } = await lineIterator.next();
+  async function pullLine(state) {
+    const { done, value } = await lineIterator.next();
 
-        if (done) {
-            if (state.isMatch) {
-                state.last = state;
-            }
+    if (done) {
+      if (state.isMatch) {
+        state.last = state;
+      }
 
-            return { done: true, value: state };
-        }
-
-        const stateLine = queryLine(tablet, grains, stateInitial, state, value);
-
-        if (stateLine.last) {
-            return { done: false, value: stateLine };
-        } else {
-            return pullLine(stateLine);
-        }
+      return { done: true, value: state };
     }
 
-    return new ReadableStream({
-        async pull(controller) {
-            const { done, value } = await pullLine(stateSaved);
+    const stateLine = queryLine(tablet, grains, stateInitial, state, value);
 
-            if (value.last) {
-                controller.enqueue(value.last);
+    if (stateLine.last) {
+      return { done: false, value: stateLine };
+    } else {
+      return pullLine(stateLine);
+    }
+  }
 
-                value.last = false;
-            }
+  return new ReadableStream({
+    async pull(controller) {
+      const { done, value } = await pullLine(stateSaved);
 
-            if (done) {
-                controller.close()
-            }
+      if (value.last) {
+        controller.enqueue(value.last);
 
-            stateSaved = value;
+        value.last = false;
+      }
 
-        }
-    })
+      if (done) {
+        controller.close();
+      }
+
+      stateSaved = value;
+    },
+  });
 }

@@ -4,38 +4,38 @@ import { buildRecord } from "../build/index.js";
 import { selectSchema } from "../schema/index.js";
 
 export async function selectRecord({ fs, dir, query }) {
-    // exit if record is undefined
-    if (query === undefined) return;
+  // exit if record is undefined
+  if (query === undefined) return;
 
-    const queries = Array.isArray(query) ? query : [query];
+  const queries = Array.isArray(query) ? query : [query];
 
-    let entries = [];
+  let entries = [];
 
-    for (const query of queries) {
-        const isSchema = query._ === "_";
+  for (const query of queries) {
+    const isSchema = query._ === "_";
 
-        if (isSchema) {
-            const schemaRecord = await selectSchema({ fs, dir });
+    if (isSchema) {
+      const schemaRecord = await selectSchema({ fs, dir });
 
-            entries.push(schemaRecord);
+      entries.push(schemaRecord);
 
-            continue;
-        }
-
-        const hasLeaves = Object.entries(query).length > 1;
-
-        // decide whether we want option or query
-        const options = hasLeaves
-              ? await queryRecord({ fs, dir, query })
-              : await selectOption({ fs, dir, query });
-
-        // rewrite to a ReadableStream
-        for (const option of options) {
-            const record = await buildRecord({ fs, dir, query: [option] })
-
-            entries.push(record);
-        }
+      continue;
     }
 
-    return entries
+    const hasLeaves = Object.entries(query).length > 1;
+
+    // decide whether we want option or query
+    const options = hasLeaves
+      ? await queryRecord({ fs, dir, query })
+      : await selectOption({ fs, dir, query });
+
+    // rewrite to a ReadableStream
+    for (const option of options) {
+      const record = await buildRecord({ fs, dir, query: [option] });
+
+      entries.push(record);
+    }
+  }
+
+  return entries;
 }

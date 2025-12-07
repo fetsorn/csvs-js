@@ -2,10 +2,7 @@ import csv from "papaparse";
 import { sow } from "../record.js";
 import { unescape } from "../escape.js";
 
-export function selectLineStream(
-    { query, entry, matchMap },
-  tablet,
-) {
+export function selectLineStream({ query, entry, matchMap }, tablet) {
   const stateInitial = {
     entry: { _: query._ },
     fst: undefined,
@@ -56,25 +53,25 @@ export function selectLineStream(
 
       const trait = tablet.traitIsFirst ? fst : snd;
 
-        const grainNew = {
-            _: tablet.trait,
-            [tablet.trait]: trait,
-            [tablet.thing]: thing,
-        };
+      const grainNew = {
+        _: tablet.trait,
+        [tablet.trait]: trait,
+        [tablet.thing]: thing,
+      };
 
-        // accumulating tablets find all values
-        // matched at least once across the dataset
-        // check here if thing was matched before
-        const matchIsNew =
-              state.matchMap === undefined || state.matchMap.get(thing) === undefined;
+      // accumulating tablets find all values
+      // matched at least once across the dataset
+      // check here if thing was matched before
+      const matchIsNew =
+        state.matchMap === undefined || state.matchMap.get(thing) === undefined;
 
-        state.isMatch = state.isMatch ? state.isMatch : matchIsNew;
+      state.isMatch = state.isMatch ? state.isMatch : matchIsNew;
 
-        if (matchIsNew) {
-            state.matchMap.set(thing, true);
+      if (matchIsNew) {
+        state.matchMap.set(thing, true);
 
-            state.entry = sow(state.entry, grainNew, tablet.trait, tablet.thing);
-        }
+        state.entry = sow(state.entry, grainNew, tablet.trait, tablet.thing);
+      }
     },
 
     flush(controller) {
@@ -93,14 +90,14 @@ export function selectLineStream(
       // after all records have been pushed for forwarding
       // push the matchMap so that other accumulating tablets
       // can search for new values
-        // in accumulating by trunk this pushes entryInitial
-        // to output and yields extra search result
-        const stateToPush = {
-          entry: stateInitial.entry,
-          matchMap: state.matchMap,
-        };
+      // in accumulating by trunk this pushes entryInitial
+      // to output and yields extra search result
+      const stateToPush = {
+        entry: stateInitial.entry,
+        matchMap: state.matchMap,
+      };
 
-        controller.enqueue(stateToPush);
+      controller.enqueue(stateToPush);
     },
   });
 }

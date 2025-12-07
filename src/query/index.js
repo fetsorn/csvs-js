@@ -15,8 +15,8 @@ function leaderStream(base, query) {
       const baseNew = state.entry._ !== base ? base : state.entry._;
 
       const entryNew = {
-          ...state.entry,
-          _: baseNew,
+        ...state.entry,
+        _: baseNew,
       };
 
       controller.enqueue({ entry: entryNew });
@@ -122,4 +122,3 @@ export async function queryRecord({ fs, dir, query }) {
 
   return entries;
 }
-

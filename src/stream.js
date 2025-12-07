@@ -77,16 +77,16 @@ export async function sortFile(fs, dir, filename) {
   const fileStream = new ReadableStream({
     async start(controller) {
       if (await isEmpty(fs, filepath)) {
-        controller.enqueue("")
+        controller.enqueue("");
       } else {
         for await (const a of fs.createReadStream(filepath)) {
-          controller.enqueue(a)
+          controller.enqueue(a);
         }
       }
 
-      controller.close()
-    }
-  })
+      controller.close();
+    },
+  });
 
   const lines = [];
 
@@ -103,11 +103,11 @@ export async function sortFile(fs, dir, filename) {
   const linesStream = new ReadableStream({
     start(controller) {
       for (const line of linesSorted) {
-        controller.enqueue(line)
+        controller.enqueue(line);
       }
 
-      controller.close()
-    }
+      controller.close();
+    },
   });
 
   const writeStream = new WritableStream({
@@ -140,7 +140,7 @@ export async function sortFile(fs, dir, filename) {
  * https://2ality.com/2019/11/nodejs-streams-async-iteration.html
  */
 export async function* chunksToLines(chunkIterable) {
-  let previous = '';
+  let previous = "";
 
   for await (const chunk of chunkIterable) {
     let startSearch = previous.length;
@@ -148,7 +148,7 @@ export async function* chunksToLines(chunkIterable) {
     previous += chunk;
 
     while (true) {
-      const eolIndex = previous.indexOf('\n', startSearch);
+      const eolIndex = previous.indexOf("\n", startSearch);
 
       if (eolIndex < 0) break;
 
@@ -157,7 +157,7 @@ export async function* chunksToLines(chunkIterable) {
 
       yield line;
 
-      previous = previous.slice(eolIndex+1);
+      previous = previous.slice(eolIndex + 1);
 
       startSearch = 0;
     }

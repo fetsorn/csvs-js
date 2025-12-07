@@ -15,9 +15,7 @@ export function selectSchemaStream({ query }) {
 
       const leaves = state.entry[trunk];
 
-      const leavesNew = leaves === undefined
-            ? [leaf]
-            : [leaves, leaf].flat();
+      const leavesNew = leaves === undefined ? [leaf] : [leaves, leaf].flat();
 
       state.entry = {
         ...state.entry,

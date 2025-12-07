@@ -14,15 +14,15 @@ import { buildSchema } from "../schema/index.js";
  * @returns {Object[]}
  */
 export async function buildRecord({ fs, dir, query }) {
-    const schema = await buildSchema({ fs, dir });
+  const schema = await buildSchema({ fs, dir });
 
-    const strategy = planBuild(schema, query[0]);
+  const strategy = planBuild(schema, query[0]);
 
-    let state = { entry: query[0] };
+  let state = { entry: query[0] };
 
-    for (const tablet of strategy) {
-        state = await buildTablet(fs, dir, tablet, state);
-    }
+  for (const tablet of strategy) {
+    state = await buildTablet(fs, dir, tablet, state);
+  }
 
-    return state.entry;
+  return state.entry;
 }

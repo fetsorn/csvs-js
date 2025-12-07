@@ -3,53 +3,53 @@ import { sow } from "../record.js";
 import { unescape } from "../escape.js";
 
 export function optionLine(tablet, state, line) {
-    if (line === "") return;
+  if (line === "") return;
 
-    const {
-        data: [[fstEscaped, sndEscaped]],
-    } = csv.parse(line, { delimiter: "," });
+  const {
+    data: [[fstEscaped, sndEscaped]],
+  } = csv.parse(line, { delimiter: "," });
 
-    const fst = unescape(fstEscaped);
+  const fst = unescape(fstEscaped);
 
-    const snd = unescape(sndEscaped);
+  const snd = unescape(sndEscaped);
 
-    // if fst is new, last group has ended
-    const fstIsNew = state.fst !== undefined && state.fst !== fst;
+  // if fst is new, last group has ended
+  const fstIsNew = state.fst !== undefined && state.fst !== fst;
 
-    state.fst = fst;
+  state.fst = fst;
 
-    const pushEndOfGroup = fstIsNew && state.isMatch;
+  const pushEndOfGroup = fstIsNew && state.isMatch;
 
-    if (pushEndOfGroup) {
-        // don't push matchMap here
-        // because accumulating is not yet finished
-        state.last = { entry: state.entry };
+  if (pushEndOfGroup) {
+    // don't push matchMap here
+    // because accumulating is not yet finished
+    state.last = { entry: state.entry };
 
-        state.entry = { _: tablet.base };
+    state.entry = { _: tablet.base };
 
-        state.isMatch = false;
-    }
+    state.isMatch = false;
+  }
 
-    const base = tablet.thingIsFirst ? fst : snd;
+  const base = tablet.thingIsFirst ? fst : snd;
 
-    const grainNew = {
-        _: tablet.base,
-        [tablet.base]: base,
-    };
+  const grainNew = {
+    _: tablet.base,
+    [tablet.base]: base,
+  };
 
-    // accumulating tablets find all values
-    // matched at least once across the dataset
-    // check here if thing was matched before
-    const matchIsNew =
-          state.matchMap === undefined || state.matchMap.get(base) === undefined;
+  // accumulating tablets find all values
+  // matched at least once across the dataset
+  // check here if thing was matched before
+  const matchIsNew =
+    state.matchMap === undefined || state.matchMap.get(base) === undefined;
 
-    state.isMatch = state.isMatch ? state.isMatch : matchIsNew;
+  state.isMatch = state.isMatch ? state.isMatch : matchIsNew;
 
-    if (matchIsNew) {
-        state.matchMap.set(base, true);
+  if (matchIsNew) {
+    state.matchMap.set(base, true);
 
-        state.entry = sow(state.entry, grainNew, tablet.base, tablet.base);
-    }
+    state.entry = sow(state.entry, grainNew, tablet.base, tablet.base);
+  }
 
-    return state
+  return state;
 }

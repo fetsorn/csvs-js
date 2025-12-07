@@ -14,9 +14,9 @@ export function planInsert(schema, query) {
       filename: `${trunk}-${branch}.csv`,
       trunk,
       branch,
-    }))
+    }));
 
-    return [...withBranch, tabletsNew].flat()
+    return [...withBranch, tabletsNew].flat();
   }, []);
 
   return tablets;

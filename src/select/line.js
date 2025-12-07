@@ -155,14 +155,11 @@ export function makeStateLine(
     }
 
     // in querying tablet we should sow the grain into the query as well
-    state.query = grainsNew.reduce(
-        (withGrain, grain) => {
-            const bar = sow(withGrain, grain, tablet.trait, tablet.thing)
+    state.query = grainsNew.reduce((withGrain, grain) => {
+      const bar = sow(withGrain, grain, tablet.trait, tablet.thing);
 
-            return bar
-        },
-      state.query,
-    );
+      return bar;
+    }, state.query);
   }
 
   return state;

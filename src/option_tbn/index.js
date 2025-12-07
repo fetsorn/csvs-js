@@ -4,76 +4,76 @@ import { planSelect } from "./strategy.js";
 import { optionTabletStream } from "./tablet.js";
 
 async function selectOptionStream({ fs, dir, query }) {
-    const schema = await buildSchema({ fs, dir });
+  const schema = await buildSchema({ fs, dir });
 
-    const strategy = planSelect(schema, query)[Symbol.iterator]();
+  const strategy = planSelect(schema, query)[Symbol.iterator]();
 
-    let tabletIterator;
+  let tabletIterator;
 
-    let tabletsOver = false;
+  let tabletsOver = false;
 
-    let state = { query, matchMap: new Map() };
+  let state = { query, matchMap: new Map() };
 
-    async function nextTablet() {
-        const { done, value } = await strategy.next();
+  async function nextTablet() {
+    const { done, value } = await strategy.next();
 
-        if (done) {
-            tabletsOver = true;
+    if (done) {
+      tabletsOver = true;
 
-            return;
-        }
-
-        const tabletStream = await optionTabletStream(fs, dir, value, state);
-
-        tabletIterator = tabletStream[Symbol.asyncIterator]();
+      return;
     }
 
-    async function pullTablet() {
-        if (tabletIterator === undefined) await nextTablet();
+    const tabletStream = await optionTabletStream(fs, dir, value, state);
 
-        const { done, value } = await tabletIterator.next();
+    tabletIterator = tabletStream[Symbol.asyncIterator]();
+  }
 
-        if (done) {
-            await nextTablet();
+  async function pullTablet() {
+    if (tabletIterator === undefined) await nextTablet();
 
-            if (tabletsOver) {
-                return null;
-            }
+    const { done, value } = await tabletIterator.next();
 
-            return pullTablet();
-        }
+    if (done) {
+      await nextTablet();
 
-        return value;
+      if (tabletsOver) {
+        return null;
+      }
+
+      return pullTablet();
     }
 
-    return new ReadableStream({
-        async pull(controller) {
-            const option = await pullTablet();
+    return value;
+  }
 
-            if (option === null) {
-                controller.close();
-            } else {
-                controller.enqueue(option.entry);
-            }
-        }
-    });
+  return new ReadableStream({
+    async pull(controller) {
+      const option = await pullTablet();
+
+      if (option === null) {
+        controller.close();
+      } else {
+        controller.enqueue(option.entry);
+      }
+    },
+  });
 }
 
 export async function selectOption({ fs, dir, query }) {
-    // exit if record is undefined
-    if (query === undefined) return;
+  // exit if record is undefined
+  if (query === undefined) return;
 
-    const queries = Array.isArray(query) ? query : [query];
+  const queries = Array.isArray(query) ? query : [query];
 
-    let entries = [];
+  let entries = [];
 
-    for (const query of queries) {
-        let optionStream = await selectOptionStream({ fs, dir, query });
+  for (const query of queries) {
+    let optionStream = await selectOptionStream({ fs, dir, query });
 
-        for await (const option of optionStream) {
-            entries.push(option);
-        }
+    for await (const option of optionStream) {
+      entries.push(option);
     }
+  }
 
-    return entries;
+  return entries;
 }
