@@ -3,7 +3,7 @@ import { ReadableStream } from "@swimburger/isomorphic-streams";
 import { isEmpty, chunksToLines } from "../stream.js";
 import { optionLine } from "./line.js";
 
-export async function optionTabletStream(fs, dir, tablet, { matchMap }) {
+export async function optionTabletStream(fs, dir, tablet, { query, matchMap }) {
   const filepath = path.join(dir, tablet.filename);
 
   let isDone = false;
@@ -19,6 +19,7 @@ export async function optionTabletStream(fs, dir, tablet, { matchMap }) {
   const entryInitial = { _: tablet.base };
 
   let stateSaved = {
+    query,
     entry: entryInitial,
     fst: undefined,
     isMatch: false,

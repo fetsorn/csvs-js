@@ -22,7 +22,9 @@ export async function selectRecord({ fs, dir, query }) {
       continue;
     }
 
-    const hasLeaves = Object.entries(query).length > 1;
+    const hasLeaves =
+      Object.keys(query).filter((key) => key !== "_" && key !== query._)
+        .length > 0;
 
     // decide whether we want option or query
     const options = hasLeaves

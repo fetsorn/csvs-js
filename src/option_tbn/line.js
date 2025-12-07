@@ -37,15 +37,18 @@ export function optionLine(tablet, state, line) {
     [tablet.base]: base,
   };
 
+  // if grain[tablet.trait] is undefined, regex is ""
+  const isMatch = new RegExp(state.query[tablet.trait]).test(base);
+
   // accumulating tablets find all values
   // matched at least once across the dataset
   // check here if thing was matched before
   const matchIsNew =
     state.matchMap === undefined || state.matchMap.get(base) === undefined;
 
-  state.isMatch = state.isMatch ? state.isMatch : matchIsNew;
+  state.isMatch = state.isMatch ? state.isMatch : isMatch && matchIsNew;
 
-  if (matchIsNew) {
+  if (isMatch && matchIsNew) {
     state.matchMap.set(base, true);
 
     state.entry = sow(state.entry, grainNew, tablet.base, tablet.base);

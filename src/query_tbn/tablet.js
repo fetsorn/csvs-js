@@ -77,11 +77,13 @@ export async function queryTabletStream(
       return { done: true, value: undefined };
     }
 
-    // first tablet loves lines
+    // first tablet needs lines
     // empty file is the same as "no matches"
-    // later tablet hates lines
+    // later tablet avoids lines
     // empty file is the same as "matching all"
-    if (!first && empty) {
+    const emptyIsGood = !first && empty;
+
+    if (emptyIsGood) {
       isDone = true;
 
       return {
@@ -100,10 +102,21 @@ export async function queryTabletStream(
         state.last = { ...state };
       }
 
+      //console.log("after", tablet.filename, "eol", JSON.stringify(state, 2, 2));
+
       return { done: false, value: state };
     }
 
+    //console.log("before", tablet.filename, value, JSON.stringify(state, 2, 2));
+
     const stateLine = queryLine(tablet, grains, stateInitial, state, value);
+
+    //console.log(
+    //  "after",
+    //  tablet.filename,
+    //  value,
+    //  JSON.stringify(stateLine, 2, 2),
+    //);
 
     if (stateLine.last) {
       return { done: false, value: stateLine };
@@ -123,6 +136,8 @@ export async function queryTabletStream(
       }
 
       if (value.last) {
+        //console.log("push", tablet.filename, JSON.stringify(value.last, 2, 2));
+
         controller.enqueue(value.last);
 
         value.last = false;
