@@ -12,11 +12,11 @@ function leaderStream(base, query) {
   return new TransformStream({
     async transform(state, controller) {
       // TODO should we set base to query in accumulating by trunk?
-      const baseNew = state.entry._ !== base ? base : state.entry._;
+      //const baseNew = state.entry._ !== base ? base : state.entry._;
 
       const entryNew = {
               ...state.entry,
-              _: baseNew,
+              //_: baseNew,
             };
 
       // do not return search result

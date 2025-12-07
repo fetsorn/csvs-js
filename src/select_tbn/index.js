@@ -1,6 +1,7 @@
 import { queryRecord } from "../query_tbn/index.js";
 import { selectOption } from "../option_tbn/index.js";
 import { buildRecord } from "../build/index.js";
+import { selectSchema } from "../schema/index.js";
 
 export async function selectRecord({ fs, dir, query }) {
     // exit if record is undefined
@@ -11,6 +12,16 @@ export async function selectRecord({ fs, dir, query }) {
     let entries = [];
 
     for (const query of queries) {
+        const isSchema = query._ === "_";
+
+        if (isSchema) {
+            const schemaRecord = await selectSchema({ fs, dir });
+
+            entries.push(schemaRecord);
+
+            continue;
+        }
+
         const hasLeaves = Object.entries(query).length > 1;
 
         // decide whether we want option or query

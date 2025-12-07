@@ -1,11 +1,10 @@
 import { ReadableStream } from "@swimburger/isomorphic-streams";
-import { toSchema } from "../schema.js";
 import { planQuery } from "./strategy.js";
-import { selectSchema } from "../select/index.js";
+import { buildSchema } from "../schema/index.js";
 import { queryTabletStream } from "./tablet.js";
 
 async function queryRecordStream({ fs, dir, query }) {
-    const schema = toSchema((await selectSchema({ fs, dir }))[0]);
+    const schema = await buildSchema({ fs, dir });
 
     const strategy = planQuery(schema, query);
 
@@ -81,10 +80,6 @@ export async function queryRecord({ fs, dir, query }) {
     if (query === undefined) return;
 
     const queries = Array.isArray(query) ? query : [query];
-
-    const [schemaRecord] = await selectSchema({ fs, dir });
-
-    const schema = toSchema(schemaRecord);
 
     let entries = [];
 

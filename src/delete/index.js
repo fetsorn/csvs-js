@@ -1,5 +1,4 @@
-import { selectSchema } from "../select/index.js";
-import { toSchema } from "../schema.js";
+import { buildSchema } from "../schema/index.js";
 import { planPrune } from "./strategy.js";
 import { pruneTablet } from "./tablet.js";
 
@@ -15,9 +14,7 @@ export async function deleteRecord({ fs, dir, query }) {
 
     const queries = Array.isArray(query) ? query : [query];
 
-    const [schemaRecord] = await selectSchema({ fs, dir });
-
-    const schema = toSchema(schemaRecord);
+    const schema = await buildSchema({ fs, dir });
 
     for (const query of queries) {
         const strategy = planPrune(schema, query);

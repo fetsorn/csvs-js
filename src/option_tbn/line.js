@@ -1,4 +1,5 @@
 import csv from "papaparse";
+import { sow } from "../record.js";
 import { unescape } from "../escape.js";
 
 export function optionLine(tablet, state, line) {
@@ -29,7 +30,12 @@ export function optionLine(tablet, state, line) {
         state.isMatch = false;
     }
 
-    const base = tablet.traitIsFirst ? fst : snd;
+    const base = tablet.thingIsFirst ? fst : snd;
+
+    const grainNew = {
+        _: tablet.base,
+        [tablet.base]: base,
+    };
 
     // accumulating tablets find all values
     // matched at least once across the dataset
@@ -42,10 +48,7 @@ export function optionLine(tablet, state, line) {
     if (matchIsNew) {
         state.matchMap.set(base, true);
 
-        state.entry = {
-            _: tablet.base,
-            [tablet.base]: base,
-        };
+        state.entry = sow(state.entry, grainNew, tablet.base, tablet.base);
     }
 
     return state

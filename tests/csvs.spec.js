@@ -75,7 +75,7 @@ describe("queryRecord()", () => {
   });
 });
 
-describe.only("selectOption()", () => {
+describe("selectOption()", () => {
   readTestCase("select").forEach((testCase) => {
     test(testCase.name, async () => {
       testCase = {
@@ -99,7 +99,7 @@ describe.only("selectOption()", () => {
   });
 });
 
-describe("selectRecord()", () => {
+describe.only("selectRecord()", () => {
   readTestCase("select").forEach((testCase) => {
     test(testCase.name, async () => {
       testCase = {

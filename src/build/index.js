@@ -3,10 +3,9 @@ import {
   TransformStream,
   WritableStream,
 } from "@swimburger/isomorphic-streams";
-import { toSchema } from "../schema.js";
 import { planBuild } from "./strategy.js";
 import { buildTablet } from "./tablet.js";
-import { selectSchema } from "../select/index.js";
+import { buildSchema } from "../schema/index.js";
 
 /**
  * This returns a list of records
@@ -15,9 +14,7 @@ import { selectSchema } from "../select/index.js";
  * @returns {Object[]}
  */
 export async function buildRecord({ fs, dir, query }) {
-    const [schemaRecord] = await selectSchema({ fs, dir });
-
-    const schema = toSchema(schemaRecord);
+    const schema = await buildSchema({ fs, dir });
 
     const strategy = planBuild(schema, query[0]);
 

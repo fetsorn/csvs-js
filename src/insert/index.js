@@ -1,15 +1,12 @@
 import { sortFile } from "../stream.js";
-import { selectSchema } from "../select/index.js";
-import { toSchema } from "../schema.js";
+import { buildSchema } from "../schema/index.js";
 import { planInsert } from "./strategy.js";
 import { insertTablet } from "./tablet.js";
 
 export async function insertRecord({ fs, dir, query }) {
     const queries = Array.isArray(query) ? query : [query];
 
-    const [schemaRecord] = await selectSchema({ fs, dir });
-
-    const schema = toSchema(schemaRecord);
+    const schema = await buildSchema({ fs, dir });
 
     for (const query of queries) {
         const strategy = planInsert(schema, query);

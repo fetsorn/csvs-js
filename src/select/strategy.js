@@ -91,12 +91,12 @@ export function planOptions(schema, base) {
     // what branch to set?
     thing: base,
     // what branch to match?
-    trait: trunk,
+    trait: base,
     // do we set first column?
     thingIsFirst: false,
     // do we match first column?
     traitIsFirst: false,
-    base: trunk,
+    base,
     filename: `${trunk}-${base}.csv`,
     traitIsRegex: true,
     // should it have constraints?

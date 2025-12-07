@@ -1,11 +1,10 @@
 import { ReadableStream } from "@swimburger/isomorphic-streams";
-import { toSchema } from "../schema.js";
-import { selectSchema } from "../select/index.js";
+import { buildSchema } from "../schema/index.js";
 import { planSelect } from "./strategy.js";
 import { optionTabletStream } from "./tablet.js";
 
 async function selectOptionStream({ fs, dir, query }) {
-    const schema = toSchema((await selectSchema({ fs, dir }))[0]);
+    const schema = await buildSchema({ fs, dir });
 
     const strategy = planSelect(schema, query)[Symbol.iterator]();
 
@@ -35,17 +34,13 @@ async function selectOptionStream({ fs, dir, query }) {
         const { done, value } = await tabletIterator.next();
 
         if (done) {
+            await nextTablet();
+
             if (tabletsOver) {
-                return null
-            } else {
-                await nextTablet();
-
-                if (tabletsOver) {
-                    return null;
-                }
-
-                return pullTablet();
+                return null;
             }
+
+            return pullTablet();
         }
 
         return value;
@@ -69,10 +64,6 @@ export async function selectOption({ fs, dir, query }) {
     if (query === undefined) return;
 
     const queries = Array.isArray(query) ? query : [query];
-
-    const [schemaRecord] = await selectSchema({ fs, dir });
-
-    const schema = toSchema(schemaRecord);
 
     let entries = [];
 
