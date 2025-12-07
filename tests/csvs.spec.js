@@ -72,7 +72,7 @@ describe("updateRecord()", () => {
   });
 });
 
-describe.only("insertRecord()", () => {
+describe("insertRecord()", () => {
   readTestCase("insert").forEach((testCase) => {
     test(testCase.name, async () => {
       testCase = {

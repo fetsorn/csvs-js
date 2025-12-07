@@ -3,7 +3,6 @@ import csv from "papaparse";
 import { isEmpty, chunksToLines } from "../stream.js";
 import { mow } from "../record.js";
 import { escapeNewline } from "../escape.js";
-import { updateSchema } from "./schema.js";
 import { updateLine } from "./line.js";
 
 async function appendTablet(fs, dir, tablet, query, tmpPath) {
@@ -100,13 +99,7 @@ export async function updateTablet(fs, dir, tablet, query) {
 
   const tmpPath = path.join(tmpdir, tablet.filename);
 
-  const isSchema = tablet.filename === "_-_.csv";
-
-  if (isSchema) {
-    await updateSchema(fs, query, tmpPath);
-  } else {
-    await appendTablet(fs, dir, tablet, query, tmpPath);
-  }
+  await appendTablet(fs, dir, tablet, query, tmpPath);
 
   if (!(await isEmpty(fs, tmpPath))) {
     // fs.rename doesn't work with external drives

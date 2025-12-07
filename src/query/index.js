@@ -3,7 +3,7 @@ import { planQuery } from "./strategy.js";
 import { buildSchema } from "../schema/index.js";
 import { queryTabletStream } from "./tablet.js";
 
-async function queryRecordStream({ fs, dir, query }) {
+export async function queryRecordStream({ fs, dir, query }) {
   const schema = await buildSchema({ fs, dir });
 
   const strategy = planQuery(schema, query);

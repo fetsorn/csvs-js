@@ -3,7 +3,7 @@ import { buildSchema } from "../schema/index.js";
 import { planSelect } from "./strategy.js";
 import { optionTabletStream } from "./tablet.js";
 
-async function selectOptionStream({ fs, dir, query }) {
+export async function selectOptionStream({ fs, dir, query }) {
   const schema = await buildSchema({ fs, dir });
 
   const strategy = planSelect(schema, query)[Symbol.iterator]();

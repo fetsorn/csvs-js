@@ -1,6 +1,11 @@
 import { selectSchema } from "./schema/index.js";
-import { selectRecord, selectRecordStream } from "./select/index.js";
+import {
+  selectRecord,
+  selectRecordStream,
+  selectRecordStreamPull,
+} from "./select/index.js";
 import { selectOption } from "./option/index.js";
+import { selectVersion } from "./version/index.js";
 import { queryRecord } from "./query/index.js";
 import { buildRecord } from "./build/index.js";
 import { updateRecord } from "./update/index.js";
@@ -16,6 +21,8 @@ import { mow, sow } from "./record.js";
 
 export {
   selectRecordStream,
+  selectRecordStreamPull,
+  selectVersion,
   selectRecord,
   selectSchema,
   selectOption,
@@ -34,6 +41,8 @@ export {
 
 export default {
   selectRecordStream,
+  selectRecordStreamPull,
+  selectVersion,
   selectRecord,
   selectSchema,
   selectOption,
