@@ -69,13 +69,6 @@ impl Dataset {
         update::update_record(self, query).await
     }
 
-    pub fn update_record_stream<S>(self, input: S) -> impl Stream<Item = Result<Entry>>
-    where
-        S: Stream<Item = Result<Entry>>,
-    {
-        update::update_record_stream(self, input)
-    }
-
     pub async fn print_record(self, query: Vec<Entry>) -> Result<()> {
         select::print_record(self, query).await
     }

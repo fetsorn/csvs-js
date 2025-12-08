@@ -18,10 +18,8 @@ struct Tablet {
 pub async fn insert_record(dataset: Dataset, query: Vec<Entry>) -> Result<()> {
     let schema = dataset.clone().select_schema().await?;
 
-    let mut strategy = vec![];
-
     for q in query {
-        strategy = plan_insert(&schema, &q)?;
+        let strategy = plan_insert(&schema, &q)?;
 
         for tablet in &strategy {
             insert_tablet(dataset.dir.clone(), tablet.clone(), q.clone()).await?;
