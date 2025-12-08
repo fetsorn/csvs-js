@@ -1,15 +1,12 @@
-use crate::{Entry, Grain, line::Line, Schema, Error, Result, Dataset};
-use async_stream::{stream, try_stream};
-use futures_core::stream::{BoxStream, Stream};
-use futures_util::pin_mut;
-use futures_util::stream::StreamExt;
+use crate::{Entry, Error, Result, Dataset};
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::fs::OpenOptions;
-use std::fs::{rename, File};
-use std::path::{Path, PathBuf};
-use temp_dir::TempDir;
-use text_file_sort::sort::Sort;
+mod tablet;
+mod strategy;
+mod sort;
+use tablet::insert_tablet;
+use strategy::plan_insert;
+use sort::sort_file;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct Tablet {
@@ -18,143 +15,21 @@ struct Tablet {
     pub branch: String,
 }
 
-async fn sort_file(filepath: &Path) -> Result<()> {
-    // must assign a variable to create the directory
-    // must assign inside the stream scope to keep the directory
-    let temp_d = TempDir::new();
-    
-    // on android <13 std::env::temp_dir() returns /data/local/tmp
-    // which is inaccessible on some android systems
-    let temp_d = match temp_d {
-       Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied => {
-          TempDir::from_path(filepath.to_path_buf())
-       }
-       Err(e) => Err(e),
-       Ok(td) => Ok(td)
-    };
+pub async fn insert_record(dataset: Dataset, query: Vec<Entry>) -> Result<()> {
+    let schema = dataset.clone().select_schema().await?;
 
-    let temp_d = temp_d?;
+    let mut strategy = vec![];
 
-    let filename = match filepath.file_name() {
-        None => return Err(Error::from_message("unexpected missing filename")),
-        Some(s) => s,
-    };
+    for q in query {
+        strategy = plan_insert(&schema, &q)?;
 
-    let output = temp_d.as_ref().join(filename);
+        for tablet in &strategy {
+            insert_tablet(dataset.dir.clone(), tablet.clone(), q.clone()).await?;
 
-    Sort::new(vec![filepath.to_path_buf()], output.to_path_buf()).sort();
-
-    rename(output, filepath)?;
-
-    Ok(())
-}
-
-fn plan_insert(schema: &Schema, query: &Entry) -> Result<Vec<Tablet>> {
-    let crown = schema.find_crown(&query.base);
-
-    let tablets = crown.iter().try_fold(vec![], |with_branch, branch| {
-        let node = match schema.0.get(branch) {
-            None => return Err(Error::from_message("unexpected missing branch")),
-            Some(vs) => vs,
-        };
-
-        let tablets_new = node
-            .trunks
-            .0
-            .iter()
-            .map(|trunk| Tablet {
-                filename: format!("{}-{}.csv", trunk, branch),
-                trunk: trunk.to_owned(),
-                branch: branch.to_owned(),
-            })
-            .collect();
-
-        Ok([with_branch, tablets_new].concat())
-    });
-
-    Ok(tablets?)
-}
-
-fn insert_tablet<S: Stream<Item = Result<Entry>>>(
-    path: PathBuf,
-    tablet: Tablet,
-    input: S,
-) -> impl Stream<Item = Result<Entry>> {
-    try_stream! {
-        let filepath = path.join(&tablet.filename);
-
-        // create file if it doesn't exist
-        if fs::metadata(&filepath).is_err() {
-            File::create(&filepath)?;
-        }
-
-        let file = OpenOptions::new()
-            .append(true)
-            .open(filepath)
-            .expect("cannot open file");
-
-        let mut wtr = csv::WriterBuilder::new()
-            .has_headers(false)
-            .from_writer(file);
-
-        for await entry in input {
-            let entry = entry?;
-
-            // pass the query early on to start other tablet streams
-            yield entry.clone();
-
-            let grains = entry.mow(&tablet.trunk, &tablet.branch);
-
-            let lines: Vec<Line> = grains.iter().filter(|grain| grain.leaf_value.is_some()).map(|grain| {
-                Line {
-                    key: match &grain.base_value { None => String::from(""), Some(s) => s.to_owned() },
-                    value: match &grain.leaf_value { None => String::from(""), Some(s) => s.to_owned() }
-                }
-            }).collect();
-
-            for line in lines.iter() {
-                wtr.serialize(line.escape())?;
-            }
-        }
-    }
-}
-
-pub fn insert_record_stream<S: Stream<Item = Result<Entry>>>(
-    dataset: Dataset,
-    input: S,
-) -> impl Stream<Item = Result<Entry>> {
-    try_stream! {
-        let schema = dataset.clone().select_schema().await?;
-
-        let mut strategy = vec![];
-
-        for await query in input {
-            let query = query?;
-
-            strategy = plan_insert(&schema, &query)?;
-
-            let query_stream = try_stream! {
-                yield query;
-            };
-
-            let mut stream: BoxStream<'static, Result<Entry>> = Box::pin(query_stream);
-
-            for tablet in &strategy {
-                stream = Box::pin(insert_tablet(dataset.dir.clone(), tablet.clone(), stream));
-            }
-
-            for await entry in stream {
-                let entry = entry?;
-
-                yield entry;
-            }
-        }
-
-        for tablet in strategy {
             let filepath = dataset.dir.join(&tablet.filename);
 
             match fs::metadata(&filepath) {
-                Err(_) => return,
+                Err(_) => return Ok(()),
                 Ok(m) => if m.len() == 0 {
                     // remove file if it is empty
                     fs::remove_file(filepath)?;
@@ -162,23 +37,8 @@ pub fn insert_record_stream<S: Stream<Item = Result<Entry>>>(
                     sort_file(&filepath).await?;
                 }
             }
-
         }
     }
-}
-
-pub async fn insert_record(dataset: Dataset, query: Vec<Entry>) -> Result<()> {
-    let readable_stream = try_stream! {
-        for q in query {
-            yield q;
-        }
-    };
-
-    let s = dataset.insert_record_stream(readable_stream);
-
-    pin_mut!(s); // needed for iteration
-
-    while let Some(entry) = s.next().await {}
 
     Ok(())
 }

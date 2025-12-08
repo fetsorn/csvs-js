@@ -43,13 +43,6 @@ impl Dataset {
         Ok(())
     }
 
-    pub fn insert_record_stream<S>(self, input: S) -> impl Stream<Item = Result<Entry>>
-    where
-        S: Stream<Item = Result<Entry>>,
-    {
-        insert::insert_record_stream(self, input)
-    }
-
     pub async fn select_record(self, query: Vec<Entry>) -> Result<Vec<Entry>> {
         select::select_record(self, query).await
     }
