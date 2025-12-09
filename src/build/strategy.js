@@ -22,7 +22,6 @@ export function planBuild(schema, query) {
       traitIsFirst: true,
       base: trunk,
       filename: `${trunk}-${branch}.csv`,
-      passthrough: true,
       eager: trunk === base, // push as soon as trait changes in the tablet
     }));
 

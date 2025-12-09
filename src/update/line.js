@@ -20,16 +20,18 @@ export function updateLine(state, line) {
 
   if (fstIsNew) {
     // insert and forget all record keys between previous and next
-    const keysBetween = state.keys.filter((key) => {
-      const isAfter =
-        state.fst === undefined || state.fst.localeCompare(key) < 1;
+    const keysBetween = state.keys
+      .filter((key) => !keysInserted.includes(key))
+      .filter((key) => {
+        const isAfter =
+          state.fst === undefined || state.fst.localeCompare(key) < 1;
 
-      const isBefore = key.localeCompare(fst) === -1;
+        const isBefore = key.localeCompare(fst) === -1;
 
-      const isBetween = isAfter && isBefore;
+        const isBetween = isAfter && isBefore;
 
-      return isBetween;
-    });
+        return isBetween;
+      });
 
     for (const key of keysBetween) {
       keysInserted.push(key);
