@@ -11,7 +11,7 @@ export function buildLine(state, tablet, grains, line) {
 
   const snd = unescapeNewline(sndEscaped);
 
-  const fstIsNew = state.fst !== undefined && state.fst !== fst;
+  const fstIsNew = state.fst === undefined || state.fst !== fst;
 
   state.fst = fst;
 
@@ -23,9 +23,7 @@ export function buildLine(state, tablet, grains, line) {
 
   if (pushEndOfGroup) {
     const stateToPush = {
-      last: {
-        entry: state.entry,
-      },
+      last: state.entry,
     };
 
     return stateToPush;

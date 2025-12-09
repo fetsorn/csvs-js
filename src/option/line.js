@@ -14,7 +14,7 @@ export function optionLine(tablet, state, line) {
   const snd = unescapeNewline(sndEscaped);
 
   // if fst is new, last group has ended
-  const fstIsNew = state.fst !== undefined && state.fst !== fst;
+  const fstIsNew = state.fst === undefined || state.fst !== fst;
 
   state.fst = fst;
 

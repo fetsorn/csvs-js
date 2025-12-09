@@ -13,11 +13,13 @@ export async function buildRecord({ fs, dir, query }) {
 
   const strategy = planBuild(schema, query[0]);
 
-  let state = { entry: query[0] };
+  let entry = query[0];
 
   for (const tablet of strategy) {
-    state = await buildTablet(fs, dir, tablet, state);
+    entry = await buildTablet(fs, dir, tablet, entry);
   }
 
-  return state.entry;
+  // if nothing is found, return input unchanged
+
+  return entry;
 }

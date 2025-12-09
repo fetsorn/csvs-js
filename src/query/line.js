@@ -87,7 +87,7 @@ export function queryLine(tablet, grains, stateInitial, state, line) {
 
   const snd = unescapeNewline(sndEscaped);
 
-  const fstIsNew = state.fst !== undefined && state.fst !== fst;
+  const fstIsNew = state.fst === undefined || state.fst !== fst;
 
   state.fst = fst;
 
