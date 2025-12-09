@@ -21,9 +21,7 @@ pub fn update_line(state: State, line: Line) -> Result<State> {
     let fst_is_new = state.fst.is_none() || state.fst.as_ref() != Some(&line.key);
 
     if state.is_match && fst_is_new {
-        //println!("1{:#?} {:#?}", line, keys_inserted);
         keys_inserted.push(state.fst.clone().unwrap());
-        //println!("2{:#?} {:#?}", line, keys_inserted);
     }
 
     if fst_is_new {
@@ -31,6 +29,7 @@ pub fn update_line(state: State, line: Line) -> Result<State> {
         let keys_between: Vec<String> = state
             .keys
             .iter()
+            .filter(|key| !keys_inserted.contains(key))
             .filter(|key| {
                 let is_first: bool = state.fst.is_none();
 
@@ -45,22 +44,12 @@ pub fn update_line(state: State, line: Line) -> Result<State> {
             .cloned()
             .collect();
 
-        //println!("3{:#?} {:#?} {:#?}", line, state.fst, keys_between);
-
         for key in keys_between {
             keys_inserted.push(key);
         }
     }
 
-    //state.keys = state.keys.iter().filter(|k| *k != key).cloned().collect();
     let is_match: bool = state.keys.contains(&line.key);
-    //let is_match: bool = state
-    //    .keys
-    //    .clone()
-    //    .into_iter()
-    //    .filter(|k| !keys_inserted.contains(k))
-    //    .collect::<Vec<String>>()
-    //    .contains(&line.key);
 
     Ok(State {
         fst: Some(line.key),
