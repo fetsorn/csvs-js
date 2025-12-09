@@ -3,6 +3,7 @@ mod delete;
 mod insert;
 mod select;
 mod update;
+mod build;
 use crate::{Entry, Result, Schema};
 use futures_core::stream::Stream;
 use serde::{Deserialize, Serialize};
@@ -38,6 +39,10 @@ impl Dataset {
 
     pub async fn select_record(self, query: Vec<Entry>) -> Result<Vec<Entry>> {
         select::select_record(self, query).await
+    }
+
+    pub async fn build_record(self, query: Entry) -> Result<Entry> {
+        build::build_record(self, query).await
     }
 
     pub fn select_record_stream<S>(self, input: S) -> impl Stream<Item = Result<Entry>>
