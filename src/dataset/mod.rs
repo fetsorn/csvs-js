@@ -30,13 +30,6 @@ impl Dataset {
         Ok(())
     }
 
-    pub fn delete_record_stream<S>(self, input: S) -> impl Stream<Item = Result<Entry>>
-    where
-        S: Stream<Item = Result<Entry>>,
-    {
-        delete::delete_record_stream(self, input)
-    }
-
     pub async fn insert_record(self, query: Vec<Entry>) -> Result<()> {
         insert::insert_record(self, query).await?;
 
