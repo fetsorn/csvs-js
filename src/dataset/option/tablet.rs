@@ -1,19 +1,21 @@
-pub struct State {
-    pub fst: String,
-}
+use super::line::{option_line, DoubleBuffer, State};
+use super::strategy::Tablet;
+use crate::{line::Line, Dataset, Entry, Error, Result, Schema};
+use async_stream::{stream, try_stream};
+use futures_core::stream::{BoxStream, Stream};
+use futures_util::pin_mut;
+use futures_util::stream::StreamExt;
+use std::collections::HashMap;
+use std::fs;
+use std::fs::File;
 
-pub struct DoubleBuffer {
-    pub current: State,
-    pub last: Option<State>,
-}
-
-pub fn select_option_stream<S: Stream<Item = Result<Entry>>>(
+pub fn option_tablet_stream(
     dataset: Dataset,
     tablet: Tablet,
-    state: DoubleBuffer,
-) -> impl Stream<Item = Result<Entry>> {
+    state: State,
+) -> impl Stream<Item = Result<DoubleBuffer>> {
     try_stream! {
-        let filepath = path.join(&tablet.filename);
+        let filepath = dataset.dir.join(&tablet.filename);
 
         let mut rdr = csv::ReaderBuilder::new()
             .has_headers(false)
@@ -21,13 +23,7 @@ pub fn select_option_stream<S: Stream<Item = Result<Entry>>>(
             .from_reader(File::open(&filepath)?);
 
         let mut state = DoubleBuffer {
-            current: State {
-                query,
-                entry: Entry { base: tablet.base }
-                fst: None,
-                is_match: false,
-                match_map: state.matchMap,
-            },
+            current: state,
             last: None
         };
 
@@ -41,15 +37,15 @@ pub fn select_option_stream<S: Stream<Item = Result<Entry>>>(
 
             let line = line_escaped.unescape();
 
-            let stateLine = option_line(tablet, state.current, line);
+            let stateLine = option_line(tablet.clone(), state.current, line)?;
 
-            if (stateLine.last.is_some) {
+            state.current = stateLine.clone().current;
+
+            if (stateLine.last.is_some()) {
                 yield stateLine;
             }
-
-            state.current = stateLine.current;
         }
 
-        if state.current.is_match yield state
+        if state.current.is_match { yield state }
     }
 }

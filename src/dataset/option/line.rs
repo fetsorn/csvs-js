@@ -1,3 +1,23 @@
+use super::strategy::Tablet;
+use crate::{line::Line, Dataset, Entry, Error, Grain, Result, Schema};
+use regex::Regex;
+use std::collections::HashMap;
+
+#[derive(Debug, Clone)]
+pub struct DoubleBuffer {
+    pub current: State,
+    pub last: Option<State>,
+}
+
+#[derive(Debug, Clone)]
+pub struct State {
+    pub query: Entry,
+    pub entry: Entry,
+    pub fst: Option<String>,
+    pub is_match: bool,
+    pub match_map: HashMap<String, bool>,
+}
+
 pub fn option_line(tablet: Tablet, state: State, line: Line) -> Result<DoubleBuffer> {
     let mut last = None;
 
@@ -5,14 +25,14 @@ pub fn option_line(tablet: Tablet, state: State, line: Line) -> Result<DoubleBuf
 
     let fst_is_new = state.fst.is_none() || state.fst.as_ref() != Some(&line.key);
 
-    state.fst = line.key;
+    state.fst = Some(line.key.clone());
 
     let push_end_of_group = fst_is_new && state.is_match;
 
     if push_end_of_group {
-        last = Some(state);
+        last = Some(state.clone());
 
-        state.entry = Entry { base: tablet.base };
+        state.entry = Entry::new(&tablet.base);
 
         state.is_match = false;
     }
@@ -25,21 +45,18 @@ pub fn option_line(tablet: Tablet, state: State, line: Line) -> Result<DoubleBuf
 
     let grain_new = Grain {
         base: tablet.base.to_owned(),
-        base_value: Some(base),
+        base_value: Some(base.clone()),
         leaf: tablet.base.to_owned(),
         leaf_value: None,
     };
 
-    let re_str = base;
+    let re_str = base.clone();
 
     let re = Regex::new(&re_str)?;
 
-    let is_match = re.is_match(state.query.base_value);
+    let is_match = re.is_match(&state.query.base_value.clone().unwrap());
 
-    let match_is_new = match state.match_map {
-        None => true,
-        Some(m) => m.get(&thing).is_none(),
-    };
+    let match_is_new = state.match_map.get(&base).is_none();
 
     state.is_match = if state.is_match {
         state.is_match
@@ -48,29 +65,13 @@ pub fn option_line(tablet: Tablet, state: State, line: Line) -> Result<DoubleBuf
     };
 
     if is_match && match_is_new {
-        match state.match_map.as_mut() {
-            None() => (),
-            Some(m) => m.insert(base, true);
-        };
+        state.match_map.insert(base, true);
 
-        // if previous querying tablet already matched thing
-        // the trait in this record is likely to be the same
-        // and might duplicate in the entry after sow
-        let is_new_thing = match &state_initial.thing_querying {
-            None => true,
-            Some(t) => t != &thing,
-        };
-
-        if is_new_thing {
-            state.query = match &state.query {
-                None => panic!("unreachable"),
-                Some(q) => Some(q.sow(&grain_new, &tablet.trait_, &tablet.thing)),
-            };
-        }
+        state.query = state.query.sow(&grain_new, &tablet.trait_, &tablet.thing);
     }
 
     Ok(DoubleBuffer {
         current: state,
-        last
+        last,
     })
 }

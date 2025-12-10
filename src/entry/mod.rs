@@ -23,6 +23,15 @@ impl fmt::Display for Entry {
 }
 
 impl Entry {
+    pub fn new(base: &str) -> Self {
+        Entry {
+            base: base.to_string(),
+            base_value: None,
+            leader_value: None,
+            leaves: HashMap::new(),
+        }
+    }
+
     pub fn mow(&self, trait_: &str, thing: &str) -> Vec<Grain> {
         mow::mow(self, trait_, thing)
     }

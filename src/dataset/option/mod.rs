@@ -1,14 +1,17 @@
+use crate::{Error, Result, Dataset, Entry, Schema};
+use async_stream::{stream, try_stream};
+use futures_core::stream::{BoxStream, Stream};
+use futures_util::pin_mut;
+use futures_util::stream::StreamExt;
 use std::collections::HashMap;
-use tokio_stream::Stream;
-use std::pin::Pin;
-use std::task::{Context, Poll};
-use std::time::Duration;
 mod tablet;
+mod line;
 mod strategy;
 use strategy::plan_option;
-use tablet::{DoubleBuffer, State, option_tablet_stream};
+use tablet::{option_tablet_stream};
+use line::State;
 
-pub fn select_option_stream<S: Stream<Item = Result<Entry>>>(
+pub async fn select_option_stream(
     dataset: Dataset,
     query: Entry,
 ) -> impl Stream<Item = Result<Entry>> {
@@ -17,38 +20,39 @@ pub fn select_option_stream<S: Stream<Item = Result<Entry>>>(
 
         let strategy = plan_option(&schema, &query.base);
 
-        let mut state = DoubleBuffer {
-            current: State {
-                query,
-                matchMap: HashMap::new(),
-            },
-            last: None,
+        let mut state = State {
+            query: query.clone(),
+            entry: Entry::new(&query.base),
+            fst: None,
+            is_match: false,
+            match_map: HashMap::new(),
         };
 
         for tablet in strategy {
-            let tablet_stream = option_tablet_stream(dataset, tablet, state);
+            let tablet_stream = option_tablet_stream(dataset.clone(), tablet, state.clone());
 
             pin_mut!(tablet_stream); // needed for iteration
 
             while let Some(value) = tablet_stream.next().await {
-                yield value.last.entry;
+                let value = value?;
 
-                state.current = value.current;
+                state = value.current;
+
+                yield value.last.unwrap().entry;
             }
         }
     }
 }
 
 pub async fn select_option(dataset: Dataset, query: Entry) -> Result<Vec<Entry>> {
-
     let mut entries = vec![];
 
-    let stream = select_option_stream();
+    let stream = dataset.select_option_stream(query).await;
 
     pin_mut!(stream); // needed for iteration
 
     while let Some(value) = stream.next().await {
-        entries.push(value);
+        entries.push(value?);
     }
 
     Ok(entries)
