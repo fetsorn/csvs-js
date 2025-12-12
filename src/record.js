@@ -1,4 +1,6 @@
 // TODO what if trait-thing relation appears elsewhere deeper in the record?
+// should return { _: thing, thing: thingValue, trait: traitValues }
+// should return { _: base, base: baseValue, trait: traitValues }
 function mowBaseIsThing(record, trait, thing) {
   const { _: base } = record;
 
@@ -29,7 +31,8 @@ function mowBaseIsThing(record, trait, thing) {
   return grains;
 }
 
-// TODO what if trait-thing relation appears elsewhere deeper in the record?
+// should return { _: trait, trait: traitValue, thing: thingValue }
+// should return { _: base, base: baseValue, leaf: leafValue }
 function mowBaseIsTrait(record, trait, thing) {
   const { _: base } = record;
 
@@ -144,23 +147,16 @@ export function mow(record, trait, thing) {
 }
 
 function sowBaseIsThing(record, grain, trait, thing) {
-  // what if grain does not have thing?
-  if (grain[thing] === undefined) return record;
+  const grainHasNothing = grain[thing] === undefined;
 
-  // if record already has a base value, set it from grain
-  if (record[thing] !== undefined) return { ...record, [thing]: record[thing] };
+  const recordAlreadyHasBase = record[thing] !== undefined;
 
-  const existingPartial =
-    record[thing] === undefined ? [] : [record[thing]].flat();
+  const cantSow = grainHasNothing || recordAlreadyHasBase;
 
-  const thingValue = [...existingPartial, grain[thing]];
+  if (cantSow) return record;
 
-  const recordNew = {
-    ...record,
-    [thing]: thingValue.length === 1 ? thingValue[0] : thingValue,
-  };
-
-  return recordNew;
+  // if the record doesn't have a base value, take it from grain
+  return { ...record, [thing]: grain[thing] };
 }
 
 function sowBaseIsTrait(record, grain, trait, thing) {

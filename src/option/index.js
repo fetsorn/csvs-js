@@ -43,17 +43,21 @@ export async function selectOptionStream({ fs, dir, query }) {
       return pullTablet();
     }
 
-    return value;
+    const { last, ...stateNew } = value;
+
+    state = stateNew;
+
+    return last;
   }
 
   return new ReadableStream({
     async pull(controller) {
-      const option = await pullTablet();
+      const entry = await pullTablet();
 
-      if (option === null) {
+      if (entry === null) {
         controller.close();
       } else {
-        controller.enqueue(option.entry);
+        controller.enqueue(entry);
       }
     },
   });

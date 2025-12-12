@@ -23,7 +23,7 @@ export function optionLine(tablet, state, line) {
   if (pushEndOfGroup) {
     // don't push matchMap here
     // because accumulating is not yet finished
-    state.last = { entry: state.entry };
+    state.last = state.entry;
 
     state.entry = { _: tablet.base };
 

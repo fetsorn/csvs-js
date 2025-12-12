@@ -13,7 +13,7 @@ export function makeStateLine(
   let state = { ...stateOld };
 
   const grainNew = {
-    _: tablet.trait,
+    _: tablet.base,
     [tablet.trait]: trait,
     [tablet.thing]: thing,
   };

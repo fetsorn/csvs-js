@@ -37,7 +37,7 @@ export async function optionTabletStream(fs, dir, tablet, { query, matchMap }) {
       isDone = true;
 
       if (state.isMatch) {
-        state.last = state;
+        state.last = state.entry;
       }
 
       return { done: false, value: state };
@@ -63,12 +63,12 @@ export async function optionTabletStream(fs, dir, tablet, { query, matchMap }) {
       }
 
       if (value.last) {
-        controller.enqueue(value.last);
-
-        value.last = false;
+        controller.enqueue(value);
       }
 
-      stateSaved = value;
+      const { last, ...stateNew } = value;
+
+      stateSaved = stateNew;
     },
   });
 }
