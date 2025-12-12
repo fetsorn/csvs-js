@@ -11,7 +11,7 @@ use strategy::plan_option;
 use tablet::{option_tablet_stream};
 use line::State;
 
-pub async fn select_option_stream(
+pub fn select_option_stream(
     dataset: Dataset,
     query: Entry,
 ) -> impl Stream<Item = Result<Entry>> {
@@ -26,6 +26,7 @@ pub async fn select_option_stream(
             fst: None,
             is_match: false,
             match_map: HashMap::new(),
+            last: None,
         };
 
         for tablet in strategy {
@@ -34,11 +35,11 @@ pub async fn select_option_stream(
             pin_mut!(tablet_stream); // needed for iteration
 
             while let Some(value) = tablet_stream.next().await {
-                let value = value?;
+                state = value?;
 
-                state = value.current;
+                yield state.last.unwrap();
 
-                yield value.last.unwrap().entry;
+                state.last = None;
             }
         }
     }
@@ -47,7 +48,7 @@ pub async fn select_option_stream(
 pub async fn select_option(dataset: Dataset, query: Entry) -> Result<Vec<Entry>> {
     let mut entries = vec![];
 
-    let stream = dataset.select_option_stream(query).await;
+    let stream = dataset.select_option_stream(query);
 
     pin_mut!(stream); // needed for iteration
 

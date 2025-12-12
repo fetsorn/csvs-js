@@ -31,10 +31,10 @@ pub fn plan_option(schema: &Schema, base: &str) -> Vec<Tablet> {
         .iter()
         .map(|trunk| Tablet {
             thing: base.to_owned(),
-            trait_: trunk.to_owned(),
+            trait_: base.to_owned(),
             thing_is_first: false,
             trait_is_first: false,
-            base: trunk.to_owned(),
+            base: base.to_owned(),
             filename: format!("{}-{}.csv", trunk, base),
             trait_is_regex: true,
             passthrough: false,

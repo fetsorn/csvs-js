@@ -1,4 +1,4 @@
-use super::line::{option_line, DoubleBuffer, State};
+use super::line::{option_line, State};
 use super::strategy::Tablet;
 use crate::{line::Line, Dataset, Entry, Error, Result, Schema};
 use async_stream::{stream, try_stream};
@@ -13,19 +13,20 @@ pub fn option_tablet_stream(
     dataset: Dataset,
     tablet: Tablet,
     state: State,
-) -> impl Stream<Item = Result<DoubleBuffer>> {
+) -> impl Stream<Item = Result<State>> {
     try_stream! {
         let filepath = dataset.dir.join(&tablet.filename);
+
+        if std::fs::metadata(&filepath).is_err() {
+            return;
+        }
 
         let mut rdr = csv::ReaderBuilder::new()
             .has_headers(false)
             .flexible(true)
             .from_reader(File::open(&filepath)?);
 
-        let mut state = DoubleBuffer {
-            current: state,
-            last: None
-        };
+        let mut state = state;
 
         for result in rdr.records() {
             let record = result?;
@@ -37,15 +38,19 @@ pub fn option_tablet_stream(
 
             let line = line_escaped.unescape();
 
-            let stateLine = option_line(tablet.clone(), state.current, line)?;
+            state = option_line(tablet.clone(), state, line)?;
 
-            state.current = stateLine.clone().current;
+            if (state.last.is_some()) {
+                yield state.clone();
 
-            if (stateLine.last.is_some()) {
-                yield stateLine;
+                state.last = None;
             }
         }
 
-        if state.current.is_match { yield state }
+        if state.is_match {
+            state.last = Some(state.clone().entry);
+
+            yield state;
+        }
     }
 }

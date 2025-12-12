@@ -13,7 +13,7 @@ pub async fn build_record(dataset: Dataset, query: Entry) -> Result<Entry> {
     let mut entry = query;
 
     for tablet in strategy {
-        entry = build_tablet(dataset.dir.clone(), tablet, entry.clone()).await?;
+        entry = build_tablet(dataset.dir.clone(), tablet.clone(), entry.clone()).await?;
     }
 
     // if nothing is found, return input unchanged

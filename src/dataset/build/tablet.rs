@@ -8,6 +8,10 @@ use super::line::{State, build_line};
 pub async fn build_tablet(path: PathBuf, tablet: Tablet, entry: Entry) -> Result<Entry> {
     let filepath = path.join(&tablet.filename);
 
+    if std::fs::metadata(&filepath).is_err() {
+        return Ok(entry);
+    }
+
     let mut rdr = csv::ReaderBuilder::new()
         .has_headers(false)
         .flexible(true)

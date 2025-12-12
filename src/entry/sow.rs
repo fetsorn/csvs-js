@@ -6,33 +6,30 @@ use std::collections::HashMap;
 pub fn sow(entry: &Entry, grain: &Grain, trait_: &str, thing: &str) -> Entry {
     // if trait_ == "datum" && thing == "filepath" {println!("{} {} {} {}", serde_json::to_string_pretty(&entry).expect(""), serde_json::to_string_pretty(&grain).expect(""), trait_, thing)};
 
-    // let base = entry;
+    let base_is_thing = entry.base == thing;
 
     // if base equals thing
-    if entry.base == thing {
-        // TODO here match
-        return match &grain.leaf_value {
+    if base_is_thing {
+        return match &grain.base_value {
             None => entry.clone(),
-            Some(grain_leaf_value) => match &entry.base_value {
+            Some(grain_base_value) => match &entry.base_value {
                 None => Entry {
                     base: thing.to_owned(),
-                    base_value: Some(grain_leaf_value.to_owned()),
+                    base_value: Some(grain_base_value.to_owned()),
                     leader_value: None,
                     leaves: entry.leaves.clone(),
                 },
-                Some(e) => Entry {
-                    base: thing.to_owned(),
-                    base_value: Some(grain_leaf_value.to_owned()),
-                    leader_value: None,
-                    leaves: entry.leaves.clone(),
-                },
+                // if record already has a base value, set it from grain
+                Some(e) => entry.clone(),
             },
         };
     }
 
-    //   append grain.thing to record.thing
+    let base_is_trait = entry.base == trait_;
+
+    // append grain.thing to record.thing
     // if base equals trait
-    if entry.base == trait_ {
+    if base_is_trait {
         let thing_item = Entry {
             base: thing.to_owned(),
             base_value: grain.leaf_value.clone(),

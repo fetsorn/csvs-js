@@ -2,6 +2,7 @@ mod create;
 mod delete;
 mod insert;
 mod select;
+mod select_tbn;
 mod update;
 mod option;
 mod build;
@@ -39,12 +40,12 @@ impl Dataset {
     }
 
     pub async fn select_record(self, query: Vec<Entry>) -> Result<Vec<Entry>> {
-        select::select_record(self, query).await
+        select_tbn::select_record(self, query).await
     }
 
 
-    pub async fn select_option_stream(self, query: Entry) -> impl Stream<Item = Result<Entry>> {
-        option::select_option_stream(self, query).await
+    pub fn select_option_stream(self, query: Entry) -> impl Stream<Item = Result<Entry>> {
+        option::select_option_stream(self, query)
     }
 
     pub async fn select_option(self, query: Entry) -> Result<Vec<Entry>> {
@@ -59,7 +60,7 @@ impl Dataset {
     where
         S: Stream<Item = Result<Entry>>,
     {
-        select::select_record_stream(self, input)
+        select_tbn::select_record_stream(self, input)
     }
 
     pub async fn select_schema(self) -> Result<Schema> {
