@@ -6,26 +6,43 @@ use std::collections::HashMap;
 #[derive(Debug, Clone)]
 pub struct State {
     pub query: Entry,
-    pub entry: Entry,
+    pub entry: Option<Entry>,
     pub fst: Option<String>,
     pub is_match: bool,
     pub match_map: HashMap<String, bool>,
-    pub last: Option<State>,
+    pub last: Option<Box<State>>,
+    pub thing_querying: Option<String>,
+}
+
+impl State {
+    pub fn new(query: Entry) -> Self {
+        State {
+            query: query,
+            entry: None,
+            fst: None,
+            is_match: false,
+            match_map: HashMap::new(),
+            last: None,
+            thing_querying: None,
+        }
+    }
 }
 
 fn make_state_line(
     state_initial: State,
-    state: &mut State,
+    state: State,
     tablet: Tablet,
     grains: Vec<Grain>,
     trait_: String,
-    tring: String,
+    thing: String,
 ) -> Result<State> {
+    let mut state = state;
+
     let grain_new = Grain {
         base: tablet.base,
-        base_value: Some(trait_),
-        leaf: tablet.thing,
-        leaf_value: Some(thing),
+        base_value: Some(trait_.clone()),
+        leaf: tablet.thing.clone(),
+        leaf_value: Some(thing.clone()),
     };
 
     for grain in grains {
@@ -87,17 +104,14 @@ fn make_state_line(
         };
 
         if is_new_thing {
-            state.query = match &state.query {
-                None => panic!("unreachable"),
-                Some(q) => Some(q.sow(&grain_new, &tablet.trait_, &tablet.thing)),
-            };
+            state.query = state.query.sow(&grain_new, &tablet.trait_, &tablet.thing);
         }
-    })
+    }
 
-    Ok(())
+    Ok(state)
 }
 
-pub fn option_line(
+pub fn query_line(
     tablet: Tablet,
     grains: Vec<Grain>,
     state_initial: State,
@@ -113,7 +127,7 @@ pub fn option_line(
     let push_end_of_group = fst_is_new && state.is_match;
 
     if push_end_of_group {
-        state.last = Some(state.clone());
+        state.last = Some(Box::new(state.clone()));
 
         state.entry = state_initial.entry.clone();
 
@@ -134,7 +148,7 @@ pub fn option_line(
         line.value.to_owned()
     };
 
-    make_state_line(state_initial, &mut state, tablet, grains, trait_, thing)?;
+    state = make_state_line(state_initial, state, tablet, grains, trait_, thing)?;
 
-    state
+    Ok(state)
 }

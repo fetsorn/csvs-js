@@ -16,6 +16,32 @@ pub struct Tablet {
     pub accumulating: bool,
 }
 
+fn gather_keys(query: &Entry) -> Vec<String> {
+    let leaves = query.leaves.keys().filter(|key| match &query.base_value {
+        None => true,
+        Some(s) => key != &s,
+    });
+
+    leaves.fold(vec![], |with_leaf, leaf| {
+        let leaf_keys = match &query.leaves.get(leaf) {
+            None => vec![],
+            Some(vs) => vs.iter().fold(vec![], |with_key, item| {
+                let has_leaves = item.leaves.keys().len() > 0;
+
+                let keys_item_new = if has_leaves {
+                    gather_keys(item)
+                } else {
+                    vec![]
+                };
+
+                [with_key, keys_item_new].concat()
+            }),
+        };
+
+        [&with_leaf[..], &[leaf.to_owned()], &leaf_keys[..]].concat()
+    })
+}
+
 pub fn plan_query(schema: &Schema, query: &Entry) -> Vec<Tablet> {
     let mut queried_branches = gather_keys(query);
 

@@ -1,4 +1,15 @@
-fn make_state_initial(state: State, tablet: Tablet) {
+use super::line::{query_line, State};
+use super::strategy::Tablet;
+use crate::{line::Line, Dataset, Entry, Error, Grain, Result, Schema};
+use async_stream::{stream, try_stream};
+use futures_core::stream::{BoxStream, Stream};
+use futures_util::pin_mut;
+use futures_util::stream::StreamExt;
+use std::collections::HashMap;
+use std::fs;
+use std::fs::File;
+
+fn make_state_initial(state: State, tablet: Tablet) -> State {
     // in a querying tablet, set initial entry to the base of the tablet
     // and preserve the received entry for sowing grains later
     // if tablet base is different from previous entry base
@@ -10,8 +21,8 @@ fn make_state_initial(state: State, tablet: Tablet) {
     let entry_fallback = if do_discard {
         Entry::new(&tablet.base)
     } else {
-        state.entry
-    }
+        state.entry.clone().unwrap()
+    };
 
     let do_sow = !do_discard;
 
@@ -19,33 +30,40 @@ fn make_state_initial(state: State, tablet: Tablet) {
         let e = Entry::new(&tablet.base);
 
         let g = Grain {
-            base: entry.base,
-            base_value: entry.base_value,
-            leaf: entry.base,
+            base: state.entry.clone().unwrap().base,
+            base_value: state.entry.clone().unwrap().base_value,
+            leaf: state.entry.clone().unwrap().base,
             leaf_value: None,
         };
 
-        e.sow(g, tablet.base, entry.base)
+        e.sow(&g, &tablet.base, &state.entry.clone().unwrap().base)
     } else {
         entry_fallback
-    }
+    };
 
-    let entry_base_changed = entry.is_none() || entry.base != entry_initial.base;
+    let entry_base_changed =
+        state.entry.is_none() || state.entry.unwrap().base != entry_initial.base;
 
     // if entry base changed forget thingQuerying
-    let thing_query_initial = if entry_base_changed { None } else { Some(thing_querying) };
+    let thing_querying_initial = if entry_base_changed {
+        None
+    } else {
+        state.thing_querying
+    };
 
-    let query_initial = query;
+    let query_initial = state.query;
 
     let state = State {
-        entry: entry_initial,
+        entry: Some(entry_initial),
         query: query_initial,
         fst: None,
         is_match: false,
         thing_querying: thing_querying_initial,
+        last: None,
+        match_map: HashMap::new(),
     };
 
-    return state
+    return state;
 }
 
 pub fn query_tablet_stream(
@@ -63,7 +81,7 @@ pub fn query_tablet_stream(
         // empty file is the same as "no matches"
         // later tablet avoids lines
         // empty file is the same as "matching all"
-        let empty_is_good = !tablet_is_first && empty;
+        let empty_is_good = !is_first_tablet && empty;
 
         if std::fs::metadata(&filepath).is_err() {
             return;
@@ -76,9 +94,9 @@ pub fn query_tablet_stream(
 
         let state_initial = make_state_initial(state.clone(), tablet.clone());
 
-        let mut state = state_initial;
+        let mut state = state_initial.clone();
 
-        let grains = state.query.mow(tablet.trait_, tablet.thing);
+        let grains = state.query.mow(&tablet.trait_, &tablet.thing);
 
         for result in rdr.records() {
             let record = result?;
@@ -90,13 +108,13 @@ pub fn query_tablet_stream(
 
             let line = line_escaped.unescape();
 
-            state = queryLine(
+            state = query_line(
                 tablet.clone(),
                 grains.clone(),
                 state_initial.clone(),
                 state.clone(),
                 line.clone(),
-            );
+            )?;
 
             if state.last.is_some() {
                 yield state.clone();

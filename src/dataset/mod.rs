@@ -5,6 +5,7 @@ mod select;
 mod select_tbn;
 mod update;
 mod option;
+mod query;
 mod build;
 use crate::{Entry, Result, Schema};
 use futures_core::stream::Stream;
@@ -50,6 +51,14 @@ impl Dataset {
 
     pub async fn select_option(self, query: Entry) -> Result<Vec<Entry>> {
         option::select_option(self, query).await
+    }
+
+    pub fn query_record_stream(self, query: Entry) -> impl Stream<Item = Result<Entry>> {
+        query::query_record_stream(self, query)
+    }
+
+    pub async fn query_record(self, query: Entry) -> Result<Vec<Entry>> {
+        query::query_record(self, query).await
     }
 
     pub async fn build_record(self, query: Entry) -> Result<Entry> {
