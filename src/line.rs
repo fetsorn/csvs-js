@@ -1,7 +1,7 @@
 use regex::{Captures, Regex};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Ord, Eq, PartialEq, PartialOrd)]
 pub struct Line {
     pub key: String,
     pub value: String,

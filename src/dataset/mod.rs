@@ -97,6 +97,14 @@ impl Dataset {
         update::update_record(self, query).await
     }
 
+    pub async fn update_schema(&self, query: Entry) -> Result<()> {
+        schema::update_schema(self, query).await
+    }
+
+    pub async fn update_version(&self, query: Entry) -> Result<()> {
+        version::update_version(self, query).await
+    }
+
     pub async fn print_record(self, query: Vec<Entry>) -> Result<()> {
         select::print_record(self, query).await
     }

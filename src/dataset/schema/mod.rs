@@ -1,6 +1,7 @@
-use crate::{Error, Result, Dataset, Entry, Schema};
+use crate::{Error, Result, Dataset, Entry, Schema, line::Line};
 use std::collections::HashMap;
 use std::fs::File;
+use std::fs;
 
 pub async fn select_schema(dataset: &Dataset) -> Result<Entry> {
     let filepath = dataset.dir.join("_-_.csv");
@@ -44,4 +45,45 @@ pub async fn build_schema(dataset: &Dataset) -> Result<Schema> {
     let schema_record = dataset.select_schema().await?;
 
     Ok(schema_record.try_into()?)
+}
+
+pub async fn update_schema(dataset: &Dataset, query: Entry) -> Result<()> {
+    let filepath = dataset.dir.join("_-_.csv");
+
+    // TODO add validation
+
+    let filepath = File::create(&filepath)?;
+
+    let mut wtr = csv::WriterBuilder::new()
+        .has_headers(false)
+        .from_writer(filepath);
+
+    let mut keys: Vec<String> = query.leaves.clone().into_keys().collect();
+
+    keys.sort();
+
+    let mut lines: Vec<Line> = vec![];
+
+    for trunk in keys {
+        let leaves = query.leaves.get(&trunk).unwrap();
+
+        for entry in leaves {
+            let line = Line {
+                key: entry.base.clone(),
+                value: entry.base_value.clone().unwrap(),
+            };
+
+            lines.push(line);
+        }
+    }
+
+    lines.sort();
+
+    for line in lines {
+        wtr.serialize(line)?;
+    }
+
+    wtr.flush()?;
+
+    Ok(())
 }
