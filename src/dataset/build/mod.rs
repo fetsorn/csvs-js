@@ -6,7 +6,7 @@ use strategy::plan_build;
 use tablet::build_tablet;
 
 pub async fn build_record(dataset: Dataset, query: Entry) -> Result<Entry> {
-    let schema = dataset.clone().select_schema().await?;
+    let schema = dataset.clone().build_schema().await?;
 
     let strategy = plan_build(&schema, &query);
 

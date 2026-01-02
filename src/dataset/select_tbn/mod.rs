@@ -13,6 +13,26 @@ pub fn select_record_stream<S: Stream<Item = Result<Entry>>>(
         for await query in input {
             let query = query?;
 
+            let is_schema = query.base == "_";
+
+            if is_schema {
+                let schema_record = dataset.select_schema().await?;
+
+                yield schema_record;
+
+                continue;
+            }
+
+            let is_version = query.base == ".";
+
+            if is_version {
+                let version_record = dataset.select_version().await?;
+
+                yield version_record;
+
+                continue;
+            }
+
             let has_leaves = query.leaves.len() > 0;
 
             if has_leaves {

@@ -16,7 +16,7 @@ pub fn select_option_stream(
     query: Entry,
 ) -> impl Stream<Item = Result<Entry>> {
     try_stream! {
-        let schema = dataset.clone().select_schema().await?;
+        let schema = dataset.clone().build_schema().await?;
 
         let strategy = plan_option(&schema, &query.base);
 

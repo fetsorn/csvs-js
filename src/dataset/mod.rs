@@ -7,6 +7,8 @@ mod update;
 mod option;
 mod query;
 mod build;
+mod schema;
+mod version;
 use crate::{Entry, Result, Schema};
 use futures_core::stream::Stream;
 use serde::{Deserialize, Serialize};
@@ -72,8 +74,16 @@ impl Dataset {
         select_tbn::select_record_stream(self, input)
     }
 
-    pub async fn select_schema(self) -> Result<Schema> {
-        select::select_schema(self).await
+    pub async fn select_schema(&self) -> Result<Entry> {
+        schema::select_schema(self).await
+    }
+
+    pub async fn build_schema(&self) -> Result<Schema> {
+        schema::build_schema(self).await
+    }
+
+    pub async fn select_version(&self) -> Result<Entry> {
+        version::select_version(self).await
     }
 
     pub fn select_schema_stream<S>(self, input: S) -> impl Stream<Item = Result<Entry>>

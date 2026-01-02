@@ -127,7 +127,7 @@ pub fn select_record_stream<S: Stream<Item = Result<Entry>>>(
                     }
                 }
             } else {
-                let schema = dataset.clone().select_schema().await?;
+                let schema = dataset.clone().build_schema().await?;
 
                 let strategy = plan_select(&schema, &query);
 
