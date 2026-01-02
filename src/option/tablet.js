@@ -66,7 +66,7 @@ export async function optionTabletStream(fs, dir, tablet, { query, matchMap }) {
         controller.enqueue(value);
       }
 
-      const { last, ...stateNew } = value;
+      const { last: omitted, ...stateNew } = value;
 
       stateSaved = stateNew;
     },

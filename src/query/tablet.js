@@ -68,7 +68,7 @@ export async function queryTabletStream(
     tablet,
   );
 
-  let stateSaved = stateInitial;
+  let stateSaved = JSON.parse(JSON.stringify(stateInitial));
 
   const grains = mow(stateSaved.query, tablet.trait, tablet.thing);
 
@@ -93,6 +93,8 @@ export async function queryTabletStream(
     }
 
     const { done, value } = await lineIterator.next();
+
+    //console.log("line iter, ", value, state);
 
     if (done) {
       isDone = true;

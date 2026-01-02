@@ -40,6 +40,8 @@ export async function buildSchema({ fs, dir }) {
 export async function updateSchema({ fs, dir, query }) {
   const filepath = path.join(dir, "_-_.csv");
 
+  // TODO add validation
+
   await fs.promises.writeFile(filepath, "");
 
   let lines = [];
