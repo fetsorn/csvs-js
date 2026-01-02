@@ -4,10 +4,8 @@ extern crate temp_dir;
 use include_dir::{include_dir, Dir};
 use serde_json::Value;
 use std::fs;
-use std::fs::File;
 use std::io::prelude::*;
-use std::path::{Path, PathBuf};
-use temp_dir::TempDir;
+use std::path::Path;
 
 pub static CASES_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/cases");
 pub static RECORDS_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/records");
@@ -60,7 +58,7 @@ pub fn copy(loadname: &str, temp_path: &Path) -> Result<(), std::io::Error> {
 #[macro_export]
 macro_rules! assert_dir {
     ($temp_path:expr, $expected_path:expr) => {
-        let check_path = TempDir::new()?;
+        let check_path = temp_dir::TempDir::new()?;
 
         copy($expected_path, check_path.path());
 

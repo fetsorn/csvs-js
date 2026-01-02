@@ -1,5 +1,6 @@
 [
   {
+    "name": "",
     "value": {
       "_": "datum",
       "datum": "value1",
@@ -20,6 +21,7 @@
     }
   },
   {
+    "name": "",
     "value": {
       "_": "datum"
     },
@@ -31,6 +33,7 @@
     }
   },
   {
+    "name": "",
     "value": {
       "_": "datum",
       "datum": "value1",
