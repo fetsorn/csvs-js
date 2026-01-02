@@ -8,7 +8,8 @@ name = "csvs"
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [dev-dependencies]
-csvs-test = { version = "1.0.1", git = "https://codeberg.org/norcivilianlabs/csvs-test" }
+#csvs-test = { version = "1.0.3", git = "https://codeberg.org/norcivilianlabs/csvs-test" }
+csvs-test = { path = "../csvs-test" }
 
 [dependencies]
 assert-json-diff = "2.0.2"

@@ -28,89 +28,6 @@ impl State {
     }
 }
 
-fn make_state_line(
-    state_initial: State,
-    state: State,
-    tablet: Tablet,
-    grains: Vec<Grain>,
-    trait_: String,
-    thing: String,
-) -> Result<State> {
-    let mut state = state;
-
-    let grain_new = Grain {
-        base: tablet.base,
-        base_value: Some(trait_.clone()),
-        leaf: tablet.thing.clone(),
-        leaf_value: Some(thing.clone()),
-    };
-
-    for grain in grains {
-        let re_str: String = if tablet.trait_is_first {
-            match &grain.base_value {
-                None => String::from(""),
-                Some(s) => s.to_owned(),
-            }
-        } else {
-            match &grain.leaf_value {
-                None => String::from(""),
-                Some(s) => s.to_owned(),
-            }
-        };
-
-        let is_match_grain = if tablet.trait_is_regex {
-            let re = Regex::new(&re_str)?;
-
-            re.is_match(&trait_)
-        } else {
-            re_str == trait_.clone()
-        };
-
-        // when querying also match literal trait from the query
-        // otherwise always true
-        let do_diff = state_initial.thing_querying.is_some();
-
-        let is_match_querying = if do_diff {
-            state_initial.thing_querying.as_ref() == Some(&thing)
-        } else {
-            true
-        };
-
-        let is_match = is_match_grain && is_match_querying;
-
-        state.is_match = if state.is_match {
-            state.is_match
-        } else {
-            is_match
-        };
-
-        if state.is_match {
-            state.thing_querying = Some(thing.to_owned())
-        }
-
-        if is_match {
-            state.entry = match &state.entry {
-                None => panic!("unreachable"),
-                Some(e) => Some(e.sow(&grain_new, &tablet.trait_, &tablet.thing)),
-            };
-        }
-
-        // if previous querying tablet already matched thing
-        // the trait in this record is likely to be the same
-        // and might duplicate in the entry after sow
-        let is_new_thing = match &state_initial.thing_querying {
-            None => true,
-            Some(t) => t != &thing,
-        };
-
-        if is_new_thing {
-            state.query = state.query.sow(&grain_new, &tablet.trait_, &tablet.thing);
-        }
-    }
-
-    Ok(state)
-}
-
 pub fn query_line(
     tablet: Tablet,
     grains: Vec<Grain>,
@@ -148,7 +65,96 @@ pub fn query_line(
         line.value.to_owned()
     };
 
-    state = make_state_line(state_initial, state, tablet, grains, trait_, thing)?;
+    let grain_new = match tablet.thing_is_first {
+        true => match tablet.trait_is_first {
+            true => Grain {
+                base: tablet.thing.to_owned(), // why not trait?
+                base_value: Some(line.key.to_owned()),
+                leaf: tablet.thing.to_owned(), // why not trait?
+                leaf_value: None,
+            },
+            false => Grain {
+                base: tablet.thing.to_owned(), // why not trait?
+                base_value: Some(line.key.to_owned()),
+                leaf: tablet.trait_.to_owned(),
+                leaf_value: Some(line.value.to_owned()),
+            },
+        },
+        false => match tablet.trait_is_first {
+            true => Grain {
+                base: tablet.trait_.to_owned(),
+                base_value: Some(line.key.to_owned()),
+                leaf: tablet.thing.to_owned(),
+                leaf_value: Some(line.value.to_owned()),
+            },
+            false => Grain {
+                base: tablet.base.to_owned(),
+                base_value: None,
+                leaf: tablet.base.to_owned(),
+                leaf_value: None,
+            },
+        },
+    };
+
+    let is_match_grains = grains.into_iter().fold(None, |with_grain, grain| {
+        let re_str: String = if tablet.trait_is_first {
+            match &grain.base_value {
+                None => String::from(""),
+                Some(s) => s.to_owned(),
+            }
+        } else {
+            match &grain.leaf_value {
+                None => String::from(""),
+                Some(s) => s.to_owned(),
+            }
+        };
+
+        let is_match_grain = if tablet.trait_is_regex {
+            let re = Regex::new(&re_str).ok()?;
+
+            re.is_match(&trait_)
+        } else {
+            re_str == trait_.clone()
+        };
+
+        let both_match = match with_grain {
+            None => is_match_grain,
+            Some(with_grain) => with_grain && is_match_grain,
+        };
+
+        Some(both_match)
+    });
+
+    // when querying also match literal trait from the query
+    // otherwise always true
+    let do_diff = state_initial.thing_querying.is_some();
+
+    let is_match_querying = if do_diff {
+        state_initial.thing_querying.as_ref() == Some(&thing)
+    } else {
+        true
+    };
+
+    let is_match = is_match_grains.unwrap() && is_match_querying;
+
+    state.is_match = if state.is_match {
+        state.is_match
+    } else {
+        is_match
+    };
+
+    if state.is_match {
+        state.thing_querying = Some(thing.to_owned())
+    }
+
+    if is_match {
+        state.entry = match &state.entry {
+            None => panic!("unreachable"), // TODO check when this is possible and remove or add to js
+            Some(e) => Some(e.sow(&grain_new, &tablet.trait_, &tablet.thing)),
+        };
+
+        state.query = state.query.sow(&grain_new, &tablet.trait_, &tablet.thing);
+    }
 
     Ok(state)
 }

@@ -1,4 +1,4 @@
-use assert_json_diff::assert_json_eq;
+use assert_json_diff::{assert_json_matches_no_panic, CompareMode, Config};
 use csvs::{Grain, IntoValue, Result};
 use csvs_test::read_testcase;
 use serde::{Deserialize, Serialize};
@@ -7,6 +7,7 @@ use std::fs;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct GrainTest {
+    name: String,
     value: Value,
     grain: Value,
 }
@@ -22,7 +23,19 @@ fn grain_try_from_test() -> Result<()> {
 
         let result_json: Value = serde_json::from_str(&result_string)?;
 
-        assert_json_eq!(result_json, test.grain);
+        let r = assert_json_matches_no_panic(
+            &result_json,
+            &test.grain,
+            Config::new(CompareMode::Strict),
+        );
+
+        assert!(
+            r.is_ok(),
+            "{} failed\n{:#?}\n{:#?}",
+            test.name,
+            result_json,
+            test.grain
+        );
     }
 
     Ok(())
@@ -39,7 +52,16 @@ fn grain_into_test() -> Result<()> {
 
         let result: Value = grain.into_value();
 
-        assert_json_eq!(result, test.value);
+        let r =
+            assert_json_matches_no_panic(&result, &test.value, Config::new(CompareMode::Strict));
+
+        assert!(
+            r.is_ok(),
+            "{} failed\n{:#?}\n{:#?}",
+            test.name,
+            result,
+            test.value
+        );
     }
 
     Ok(())

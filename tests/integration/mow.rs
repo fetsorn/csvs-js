@@ -1,4 +1,4 @@
-use assert_json_diff::assert_json_eq;
+use assert_json_diff::{assert_json_matches_no_panic, CompareMode, Config};
 use csvs::{Entry, Grain, IntoValue, Result};
 use csvs_test::{read_record, read_records, read_testcase};
 use serde::{Deserialize, Serialize};
@@ -7,6 +7,7 @@ use std::fs;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct MowTest {
+    name: String,
     initial: String,
     trunk: String,
     branch: String,
@@ -26,7 +27,19 @@ fn mow_test() -> Result<()> {
 
         let expected_json: Vec<Value> = read_records(&test.expected);
 
-        assert_json_eq!(result_json, expected_json);
+        let r = assert_json_matches_no_panic(
+            &result_json,
+            &expected_json,
+            Config::new(CompareMode::Strict),
+        );
+
+        assert!(
+            r.is_ok(),
+            "{} failed\n{:#?}\n{:#?}",
+            test.name,
+            result_json,
+            expected_json
+        );
     }
 
     Ok(())

@@ -1,3 +1,4 @@
+#![allow(warnings)]
 extern crate dir_diff;
 mod delete;
 mod entry;
@@ -11,3 +12,5 @@ mod sow;
 mod update;
 use serde_json::Value;
 use std::fs;
+
+fn main() {}

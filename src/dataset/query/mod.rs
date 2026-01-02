@@ -60,14 +60,25 @@ pub fn query_record_stream(
 
         let mut stream_map: HashMap<usize, Pin<Box<dyn Stream<Item = Result<State>>>>> = HashMap::new();
 
-        // TODO a while loop that takes a counter
+        // a while loop that takes a counter
         // and a map of counter to stream and state
         while true {
             // initialize the stream for the current counter
             if state_map.get(&counter).is_none() {
-                let state_previous = get_previous_state(&state_map, query.clone(), counter);
+                let state_previous = get_previous_state(
+                    &state_map,
+                    query.clone(),
+                    counter
+                );
 
-                init_iterator(dataset.clone(), &mut state_map, &mut stream_map, strategy[counter].clone(), counter, state_previous);
+                init_iterator(
+                    dataset.clone(),
+                    &mut state_map,
+                    &mut stream_map,
+                    strategy[counter].clone(),
+                    counter,
+                    state_previous
+                );
             }
 
             // get the stream for the current counter
@@ -87,8 +98,6 @@ pub fn query_record_stream(
                     return;
                 } else {
                     // if later tablet is over, close iterator
-                    // has to consume the state map?
-                    // should I pass it as a parameter
                     stop_iterator(&mut stream_map, counter);
 
                     // and resume the previous tablet
@@ -111,7 +120,14 @@ pub fn query_record_stream(
                     counter = counter + 1;
 
                     // pass state to the next tablet
-                    init_iterator(dataset.clone(), &mut state_map, &mut stream_map, strategy[counter].clone(), counter, value);
+                    init_iterator(
+                        dataset.clone(),
+                        &mut state_map,
+                        &mut stream_map,
+                        strategy[counter].clone(),
+                        counter,
+                        value
+                    );
 
                     continue;
                 }

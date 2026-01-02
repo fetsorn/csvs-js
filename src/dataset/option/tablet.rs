@@ -26,7 +26,14 @@ pub fn option_tablet_stream(
             .flexible(true)
             .from_reader(File::open(&filepath)?);
 
-        let mut state = state;
+        let mut state = State {
+            query: state.query.clone(),
+            entry: Entry::new(&tablet.base),
+            fst: None,
+            is_match: false,
+            match_map: state.match_map.clone(),
+            last: None,
+        };
 
         for result in rdr.records() {
             let record = result?;

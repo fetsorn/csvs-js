@@ -1,4 +1,4 @@
-use assert_json_diff::assert_json_eq;
+use assert_json_diff::{assert_json_matches_no_panic, CompareMode, Config};
 use csvs::{Branch, Entry, Leaves, Result, Schema, Trunks};
 use csvs_test::read_testcase;
 use serde::{Deserialize, Serialize};
@@ -8,6 +8,7 @@ use std::fs;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct SchemaTest {
+    name: String,
     entry: Value,
     schema: Value,
 }
@@ -25,7 +26,16 @@ fn entry_into_test() -> Result<()> {
 
         let result_string: String = serde_json::to_string(&result)?;
 
-        assert_json_eq!(result, test.schema);
+        let r =
+            assert_json_matches_no_panic(&result, &test.schema, Config::new(CompareMode::Strict));
+
+        assert!(
+            r.is_ok(),
+            "{} failed\n{:#?}\n{:#?}",
+            test.name,
+            result,
+            test.schema
+        );
     }
 
     Ok(())

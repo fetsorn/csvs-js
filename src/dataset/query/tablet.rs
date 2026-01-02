@@ -75,16 +75,25 @@ pub fn query_tablet_stream(
     try_stream! {
         let filepath = dataset.dir.join(&tablet.filename);
 
-        let mut empty = false;
-
-        // first tablet needs lines
-        // empty file is the same as "no matches"
-        // later tablet avoids lines
-        // empty file is the same as "matching all"
-        let empty_is_good = !is_first_tablet && empty;
-
+        // error when file is empty
         if std::fs::metadata(&filepath).is_err() {
-            return;
+            // first tablet needs lines
+            // empty file is the same as "no matches"
+            // later tablet avoids lines
+            // empty file is the same as "matching all"
+            let empty_is_good = !is_first_tablet;
+
+            if empty_is_good {
+                let mut state = state.clone();
+
+                state.last = Some(Box::new(state.clone()));
+
+                yield state;
+
+                return;
+            } else {
+                return;
+            }
         }
 
         let mut rdr = csv::ReaderBuilder::new()
@@ -116,11 +125,15 @@ pub fn query_tablet_stream(
                 line.clone(),
             )?;
 
-            if state.last.is_some() {
-                yield state.clone();
+            if let Some(last) = state.last {
+                yield *last;
 
                 state.last = None;
             }
+        }
+
+        if state.is_match {
+            yield state;
         }
     }
 }

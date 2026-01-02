@@ -1,4 +1,4 @@
-use assert_json_diff::assert_json_eq;
+use assert_json_diff::{assert_json_matches_no_panic, Config, CompareMode};
 use temp_dir::TempDir;
 use serde_json::Value;
 use csvs::{
@@ -41,7 +41,9 @@ async fn select_test() -> Result<()> {
 
         let expected_json: Vec<Value> = read_records(&test.expected);
 
-        assert_json_eq!(entries_json, expected_json);
+        let r = assert_json_matches_no_panic(&entries_json, &expected_json, Config::new(CompareMode::Strict));
+
+        assert!(r.is_ok(), "{} failed\n{:#?}\n{:#?}", test.name, entries_json, expected_json);
     }
 
     Ok(())

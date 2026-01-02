@@ -1,5 +1,5 @@
 extern crate dir_diff;
-use crate::{Entry, Result, Dataset};
+use csvs::{Entry, Result, Dataset};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use temp_dir::TempDir;

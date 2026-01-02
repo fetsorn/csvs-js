@@ -3,8 +3,6 @@ use clap::{Parser, Subcommand};
 use csvs::{Entry, Error, Result, Dataset};
 use serde_json::{from_str, Value};
 use std::env;
-#[cfg(test)]
-mod test;
 
 /// A command-line utility for comma separated value store datasets
 #[derive(Parser)]

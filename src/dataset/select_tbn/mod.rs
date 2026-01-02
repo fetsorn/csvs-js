@@ -3,6 +3,7 @@ use async_stream::{stream, try_stream};
 use futures_core::stream::{BoxStream, Stream};
 use futures_util::pin_mut;
 use futures_util::stream::StreamExt;
+use std::pin::{Pin, pin};
 
 pub fn select_record_stream<S: Stream<Item = Result<Entry>>>(
     dataset: Dataset,
@@ -12,16 +13,32 @@ pub fn select_record_stream<S: Stream<Item = Result<Entry>>>(
         for await query in input {
             let query = query?;
 
-            let stream = dataset.clone().select_option_stream(query);
+            let has_leaves = query.leaves.len() > 0;
 
-            pin_mut!(stream); // needed for iteration
+            if has_leaves {
+                let stream = dataset.clone().query_record_stream(query);
 
-            while let Some(entry) = stream.next().await {
-                let entry = entry?;
+                pin_mut!(stream); // needed for iteration
 
-                let entry = dataset.clone().build_record(entry).await?;
+                while let Some(entry) = stream.next().await {
+                    let entry = entry?;
 
-                yield entry;
+                    let entry = dataset.clone().build_record(entry).await?;
+
+                    yield entry;
+                }
+            } else {
+                let stream = dataset.clone().select_option_stream(query);
+
+                pin_mut!(stream); // needed for iteration
+
+                while let Some(entry) = stream.next().await {
+                    let entry = entry?;
+
+                    let entry = dataset.clone().build_record(entry).await?;
+
+                    yield entry;
+                }
             }
         }
     }

@@ -1,4 +1,3 @@
-use assert_json_diff::assert_json_eq;
 use csvs::{Entry, Result, Schema};
 use csvs_test::{read_record, read_testcase};
 use serde::{Deserialize, Serialize};

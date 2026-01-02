@@ -75,5 +75,7 @@ pub fn plan_query(schema: &Schema, query: &Entry) -> Vec<Tablet> {
         [with_branch, tablets_new].concat()
     });
 
+    // TODO add base_is_trunk_tablets
+
     queried_tablets
 }
