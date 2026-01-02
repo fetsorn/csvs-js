@@ -85,3 +85,23 @@ pub async fn select_record(dataset: Dataset, query: Vec<Entry>) -> Result<Vec<En
 
     Ok(entries)
 }
+
+pub async fn print_record(dataset: Dataset, query: Vec<Entry>) -> Result<()> {
+    let readable_stream = try_stream! {
+        for q in query {
+            yield q;
+        }
+    };
+
+    let s = dataset.select_record_stream(readable_stream);
+
+    pin_mut!(s); // needed for iteration
+
+    while let Some(entry) = s.next().await {
+        let entry = entry?;
+
+        println!("{}", entry);
+    }
+
+    Ok(())
+}

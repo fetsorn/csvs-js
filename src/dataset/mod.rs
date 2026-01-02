@@ -1,7 +1,6 @@
 mod create;
 mod delete;
 mod insert;
-mod select;
 mod select_tbn;
 mod update;
 mod option;
@@ -86,13 +85,6 @@ impl Dataset {
         version::select_version(self).await
     }
 
-    pub fn select_schema_stream<S>(self, input: S) -> impl Stream<Item = Result<Entry>>
-    where
-        S: Stream<Item = Result<Entry>>
-    {
-        select::select_schema_stream(self, input)
-    }
-
     pub async fn update_record(self, query: Vec<Entry>) -> Result<()> {
         update::update_record(self, query).await
     }
@@ -106,6 +98,6 @@ impl Dataset {
     }
 
     pub async fn print_record(self, query: Vec<Entry>) -> Result<()> {
-        select::print_record(self, query).await
+        select_tbn::print_record(self, query).await
     }
 }
