@@ -5,10 +5,10 @@ import { selectSchema } from "../schema/index.js";
 import { selectVersion } from "../version/index.js";
 
 // for backwards compatibility with push streams
-export function selectRecordStream({ fs, dir }) {
+export function selectRecordStream({ fs, dir, light }) {
   return new TransformStream({
     async transform(query, controller) {
-      const entries = await selectRecord({ fs, dir, query });
+      const entries = await selectRecord({ fs, dir, query, light });
 
       for (const entry of entries) {
         controller.enqueue(entry);
@@ -17,7 +17,7 @@ export function selectRecordStream({ fs, dir }) {
   });
 }
 
-export async function selectRecordStreamPull({ fs, dir, query }) {
+export async function selectRecordStreamPull({ fs, dir, query, light }) {
   const isSchema = query._ === "_";
 
   const isVersion = query._ === ".";
@@ -70,7 +70,9 @@ export async function selectRecordStreamPull({ fs, dir, query }) {
       return { done: true, value: undefined };
     }
 
-    const record = await buildRecord({ fs, dir, query: [value] });
+    const record = light
+      ? value
+      : await buildRecord({ fs, dir, query: [value] });
 
     return { done: false, value: record };
   }
@@ -88,7 +90,7 @@ export async function selectRecordStreamPull({ fs, dir, query }) {
   });
 }
 
-export async function selectRecord({ fs, dir, query }) {
+export async function selectRecord({ fs, dir, query, light }) {
   // exit if record is undefined
   if (query === undefined) return;
 
@@ -97,7 +99,7 @@ export async function selectRecord({ fs, dir, query }) {
   let entries = [];
 
   for (const query of queries) {
-    const stream = await selectRecordStreamPull({ fs, dir, query });
+    const stream = await selectRecordStreamPull({ fs, dir, query, light });
 
     for await (const record of stream) {
       entries.push(record);
