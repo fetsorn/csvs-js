@@ -75,7 +75,8 @@ pub fn plan_query(schema: &Schema, query: &Entry) -> Vec<Tablet> {
         [with_branch, tablets_new].concat()
     });
 
-    // TODO add base_is_trunk_tablets
+    // TODO js has baseIsTrunkTablets
+    // which doesn't happen in the test suite right now
 
     queried_tablets
 }
