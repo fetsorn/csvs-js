@@ -1,5 +1,4 @@
-#+TITLE: csvs-js
-#+OPTIONS: toc:nil
+#+title: Contributing
 
 Create, read, update and delete records in a csvs database, run powerful search queries.
 
@@ -18,84 +17,6 @@ npx http-server
 # publish
 yarn build
 npm publish
-#+end_src
-
-* Getting started
-#+begin_src js
-// functions exported by csvs-js require a callback
-// that describes how to fetch and write files from a csvs database
-
-function fetchDataMetadir(path) {
-  // fetch file from path
-}
-
-function writeDataMetadir(path, content) {
-  // write content to file at path
-}
-
-const callback = {
-  fetch: fetchDataMetadir,
-  write: writeDataMetadir
-}
-
-// get array of results from query
-var searchParams = new URLSearchParams()
-searchParams.set('val1', 'foo')
-const query1 = await queryMetadir(searchParams, callback, true)
-console.log(query1)
-//  [{"val1": "foo",
-//    "val2": "bar",
-//    "UUID": "b29b9ee3ad01efde7d8694cea4a37844c677ad807b61fa90c44409a21710035c"}]
-
-// if object has no uuid
-// editEntry creates a new record in the database
-// and returns it
-let entryBaz = {"val1": "foo", "val2": "baz"}
-let entryNew1 = await editEntry(entryBaz, callback)
-console.log(entryNew1)
-// {"val1": "foo",
-//  "val2": "baz",
-//  "UUID": "33d6e141e92852d5be1930458c1713c2bed09f42d545bf95c0f6d6e271b4077a"}
-
-const query2 = await queryMetadir(searchParams, callback, true)
-console.log(query2)
-//  [{"val1": "foo",
-//    "val2": "bar",
-//    "UUID": "b29b9ee3ad01efde7d8694cea4a37844c677ad807b61fa90c44409a21710035c"},
-//   {"val1": "foo",
-//    "val2": "baz",
-//    "UUID": "33d6e141e92852d5be1930458c1713c2bed09f42d545bf95c0f6d6e271b4077a"}]
-
-// if object has a uuid
-// editEntry updates the record with matching uuid
-// and returns it
-let entryBarbaz = {"val1": "foo",
-                   "val2": "barbaz",
-                   "UUID": "33d6e141e92852d5be1930458c1713c2bed09f42d545bf95c0f6d6e271b4077a"}
-let entryNew2 = await editEntry(entryBarbaz, callback)
-console.log(entryNew)
-// {"val1": "foo",
-//  "val2": "barbaz",
-//  "UUID": "33d6e141e92852d5be1930458c1713c2bed09f42d545bf95c0f6d6e271b4077a"}
-
-const query3 = await queryMetadir(searchParams, callback, true)
-console.log(query3)
-//  [{"val1": "foo",
-//    "val2": "bar",
-//    "UUID": "b29b9ee3ad01efde7d8694cea4a37844c677ad807b61fa90c44409a21710035c"},
-//   {"val1": "foo",
-//    "val2": "barbaz",
-//    "UUID": "33d6e141e92852d5be1930458c1713c2bed09f42d545bf95c0f6d6e271b4077a"}]
-
-// deleteEntry deletes a record with matching uuid
-let uuid = "b29b9ee3ad01efde7d8694cea4a37844c677ad807b61fa90c44409a21710035c"
-await deleteEntry(uuid, callback)
-
-const query4 = await queryMetadir(searchParams, callback, true)
-console.log(query4)
-//  [{"val1": "foo",
-//    "val2": "barbaz",
-//    "UUID": "33d6e141e92852d5be1930458c1713c2bed09f42d545bf95c0f6d6e271b4077a"}]
 #+end_src
 
 * More csvs projects

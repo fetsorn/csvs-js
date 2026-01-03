@@ -62,6 +62,7 @@ export function planQuery(schema, query) {
 
   const { leaves } = schema[base];
 
+  // TODO remove, doesn't happen in the test suite right now
   const baseIsTrunkTablets = leaves.map((leaf) => ({
     // what branch to set?
     thing: base,
