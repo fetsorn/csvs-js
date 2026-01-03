@@ -26,7 +26,7 @@ Check out [the FAQ][FAQ] for answers to common questions about the project.
 
 # Features
  - Search with keywords and regular expressions.
- - Run on MacOS, Linux, Windows.
+ - Run in Node.js and in the browser.
 
 
 # Install

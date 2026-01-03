@@ -1,9 +1,5 @@
 #+title: Contributing
 
-Create, read, update and delete records in a csvs database, run powerful search queries.
-
-[[https://norcivilianlabs.org/csvs][Docs]]
-
 * Setup
 #+begin_src sh
 # install
@@ -19,18 +15,7 @@ yarn build
 npm publish
 #+end_src
 
-* More csvs projects
-[[https://github.com/fetsorn/csvs-spec][csvs-spec]] - format description
-
-[[https://github.com/fetsorn/qualia][qualia]] - Web UI and desktop app
-
-[[https://github.com/fetsorn/csvs-sh][csvs-sh]] - command-line interface
-
-
-
-[[https://github.com/fetsorn/wasm-grep][wasm-grep]] - ripgrep compiled to WASM
-
-
+#+begin_source markdown
 # Getting Started
 
 This documentation describes the library for searching and updating [CSVS](https://csvs-format.docs.norcivilianlabs.org/) datasets.
@@ -181,3 +166,4 @@ const entries = await new CSVS({ fs, dir }).select(new URLSearchParams());
 //   actdate: '2001-01-01'
 // }]
 ```
+#+end_source markdown
