@@ -30,11 +30,11 @@ fn get_previous_state(
     get_previous_state(state_map, query, c - 1)
 }
 
-fn stop_iterator(stream_map: &mut HashMap<usize, Pin<Box<dyn Stream<Item = Result<State>>>>>, c: usize) {
+fn stop_iterator(stream_map: &mut HashMap<usize, Pin<Box<dyn Stream<Item = Result<State>> + Send>>>, c: usize) {
     stream_map.remove(&c);
 }
 
-fn init_iterator(dataset: Dataset, state_map: &mut HashMap<usize, State>, stream_map: &mut HashMap<usize, Pin<Box<dyn Stream<Item = Result<State>>>>>, tablet: Tablet, c: usize, s: State) {
+fn init_iterator(dataset: Dataset, state_map: &mut HashMap<usize, State>, stream_map: &mut HashMap<usize, Pin<Box<dyn Stream<Item = Result<State>> + Send>>>, tablet: Tablet, c: usize, s: State) {
     let is_first_tablet = c == 0;
 
     let tablet_stream = query_tablet_stream(dataset, tablet.clone(), s.clone(), is_first_tablet);
@@ -58,7 +58,7 @@ pub fn query_record_stream(
         // persist the state of each stream?
         let mut state_map: HashMap<usize, State> = HashMap::new();
 
-        let mut stream_map: HashMap<usize, Pin<Box<dyn Stream<Item = Result<State>>>>> = HashMap::new();
+        let mut stream_map: HashMap<usize, Pin<Box<dyn Stream<Item = Result<State>> + Send>>> = HashMap::new();
 
         // a while loop that takes a counter
         // and a map of counter to stream and state
@@ -82,7 +82,7 @@ pub fn query_record_stream(
             }
 
             // get the stream for the current counter
-            let tablet_stream: &mut Pin<Box<dyn Stream<Item = Result<State>>>> = stream_map.get_mut(&counter).unwrap();
+            let tablet_stream: &mut Pin<Box<dyn Stream<Item = Result<State>> + Send>> = stream_map.get_mut(&counter).unwrap();
 
             let is_first_tablet = counter == 0;
 

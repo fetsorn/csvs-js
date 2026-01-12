@@ -1,6 +1,7 @@
 use assert_json_diff::{assert_json_matches_no_panic, Config, CompareMode};
 use temp_dir::TempDir;
 use serde_json::Value;
+use async_stream::try_stream;
 use csvs::{
     Result,
     Entry, IntoValue, Dataset
@@ -8,6 +9,24 @@ use csvs::{
 use csvs_test::{read_record, read_records, copy, read_testcase};
 use serde::{Deserialize, Serialize};
 use std::fs;
+
+// make sure that select stream is Send
+fn assert_send<T: Send>(_: T) {}
+
+#[tokio::test]
+async fn stream_is_send() -> Result<()> {
+    let temp_path = TempDir::new()?;
+
+    let dataset = Dataset::new(&temp_path.path().to_owned());
+
+    let readable_stream = try_stream! {
+       yield Entry::new("");
+    };
+
+    assert_send(dataset.select_record_stream(readable_stream));
+
+    Ok(())
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct SelectTest {
