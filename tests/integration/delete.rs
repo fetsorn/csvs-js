@@ -27,7 +27,7 @@ async fn delete_test() -> Result<()> {
             .map(|query| read_record(&query).try_into())
             .collect::<Result<Vec<Entry>>>()?;
 
-        let dataset = Dataset::new(&temp_path.path().to_owned());
+        let dataset = Dataset::open(&temp_path.path().to_owned()).await?;
 
         dataset.delete_record(queries).await;
 

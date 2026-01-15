@@ -8,6 +8,7 @@ use std::pin::{Pin, pin};
 pub fn select_record_stream<S: Stream<Item = Result<Entry>>>(
     dataset: Dataset,
     input: S,
+    light: bool,
 ) -> impl Stream<Item = Result<Entry>> {
     try_stream! {
         for await query in input {
@@ -43,6 +44,12 @@ pub fn select_record_stream<S: Stream<Item = Result<Entry>>>(
                 while let Some(entry) = stream.next().await {
                     let entry = entry?;
 
+                    if light {
+                        yield entry;
+
+                        continue;
+                    }
+
                     let entry = dataset.clone().build_record(entry).await?;
 
                     yield entry;
@@ -54,6 +61,12 @@ pub fn select_record_stream<S: Stream<Item = Result<Entry>>>(
 
                 while let Some(entry) = stream.next().await {
                     let entry = entry?;
+
+                    if light {
+                        yield entry;
+
+                        continue;
+                    }
 
                     let entry = dataset.clone().build_record(entry).await?;
 
@@ -73,7 +86,7 @@ pub async fn select_record(dataset: Dataset, query: Vec<Entry>) -> Result<Vec<En
 
     let mut entries = vec![];
 
-    let s = dataset.select_record_stream(readable_stream);
+    let s = dataset.select_record_stream(readable_stream, false);
 
     pin_mut!(s); // needed for iteration
 
@@ -93,7 +106,7 @@ pub async fn print_record(dataset: Dataset, query: Vec<Entry>) -> Result<()> {
         }
     };
 
-    let s = dataset.select_record_stream(readable_stream);
+    let s = dataset.select_record_stream(readable_stream, false);
 
     pin_mut!(s); // needed for iteration
 

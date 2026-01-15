@@ -17,13 +17,13 @@ fn assert_send<T: Send>(_: T) {}
 async fn stream_is_send() -> Result<()> {
     let temp_path = TempDir::new()?;
 
-    let dataset = Dataset::new(&temp_path.path().to_owned());
+    let dataset = Dataset::create(&temp_path.path().to_owned(), true).await?;
 
     let readable_stream = try_stream! {
        yield Entry::new("");
     };
 
-    assert_send(dataset.select_record_stream(readable_stream));
+    assert_send(dataset.select_record_stream(readable_stream, false));
 
     Ok(())
 }
@@ -52,7 +52,7 @@ async fn select_test() -> Result<()> {
             .map(|query| read_record(&query).try_into())
             .collect::<Result<Vec<Entry>>>()?;
 
-        let dataset = Dataset::new(&temp_path.path().to_owned());
+        let dataset = Dataset::open(&temp_path.path().to_owned()).await?;
 
         let entries = dataset.select_record(queries).await?;
 

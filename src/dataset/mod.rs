@@ -4,6 +4,7 @@ mod insert;
 mod select;
 mod update;
 mod option;
+mod open;
 mod query;
 mod build;
 mod schema;
@@ -19,14 +20,12 @@ pub struct Dataset {
 }
 
 impl Dataset {
-    pub fn new(dir: &PathBuf) -> Self {
-        Dataset { dir: dir.clone() }
+    pub async fn open(dir: &PathBuf) -> Result<Self> {
+        open::open(dir).await
     }
 
-    pub fn create(&self, name: &str) -> Result<()> {
-        create::create_dataset(self, name);
-
-        Ok(())
+    pub async fn create(dir: &PathBuf, nested: bool) -> Result<Self> {
+        create::create(dir, nested).await
     }
 
     pub async fn delete_record(self, query: Vec<Entry>) -> Result<()> {
@@ -66,11 +65,11 @@ impl Dataset {
         build::build_record(self, query).await
     }
 
-    pub fn select_record_stream<S>(self, input: S) -> impl Stream<Item = Result<Entry>>
+    pub fn select_record_stream<S>(self, input: S, light: bool) -> impl Stream<Item = Result<Entry>>
     where
         S: Stream<Item = Result<Entry>>,
     {
-        select::select_record_stream(self, input)
+        select::select_record_stream(self, input, light)
     }
 
     pub async fn select_schema(&self) -> Result<Entry> {
