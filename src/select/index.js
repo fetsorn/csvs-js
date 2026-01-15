@@ -1,3 +1,4 @@
+import path from "path";
 import { queryRecordStream } from "../query/index.js";
 import { selectOptionStream } from "../option/index.js";
 import { buildRecord } from "../build/index.js";
@@ -5,10 +6,23 @@ import { selectSchema } from "../schema/index.js";
 import { selectVersion } from "../version/index.js";
 
 // for backwards compatibility with push streams
-export function selectRecordStream({ fs, dir, light }) {
+export function selectRecordStream({
+  fs,
+  bare = true,
+  dir,
+  light,
+  csvsdir = bare ? dir : path.join(dir, "csvs"),
+}) {
   return new TransformStream({
     async transform(query, controller) {
-      const entries = await selectRecord({ fs, dir, query, light });
+      const entries = await selectRecord({
+        fs,
+        bare,
+        dir,
+        csvsdir,
+        query,
+        light,
+      });
 
       for (const entry of entries) {
         controller.enqueue(entry);
@@ -17,7 +31,14 @@ export function selectRecordStream({ fs, dir, light }) {
   });
 }
 
-export async function selectRecordStreamPull({ fs, dir, query, light }) {
+export async function selectRecordStreamPull({
+  fs,
+  bare = true,
+  dir,
+  query,
+  light,
+  csvsdir = bare ? dir : path.join(dir, "csvs"),
+}) {
   const isSchema = query._ === "_";
 
   const isVersion = query._ === ".";
@@ -33,8 +54,8 @@ export async function selectRecordStreamPull({ fs, dir, query, light }) {
   async function initStream() {
     // decide whether we want option or query
     const recordStream = hasLeaves
-      ? await queryRecordStream({ fs, dir, query })
-      : await selectOptionStream({ fs, dir, query });
+      ? await queryRecordStream({ fs, bare, dir, csvsdir, query })
+      : await selectOptionStream({ fs, bare, dir, csvsdir, query });
 
     recordIterator = recordStream[Symbol.asyncIterator]();
   }
@@ -47,7 +68,7 @@ export async function selectRecordStreamPull({ fs, dir, query, light }) {
     if (isSchema) {
       isDone = true;
 
-      const schemaRecord = await selectSchema({ fs, dir });
+      const schemaRecord = await selectSchema({ fs, bare, dir, csvsdir });
 
       return { done: false, value: schemaRecord };
     }
@@ -55,7 +76,7 @@ export async function selectRecordStreamPull({ fs, dir, query, light }) {
     if (isVersion) {
       isDone = true;
 
-      const versionRecord = await selectVersion({ fs, dir });
+      const versionRecord = await selectVersion({ fs, bare, dir, csvsdir });
 
       return { done: false, value: versionRecord };
     }
@@ -72,7 +93,7 @@ export async function selectRecordStreamPull({ fs, dir, query, light }) {
 
     const record = light
       ? value
-      : await buildRecord({ fs, dir, query: [value] });
+      : await buildRecord({ fs, bare, dir, csvsdir, query: [value] });
 
     return { done: false, value: record };
   }
@@ -90,7 +111,14 @@ export async function selectRecordStreamPull({ fs, dir, query, light }) {
   });
 }
 
-export async function selectRecord({ fs, dir, query, light }) {
+export async function selectRecord({
+  fs,
+  bare = true,
+  dir,
+  query,
+  light,
+  csvsdir = bare ? dir : path.join(dir, "csvs"),
+}) {
   // exit if record is undefined
   if (query === undefined) return;
 
@@ -99,7 +127,14 @@ export async function selectRecord({ fs, dir, query, light }) {
   let entries = [];
 
   for (const query of queries) {
-    const stream = await selectRecordStreamPull({ fs, dir, query, light });
+    const stream = await selectRecordStreamPull({
+      fs,
+      bare,
+      dir,
+      csvsdir,
+      query,
+      light,
+    });
 
     for await (const record of stream) {
       entries.push(record);

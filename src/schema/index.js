@@ -3,8 +3,13 @@ import csv from "papaparse";
 import { isEmpty, chunksToLines } from "../stream.js";
 import { toSchema } from "../schema.js";
 
-export async function selectSchema({ fs, dir }) {
-  const filepath = path.join(dir, "_-_.csv");
+export async function selectSchema({
+  fs,
+  bare = true,
+  dir,
+  csvsdir = bare ? dir : path.join(dir, "csvs"),
+}) {
+  const filepath = path.join(csvsdir, "_-_.csv");
 
   const lineStream = (await isEmpty(fs, filepath))
     ? ReadableStream.from([])
@@ -29,16 +34,27 @@ export async function selectSchema({ fs, dir }) {
   return entry;
 }
 
-export async function buildSchema({ fs, dir }) {
-  const schemaRecord = await selectSchema({ fs, dir });
+export async function buildSchema({
+  fs,
+  bare = true,
+  dir,
+  csvsdir = bare ? dir : path.join(dir, "csvs"),
+}) {
+  const schemaRecord = await selectSchema({ fs, bare, dir, csvsdir });
 
   const schema = toSchema(schemaRecord);
 
   return schema;
 }
 
-export async function updateSchema({ fs, dir, query }) {
-  const filepath = path.join(dir, "_-_.csv");
+export async function updateSchema({
+  fs,
+  bare = true,
+  dir,
+  query,
+  csvsdir = bare ? dir : path.join(dir, "csvs"),
+}) {
+  const filepath = path.join(csvsdir, "_-_.csv");
 
   // TODO add validation
 

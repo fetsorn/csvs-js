@@ -1,3 +1,4 @@
+import { init } from "./init/index.js";
 import { buildSchema } from "./schema/index.js";
 import {
   selectRecord,
@@ -19,6 +20,7 @@ import {
 import { mow, sow } from "./record.js";
 
 export {
+  init,
   selectRecordStream,
   selectRecordStreamPull,
   selectRecord,
@@ -38,6 +40,7 @@ export {
 };
 
 export default {
+  init,
   selectRecordStream,
   selectRecordStreamPull,
   selectRecord,

@@ -1,10 +1,17 @@
+import path from "path";
 import { ReadableStream } from "@swimburger/isomorphic-streams";
 import { planQuery } from "./strategy.js";
 import { buildSchema } from "../schema/index.js";
 import { queryTabletStream } from "./tablet.js";
 
-export async function queryRecordStream({ fs, dir, query }) {
-  const schema = await buildSchema({ fs, dir });
+export async function queryRecordStream({
+  fs,
+  bare = true,
+  dir,
+  query,
+  csvsdir = bare ? dir : path.join(dir, "csvs"),
+}) {
+  const schema = await buildSchema({ fs, bare, dir, csvsdir });
 
   const strategy = planQuery(schema, query);
 
@@ -33,7 +40,7 @@ export async function queryRecordStream({ fs, dir, query }) {
 
     const tabletStream = await queryTabletStream(
       fs,
-      dir,
+      csvsdir,
       strategy[counter],
       state,
       isFirstTablet,
@@ -107,7 +114,13 @@ export async function queryRecordStream({ fs, dir, query }) {
   });
 }
 
-export async function queryRecord({ fs, dir, query }) {
+export async function queryRecord({
+  fs,
+  bare = true,
+  dir,
+  query,
+  csvsdir = bare ? dir : path.join(dir, "csvs"),
+}) {
   // exit if record is undefined
   if (query === undefined) return;
 
@@ -116,7 +129,13 @@ export async function queryRecord({ fs, dir, query }) {
   let entries = [];
 
   for (const query of queries) {
-    let entryStream = await queryRecordStream({ fs, dir, query });
+    let entryStream = await queryRecordStream({
+      fs,
+      bare,
+      dir,
+      csvsdir,
+      query,
+    });
 
     for await (const entry of entryStream) {
       entries.push(entry);

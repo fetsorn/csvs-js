@@ -1,3 +1,4 @@
+import path from "path";
 import { planBuild } from "./strategy.js";
 import { buildTablet } from "./tablet.js";
 import { buildSchema } from "../schema/index.js";
@@ -8,7 +9,13 @@ import { buildSchema } from "../schema/index.js";
  * @function
  * @returns {Object[]}
  */
-export async function buildRecord({ fs, dir, query }) {
+export async function buildRecord({
+  fs,
+  bare = true,
+  dir,
+  csvsdir = bare ? dir : path.join(dir, "csvs"),
+  query,
+}) {
   const schema = await buildSchema({ fs, dir });
 
   const strategy = planBuild(schema, query[0]);
@@ -16,7 +23,7 @@ export async function buildRecord({ fs, dir, query }) {
   let entry = query[0];
 
   for (const tablet of strategy) {
-    entry = await buildTablet(fs, dir, tablet, entry);
+    entry = await buildTablet(fs, csvsdir, tablet, entry);
   }
 
   // if nothing is found, return input unchanged

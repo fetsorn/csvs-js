@@ -1,10 +1,17 @@
+import path from "path";
 import { ReadableStream } from "@swimburger/isomorphic-streams";
 import { buildSchema } from "../schema/index.js";
 import { planSelect } from "./strategy.js";
 import { optionTabletStream } from "./tablet.js";
 
-export async function selectOptionStream({ fs, dir, query }) {
-  const schema = await buildSchema({ fs, dir });
+export async function selectOptionStream({
+  fs,
+  bare = true,
+  dir,
+  query,
+  csvsdir = bare ? dir : path.join(dir, "csvs"),
+}) {
+  const schema = await buildSchema({ fs, bare, dir, csvsdir });
 
   const strategy = planSelect(schema, query)[Symbol.iterator]();
 
@@ -23,7 +30,7 @@ export async function selectOptionStream({ fs, dir, query }) {
       return;
     }
 
-    const tabletStream = await optionTabletStream(fs, dir, value, state);
+    const tabletStream = await optionTabletStream(fs, csvsdir, value, state);
 
     tabletIterator = tabletStream[Symbol.asyncIterator]();
   }
@@ -63,7 +70,13 @@ export async function selectOptionStream({ fs, dir, query }) {
   });
 }
 
-export async function selectOption({ fs, dir, query }) {
+export async function selectOption({
+  fs,
+  bare = true,
+  dir,
+  query,
+  csvsdir = bare ? dir : path.join(dir, "csvs"),
+}) {
   // exit if record is undefined
   if (query === undefined) return;
 
@@ -72,7 +85,13 @@ export async function selectOption({ fs, dir, query }) {
   let entries = [];
 
   for (const query of queries) {
-    let optionStream = await selectOptionStream({ fs, dir, query });
+    let optionStream = await selectOptionStream({
+      fs,
+      bare,
+      dir,
+      csvsdir,
+      query,
+    });
 
     for await (const option of optionStream) {
       entries.push(option);

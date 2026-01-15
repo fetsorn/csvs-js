@@ -2,8 +2,13 @@ import path from "path";
 import csv from "papaparse";
 import { isEmpty, chunksToLines } from "../stream.js";
 
-export async function selectVersion({ fs, dir }) {
-  const filepath = path.join(dir, ".csvs.csv");
+export async function selectVersion({
+  fs,
+  bare = true,
+  dir,
+  csvsdir = bare ? dir : path.join(dir, "csvs"),
+}) {
+  const filepath = path.join(csvsdir, ".csvs.csv");
 
   const lineStream = (await isEmpty(fs, filepath))
     ? ReadableStream.from([])
@@ -24,8 +29,14 @@ export async function selectVersion({ fs, dir }) {
   return entry;
 }
 
-export async function updateVersion({ fs, dir, query }) {
-  const filepath = path.join(dir, ".csvs.csv");
+export async function updateVersion({
+  fs,
+  bare = true,
+  dir,
+  query,
+  csvsdir = bare ? dir : path.join(dir, "csvs"),
+}) {
+  const filepath = path.join(csvsdir, ".csvs.csv");
 
   await fs.promises.writeFile(filepath, "");
 
