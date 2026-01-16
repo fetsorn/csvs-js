@@ -8,7 +8,7 @@ import { selectVersion } from "../version/index.js";
 // for backwards compatibility with push streams
 export function selectRecordStream({
   fs,
-  bare = true,
+  bare = false,
   dir,
   light,
   csvsdir = bare ? dir : path.join(dir, "csvs"),
@@ -33,7 +33,7 @@ export function selectRecordStream({
 
 export async function selectRecordStreamPull({
   fs,
-  bare = true,
+  bare = false,
   dir,
   query,
   light,
@@ -113,7 +113,7 @@ export async function selectRecordStreamPull({
 
 export async function selectRecord({
   fs,
-  bare = true,
+  bare = false,
   dir,
   query,
   light,

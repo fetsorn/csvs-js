@@ -6,7 +6,7 @@ import { queryTabletStream } from "./tablet.js";
 
 export async function queryRecordStream({
   fs,
-  bare = true,
+  bare = false,
   dir,
   query,
   csvsdir = bare ? dir : path.join(dir, "csvs"),
@@ -116,7 +116,7 @@ export async function queryRecordStream({
 
 export async function queryRecord({
   fs,
-  bare = true,
+  bare = false,
   dir,
   query,
   csvsdir = bare ? dir : path.join(dir, "csvs"),

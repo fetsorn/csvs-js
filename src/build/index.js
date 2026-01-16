@@ -11,12 +11,12 @@ import { buildSchema } from "../schema/index.js";
  */
 export async function buildRecord({
   fs,
-  bare = true,
+  bare = false,
   dir,
   csvsdir = bare ? dir : path.join(dir, "csvs"),
   query,
 }) {
-  const schema = await buildSchema({ fs, dir });
+  const schema = await buildSchema({ fs, bare, dir, csvsdir });
 
   const strategy = planBuild(schema, query[0]);
 

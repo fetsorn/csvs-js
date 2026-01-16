@@ -4,7 +4,7 @@ import { isEmpty, chunksToLines } from "../stream.js";
 
 export async function selectVersion({
   fs,
-  bare = true,
+  bare = false,
   dir,
   csvsdir = bare ? dir : path.join(dir, "csvs"),
 }) {
@@ -31,7 +31,7 @@ export async function selectVersion({
 
 export async function updateVersion({
   fs,
-  bare = true,
+  bare = false,
   dir,
   query,
   csvsdir = bare ? dir : path.join(dir, "csvs"),

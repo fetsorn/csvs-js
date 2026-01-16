@@ -6,7 +6,7 @@ import { optionTabletStream } from "./tablet.js";
 
 export async function selectOptionStream({
   fs,
-  bare = true,
+  bare = false,
   dir,
   query,
   csvsdir = bare ? dir : path.join(dir, "csvs"),
@@ -72,7 +72,7 @@ export async function selectOptionStream({
 
 export async function selectOption({
   fs,
-  bare = true,
+  bare = false,
   dir,
   query,
   csvsdir = bare ? dir : path.join(dir, "csvs"),

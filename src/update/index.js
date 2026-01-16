@@ -7,7 +7,7 @@ import { updateVersion } from "../version/index.js";
 
 export async function updateRecord({
   fs,
-  bare = true,
+  bare = false,
   dir,
   csvsdir = bare ? dir : path.join(dir, "csvs"),
   query,

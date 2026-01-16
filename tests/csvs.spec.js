@@ -22,7 +22,7 @@ import {
   sow,
 } from "../src/index.js";
 
-describe("selectRecord()", () => {
+describe.only("selectRecord()", () => {
   readTestCase("select").forEach((testCase) => {
     test(testCase.name, async () => {
       testCase = {
@@ -33,6 +33,7 @@ describe("selectRecord()", () => {
 
       const data = await selectRecord({
         fs: nodefs,
+        bare: true,
         dir: testCase.initial,
         query: testCase.query,
       });
@@ -61,6 +62,7 @@ describe("updateRecord()", () => {
 
       await updateRecord({
         fs: nodefs,
+        bare: true,
         dir: tmpdir,
         query: testCase.query,
       });
@@ -87,6 +89,7 @@ describe("insertRecord()", () => {
 
       await insertRecord({
         fs: nodefs,
+        bare: true,
         dir: tmpdir,
         query: testCase.query,
       });
@@ -113,6 +116,7 @@ describe("deleteRecord()", () => {
 
       await deleteRecord({
         fs: nodefs,
+        bare: true,
         dir: tmpdir,
         query: testCase.query,
       });

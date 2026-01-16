@@ -6,7 +6,7 @@ import { insertTablet } from "./tablet.js";
 
 export async function insertRecord({
   fs,
-  bare = true,
+  bare = false,
   dir,
   query,
   csvsdir = bare ? dir : path.join(dir, "csvs"),

@@ -11,7 +11,7 @@ import { pruneTablet } from "./tablet.js";
  */
 export async function deleteRecord({
   fs,
-  bare = true,
+  bare = false,
   dir,
   query,
   csvsdir = bare ? dir : path.join(dir, "csvs"),

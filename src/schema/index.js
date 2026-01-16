@@ -5,7 +5,7 @@ import { toSchema } from "../schema.js";
 
 export async function selectSchema({
   fs,
-  bare = true,
+  bare = false,
   dir,
   csvsdir = bare ? dir : path.join(dir, "csvs"),
 }) {
@@ -36,10 +36,11 @@ export async function selectSchema({
 
 export async function buildSchema({
   fs,
-  bare = true,
+  bare = false,
   dir,
   csvsdir = bare ? dir : path.join(dir, "csvs"),
 }) {
+  console.log(bare, dir, csvsdir);
   const schemaRecord = await selectSchema({ fs, bare, dir, csvsdir });
 
   const schema = toSchema(schemaRecord);
@@ -49,7 +50,7 @@ export async function buildSchema({
 
 export async function updateSchema({
   fs,
-  bare = true,
+  bare = false,
   dir,
   query,
   csvsdir = bare ? dir : path.join(dir, "csvs"),
