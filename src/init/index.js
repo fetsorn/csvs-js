@@ -34,20 +34,21 @@ export async function init({
   csvsdir = bare ? dir : path.join(dir, "csvs"),
 }) {
   const versionContent = "csvs,0.0.2";
+
   // if dir exists, check for .csvs.csv
-  if (await exists(fs, dir)) {
+  if (await exists(fs, csvsdir)) {
     if (bare) {
-      const versionPath = path.join(dir, ".csvs.csv");
+      const versionPath = path.join(csvsdir, ".csvs.csv");
 
       if (await exists(fs, versionPath)) {
         // if version exists return bare dir
-        return dir;
+        return csvsdir;
       } else {
         // if no version create version
         await fs.promises.writeFile(versionPath, versionContent, "utf8");
       }
     } else {
-      const nestedPath = path.join(dir, "csvs");
+      const nestedPath = path.join(csvsdir, "csvs");
 
       // if nested dir exists
       if (await exists(fs, nestedPath)) {
