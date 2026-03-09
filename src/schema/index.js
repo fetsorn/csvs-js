@@ -40,7 +40,6 @@ export async function buildSchema({
   dir,
   csvsdir = bare ? dir : path.join(dir, "csvs"),
 }) {
-  console.log(bare, dir, csvsdir);
   const schemaRecord = await selectSchema({ fs, bare, dir, csvsdir });
 
   const schema = toSchema(schemaRecord);
