@@ -58,7 +58,7 @@ export async function init({
 }) {
   if (!bare) {
     if (!(await exists(fs, csvsdir))) {
-      await fs.promises.mkdir(nestedPath);
+      await fs.promises.mkdir(csvsdir);
     }
   }
 
