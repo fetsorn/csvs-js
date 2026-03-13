@@ -15,9 +15,9 @@
   },
   {
     "name": "empty grain when trait has no leaf",
-    "initial": "record_mow_empty",
+    "initial": "record_mow_nodata",
     "trunk": "export1_tag",
     "branch": "export1_channel",
-    "expected": [ "grain_empty" ]
+    "expected": [ "grain_nodata" ]
   }
 ]

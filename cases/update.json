@@ -25,7 +25,7 @@
   },
   {
     "name": "adds record with array to empty dataset",
-    "initial": "array_empty",
+    "initial": "array_nodata",
     "query": [ "record_array" ],
     "expected": "array"
   },
@@ -67,9 +67,9 @@
   },
   {
     "name": "ignores record with values that don't fit base",
-    "initial": "empty",
+    "initial": "nodata",
     "query": [ "record_base_ignored_array_items" ],
-    "expected": "empty"
+    "expected": "nodata"
   },
   {
     "name": "adds record with array of literal values",
@@ -103,7 +103,7 @@
   },
   {
     "name": "adds three records",
-    "initial": "empty",
+    "initial": "nodata",
     "query": [ "record2001", "record2002", "record2003_unedited" ],
     "expected": "default"
   },

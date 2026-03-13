@@ -15,7 +15,7 @@
     "name": "deletes to an empty dir",
     "initial": "deleted_leaf",
     "query": ["record_sow_base_is_trait"],
-    "expected": "deleted_leaf_empty"
+    "expected": "deleted_leaf_nodata"
   },
   {
     "name": "deletes a record with a newline",
