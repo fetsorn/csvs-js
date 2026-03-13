@@ -5,16 +5,14 @@ pub async fn create(dir: &PathBuf, bare: bool) -> Result<Dataset> {
     if (bare) {
         let version_path = dir.join(".csvs.csv");
 
+        println!("{:?}", std::fs::metadata(&version_path));
+
         let version_exists = std::fs::metadata(&version_path).is_ok();
 
-        if version_exists {
-            return Err(Error::from_message(""))
-        } else {
-            // write .csvs.csv
-            std::fs::write(&version_path, "csvs,0.0.2")?;
+        // write .csvs.csv
+        std::fs::write(&version_path, "csvs,0.0.2\n")?;
 
-            return Ok(Dataset { dir: dir.clone() });
-        }
+        return Ok(Dataset { dir: dir.clone() });
     } else {
         let nested_dir = dir.join("csvs");
 
@@ -22,7 +20,7 @@ pub async fn create(dir: &PathBuf, bare: bool) -> Result<Dataset> {
 
         // check that path/name doesn't exist
         if nested_exists {
-            return Err(Error::from_message(""))
+            return Err(Error::from_message("dataset exists"))
         } else {
             // create directory name
             std::fs::create_dir_all(&nested_dir)?;
@@ -30,11 +28,9 @@ pub async fn create(dir: &PathBuf, bare: bool) -> Result<Dataset> {
             // write .csvs.csv
             let version_path = nested_dir.join(".csvs.csv");
 
-            std::fs::write(&version_path, "csvs,0.0.2")?;
+            std::fs::write(&version_path, "csvs,0.0.2\n")?;
 
             return Ok(Dataset { dir: nested_dir.clone() });
         }
     }
-
-    return Err(Error::from_message(""))
 }

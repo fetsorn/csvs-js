@@ -23,5 +23,5 @@ pub async fn open(dir: &PathBuf) -> Result<Dataset> {
         }
     }
 
-    return Err(Error::from_message(""))
+    return Err(Error::from_message("no dataset"))
 }

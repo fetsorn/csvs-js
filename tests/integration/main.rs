@@ -3,6 +3,7 @@ extern crate dir_diff;
 mod delete;
 mod entry;
 mod grain;
+mod init;
 mod insert;
 mod mow;
 mod schema;
