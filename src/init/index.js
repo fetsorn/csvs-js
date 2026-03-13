@@ -19,6 +19,29 @@ async function exists(fs, filepath) {
 }
 
 /**
+ * Initialize a new bare dataset
+ *
+ * @param {object} args
+ * @param {object} args.fs
+ * @param {string} [args.dir]
+ * @returns {Promise<void>}
+ */
+async function _init({ fs, dir }) {
+  const versionContent = "csvs,0.0.2\n";
+
+  // takes a dir, checks for .csvs.csv.
+  const versionPath = path.join(dir, ".csvs.csv");
+
+  if (await exists(fs, versionPath)) {
+    // If exists, console.warn and return.
+    console.warn(versionPath, "exists");
+  } else {
+    // if no version create version
+    await fs.promises.writeFile(versionPath, versionContent, "utf8");
+  }
+}
+
+/**
  * Initialize a new dataset
  *
  * @param {object} args
@@ -33,43 +56,11 @@ export async function init({
   dir,
   csvsdir = bare ? dir : path.join(dir, "csvs"),
 }) {
-  const versionContent = "csvs,0.0.2";
-
-  // if dir exists, check for .csvs.csv
-  if (await exists(fs, csvsdir)) {
-    if (bare) {
-      const versionPath = path.join(csvsdir, ".csvs.csv");
-
-      if (await exists(fs, versionPath)) {
-        // if version exists return bare dir
-        return csvsdir;
-      } else {
-        // if no version create version
-        await fs.promises.writeFile(versionPath, versionContent, "utf8");
-      }
-    } else {
-      const nestedPath = path.join(csvsdir, "csvs");
-
-      // if nested dir exists
-      if (await exists(fs, nestedPath)) {
-        const versionPath = path.join(nestedPath, ".csvs.csv");
-
-        if (await exists(fs, versionPath)) {
-          // if version exists return nested dir
-          return nestedPath;
-        } else {
-          // if no version create version
-          await fs.promises.writeFile(versionPath, versionContent, "utf8");
-        }
-      } else {
-        // if no nested dir create nested dir
-        await fs.promises.mkdir(nestedPath);
-
-        const versionPath = path.join(nestedPath, ".csvs.csv");
-
-        // if no nested dir create version
-        await fs.promises.writeFile(versionPath, versionContent, "utf8");
-      }
+  if (!bare) {
+    if (!(await exists(fs, csvsdir))) {
+      await fs.promises.mkdir(nestedPath);
     }
   }
+
+  await _init({ fs, dir: csvsdir });
 }

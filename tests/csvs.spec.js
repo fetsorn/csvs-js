@@ -13,6 +13,7 @@ import {
   sortObject,
 } from "@fetsorn/csvs-test";
 import {
+  init,
   selectRecord,
   updateRecord,
   insertRecord,
@@ -22,7 +23,7 @@ import {
   sow,
 } from "../src/index.js";
 
-describe.only("selectRecord()", () => {
+describe("selectRecord()", () => {
   readTestCase("select").forEach((testCase) => {
     test(testCase.name, async () => {
       testCase = {
@@ -191,6 +192,31 @@ describe("toSchema()", () => {
       const expected = sortObject(testCase.expected);
 
       expect(dataSorted).toStrictEqual(expected);
+    });
+  });
+});
+
+describe("init()", () => {
+  readTestCase("init").forEach((testCase) => {
+    test(testCase.name, async () => {
+      testCase = {
+        initial: readDir(testCase.initial),
+        expected: readDir(testCase.expected),
+      };
+
+      const tmpdir = nodefs.mkdtempSync(join(os.tmpdir(), "csvs-"));
+
+      copy(testCase.initial, tmpdir);
+
+      await init({
+        fs: nodefs,
+        bare: true,
+        dir: tmpdir,
+      });
+
+      expect(loadContents(tmpdir)).toStrictEqual(
+        loadContents(testCase.expected),
+      );
     });
   });
 });
