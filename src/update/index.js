@@ -1,5 +1,6 @@
 import path from "path";
 import { buildSchema } from "../schema/index.js";
+import { sortFile } from "../stream.js";
 import { planUpdate } from "./strategy.js";
 import { updateTablet } from "./tablet.js";
 import { updateSchema } from "../schema/index.js";
@@ -40,6 +41,8 @@ export async function updateRecord({
 
     for (const tablet of strategy) {
       await updateTablet(fs, csvsdir, tablet, query);
+
+      await sortFile(fs, csvsdir, tablet.filename);
     }
   }
 }
