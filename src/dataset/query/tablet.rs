@@ -1,16 +1,13 @@
-use super::line::{query_line, State};
+use super::groups::{key_groups, KeyGroup};
+use super::line::State;
 use super::strategy::Tablet;
-use crate::{line::Line, Dataset, Entry, Grain, Result};
+use crate::{Dataset, Entry, Grain, Result};
 use async_stream::try_stream;
 use futures_core::stream::Stream;
-use std::collections::HashMap;
-use std::fs::File;
+use regex::Regex;
 
-fn make_state_initial(state: State, tablet: Tablet) -> State {
-    // in a querying tablet, set initial entry to the base of the tablet
-    // and preserve the received entry for sowing grains later
-    // if tablet base is different from previous entry base
-    // sow previous entry into the initial entry
+fn make_state_initial(state: &State, tablet: &Tablet) -> State {
+    // if tablet base differs from query base, sow previous entry into a new entry
     let is_same_base = tablet.base == state.query.base;
 
     let do_discard = state.entry.is_none() || is_same_base;
@@ -18,7 +15,6 @@ fn make_state_initial(state: State, tablet: Tablet) -> State {
     let entry_initial = if do_discard {
         Entry::new(&tablet.base)
     } else {
-        // safe: do_discard is false means state.entry.is_some()
         let prev = state.entry.as_ref().expect("checked is_some via do_discard");
         let e = Entry::new(&tablet.base);
 
@@ -37,26 +33,125 @@ fn make_state_initial(state: State, tablet: Tablet) -> State {
         Some(e) => e.base != entry_initial.base,
     };
 
-    // if entry base changed forget thingQuerying
+    // if entry base changed, forget parent join key
     let thing_querying_initial = if entry_base_changed {
         None
     } else {
-        state.thing_querying
+        state.thing_querying.clone()
     };
 
-    let query_initial = state.query;
-
-    let state = State {
+    State {
         entry: Some(entry_initial),
-        query: query_initial,
-        fst: None,
-        is_match: false,
+        query: state.query.clone(),
         thing_querying: thing_querying_initial,
-        last: None,
-        match_map: HashMap::new(),
-    };
+    }
+}
 
-    return state;
+/// Match a key group against query grains.
+/// Returns Some(State) if any value in the group matched, None otherwise.
+fn match_group(
+    group: &KeyGroup,
+    tablet: &Tablet,
+    grains: &[Grain],
+    state_initial: &State,
+) -> Option<State> {
+    let mut group_entry = state_initial.entry.clone()?;
+    let mut group_query = state_initial.query.clone();
+    let mut matched = false;
+    let mut group_thing_querying: Option<String> = None;
+
+    for value in &group.values {
+        let trait_ = if tablet.trait_is_first {
+            group.key.clone()
+        } else {
+            value.clone()
+        };
+
+        let thing = if tablet.thing_is_first {
+            group.key.clone()
+        } else {
+            value.clone()
+        };
+
+        let grain_new = if tablet.thing_is_first {
+            if tablet.trait_is_first {
+                Grain {
+                    base: tablet.thing.clone(),
+                    base_value: Some(group.key.clone()),
+                    leaf: tablet.thing.clone(),
+                    leaf_value: None,
+                }
+            } else {
+                Grain {
+                    base: tablet.thing.clone(),
+                    base_value: Some(group.key.clone()),
+                    leaf: tablet.trait_.clone(),
+                    leaf_value: Some(value.clone()),
+                }
+            }
+        } else if tablet.trait_is_first {
+            Grain {
+                base: tablet.trait_.clone(),
+                base_value: Some(group.key.clone()),
+                leaf: tablet.thing.clone(),
+                leaf_value: Some(value.clone()),
+            }
+        } else {
+            Grain {
+                base: tablet.base.clone(),
+                base_value: None,
+                leaf: tablet.base.clone(),
+                leaf_value: None,
+            }
+        };
+
+        // all grains must match
+        let is_match_grains = grains.iter().fold(None, |acc, grain| {
+            let re_str = if tablet.trait_is_first {
+                grain.base_value.as_deref().unwrap_or("")
+            } else {
+                grain.leaf_value.as_deref().unwrap_or("")
+            };
+
+            let is_match_grain = if tablet.trait_is_regex {
+                Regex::new(re_str)
+                    .ok()
+                    .map_or(false, |re| re.is_match(&trait_))
+            } else {
+                re_str == trait_
+            };
+
+            Some(match acc {
+                None => is_match_grain,
+                Some(prev) => prev && is_match_grain,
+            })
+        });
+
+        // when parent join key is set, also require it matches
+        let is_match_querying = match &state_initial.thing_querying {
+            Some(tq) => *tq == thing,
+            None => true,
+        };
+
+        let is_match = is_match_grains.unwrap_or(false) && is_match_querying;
+
+        if is_match {
+            matched = true;
+            group_thing_querying = Some(thing);
+            group_entry = group_entry.sow(&grain_new, &tablet.trait_, &tablet.thing);
+            group_query = group_query.sow(&grain_new, &tablet.trait_, &tablet.thing);
+        }
+    }
+
+    if matched {
+        Some(State {
+            entry: Some(group_entry),
+            query: group_query,
+            thing_querying: group_thing_querying,
+        })
+    } else {
+        None
+    }
 }
 
 pub fn query_tablet_stream(
@@ -67,66 +162,26 @@ pub fn query_tablet_stream(
 ) -> impl Stream<Item = Result<State>> {
     try_stream! {
         let filepath = dataset.dir.join(&tablet.filename);
+        let file_exists = std::fs::metadata(&filepath).is_ok();
 
-        // error when file is empty
-        if std::fs::metadata(&filepath).is_err() {
-            // first tablet needs lines
-            // empty file is the same as "no matches"
-            // later tablet avoids lines
-            // empty file is the same as "matching all"
-            let empty_is_good = !is_first_tablet;
-
-            if empty_is_good {
-                let mut state = state.clone();
-
-                state.last = Some(Box::new(state.clone()));
-
+        // first tablet needs lines — empty/missing file means no matches
+        // later tablet — empty/missing file means match all
+        if !file_exists {
+            if !is_first_tablet {
                 yield state;
-
-                return;
-            } else {
-                return;
             }
+            return;
         }
 
-        let mut rdr = csv::ReaderBuilder::new()
-            .has_headers(false)
-            .flexible(true)
-            .from_reader(File::open(&filepath)?);
+        let state_initial = make_state_initial(&state, &tablet);
+        let grains = state_initial.query.mow(&tablet.trait_, &tablet.thing);
 
-        let state_initial = make_state_initial(state.clone(), tablet.clone());
+        let groups = key_groups(&filepath)?;
 
-        let mut state = state_initial.clone();
-
-        let grains = state.query.mow(&tablet.trait_, &tablet.thing);
-
-        for result in rdr.records() {
-            let record = result?;
-
-            let line_escaped = Line {
-                key: match record.get(0) { None => String::from(""), Some(s) => s.to_owned() },
-                value: match record.get(1) { None => String::from(""), Some(s) => s.to_owned() }
-            };
-
-            let line = line_escaped.unescape();
-
-            state = query_line(
-                tablet.clone(),
-                grains.clone(),
-                state_initial.clone(),
-                state.clone(),
-                line.clone(),
-            )?;
-
-            if let Some(last) = state.last {
-                yield *last;
-
-                state.last = None;
+        for group in &groups {
+            if let Some(matched_state) = match_group(group, &tablet, &grains, &state_initial) {
+                yield matched_state;
             }
-        }
-
-        if state.is_match {
-            yield state;
         }
     }
 }
