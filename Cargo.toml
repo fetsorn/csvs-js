@@ -26,4 +26,3 @@ serde_json = "1.0.145"
 temp-dir = { version = "0.1.16", git = "https://codeberg.org/fetsorn/temp-dir" }
 tokio = { version = "1.43.0", features = ["full"] }
 crossterm = "0.28.1"
-text-file-sort = "0.1.2"
