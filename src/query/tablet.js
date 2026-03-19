@@ -1,8 +1,8 @@
 import path from "path";
 import { ReadableStream } from "@swimburger/isomorphic-streams";
-import { isEmpty, chunksToLines } from "../stream.js";
+import { isEmpty } from "../stream.js";
 import { mow, sow } from "../record.js";
-import { queryLine } from "./line.js";
+import { keyGroups } from "./groups.js";
 
 export function makeStateInitial({ query, entry, thingQuerying }, tablet) {
   // in a querying tablet, set initial entry to the base of the tablet
@@ -31,17 +31,56 @@ export function makeStateInitial({ query, entry, thingQuerying }, tablet) {
   // if entry base changed forget thingQuerying
   const thingQueryingInitial = entryBaseChanged ? undefined : thingQuerying;
 
-  const queryInitial = query;
+  return { entry: entryInitial, query, thingQuerying: thingQueryingInitial };
+}
 
-  const state = {
-    entry: entryInitial,
-    query: queryInitial,
-    fst: undefined,
-    isMatch: false,
-    thingQuerying: thingQueryingInitial,
-  };
+/**
+ * Match a key group against query grains.
+ * Returns { matched, entry, query, thingQuerying } where matched is true
+ * if any value in the group satisfied all grain predicates.
+ */
+function matchGroup(key, values, tablet, grains, stateInitial) {
+  let groupEntry = { ...stateInitial.entry };
+  let groupQuery = { ...stateInitial.query };
+  let matched = false;
+  let groupThingQuerying = undefined;
 
-  return state;
+  for (const value of values) {
+    const trait_ = tablet.traitIsFirst ? key : value;
+    const thing = tablet.thingIsFirst ? key : value;
+
+    const grainNew = {
+      _: tablet.base,
+      [tablet.trait]: trait_,
+      [tablet.thing]: thing,
+    };
+
+    // all grains must match
+    const isMatchGrains = grains.reduce((acc, grain) => {
+      const isMatchGrain = tablet.traitIsRegex
+        ? new RegExp(grain[tablet.trait]).test(trait_)
+        : grain[tablet.trait] === trait_;
+
+      return acc === undefined ? isMatchGrain : acc && isMatchGrain;
+    }, undefined);
+
+    // when parent key (thingQuerying) is set, also require it matches
+    const doDiff = stateInitial.thingQuerying !== undefined;
+    const isMatchQuerying = doDiff
+      ? stateInitial.thingQuerying === thing
+      : true;
+
+    const isMatch = isMatchGrains && isMatchQuerying;
+
+    if (isMatch) {
+      matched = true;
+      groupThingQuerying = thing;
+      groupEntry = sow(groupEntry, grainNew, tablet.trait, tablet.thing);
+      groupQuery = sow(groupQuery, grainNew, tablet.trait, tablet.thing);
+    }
+  }
+
+  return { matched, entry: groupEntry, query: groupQuery, thingQuerying: groupThingQuerying };
 }
 
 export async function queryTabletStream(
@@ -52,100 +91,38 @@ export async function queryTabletStream(
   first,
 ) {
   const filepath = path.join(dir, tablet.filename);
-
   const empty = await isEmpty(fs, filepath);
 
-  let isDone = false;
+  // first tablet needs lines — empty file means no matches
+  // later tablet avoids lines — empty file means match all
+  if (empty && first) {
+    return ReadableStream.from([]);
+  }
 
-  const lineStream = empty
-    ? ReadableStream.from([])
-    : chunksToLines(fs.createReadStream(filepath));
-
-  const lineIterator = lineStream[Symbol.asyncIterator]();
+  if (empty && !first) {
+    return ReadableStream.from([{ query, entry, thingQuerying }]);
+  }
 
   const stateInitial = makeStateInitial(
     { query, entry, thingQuerying },
     tablet,
   );
 
-  let stateSaved = JSON.parse(JSON.stringify(stateInitial));
+  const grains = mow(stateInitial.query, tablet.trait, tablet.thing);
 
-  const grains = mow(stateSaved.query, tablet.trait, tablet.thing);
+  async function* matchedEntries() {
+    for await (const { key, values } of keyGroups(fs, dir, tablet.filename)) {
+      const result = matchGroup(key, values, tablet, grains, stateInitial);
 
-  async function pullLine(state) {
-    if (isDone) {
-      return { done: true, value: undefined };
-    }
-
-    // first tablet needs lines
-    // empty file is the same as "no matches"
-    // later tablet avoids lines
-    // empty file is the same as "matching all"
-    const emptyIsGood = !first && empty;
-
-    if (emptyIsGood) {
-      isDone = true;
-
-      return {
-        done: false,
-        value: { last: { query, entry, thingQuerying } },
-      };
-    }
-
-    const { done, value } = await lineIterator.next();
-
-    //console.log("line iter, ", value, state);
-
-    if (done) {
-      isDone = true;
-
-      if (state.isMatch) {
-        // shallow clone to avoid a circular object
-        state.last = { ...state };
+      if (result.matched) {
+        yield {
+          entry: result.entry,
+          query: result.query,
+          thingQuerying: result.thingQuerying,
+        };
       }
-
-      //console.log("after", tablet.filename, "eol", JSON.stringify(state, 2, 2));
-
-      return { done: false, value: state };
-    }
-
-    //console.log("before", tablet.filename, value, JSON.stringify(state, 2, 2));
-
-    const stateLine = queryLine(tablet, grains, stateInitial, state, value);
-
-    //console.log(
-    //  "after",
-    //  tablet.filename,
-    //  value,
-    //  JSON.stringify(stateLine, 2, 2),
-    //);
-
-    if (stateLine.last) {
-      return { done: false, value: stateLine };
-    } else {
-      return pullLine(stateLine);
     }
   }
 
-  return new ReadableStream({
-    async pull(controller) {
-      const { done, value } = await pullLine(stateSaved);
-
-      if (done) {
-        controller.close();
-
-        return;
-      }
-
-      if (value.last) {
-        //console.log("push", tablet.filename, JSON.stringify(value.last, 2, 2));
-
-        controller.enqueue(value.last);
-
-        value.last = false;
-      }
-
-      stateSaved = value;
-    },
-  });
+  return ReadableStream.from(matchedEntries());
 }
