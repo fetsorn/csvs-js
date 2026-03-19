@@ -16,7 +16,7 @@ struct Tablet {
 }
 
 pub async fn insert_record(dataset: Dataset, query: Vec<Entry>) -> Result<()> {
-    let schema = dataset.clone().build_schema().await?;
+    let schema = dataset.get_schema().await?;
 
     for q in query {
         let strategy = plan_insert(&schema, &q)?;

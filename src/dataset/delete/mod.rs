@@ -5,7 +5,7 @@ use strategy::plan_delete;
 use tablet::prune_tablet;
 
 pub async fn delete_record(dataset: Dataset, query: Vec<Entry>) -> Result<()> {
-    let schema = dataset.clone().build_schema().await?;
+    let schema = dataset.get_schema().await?;
 
     for q in query {
         let strategy = plan_delete(&schema, &q)?;

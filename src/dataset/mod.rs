@@ -14,9 +14,16 @@ use futures_core::stream::Stream;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
+/// A csvs dataset backed by CSV files in a directory.
+///
+/// Designed for single-writer access. Concurrent writes to the same
+/// dataset directory may corrupt data. Use git-based sync for
+/// multi-device access.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Dataset {
     dir: PathBuf,
+    #[serde(skip)]
+    schema_cache: Option<Schema>,
 }
 
 impl Dataset {
@@ -26,6 +33,22 @@ impl Dataset {
 
     pub async fn create(dir: &PathBuf, nested: bool) -> Result<Self> {
         create::create(dir, nested).await
+    }
+
+    /// Pre-load and cache the schema. Subsequent operations will
+    /// reuse it instead of reading `_-_.csv` each time.
+    pub async fn with_schema(mut self) -> Result<Self> {
+        let schema = schema::build_schema(&self).await?;
+        self.schema_cache = Some(schema);
+        Ok(self)
+    }
+
+    /// Get the schema, using the cache if available.
+    pub(crate) async fn get_schema(&self) -> Result<Schema> {
+        match &self.schema_cache {
+            Some(s) => Ok(s.clone()),
+            None => schema::build_schema(self).await,
+        }
     }
 
     pub async fn delete_record(self, query: Vec<Entry>) -> Result<()> {
@@ -77,7 +100,7 @@ impl Dataset {
     }
 
     pub async fn build_schema(&self) -> Result<Schema> {
-        schema::build_schema(self).await
+        self.get_schema().await
     }
 
     pub async fn select_version(&self) -> Result<Entry> {

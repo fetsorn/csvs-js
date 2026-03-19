@@ -6,7 +6,7 @@ use strategy::plan_update;
 use tablet::update_tablet;
 
 pub async fn update_record(dataset: Dataset, query: Vec<Entry>) -> Result<()> {
-    let schema = dataset.clone().build_schema().await?;
+    let schema = dataset.get_schema().await?;
 
     for q in query {
         let is_schema = q.base == "_";

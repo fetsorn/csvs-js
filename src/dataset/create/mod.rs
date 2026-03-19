@@ -12,7 +12,7 @@ pub async fn create(dir: &PathBuf, bare: bool) -> Result<Dataset> {
         // write .csvs.csv
         std::fs::write(&version_path, "csvs,0.0.2\n")?;
 
-        return Ok(Dataset { dir: dir.clone() });
+        return Ok(Dataset { schema_cache: None, dir: dir.clone() });
     } else {
         let nested_dir = dir.join("csvs");
 
@@ -30,7 +30,7 @@ pub async fn create(dir: &PathBuf, bare: bool) -> Result<Dataset> {
 
             std::fs::write(&version_path, "csvs,0.0.2\n")?;
 
-            return Ok(Dataset { dir: nested_dir.clone() });
+            return Ok(Dataset { schema_cache: None, dir: nested_dir.clone() });
         }
     }
 }
