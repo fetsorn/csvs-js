@@ -1,6 +1,6 @@
-use crate::{Error, Result, Dataset, Entry, Schema};
-use async_stream::{stream, try_stream};
-use futures_core::stream::{BoxStream, Stream};
+use crate::{Result, Dataset, Entry};
+use async_stream::try_stream;
+use futures_core::stream::Stream;
 use futures_util::pin_mut;
 use futures_util::stream::StreamExt;
 use std::collections::HashMap;

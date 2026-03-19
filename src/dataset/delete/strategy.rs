@@ -1,10 +1,5 @@
-use crate::{line::Line, Branch, Dataset, Entry, Error, Leaves, Result, Schema, Trunks};
+use crate::{Branch, Entry, Error, Leaves, Result, Schema, Trunks};
 use serde::{Deserialize, Serialize};
-use std::fs;
-use std::fs::File;
-use std::io::prelude::*;
-use std::path::{Path, PathBuf};
-use temp_dir::TempDir;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Tablet {

@@ -1,6 +1,5 @@
-use crate::{Branch, Entry, Error, Leaves, line::Line, Result, Schema, Trunks, Dataset};
-use std::path::{Path, PathBuf};
-use std::fs;
+use crate::{Entry, line::Line, Result};
+use std::path::PathBuf;
 use std::fs::File;
 use super::strategy::Tablet;
 use super::line::{State, build_line};
@@ -38,7 +37,7 @@ pub async fn build_tablet(path: PathBuf, tablet: Tablet, entry: Entry) -> Result
 
         state = build_line(tablet.clone(), grains.clone(), state.clone(), line)?;
 
-        if (state.last.is_some()) {
+        if state.last.is_some()  {
             return Ok(state.last.unwrap());
         }
     }

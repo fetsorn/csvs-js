@@ -1,5 +1,5 @@
 use super::strategy::Tablet;
-use crate::{line::Line, Dataset, Entry, Error, Grain, Result, Schema};
+use crate::{line::Line, Entry, Grain, Result};
 use regex::Regex;
 use std::collections::HashMap;
 

@@ -1,4 +1,4 @@
-use crate::{Error, Result, Dataset, Entry, Schema};
+use crate::{Result, Dataset, Entry};
 mod strategy;
 mod tablet;
 mod line;

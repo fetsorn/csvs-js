@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::fs::File;
 use std::fs;
 use std::fs::OpenOptions;
-use crate::{line::Line, Entry, Error, Result};
+use crate::{line::Line, Entry, Result};
 use super::Tablet;
 
 pub async fn insert_tablet(path: PathBuf, tablet: Tablet, entry: Entry) -> Result<()> {

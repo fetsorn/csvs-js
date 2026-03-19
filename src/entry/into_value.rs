@@ -31,12 +31,11 @@ impl IntoValue for Entry {
                 value[&leaf] = match value.get(leaf) {
                     None => leaf_value,
                     Some(i) => match i {
-                        Value::Null => panic!("unreachable"),
-                        Value::Bool(_) => panic!("unreachable"),
-                        Value::Number(_) => panic!("unreachable"),
                         Value::String(s) => vec![s.to_owned().into(), leaf_value].into(),
                         Value::Object(o) => vec![o.clone().into(), leaf_value].into(),
                         Value::Array(vs) => [&vs[..], &[leaf_value]].concat().into(),
+                        // skip unexpected value types rather than panicking
+                        _ => continue,
                     },
                 };
             }

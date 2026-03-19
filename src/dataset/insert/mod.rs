@@ -1,4 +1,4 @@
-use crate::{Entry, Error, Result, Dataset};
+use crate::{Entry, Result, Dataset};
 use serde::{Deserialize, Serialize};
 use std::fs;
 mod tablet;

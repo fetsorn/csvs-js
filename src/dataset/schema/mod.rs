@@ -1,7 +1,6 @@
-use crate::{Error, Result, Dataset, Entry, Schema, line::Line};
+use crate::{Result, Dataset, Entry, Schema, line::Line};
 use std::collections::HashMap;
 use std::fs::File;
-use std::fs;
 
 pub async fn select_schema(dataset: &Dataset) -> Result<Entry> {
     let filepath = dataset.dir.join("_-_.csv");

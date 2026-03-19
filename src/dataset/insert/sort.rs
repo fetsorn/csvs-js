@@ -3,7 +3,6 @@ use temp_dir::TempDir;
 use text_file_sort::sort::Sort;
 use std::path::Path;
 use std::fs::rename;
-use std::fs;
 
 pub async fn sort_file(filepath: &Path) -> Result<()> {
     // must assign a variable to create the directory
@@ -29,7 +28,7 @@ pub async fn sort_file(filepath: &Path) -> Result<()> {
 
     let output = temp_d.as_ref().join(filename);
 
-    Sort::new(vec![filepath.to_path_buf()], output.to_path_buf()).sort();
+    let _ = Sort::new(vec![filepath.to_path_buf()], output.to_path_buf()).sort();
 
     rename(output, filepath)?;
 

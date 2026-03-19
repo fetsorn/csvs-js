@@ -2,12 +2,12 @@ use crate::{Dataset, Result, Error};
 use std::path::PathBuf;
 
 pub async fn create(dir: &PathBuf, bare: bool) -> Result<Dataset> {
-    if (bare) {
+    if bare  {
         let version_path = dir.join(".csvs.csv");
 
         println!("{:?}", std::fs::metadata(&version_path));
 
-        let version_exists = std::fs::metadata(&version_path).is_ok();
+        let _version_exists = std::fs::metadata(&version_path).is_ok();
 
         // write .csvs.csv
         std::fs::write(&version_path, "csvs,0.0.2\n")?;

@@ -97,7 +97,7 @@ pub fn mow(entry: &Entry, trait_: &str, thing: &str) -> Vec<Grain> {
     entry
         .leaves
         .iter()
-        .fold(vec![], |with_entry, (leaf, leaf_items)| {
+        .fold(vec![], |with_entry, (_leaf, leaf_items)| {
             let leaf_grains = leaf_items.iter().fold(vec![], |with_leaf_item, leaf_item| {
                 let leaf_item_grains = mow(leaf_item, trait_, thing);
 

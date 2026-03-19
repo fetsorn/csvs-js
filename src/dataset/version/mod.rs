@@ -1,4 +1,4 @@
-use crate::{Error, Result, Dataset, Entry, Schema, line::Line};
+use crate::{Result, Dataset, Entry, line::Line};
 use std::collections::HashMap;
 use std::fs::File;
 

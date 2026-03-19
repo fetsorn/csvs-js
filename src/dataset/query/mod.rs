@@ -1,8 +1,8 @@
-use crate::{Error, Result, Dataset, Entry, Schema};
-use futures_core::stream::{BoxStream, Stream};
+use crate::{Error, Result, Dataset, Entry};
+use futures_core::stream::Stream;
 use std::collections::HashMap;
-use std::pin::{Pin, pin};
-use async_stream::{stream, try_stream};
+use std::pin::Pin;
+use async_stream::try_stream;
 use futures_util::pin_mut;
 use futures_util::stream::StreamExt;
 mod tablet;
@@ -62,7 +62,7 @@ pub fn query_record_stream(
 
         // a while loop that takes a counter
         // and a map of counter to stream and state
-        while true {
+        loop {
             // initialize the stream for the current counter
             if state_map.get(&counter).is_none() {
                 let state_previous = get_previous_state(
@@ -82,7 +82,8 @@ pub fn query_record_stream(
             }
 
             // get the stream for the current counter
-            let tablet_stream: &mut Pin<Box<dyn Stream<Item = Result<State>> + Send>> = stream_map.get_mut(&counter).unwrap();
+            let tablet_stream: &mut Pin<Box<dyn Stream<Item = Result<State>> + Send>> = stream_map.get_mut(&counter)
+                .ok_or_else(|| Error::from_message(format!("query: stream not found for tablet {}", counter)))?;
 
             let is_first_tablet = counter == 0;
 
@@ -106,7 +107,8 @@ pub fn query_record_stream(
                     continue;
                 }
             } else {
-                let value = value.unwrap()?;
+                // safe: we just checked value.is_none() above
+                let value = value.expect("checked Some above")?;
 
                 if is_last_tablet {
                     // if last tablet, yield value

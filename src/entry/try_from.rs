@@ -3,35 +3,36 @@ use crate::{Error, Result};
 use serde_json::Value;
 use std::collections::HashMap;
 
+fn type_name(v: &Value) -> &'static str {
+    match v {
+        Value::Null => "null",
+        Value::Bool(_) => "bool",
+        Value::Number(_) => "number",
+        Value::String(_) => "string",
+        Value::Array(_) => "array",
+        Value::Object(_) => "object",
+    }
+}
+
 impl TryFrom<Value> for Entry {
     type Error = Error;
 
     fn try_from(value: Value) -> Result<Self> {
-        // validate that value is object
         match value {
-            Value::Null => Err(Error::from_message("")),
-            Value::Bool(_) => Err(Error::from_message("")),
-            Value::Number(_) => Err(Error::from_message("")),
-            Value::String(_) => Err(Error::from_message("")),
-            Value::Array(_) => Err(Error::from_message("")),
             Value::Object(v) => {
-                let base = match &v["_"] {
-                    Value::Null => return Err(Error::from_message("")),
-                    Value::Bool(_) => return Err(Error::from_message("")),
-                    Value::Number(_) => return Err(Error::from_message("")),
+                let base = match v.get("_").unwrap_or(&Value::Null) {
                     Value::String(s) => s,
-                    Value::Array(_) => return Err(Error::from_message("")),
-                    Value::Object(_) => return Err(Error::from_message("")),
+                    other => return Err(Error::from_message(
+                        format!("Entry field '_' must be a string, got {}", type_name(other))
+                    )),
                 };
 
                 let base_value = if v.contains_key(base) {
                     match &v[base] {
-                        Value::Null => return Err(Error::from_message("")),
-                        Value::Bool(_) => return Err(Error::from_message("")),
-                        Value::Number(_) => return Err(Error::from_message("")),
                         Value::String(s) => Some(s),
-                        Value::Array(_) => return Err(Error::from_message("")),
-                        Value::Object(_) => return Err(Error::from_message("")),
+                        other => return Err(Error::from_message(
+                            format!("Entry base value for '{}' must be a string, got {}", base, type_name(other))
+                        )),
                     }
                 } else {
                     None
@@ -39,12 +40,10 @@ impl TryFrom<Value> for Entry {
 
                 let leader_value = if v.contains_key("__") {
                     match &v["__"] {
-                        Value::Null => return Err(Error::from_message("")),
-                        Value::Bool(_) => return Err(Error::from_message("")),
-                        Value::Number(_) => return Err(Error::from_message("")),
                         Value::String(s) => Some(s),
-                        Value::Array(_) => return Err(Error::from_message("")),
-                        Value::Object(_) => return Err(Error::from_message("")),
+                        other => return Err(Error::from_message(
+                            format!("Entry leader value '__' must be a string, got {}", type_name(other))
+                        )),
                     }
                 } else {
                     None
@@ -55,9 +54,6 @@ impl TryFrom<Value> for Entry {
                     .filter(|(key, _)| (*key != "_") && (*key != base) && (*key != "__"))
                     .map(|(key, val)| {
                         let values: Vec<Entry> = match val {
-                            Value::Null => return Err(Error::from_message("")),
-                            Value::Bool(_) => return Err(Error::from_message("")),
-                            Value::Number(_) => return Err(Error::from_message("")),
                             Value::String(s) => {
                                 vec![Entry {
                                     base: key.to_owned(),
@@ -69,28 +65,28 @@ impl TryFrom<Value> for Entry {
                             Value::Array(vs) => vs
                                 .iter()
                                 .map(|v| match v {
-                                    Value::Null => return Err(Error::from_message("")),
-                                    Value::Bool(_) => return Err(Error::from_message("")),
-                                    Value::Number(_) => return Err(Error::from_message("")),
                                     Value::String(s) => Ok(Entry {
                                         base: key.to_owned(),
                                         base_value: Some(s.to_owned()),
                                         leader_value: None,
                                         leaves: HashMap::new(),
                                     }),
-                                    Value::Array(_) => return Err(Error::from_message("")),
                                     Value::Object(_) => {
                                         let e: Entry = v.clone().try_into()?;
-
                                         Ok(e)
                                     }
+                                    other => Err(Error::from_message(
+                                        format!("Entry leaf '{}' array item must be string or object, got {}", key, type_name(other))
+                                    )),
                                 })
                                 .collect::<Result<Vec<Entry>>>()?,
                             Value::Object(_) => {
                                 let e: Entry = val.clone().try_into()?;
-
                                 vec![e]
                             }
+                            other => return Err(Error::from_message(
+                                format!("Entry leaf '{}' must be string, array, or object, got {}", key, type_name(other))
+                            )),
                         };
 
                         Ok((key.to_owned(), values))
@@ -104,6 +100,9 @@ impl TryFrom<Value> for Entry {
                     leaves,
                 })
             }
+            other => Err(Error::from_message(
+                format!("expected JSON object for Entry, got {}", type_name(&other))
+            )),
         }
     }
 }
@@ -135,11 +134,3 @@ impl TryFrom<&Value> for Entry {
         value.clone().try_into()
     }
 }
-
-//impl TryFrom<&Value> for Entry {
-//    type Error = Error;
-//
-//    fn try_from(values: Vec<Value>) -> Result<Self> {
-//        values.iter().map(|value| value.try_into()).collect()
-//    }
-//}

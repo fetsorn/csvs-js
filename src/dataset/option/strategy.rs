@@ -1,4 +1,4 @@
-use crate::{Branch, Entry, Leaves, Schema, Trunks};
+use crate::{Branch, Leaves, Schema, Trunks};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -17,7 +17,7 @@ pub struct Tablet {
 }
 
 pub fn plan_option(schema: &Schema, base: &str) -> Vec<Tablet> {
-    let empty = (Trunks(vec![]), Leaves(vec![]));
+    let _empty = (Trunks(vec![]), Leaves(vec![]));
 
     let (trunks, leaves) = match schema.0.get(base) {
         None => (vec![], vec![]),

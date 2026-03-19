@@ -1,12 +1,9 @@
 use super::line::{query_line, State};
 use super::strategy::Tablet;
-use crate::{line::Line, Dataset, Entry, Error, Grain, Result, Schema};
-use async_stream::{stream, try_stream};
-use futures_core::stream::{BoxStream, Stream};
-use futures_util::pin_mut;
-use futures_util::stream::StreamExt;
+use crate::{line::Line, Dataset, Entry, Grain, Result};
+use async_stream::try_stream;
+use futures_core::stream::Stream;
 use std::collections::HashMap;
-use std::fs;
 use std::fs::File;
 
 fn make_state_initial(state: State, tablet: Tablet) -> State {
@@ -18,31 +15,27 @@ fn make_state_initial(state: State, tablet: Tablet) -> State {
 
     let do_discard = state.entry.is_none() || is_same_base;
 
-    let entry_fallback = if do_discard {
+    let entry_initial = if do_discard {
         Entry::new(&tablet.base)
     } else {
-        state.entry.clone().unwrap()
-    };
-
-    let do_sow = !do_discard;
-
-    let entry_initial = if do_sow {
+        // safe: do_discard is false means state.entry.is_some()
+        let prev = state.entry.as_ref().expect("checked is_some via do_discard");
         let e = Entry::new(&tablet.base);
 
         let g = Grain {
-            base: state.entry.clone().unwrap().base,
-            base_value: state.entry.clone().unwrap().base_value,
-            leaf: state.entry.clone().unwrap().base,
+            base: prev.base.clone(),
+            base_value: prev.base_value.clone(),
+            leaf: prev.base.clone(),
             leaf_value: None,
         };
 
-        e.sow(&g, &tablet.base, &state.entry.clone().unwrap().base)
-    } else {
-        entry_fallback
+        e.sow(&g, &tablet.base, &prev.base)
     };
 
-    let entry_base_changed =
-        state.entry.is_none() || state.entry.unwrap().base != entry_initial.base;
+    let entry_base_changed = match &state.entry {
+        None => true,
+        Some(e) => e.base != entry_initial.base,
+    };
 
     // if entry base changed forget thingQuerying
     let thing_querying_initial = if entry_base_changed {

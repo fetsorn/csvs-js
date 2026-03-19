@@ -1,13 +1,11 @@
-use crate::{line::Line, Branch, Dataset, Entry, Error, Leaves, Result, Schema, Trunks};
-use serde::{Deserialize, Serialize};
+use crate::{line::Line, Entry, Error, Result};
 use std::fs;
 use std::fs::File;
-use std::io::prelude::*;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use temp_dir::TempDir;
 use super::strategy::Tablet;
 
-pub async fn foo(path: PathBuf, tablet: Tablet, entry: Entry, temp_path: PathBuf) -> Result<()> {
+pub async fn foo(path: PathBuf, tablet: Tablet, _entry: Entry, temp_path: PathBuf) -> Result<()> {
     let filepath = path.join(&tablet.filename);
 
     let temp_file = File::create(&temp_path)?;

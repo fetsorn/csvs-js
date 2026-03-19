@@ -1,4 +1,4 @@
-use super::{Branch, Leaves, Schema, Trunks};
+use super::Schema;
 use std::cmp::Ordering;
 
 pub fn sort_nesting_descending(schema: Schema) -> impl FnMut(&String, &String) -> Ordering {

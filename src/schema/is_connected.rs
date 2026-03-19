@@ -8,7 +8,7 @@ pub fn is_connected(schema: &Schema, base: &str, branch: &str) -> bool {
 
     let Branch {
         trunks: Trunks(trunks),
-        leaves: Leaves(leaves),
+        leaves: Leaves(_leaves),
     } = match schema.0.get(branch) {
         None => Branch {
             trunks: Trunks(vec![]),

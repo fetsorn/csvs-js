@@ -1,8 +1,6 @@
 use super::{Branch, Leaves, Schema, Trunks};
 use crate::{Entry, Error, Result};
-use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::convert::TryFrom;
 

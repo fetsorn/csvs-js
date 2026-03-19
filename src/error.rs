@@ -1,7 +1,6 @@
 use std::io::Write;
 use std::{fmt, io};
 
-use backtrace::Backtrace;
 use crossterm::style::{Attribute, Color, ResetColor, SetAttribute, SetForegroundColor};
 use serde::{Serialize, Serializer};
 

@@ -1,4 +1,4 @@
-use crate::{Branch, Entry, Leaves, Schema, Trunks};
+use crate::{Branch, Entry, Schema, Trunks};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

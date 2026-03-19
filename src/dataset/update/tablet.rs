@@ -1,10 +1,9 @@
-use crate::{Branch, Entry, Error, Leaves, line::Line, Result, Schema, Trunks, Dataset};
-use serde::{Deserialize, Serialize};
+use crate::{Entry, Error, line::Line, Result};
 use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::fs::OpenOptions;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use temp_dir::TempDir;
 use super::strategy::Tablet;
 use super::line::{State, update_line};

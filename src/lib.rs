@@ -1,4 +1,3 @@
-#![allow(warnings)]
 mod dataset;
 mod entry;
 pub mod error;

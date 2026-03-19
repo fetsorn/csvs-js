@@ -1,12 +1,8 @@
 use super::line::{option_line, State};
 use super::strategy::Tablet;
-use crate::{line::Line, Dataset, Entry, Error, Result, Schema};
-use async_stream::{stream, try_stream};
-use futures_core::stream::{BoxStream, Stream};
-use futures_util::pin_mut;
-use futures_util::stream::StreamExt;
-use std::collections::HashMap;
-use std::fs;
+use crate::{line::Line, Dataset, Entry, Result};
+use async_stream::try_stream;
+use futures_core::stream::Stream;
 use std::fs::File;
 
 pub fn option_tablet_stream(
@@ -47,7 +43,7 @@ pub fn option_tablet_stream(
 
             state = option_line(tablet.clone(), state, line)?;
 
-            if (state.last.is_some()) {
+            if state.last.is_some()  {
                 yield state.clone();
 
                 state.last = None;

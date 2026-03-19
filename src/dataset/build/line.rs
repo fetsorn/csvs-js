@@ -1,5 +1,5 @@
 use super::strategy::Tablet;
-use crate::{line::Line, Branch, Dataset, Entry, Error, Grain, Leaves, Result, Schema, Trunks};
+use crate::{line::Line, Entry, Grain, Result};
 
 #[derive(Debug, Clone)]
 pub struct State {
@@ -26,7 +26,7 @@ pub fn build_line(tablet: Tablet, grains: Vec<Grain>, state: State, line: Line) 
 
     let push_end_of_group = is_end_of_group && is_complete;
 
-    if (push_end_of_group) {
+    if push_end_of_group  {
         state.last = Some(state.clone().entry);
 
         return Ok(state);
@@ -53,7 +53,7 @@ pub fn build_line(tablet: Tablet, grains: Vec<Grain>, state: State, line: Line) 
             is_match_grain
         };
 
-        if (is_match_grain) {
+        if is_match_grain  {
             state.entry = state.entry.sow(&grain_new, &tablet.trait_, &tablet.thing);
         }
     }

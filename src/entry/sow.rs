@@ -20,7 +20,7 @@ pub fn sow(entry: &Entry, grain: &Grain, trait_: &str, thing: &str) -> Entry {
                     leaves: entry.leaves.clone(),
                 },
                 // if record already has a base value, set it from grain
-                Some(e) => entry.clone(),
+                Some(_e) => entry.clone(),
             },
         };
     }

@@ -1,5 +1,5 @@
 use super::strategy::Tablet;
-use crate::{line::Line, Dataset, Entry, Error, Grain, Result, Schema};
+use crate::{line::Line, Entry, Error, Grain, Result};
 use regex::Regex;
 use std::collections::HashMap;
 
@@ -135,7 +135,7 @@ pub fn query_line(
         true
     };
 
-    let is_match = is_match_grains.unwrap() && is_match_querying;
+    let is_match = is_match_grains.unwrap_or(false) && is_match_querying;
 
     state.is_match = if state.is_match {
         state.is_match
@@ -149,7 +149,7 @@ pub fn query_line(
 
     if is_match {
         state.entry = match &state.entry {
-            None => panic!("unreachable"), // TODO check when this is possible and remove or add to js
+            None => return Err(Error::from_message("query_line: state.entry is None when match found")),
             Some(e) => Some(e.sow(&grain_new, &tablet.trait_, &tablet.thing)),
         };
 
