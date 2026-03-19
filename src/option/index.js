@@ -10,8 +10,9 @@ export async function selectOptionStream({
   dir,
   query,
   csvsdir = bare ? dir : path.join(dir, "csvs"),
+  schema: schemaCached,
 }) {
-  const schema = await buildSchema({ fs, bare, dir, csvsdir });
+  const schema = schemaCached ?? await buildSchema({ fs, bare, dir, csvsdir });
 
   const strategy = planSelect(schema, query)[Symbol.iterator]();
 

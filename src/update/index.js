@@ -12,13 +12,14 @@ export async function updateRecord({
   dir,
   csvsdir = bare ? dir : path.join(dir, "csvs"),
   query,
+  schema: schemaCached,
 }) {
   // exit if record is undefined
   if (query === undefined) return;
 
   const queries = Array.isArray(query) ? query : [query];
 
-  const schema = await buildSchema({ fs, bare, dir, csvsdir });
+  const schema = schemaCached ?? await buildSchema({ fs, bare, dir, csvsdir });
 
   for (const query of queries) {
     const isSchema = query._ === "_";

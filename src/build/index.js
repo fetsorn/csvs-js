@@ -15,8 +15,9 @@ export async function buildRecord({
   dir,
   csvsdir = bare ? dir : path.join(dir, "csvs"),
   query,
+  schema: schemaCached,
 }) {
-  const schema = await buildSchema({ fs, bare, dir, csvsdir });
+  const schema = schemaCached ?? await buildSchema({ fs, bare, dir, csvsdir });
 
   const strategy = planBuild(schema, query[0]);
 
