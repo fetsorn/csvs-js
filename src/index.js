@@ -1,3 +1,13 @@
+/**
+ * csvs-js - plain-text relational database backed by CSV files.
+ *
+ * Designed for single-writer access. Concurrent writes to the same
+ * dataset directory may corrupt data. Use git-based sync for
+ * multi-device access.
+ *
+ * Pass a pre-built `schema` option to any operation to avoid
+ * repeated reads of `_-_.csv`.
+ */
 import { init } from "./init/index.js";
 import { buildSchema } from "./schema/index.js";
 import {
