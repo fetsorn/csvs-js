@@ -1,4 +1,6 @@
 import path from "path";
+import csv from "papaparse";
+import { unescapeNewline } from "./escape.js";
 
 export async function isEmpty(fs, filepath) {
   // only use functions covered by lightning-fs
@@ -34,7 +36,15 @@ export async function sortFile(fs, dir, filename) {
     lines.push(line);
   }
 
-  const linesSorted = lines.sort();
+  const linesSorted = lines.sort((a, b) => {
+    // Parse CSV to extract first field (key) for comparison,
+    // matching the localeCompare ordering used by updateLine.
+    const { data: [[fstA]] } = csv.parse(a.trimEnd(), { delimiter: "," });
+    const { data: [[fstB]] } = csv.parse(b.trimEnd(), { delimiter: "," });
+    const keyA = unescapeNewline(fstA ?? "");
+    const keyB = unescapeNewline(fstB ?? "");
+    return keyA.localeCompare(keyB);
+  });
 
   for (const line of linesSorted) {
     await fs.promises.appendFile(tmpPath, line);
