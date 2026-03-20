@@ -82,7 +82,7 @@ export function sortNestingAscending(schema) {
       return 1;
     }
 
-    return b.localeCompare(a);
+    return b < a ? -1 : b > a ? 1 : 0;
   };
 }
 
@@ -108,7 +108,7 @@ export function sortNestingDescending(schema) {
       return 1;
     }
 
-    return a.localeCompare(b);
+    return a < b ? -1 : a > b ? 1 : 0;
   };
 }
 

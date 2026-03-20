@@ -38,12 +38,12 @@ export async function sortFile(fs, dir, filename) {
 
   const linesSorted = lines.sort((a, b) => {
     // Parse CSV to extract first field (key) for comparison,
-    // matching the localeCompare ordering used by updateLine.
+    // using byte-order comparison to match Rust's String::cmp.
     const { data: [[fstA]] } = csv.parse(a.trimEnd(), { delimiter: "," });
     const { data: [[fstB]] } = csv.parse(b.trimEnd(), { delimiter: "," });
     const keyA = unescapeNewline(fstA ?? "");
     const keyB = unescapeNewline(fstB ?? "");
-    return keyA.localeCompare(keyB);
+    return keyA < keyB ? -1 : keyA > keyB ? 1 : 0;
   });
 
   for (const line of linesSorted) {

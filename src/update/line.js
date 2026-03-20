@@ -24,9 +24,9 @@ export function updateLine(state, line) {
       .filter((key) => !keysInserted.includes(key))
       .filter((key) => {
         const isAfter =
-          state.fst === undefined || state.fst.localeCompare(key) < 1;
+          state.fst === undefined || !(key < state.fst || key === state.fst);
 
-        const isBefore = key.localeCompare(fst) === -1;
+        const isBefore = key < fst;
 
         const isBetween = isAfter && isBefore;
 
