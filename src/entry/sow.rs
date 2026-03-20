@@ -123,14 +123,12 @@ pub fn sow(entry: &Entry, grain: &Grain, trait_: &str, thing: &str) -> Entry {
         })
         .collect();
 
-    let foo = Entry {
+    let result = Entry {
         base: entry.base.to_owned(),
         base_value: entry.base_value.clone(),
         leader_value: None,
         leaves: leaves_new,
     };
 
-    // if trait_ == "datum" && thing == "filepath" {println!("{}", serde_json::to_string_pretty(&foo).expect(""))};
-
-    foo
+    result
 }

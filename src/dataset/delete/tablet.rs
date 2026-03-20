@@ -5,7 +5,8 @@ use std::path::PathBuf;
 use temp_dir::TempDir;
 use super::strategy::Tablet;
 
-pub async fn foo(path: PathBuf, tablet: Tablet, _entry: Entry, temp_path: PathBuf) -> Result<()> {
+/// Write all lines in the tablet except the "deleted" ones to a temp file
+pub async fn filter_lines_to_temp(path: PathBuf, tablet: Tablet, _entry: Entry, temp_path: PathBuf) -> Result<()> {
     let filepath = path.join(&tablet.filename);
 
     let temp_file = File::create(&temp_path)?;
@@ -90,7 +91,7 @@ pub async fn prune_tablet(path: PathBuf, tablet: Tablet, entry: Entry) -> Result
 
     let temp_path = temp_d.as_ref().join(filename);
 
-    foo(path, tablet, entry, temp_path.clone()).await?;
+    filter_lines_to_temp(path, tablet, entry, temp_path.clone()).await?;
 
     // if empty
     match fs::metadata(&temp_path) {

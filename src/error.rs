@@ -1,7 +1,5 @@
-use std::io::Write;
 use std::{fmt, io};
 
-use crossterm::style::{Attribute, Color, ResetColor, SetAttribute, SetForegroundColor};
 use serde::{Serialize, Serializer};
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -18,25 +16,6 @@ struct Context {
 }
 
 impl Error {
-    pub fn write(&self, stdout: &mut io::StdoutLock) -> Result<()> {
-        crossterm::queue!(
-            stdout,
-            SetForegroundColor(Color::Red),
-            SetAttribute(Attribute::Bold)
-        )?;
-        write!(stdout, "error: ")?;
-        stdout.flush()?;
-        crossterm::queue!(stdout, ResetColor, SetAttribute(Attribute::Reset))?;
-
-        write!(stdout, "{}", self)?;
-        let mut err = self as &dyn std::error::Error;
-        while let Some(source) = err.source() {
-            write!(stdout, ": {}", source)?;
-            err = source;
-        }
-        Ok(())
-    }
-
     pub fn from_message(message: impl ToString) -> Self {
         Error {
             inner: message.to_string().into(),
@@ -91,6 +70,7 @@ impl From<regex::Error> for Error {
     }
 }
 
+// TODO: move this to csvs-test by mapping dir_diff errors in the assert_dir macro
 impl From<dir_diff::Error> for Error {
     fn from(ctx: dir_diff::Error) -> Error {
         Error { inner: ctx.into() }
