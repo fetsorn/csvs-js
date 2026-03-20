@@ -50,6 +50,11 @@ export function findCrown(schema, base) {
   );
 }
 
+/**
+ * Nesting level = distance from a leaf node in the schema graph.
+ * Leaves (no trunks) are level 0, their trunks are level 1, etc.
+ * E.g. for datum -> filepath -> moddate: moddate=0, filepath=1, datum=2.
+ */
 export function getNestingLevel(schema, branch) {
   const { trunks } = schema[branch];
 
@@ -69,10 +74,15 @@ export function getNestingLevel(schema, branch) {
  * @returns {number} - sorting index, a<b -1, a>b 1, a==b 0
  */
 export function sortNestingAscending(schema) {
-  return (a, b) => {
-    const levelA = getNestingLevel(schema, a);
+  // Precompute levels once so each comparison is O(1).
+  const levels = Object.fromEntries(
+    Object.keys(schema).map((k) => [k, getNestingLevel(schema, k)]),
+  );
 
-    const levelB = getNestingLevel(schema, b);
+  return (a, b) => {
+    const levelA = levels[a] ?? 0;
+
+    const levelB = levels[b] ?? 0;
 
     if (levelA > levelB) {
       return -1;
@@ -95,10 +105,15 @@ export function sortNestingAscending(schema) {
  * @returns {number} - sorting index, a<b -1, a>b 1, a==b 0
  */
 export function sortNestingDescending(schema) {
-  return (a, b) => {
-    const levelA = getNestingLevel(schema, a);
+  // Precompute levels once so each comparison is O(1).
+  const levels = Object.fromEntries(
+    Object.keys(schema).map((k) => [k, getNestingLevel(schema, k)]),
+  );
 
-    const levelB = getNestingLevel(schema, b);
+  return (a, b) => {
+    const levelA = levels[a] ?? 0;
+
+    const levelB = levels[b] ?? 0;
 
     if (levelA < levelB) {
       return -1;
