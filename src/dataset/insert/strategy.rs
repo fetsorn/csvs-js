@@ -10,10 +10,11 @@ pub fn plan_insert(schema: &Schema, query: &Entry) -> Result<Vec<Tablet>> {
             Some(vs) => vs,
         };
 
-        let tablets_new = node
+        let tablets_new: Vec<Tablet> = node
             .trunks
             .0
             .iter()
+            .filter(|trunk| crown.contains(trunk))
             .map(|trunk| Tablet {
                 filename: format!("{}-{}.csv", trunk, branch),
                 trunk: trunk.to_owned(),

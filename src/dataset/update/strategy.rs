@@ -19,8 +19,9 @@ pub fn plan_update(schema: &Schema, query: &Entry) -> Vec<Tablet> {
             }) => ts.to_vec(),
         };
 
-        let tablets_new = trunks
+        let tablets_new: Vec<Tablet> = trunks
             .iter()
+            .filter(|trunk| crown.contains(trunk))
             .map(|trunk| Tablet {
                 filename: format!("{}-{}.csv", trunk, branch),
                 trunk: trunk.to_owned(),
