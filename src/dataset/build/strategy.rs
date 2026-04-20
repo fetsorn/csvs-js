@@ -17,15 +17,15 @@ pub struct Tablet {
 }
 
 pub fn plan_build(schema: &Schema, query: &Entry) -> Vec<Tablet> {
-    let mut crown: Vec<String> = schema
-        .find_crown(&query.base)
-        .into_iter()
-        .filter(|b| *b != query.base)
+    let full_crown = schema.find_crown(&query.base);
+
+    let mut crown: Vec<String> = full_crown
+        .iter()
+        .filter(|b| **b != query.base)
+        .cloned()
         .collect();
 
     crown.sort_by(schema.clone().sort_nesting_descending());
-
-    // println!("{:#?}", crown);
 
     let value_tablets = crown.iter().fold(vec![], |with_branch, branch| {
         let trunks = match schema.0.get(branch) {
@@ -37,6 +37,7 @@ pub fn plan_build(schema: &Schema, query: &Entry) -> Vec<Tablet> {
 
         let tablets_new = trunks
             .iter()
+            .filter(|trunk| full_crown.contains(trunk))
             .map(|trunk| Tablet {
                 thing: branch.to_owned(),
                 trait_: trunk.to_owned(),
