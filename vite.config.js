@@ -9,7 +9,7 @@ module.exports = defineConfig({
   build: {
     lib: {
       entry: resolve(__dirname, "src/index.js"),
-      formats: ["es"],
+      name: "csvs",
       fileName: "csvs",
     },
     sourcemap: "inline",
