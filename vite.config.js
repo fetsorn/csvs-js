@@ -13,6 +13,8 @@ module.exports = defineConfig({
       fileName: "csvs",
     },
     sourcemap: "inline",
+    minify: false,
+    terserOptions: { compress: false, mangle: false },
   },
   resolve: {
     alias: {
