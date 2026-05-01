@@ -12,7 +12,11 @@ export async function selectSchema({
   const filepath = path.join(csvsdir, "_-_.csv");
 
   const lineStream = (await isEmpty(fs, filepath))
-    ? ReadableStream.from([])
+    ? new ReadableStream({
+        start(controller) {
+          controller.close();
+        },
+      })
     : chunksToLines(fs.createReadStream(filepath));
 
   let entry = { _: "_" };

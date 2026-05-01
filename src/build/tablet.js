@@ -7,7 +7,11 @@ export async function buildTablet(fs, dir, tablet, entry) {
   const filepath = path.join(dir, tablet.filename);
 
   const lineStream = (await isEmpty(fs, filepath))
-    ? ReadableStream.from([])
+    ? new ReadableStream({
+        start(controller) {
+          controller.close();
+        },
+      })
     : chunksToLines(fs.createReadStream(filepath));
 
   const grains = mow(entry, tablet.trait, tablet.thing);

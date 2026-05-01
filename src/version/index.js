@@ -11,7 +11,11 @@ export async function selectVersion({
   const filepath = path.join(csvsdir, ".csvs.csv");
 
   const lineStream = (await isEmpty(fs, filepath))
-    ? ReadableStream.from([])
+    ? new ReadableStream({
+        start(controller) {
+          controller.close();
+        },
+      })
     : chunksToLines(fs.createReadStream(filepath));
 
   let entry = { _: "." };

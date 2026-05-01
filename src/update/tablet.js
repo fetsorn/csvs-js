@@ -11,7 +11,11 @@ async function appendTablet(fs, dir, tablet, query, tmpPath) {
   const empty = await isEmpty(fs, filepath);
 
   const lineStream = empty
-    ? ReadableStream.from([])
+    ? new ReadableStream({
+        start(controller) {
+          controller.close();
+        },
+      })
     : chunksToLines(fs.createReadStream(filepath));
 
   const grains = mow(query, tablet.trunk, tablet.branch);

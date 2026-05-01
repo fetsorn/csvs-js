@@ -80,7 +80,12 @@ function matchGroup(key, values, tablet, grains, stateInitial) {
     }
   }
 
-  return { matched, entry: groupEntry, query: groupQuery, thingQuerying: groupThingQuerying };
+  return {
+    matched,
+    entry: groupEntry,
+    query: groupQuery,
+    thingQuerying: groupThingQuerying,
+  };
 }
 
 export async function queryTabletStream(
@@ -96,11 +101,21 @@ export async function queryTabletStream(
   // first tablet needs lines — empty file means no matches
   // later tablet avoids lines — empty file means match all
   if (empty && first) {
-    return ReadableStream.from([]);
+    return new ReadableStream({
+      start(controller) {
+        controller.close();
+      },
+    });
   }
 
   if (empty && !first) {
-    return ReadableStream.from([{ query, entry, thingQuerying }]);
+    return new ReadableStream({
+      start(controller) {
+        controller.enqueue({ query, entry, thingQuerying });
+
+        controller.close();
+      },
+    });
   }
 
   const stateInitial = makeStateInitial(
@@ -124,5 +139,13 @@ export async function queryTabletStream(
     }
   }
 
-  return ReadableStream.from(matchedEntries());
+  return new ReadableStream({
+    async pull(controller) {
+      for await (const entry of matchedEntries()) {
+        controller.enqueue(entry);
+      }
+
+      controller.close();
+    },
+  });
 }

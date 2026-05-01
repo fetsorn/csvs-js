@@ -11,7 +11,11 @@ export async function optionTabletStream(fs, dir, tablet, { query, matchMap }) {
   const empty = await isEmpty(fs, filepath);
 
   const lineStream = empty
-    ? ReadableStream.from([])
+    ? new ReadableStream({
+        start(controller) {
+          controller.close();
+        },
+      })
     : chunksToLines(fs.createReadStream(filepath));
 
   const lineIterator = lineStream[Symbol.asyncIterator]();

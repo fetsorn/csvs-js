@@ -27,7 +27,11 @@ export async function sortFile(fs, dir, filename) {
   const empty = await isEmpty(fs, filepath);
 
   const lineStream = empty
-    ? ReadableStream.from([])
+    ? new ReadableStream({
+        start(controller) {
+          controller.close();
+        },
+      })
     : chunksToLines(fs.createReadStream(filepath));
 
   const lines = [];
@@ -39,8 +43,12 @@ export async function sortFile(fs, dir, filename) {
   const linesSorted = lines.sort((a, b) => {
     // Parse CSV to extract first field (key) for comparison,
     // using byte-order comparison to match Rust's String::cmp.
-    const { data: [[fstA]] } = csv.parse(a.trimEnd(), { delimiter: "," });
-    const { data: [[fstB]] } = csv.parse(b.trimEnd(), { delimiter: "," });
+    const {
+      data: [[fstA]],
+    } = csv.parse(a.trimEnd(), { delimiter: "," });
+    const {
+      data: [[fstB]],
+    } = csv.parse(b.trimEnd(), { delimiter: "," });
     const keyA = unescapeNewline(fstA ?? "");
     const keyB = unescapeNewline(fstB ?? "");
     return keyA < keyB ? -1 : keyA > keyB ? 1 : 0;
