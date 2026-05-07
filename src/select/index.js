@@ -31,7 +31,7 @@ export function selectRecordStream({
   });
 }
 
-export async function selectRecordStreamPull({
+export function selectRecordStreamPull({
   fs,
   bare = false,
   dir,
