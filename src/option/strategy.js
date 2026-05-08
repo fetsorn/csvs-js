@@ -1,4 +1,6 @@
 export function planOptions(schema, base) {
+  if (schema[base] === undefined) return [];
+
   const { trunks } = schema[base];
 
   // if base is leaf, parse the trunk relationship

@@ -13,6 +13,8 @@ export function isConnected(schema, base, branch) {
     return true;
   }
 
+  if (schema[branch] === undefined) return false;
+
   const { trunks } = schema[branch];
 
   for (const trunk of trunks) {
@@ -56,6 +58,8 @@ export function findCrown(schema, base) {
  * E.g. for datum -> filepath -> moddate: moddate=0, filepath=1, datum=2.
  */
 export function getNestingLevel(schema, branch) {
+  if (schema[branch] === undefined) return 0;
+
   const { trunks } = schema[branch];
 
   const trunkLevels = trunks.map((trunk) => getNestingLevel(schema, trunk));

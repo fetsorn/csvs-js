@@ -37,6 +37,8 @@ export function planQuery(schema, query) {
   const queriedBranches = gatherKeys(query).sort(sortNestingAscending(schema));
 
   const queriedTablets = queriedBranches.reduce((withBranch, branch) => {
+    if (schema[branch] === undefined) return withBranch;
+
     const { trunks } = schema[branch];
 
     const branchIsLeafTablets = trunks.map((trunk) => ({
@@ -59,6 +61,8 @@ export function planQuery(schema, query) {
   }, []);
 
   const base = query._;
+
+  if (schema[base] === undefined) return [...queriedTablets];
 
   const { leaves } = schema[base];
 
