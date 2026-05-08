@@ -40,6 +40,8 @@ export async function selectOptionStream({
   async function pullTablet() {
     if (tabletIterator === undefined) await nextTablet();
 
+    if (tabletsOver) return null;
+
     const { done, value } = await tabletIterator.next();
 
     if (done) {
