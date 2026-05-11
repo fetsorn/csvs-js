@@ -88,11 +88,8 @@ impl Dataset {
         build::build_record(self, query).await
     }
 
-    pub fn select_record_stream<S>(self, input: S, light: bool) -> impl Stream<Item = Result<Entry>>
-    where
-        S: Stream<Item = Result<Entry>>,
-    {
-        select::select_record_stream(self, input, light)
+    pub fn select_record_stream(self, query: Vec<Entry>, light: bool) -> impl Stream<Item = Result<Entry>> {
+        select::select_record_stream(self, query, light)
     }
 
     pub async fn select_schema(&self) -> Result<Entry> {

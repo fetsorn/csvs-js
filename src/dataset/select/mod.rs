@@ -3,17 +3,22 @@ use async_stream::try_stream;
 use futures_core::stream::Stream;
 use futures_util::pin_mut;
 use futures_util::stream::StreamExt;
+use std::collections::HashSet;
 
-pub fn select_record_stream<S: Stream<Item = Result<Entry>>>(
+pub fn select_record_stream(
     dataset: Dataset,
-    input: S,
+    query: Vec<Entry>,
     light: bool,
 ) -> impl Stream<Item = Result<Entry>> {
     try_stream! {
-        for await query in input {
-            let query = query?;
+        let mut seen = if query.len() > 1 {
+            Some(HashSet::new())
+        } else {
+            None
+        };
 
-            let is_schema = query.base == "_";
+        for q in query {
+            let is_schema = q.base == "_";
 
             if is_schema {
                 let schema_record = dataset.select_schema().await?;
@@ -23,7 +28,7 @@ pub fn select_record_stream<S: Stream<Item = Result<Entry>>>(
                 continue;
             }
 
-            let is_version = query.base == ".";
+            let is_version = q.base == ".";
 
             if is_version {
                 let version_record = dataset.select_version().await?;
@@ -33,15 +38,23 @@ pub fn select_record_stream<S: Stream<Item = Result<Entry>>>(
                 continue;
             }
 
-            let has_leaves = query.leaves.len() > 0;
+            let has_leaves = q.leaves.len() > 0;
 
             if has_leaves {
-                let stream = dataset.clone().query_record_stream(query);
+                let stream = dataset.clone().query_record_stream(q);
 
-                pin_mut!(stream); // needed for iteration
+                pin_mut!(stream);
 
                 while let Some(entry) = stream.next().await {
                     let entry = entry?;
+
+                    if let Some(ref mut set) = seen {
+                        if let Some(ref bv) = entry.base_value {
+                            if !set.insert(bv.clone()) {
+                                continue;
+                            }
+                        }
+                    }
 
                     if light {
                         yield entry;
@@ -54,12 +67,20 @@ pub fn select_record_stream<S: Stream<Item = Result<Entry>>>(
                     yield entry;
                 }
             } else {
-                let stream = dataset.clone().select_option_stream(query);
+                let stream = dataset.clone().select_option_stream(q);
 
-                pin_mut!(stream); // needed for iteration
+                pin_mut!(stream);
 
                 while let Some(entry) = stream.next().await {
                     let entry = entry?;
+
+                    if let Some(ref mut set) = seen {
+                        if let Some(ref bv) = entry.base_value {
+                            if !set.insert(bv.clone()) {
+                                continue;
+                            }
+                        }
+                    }
 
                     if light {
                         yield entry;
@@ -77,17 +98,11 @@ pub fn select_record_stream<S: Stream<Item = Result<Entry>>>(
 }
 
 pub async fn select_record(dataset: Dataset, query: Vec<Entry>) -> Result<Vec<Entry>> {
-    let readable_stream = try_stream! {
-        for q in query {
-            yield q;
-        }
-    };
-
     let mut entries = vec![];
 
-    let s = dataset.select_record_stream(readable_stream, false);
+    let s = dataset.select_record_stream(query, false);
 
-    pin_mut!(s); // needed for iteration
+    pin_mut!(s);
 
     while let Some(entry) = s.next().await {
         let entry = entry?;
@@ -99,15 +114,9 @@ pub async fn select_record(dataset: Dataset, query: Vec<Entry>) -> Result<Vec<En
 }
 
 pub async fn print_record(dataset: Dataset, query: Vec<Entry>) -> Result<()> {
-    let readable_stream = try_stream! {
-        for q in query {
-            yield q;
-        }
-    };
+    let s = dataset.select_record_stream(query, false);
 
-    let s = dataset.select_record_stream(readable_stream, false);
-
-    pin_mut!(s); // needed for iteration
+    pin_mut!(s);
 
     while let Some(entry) = s.next().await {
         let entry = entry?;

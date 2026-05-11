@@ -19,11 +19,7 @@ async fn stream_is_send() -> Result<()> {
 
     let dataset = Dataset::create(&temp_path.path().to_owned(), true).await?;
 
-    let readable_stream = try_stream! {
-       yield Entry::new("");
-    };
-
-    assert_send(dataset.select_record_stream(readable_stream, false));
+    assert_send(dataset.select_record_stream(vec![Entry::new("")], false));
 
     Ok(())
 }
