@@ -39,23 +39,30 @@ export function selectRecordStreamPull({
   light,
   csvsdir = bare ? dir : path.join(dir, "csvs"),
 }) {
-  const isSchema = query._ === "_";
+  const queries = Array.isArray(query) ? query : [query];
 
-  const isVersion = query._ === ".";
-
-  const hasLeaves =
-    Object.keys(query).filter((key) => key !== "_" && key !== query._).length >
-    0;
+  let armIndex = 0;
 
   let recordIterator;
 
   let isDone = false;
 
+  const seen = queries.length > 1 ? new Set() : undefined;
+
+  function currentQuery() {
+    return queries[armIndex];
+  }
+
   async function initStream() {
+    const q = currentQuery();
+
+    const hasLeaves =
+      Object.keys(q).filter((key) => key !== "_" && key !== q._).length > 0;
+
     // decide whether we want option or query
     const recordStream = hasLeaves
-      ? await queryRecordStream({ fs, bare, dir, csvsdir, query })
-      : await selectOptionStream({ fs, bare, dir, csvsdir, query });
+      ? await queryRecordStream({ fs, bare, dir, csvsdir, query: q })
+      : await selectOptionStream({ fs, bare, dir, csvsdir, query: q });
 
     recordIterator = recordStream[Symbol.asyncIterator]();
   }
@@ -65,7 +72,9 @@ export function selectRecordStreamPull({
       return { done: true, value: undefined };
     }
 
-    if (isSchema) {
+    const q = currentQuery();
+
+    if (q._ === "_") {
       isDone = true;
 
       const schemaRecord = await selectSchema({ fs, bare, dir, csvsdir });
@@ -73,7 +82,7 @@ export function selectRecordStreamPull({
       return { done: false, value: schemaRecord };
     }
 
-    if (isVersion) {
+    if (q._ === ".") {
       isDone = true;
 
       const versionRecord = await selectVersion({ fs, bare, dir, csvsdir });
@@ -88,7 +97,29 @@ export function selectRecordStreamPull({
     const { done, value } = await recordIterator.next();
 
     if (done) {
-      return { done: true, value: undefined };
+      // move to next arm
+      armIndex++;
+      recordIterator = undefined;
+
+      if (armIndex >= queries.length) {
+        return { done: true, value: undefined };
+      }
+
+      // recurse to pull from next arm
+      return pullRecord();
+    }
+
+    // deduplicate across union arms by base value
+    if (seen !== undefined) {
+      const baseValue = value[value._];
+
+      if (baseValue !== undefined && seen.has(baseValue)) {
+        return pullRecord();
+      }
+
+      if (baseValue !== undefined) {
+        seen.add(baseValue);
+      }
     }
 
     const record = light
