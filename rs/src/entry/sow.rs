@@ -18,6 +18,7 @@ pub fn sow(entry: &Entry, grain: &Grain, trait_: &str, thing: &str) -> Entry {
                     base_value: Some(grain_base_value.to_owned()),
                     leader_value: None,
                     leaves: entry.leaves.clone(),
+                    prose: HashMap::new(),
                 },
                 // if record already has a base value, set it from grain
                 Some(_e) => entry.clone(),
@@ -35,6 +36,7 @@ pub fn sow(entry: &Entry, grain: &Grain, trait_: &str, thing: &str) -> Entry {
             base_value: grain.leaf_value.clone(),
             leader_value: None,
             leaves: HashMap::new(),
+            prose: HashMap::new(),
         };
 
         let mut leaves = entry.leaves.clone();
@@ -52,6 +54,7 @@ pub fn sow(entry: &Entry, grain: &Grain, trait_: &str, thing: &str) -> Entry {
             base_value: entry.base_value.clone(),
             leader_value: None,
             leaves,
+            prose: HashMap::new(),
         };
     }
 
@@ -75,6 +78,7 @@ pub fn sow(entry: &Entry, grain: &Grain, trait_: &str, thing: &str) -> Entry {
                     base_value: grain.leaf_value.clone(),
                     leader_value: None,
                     leaves: HashMap::new(),
+                    prose: HashMap::new(),
                 };
 
                 leaves.insert(
@@ -95,6 +99,7 @@ pub fn sow(entry: &Entry, grain: &Grain, trait_: &str, thing: &str) -> Entry {
                         base_value: trunk_item.base_value.clone(),
                         leader_value: None,
                         leaves,
+                        prose: HashMap::new(),
                     }
                 } else {
                     trunk_item.clone()
@@ -128,6 +133,7 @@ pub fn sow(entry: &Entry, grain: &Grain, trait_: &str, thing: &str) -> Entry {
         base_value: entry.base_value.clone(),
         leader_value: None,
         leaves: leaves_new,
+        prose: HashMap::new(),
     };
 
     result

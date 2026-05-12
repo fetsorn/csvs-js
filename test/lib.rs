@@ -41,15 +41,29 @@ pub fn read_testcase<R: serde::de::DeserializeOwned>(loadname: &str) -> Vec<R> {
 pub fn copy(loadname: &str, temp_path: &Path) -> Result<(), std::io::Error> {
     let dataset = DATASETS_DIR.get_dir(loadname).unwrap();
 
-    for file_entry in dataset.files() {
-        let file_name = file_entry
-            .path()
-            .file_name()
-            .expect("should not terminate in ..");
+    copy_dir_recursive(dataset, temp_path, loadname)
+}
 
-        let mut file = fs::File::create(temp_path.join(file_name))?;
+fn copy_dir_recursive(dir: &Dir<'_>, temp_path: &Path, prefix: &str) -> Result<(), std::io::Error> {
+    for file_entry in dir.files() {
+        let relative = file_entry
+            .path()
+            .strip_prefix(prefix)
+            .unwrap_or(file_entry.path());
+
+        let dest = temp_path.join(relative);
+
+        if let Some(parent) = dest.parent() {
+            fs::create_dir_all(parent)?;
+        }
+
+        let mut file = fs::File::create(&dest)?;
 
         file.write_all(file_entry.contents())?;
+    }
+
+    for subdir in dir.dirs() {
+        copy_dir_recursive(subdir, temp_path, prefix)?;
     }
 
     Ok(())

@@ -19,10 +19,27 @@ pub async fn insert_record(dataset: Dataset, query: Vec<Entry>) -> Result<()> {
     let schema = dataset.get_schema().await?;
 
     for q in query {
-        let strategy = plan_insert(&schema, &q)?;
+        // Write prose blobs and strip @ keys before tablet insert
+        if !q.prose.is_empty() {
+            if let Some(ref base_value) = q.base_value {
+                for (lang, content) in &q.prose {
+                    dataset.prose_address.write_prose(
+                        &dataset.dir,
+                        base_value,
+                        lang.as_deref(),
+                        content,
+                    )?;
+                }
+            }
+        }
+
+        let mut stripped = q.clone();
+        stripped.prose.clear();
+
+        let strategy = plan_insert(&schema, &stripped)?;
 
         for tablet in &strategy {
-            insert_tablet(dataset.dir.clone(), tablet.clone(), q.clone()).await?;
+            insert_tablet(dataset.dir.clone(), tablet.clone(), stripped.clone()).await?;
 
             let filepath = dataset.dir.join(&tablet.filename);
 

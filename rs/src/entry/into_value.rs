@@ -17,6 +17,14 @@ impl IntoValue for Entry {
             Some(s) => value["__"] = s.into(),
         }
 
+        for (lang, text) in self.prose.iter() {
+            let key = match lang {
+                None => "@".to_string(),
+                Some(l) => format!("@{}", l),
+            };
+            value[key] = text.clone().into();
+        }
+
         for (leaf, items) in self.leaves.iter() {
             for entry in items {
                 // condense entry to a string if it has no leaves

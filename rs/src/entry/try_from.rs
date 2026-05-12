@@ -49,9 +49,29 @@ impl TryFrom<Value> for Entry {
                     None
                 };
 
+                // Extract prose keys (starting with "@")
+                let mut prose = HashMap::new();
+
+                for (key, val) in v.iter() {
+                    if key.starts_with('@') {
+                        let lang = if key.len() == 1 {
+                            None
+                        } else {
+                            Some(key[1..].to_owned())
+                        };
+
+                        match val {
+                            Value::String(s) => { prose.insert(lang, s.to_owned()); }
+                            other => return Err(Error::from_message(
+                                format!("Prose key '{}' must be a string, got {}", key, type_name(other))
+                            )),
+                        }
+                    }
+                }
+
                 let leaves = v
                     .iter()
-                    .filter(|(key, _)| (*key != "_") && (*key != base) && (*key != "__"))
+                    .filter(|(key, _)| (*key != "_") && (*key != base) && (*key != "__") && !key.starts_with('@'))
                     .map(|(key, val)| {
                         let values: Vec<Entry> = match val {
                             Value::String(s) => {
@@ -60,6 +80,7 @@ impl TryFrom<Value> for Entry {
                                     base_value: Some(s.to_owned()),
                                     leader_value: None,
                                     leaves: HashMap::new(),
+                                    prose: HashMap::new(),
                                 }]
                             }
                             Value::Array(vs) => vs
@@ -70,6 +91,7 @@ impl TryFrom<Value> for Entry {
                                         base_value: Some(s.to_owned()),
                                         leader_value: None,
                                         leaves: HashMap::new(),
+                                        prose: HashMap::new(),
                                     }),
                                     Value::Object(_) => {
                                         let e: Entry = v.clone().try_into()?;
@@ -98,6 +120,7 @@ impl TryFrom<Value> for Entry {
                     base_value: base_value.cloned(),
                     leader_value: leader_value.cloned(),
                     leaves,
+                    prose,
                 })
             }
             other => Err(Error::from_message(

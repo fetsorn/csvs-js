@@ -50,7 +50,7 @@ async fn select_test() -> Result<()> {
 
         let dataset = Dataset::open(&temp_path.path().to_owned()).await?;
 
-        let entries = dataset.select_record(queries).await?;
+        let entries = dataset.select_record(queries, false).await?;
 
         let entries_json: Vec<Value> = entries.iter().map(|i| i.clone().into_value()).collect();
 

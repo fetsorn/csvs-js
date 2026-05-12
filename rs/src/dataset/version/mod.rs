@@ -28,6 +28,7 @@ pub async fn select_version(dataset: &Dataset) -> Result<Entry> {
             base_value: Some(leaf.to_owned()),
             leader_value: None,
             leaves: HashMap::new(),
+            prose: HashMap::new(),
         };
 
         entry.leaves.insert(trunk.to_owned(), vec![leaf_entry]);

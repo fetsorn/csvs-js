@@ -8,12 +8,19 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 
+/// A SON record.
+///
+/// `prose` holds description blobs keyed by language tag.
+/// `None` = untagged (`@`), `Some("en")` = `@en`, etc.
+/// Populated only when the prose flag is set during build.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Entry {
     pub base: String,
     pub base_value: Option<String>,
     pub leader_value: Option<String>,
     pub leaves: HashMap<String, Vec<Entry>>,
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub prose: HashMap<Option<String>, String>,
 }
 
 impl fmt::Display for Entry {
@@ -29,6 +36,7 @@ impl Entry {
             base_value: None,
             leader_value: None,
             leaves: HashMap::new(),
+            prose: HashMap::new(),
         }
     }
 

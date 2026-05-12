@@ -30,7 +30,8 @@ pub async fn select_schema(dataset: &Dataset) -> Result<Entry> {
             base: trunk.to_owned(),
             base_value: Some(leaf.to_owned()),
             leader_value: None,
-            leaves: HashMap::new()
+            leaves: HashMap::new(),
+            prose: HashMap::new(),
         }]].concat();
 
         // set leaves of trunk

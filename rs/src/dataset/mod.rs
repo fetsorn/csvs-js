@@ -9,10 +9,12 @@ mod query;
 mod build;
 mod schema;
 mod version;
+pub mod prose;
 use crate::{Entry, Result, Schema};
 use futures_core::stream::Stream;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use prose::ProseAddress;
 
 /// A csvs dataset backed by CSV files in a directory.
 ///
@@ -24,6 +26,8 @@ pub struct Dataset {
     dir: PathBuf,
     #[serde(skip)]
     schema_cache: Option<Schema>,
+    #[serde(skip, default)]
+    prose_address: ProseAddress,
 }
 
 impl Dataset {
@@ -63,8 +67,8 @@ impl Dataset {
         Ok(())
     }
 
-    pub async fn select_record(self, query: Vec<Entry>) -> Result<Vec<Entry>> {
-        select::select_record(self, query).await
+    pub async fn select_record(self, query: Vec<Entry>, light: bool) -> Result<Vec<Entry>> {
+        select::select_record(self, query, light).await
     }
 
 
@@ -85,7 +89,11 @@ impl Dataset {
     }
 
     pub async fn build_record(self, query: Entry) -> Result<Entry> {
-        build::build_record(self, query).await
+        build::build_record(self, query, false).await
+    }
+
+    pub async fn build_record_with_prose(self, query: Entry) -> Result<Entry> {
+        build::build_record(self, query, true).await
     }
 
     pub fn select_record_stream(self, query: Vec<Entry>, light: bool) -> impl Stream<Item = Result<Entry>> {
