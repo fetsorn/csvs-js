@@ -1,0 +1,8 @@
+.DS_Store
+node_modules
+/dist/
+/result
+/build/
+/test/
+/out/
+/target/
