@@ -1,0 +1,12 @@
+[
+  {
+    "name": "initializes",
+    "initial": "empty",
+    "expected": "initialized"
+  },
+  {
+    "name": "warns when exists",
+    "initial": "initialized",
+    "expected": "initialized"
+  }
+]

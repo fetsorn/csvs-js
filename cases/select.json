@@ -1,0 +1,209 @@
+[
+  {
+    "name": "name1",
+    "initial": "default",
+    "query": [ "query_name1" ],
+    "expected": [ "record2001" ]
+  },
+  {
+    "name": "name2",
+    "initial": "default",
+    "query": [ "query_name2" ],
+    "expected": [ "record2002" ]
+  },
+  {
+    "name": "name3 with empty string trunk value",
+    "initial": "default",
+    "query": [ "query_name3" ],
+    "expected": [ "record2003_unedited" ]
+  },
+  {
+    "name": "name2 with out-of-order schema",
+    "initial": "unordered",
+    "query": [ "query_name2" ],
+    "expected": [ "record2002" ]
+  },
+  {
+    "name": "name1 with simple array",
+    "initial": "array_simple",
+    "query": [ "query_name2" ],
+    "expected": [ "record_array_simple" ]
+  },
+  {
+    "name": "name1 with double array",
+    "initial": "array_double",
+    "query": [ "query_value" ],
+    "expected": [ "record_array_double_1", "record_array_double_2" ]
+  },
+  {
+    "name": "name1 with array of tags",
+    "initial": "array",
+    "query": [ "query_name1" ],
+    "expected": [ "record_array" ]
+  },
+  {
+    "name": "value2 with array of tags",
+    "initial": "array_added",
+    "query": [ "query_value1" ],
+    "expected": [ "record_array" ]
+  },
+  {
+    "name": "export1_key with array of tags",
+    "initial": "array_added",
+    "query": [ "query_array" ],
+    "expected": [ "record_array" ]
+  },
+  {
+    "name": "name1 with regexp",
+    "initial": "default",
+    "query": [ "query_regexp" ],
+    "expected": [ "record2003_unedited", "record2001", "record2002" ]
+  },
+  {
+    "name": "no names with literal regexp",
+    "initial": "default",
+    "query": [ "query_literal" ],
+    "expected": [ ]
+  },
+  {
+    "name": "no names with literal regexp",
+    "initial": "default",
+    "query": [ "query_literal_2" ],
+    "expected": [ ]
+  },
+  {
+    "name": "moddate regex",
+    "initial": "default",
+    "query": [ "query_moddate_regexp" ],
+    "expected": [ "record2001", "record2002" ]
+  },
+  {
+    "name": "two queries",
+    "initial": "default",
+    "query": [ "query_two_queries" ],
+    "expected": [ "record2001" ]
+  },
+  {
+    "name": "export1_tag with export1_key",
+    "initial": "array_added",
+    "query": [ "query_export1" ],
+    "expected": [ "record_export1_tag" ]
+  },
+  {
+    "name": "unlinked export1_tag with export1_key",
+    "initial": "deleted_array_item",
+    "query": [ "query_export1_unlinked" ],
+    "expected": [ "record_export1_tag" ]
+  },
+  {
+    "name": "options name",
+    "initial": "added",
+    "query": [ "query_option_actname" ],
+    "expected": [
+      "option_actname_3",
+      "option_actname_1",
+      "option_actname_2",
+      "option_actname_5"
+    ]
+  },
+  {
+    "name": "options date",
+    "initial": "added",
+    "query": [ "query_option_actdate" ],
+    "expected": [
+      "option_actdate_2003",
+      "option_actdate_2001",
+      "option_actdate_2002",
+      "option_actdate_2005"
+    ]
+  },
+  {
+    "name": "options saydate",
+    "initial": "added",
+    "query": [ "query_option_saydate" ],
+    "expected": [
+      "option_saydate_2003",
+      "option_saydate_2001",
+      "option_saydate_2002",
+      "option_saydate_2004"
+    ]
+  },
+  {
+    "name": "options sayname",
+    "initial": "added",
+    "query": [ "query_option_sayname" ],
+    "expected": [
+      "option_sayname_3",
+      "option_sayname_1",
+      "option_sayname_2",
+      "option_sayname_4"
+    ]
+  },
+  {
+    "name": "options object",
+    "initial": "array",
+    "query": [ "query_option_export1" ],
+    "expected": [
+      "option_export1_tag_1",
+      "option_export1_tag_2"
+    ]
+  },
+  {
+    "name": "options object free from trunk",
+    "initial": "array_free",
+    "query": [ "query_option_export1" ],
+    "expected": [
+      "option_export1_tag_1",
+      "option_export1_tag_2",
+      "option_export1_tag_3"
+    ]
+  },
+  {
+    "name": "query schema relations",
+    "initial": "default",
+    "query": [ "query_schema" ],
+    "expected": [ "record_schema" ]
+  },
+  {
+    "name": "name1 with array of literal values",
+    "initial": "array_literal",
+    "query": [ "query_name1" ],
+    "expected": [ "record_array_literal" ]
+  },
+  {
+    "name": "fails a match on list of values export1_tag",
+    "initial": "array",
+    "query": [ "query_export1_fail" ],
+    "expected": []
+  },
+  {
+    "name": "fails a match on list of values actname",
+    "initial": "array_long",
+    "query": [ "query_actname_fail" ],
+    "expected": []
+  },
+  {
+    "name": "finds value with semicolon",
+    "initial": "semicolon",
+    "query": [ "query_event1" ],
+    "expected": [ "record_semicolon" ]
+  },
+  {
+    "name": "multiple roots",
+    "initial": "two_roots",
+    "query": [ "query_name1" ],
+    "expected": [ "record2001" ]
+  },
+  {
+    "name": "finds value with a newline",
+    "initial": "newline",
+    "query": [ "query_newline" ],
+    "expected": [ "record_newline" ]
+  },
+  {
+    "name": "query version",
+    "initial": "default",
+    "query": [ "query_version" ],
+    "expected": [ "record_version" ]
+  }
+]

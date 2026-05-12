@@ -1,0 +1,26 @@
+[
+  {
+    "name": "duplicates on no change",
+    "initial": "default",
+    "query": ["record2001"],
+    "expected": "duplicate"
+  },
+  {
+    "name": "adds attribute record",
+    "initial": "default",
+    "query": ["record2001_edited"],
+    "expected": "duplicate_leaf"
+  },
+  {
+    "name": "adds record",
+    "initial": "default",
+    "query": ["record_added"],
+    "expected": "added"
+  },
+  {
+    "name": "adds record with a newline",
+    "initial": "default",
+    "query": ["record_newline"],
+    "expected": "added_newline"
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "_": "_",
+  "repo": [
+    "reponame",
+    "category",
+    "branch",
+    "local_tag",
+    "remote_tag",
+    "sync_tag"
+  ],
+  "branch": ["trunk", "task", "cognate", "description_en", "description_ru"],
+  "remote_tag": ["remote_url", "remote_token"],
+  "sync_tag": ["sync_tag_search"]
+}

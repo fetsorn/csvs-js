@@ -1,0 +1,15 @@
+{
+    "name": "@fetsorn/csvs-test",
+    "description": "test suite for csvs",
+    "version": "1.0.3",
+    "author": "Anton Davydov <fetsorn@gmail.com>",
+    "type": "module",
+    "exports": "./index.js",
+    "files": ["records/", "cases/", "datasets/", "index.js"],
+    "license": "MIT",
+    "scripts": {
+
+    },
+    "dependencies": {},
+    "devDependencies": {}
+}
