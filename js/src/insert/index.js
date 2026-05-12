@@ -18,14 +18,12 @@ export async function insertRecord({
   const schema = schemaCached ?? await buildSchema({ fs, bare, dir, csvsdir });
 
   for (const q of queries) {
-    const { prose, stripped } = extractProse(q);
+    const { proseEntries, stripped } = extractProse(q);
 
-    // Write prose blobs
-    const baseValue = stripped[stripped._];
-
-    if (baseValue !== undefined && Object.keys(prose).length > 0) {
-      for (const [key, content] of Object.entries(prose)) {
-        await writeProse(fs, csvsdir, baseValue, parseLang(key), content);
+    // Write prose blobs for all entries (top-level and nested)
+    for (const { value, key, content } of proseEntries) {
+      if (value !== undefined) {
+        await writeProse(fs, csvsdir, value, parseLang(key), content);
       }
     }
 

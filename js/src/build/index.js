@@ -19,7 +19,8 @@ export async function buildRecord({
   schema: schemaCached,
   prose = false,
 }) {
-  const schema = schemaCached ?? await buildSchema({ fs, bare, dir, csvsdir });
+  const schema =
+    schemaCached ?? (await buildSchema({ fs, bare, dir, csvsdir }));
 
   const strategy = planBuild(schema, query[0]);
 
@@ -31,10 +32,69 @@ export async function buildRecord({
 
   // if nothing is found, return input unchanged
 
-  if (prose && entry[entry._] !== undefined) {
-    const proseMap = await readProse(fs, csvsdir, entry[entry._]);
-    Object.assign(entry, proseMap);
+  if (prose) {
+    entry = await withProse(fs, csvsdir, entry);
   }
 
   return entry;
+}
+
+async function withProse(fs, csvsdir, entry) {
+  const baseValue = entry[entry._];
+
+  const prosePartial =
+    baseValue !== undefined && typeof baseValue === "string"
+      ? await readProse(fs, csvsdir, baseValue)
+      : {};
+
+  const keys = Object.keys(entry).filter((k) => k !== "_");
+
+  const leafEntries = await Promise.all(
+    keys.map(async (key) => {
+      const val = entry[key];
+
+      if (
+        val !== null &&
+        typeof val === "object" &&
+        !Array.isArray(val) &&
+        val._
+      ) {
+        return [key, await withProse(fs, csvsdir, val)];
+      }
+
+      if (Array.isArray(val)) {
+        const items = await Promise.all(
+          val.map(async (item) => {
+            if (item !== null && typeof item === "object" && item._) {
+              return withProse(fs, csvsdir, item);
+            }
+
+            if (typeof item === "string") {
+              const itemProse = await readProse(fs, csvsdir, item);
+
+              if (Object.keys(itemProse).length > 0) {
+                return { _: key, [key]: item, ...itemProse };
+              }
+            }
+
+            return item;
+          }),
+        );
+
+        return [key, items];
+      }
+
+      if (typeof val === "string" && key !== entry._) {
+        const valProse = await readProse(fs, csvsdir, val);
+
+        if (Object.keys(valProse).length > 0) {
+          return [key, { _: key, [key]: val, ...valProse }];
+        }
+      }
+
+      return [key, val];
+    }),
+  );
+
+  return { ...entry, ...Object.fromEntries(leafEntries), ...prosePartial };
 }

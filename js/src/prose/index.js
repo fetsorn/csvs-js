@@ -41,8 +41,9 @@ export async function readProse(fs, dir, value) {
   const untaggedPath = prosePath(dir, value, null);
   try {
     const content = await fs.promises.readFile(untaggedPath, "utf8");
+
     result["@"] = content;
-  } catch {
+  } catch (e) {
     // no untagged blob
   }
 
@@ -53,13 +54,16 @@ export async function readProse(fs, dir, value) {
 
   try {
     const files = await fs.promises.readdir(proseDir);
+
     for (const file of files) {
       if (file.startsWith(prefix) && file.length > prefix.length) {
         const lang = file.slice(prefix.length);
+
         const content = await fs.promises.readFile(
           path.join(proseDir, file),
           "utf8",
         );
+
         result[`@${lang}`] = content;
       }
     }
@@ -137,23 +141,43 @@ export async function searchProse(fs, dir, pattern, lang) {
 }
 
 /**
- * Extract @ keys from a record. Returns { prose, stripped }
- * where prose is { "@": "text", "@en": "text" } and stripped is
- * the record without @ keys.
+ * Recursively extract @ keys from a record and all nested entries.
+ * Returns { proseEntries, stripped } where proseEntries is an array
+ * of { value, key, content } for each @ key found at any depth,
+ * and stripped is the record with all @ keys removed.
  */
 export function extractProse(record) {
-  const prose = {};
-  const stripped = {};
+  const proseEntries = [];
 
-  for (const [key, value] of Object.entries(record)) {
-    if (key.startsWith("@")) {
-      prose[key] = value;
-    } else {
-      stripped[key] = value;
+  function walk(obj) {
+    if (obj === null || typeof obj !== "object") return obj;
+
+    if (Array.isArray(obj)) return obj.map(walk);
+
+    const result = {};
+    const base = obj._;
+    const baseValue = base !== undefined ? obj[base] : undefined;
+
+    for (const [key, value] of Object.entries(obj)) {
+      if (key.startsWith("@")) {
+        proseEntries.push({
+          value: typeof baseValue === "string" ? baseValue : undefined,
+          key,
+          content: value,
+        });
+      } else if (typeof value === "object" && value !== null) {
+        result[key] = walk(value);
+      } else {
+        result[key] = value;
+      }
     }
+
+    return result;
   }
 
-  return { prose, stripped };
+  const stripped = walk(record);
+
+  return { proseEntries, stripped };
 }
 
 /**

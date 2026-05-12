@@ -5,6 +5,7 @@ import { planUpdate } from "./strategy.js";
 import { updateTablet } from "./tablet.js";
 import { updateSchema } from "../schema/index.js";
 import { updateVersion } from "../version/index.js";
+import { extractProse, writeProse, parseLang } from "../prose/index.js";
 
 export async function updateRecord({
   fs,
@@ -38,10 +39,19 @@ export async function updateRecord({
       continue;
     }
 
-    const strategy = planUpdate(schema, query);
+    const { proseEntries, stripped } = extractProse(query);
+
+    // Write prose blobs for all entries (top-level and nested)
+    for (const { value, key, content } of proseEntries) {
+      if (value !== undefined) {
+        await writeProse(fs, csvsdir, value, parseLang(key), content);
+      }
+    }
+
+    const strategy = planUpdate(schema, stripped);
 
     for (const tablet of strategy) {
-      await updateTablet(fs, csvsdir, tablet, query);
+      await updateTablet(fs, csvsdir, tablet, stripped);
 
       await sortFile(fs, csvsdir, tablet.filename);
     }

@@ -60,16 +60,16 @@ export function selectRecordStreamPull({
     const q = currentQuery();
 
     // Extract prose filters
-    const { prose, stripped } = extractProse(q);
+    const { proseEntries, stripped } = extractProse(q);
 
-    const proseFilters = Object.entries(prose).filter(
-      ([, v]) => v !== "",
+    const proseFilters = proseEntries.filter(
+      ({ content }) => content !== "",
     );
 
     if (proseFilters.length > 0) {
       let allowed = null;
 
-      for (const [key, pattern] of proseFilters) {
+      for (const { key, content: pattern } of proseFilters) {
         const lang = parseLang(key);
         const matches = await searchProse(fs, csvsdir, pattern, lang);
         const matchSet = new Set(matches);
