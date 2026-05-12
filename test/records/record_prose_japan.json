@@ -1,7 +1,11 @@
 {
   "_": "event",
   "event": "visited-japan",
-  "date": "2001-01-01",
+  "date": {
+    "_": "date",
+    "date": "2001-01-01",
+    "@en": "Cherry blossom season"
+  },
   "@": "We visited Tokyo and Kyoto in spring",
   "@en": "We visited Tokyo and Kyoto in spring",
   "@ru": "Мы посетили Токио и Киото весной"
