@@ -4,6 +4,7 @@ import { selectOptionStream } from "../option/index.js";
 import { buildRecord } from "../build/index.js";
 import { selectSchema } from "../schema/index.js";
 import { selectVersion } from "../version/index.js";
+import { extractProse, searchProse, parseLang } from "../prose/index.js";
 
 // for backwards compatibility with push streams
 export function selectRecordStream({
@@ -47,6 +48,8 @@ export function selectRecordStreamPull({
 
   let isDone = false;
 
+  let proseAllowed = undefined;
+
   const seen = queries.length > 1 ? new Set() : undefined;
 
   function currentQuery() {
@@ -56,13 +59,42 @@ export function selectRecordStreamPull({
   async function initStream() {
     const q = currentQuery();
 
+    // Extract prose filters
+    const { prose, stripped } = extractProse(q);
+
+    const proseFilters = Object.entries(prose).filter(
+      ([, v]) => v !== "",
+    );
+
+    if (proseFilters.length > 0) {
+      let allowed = null;
+
+      for (const [key, pattern] of proseFilters) {
+        const lang = parseLang(key);
+        const matches = await searchProse(fs, csvsdir, pattern, lang);
+        const matchSet = new Set(matches);
+
+        if (allowed === null) {
+          allowed = matchSet;
+        } else {
+          allowed = new Set([...allowed].filter((v) => matchSet.has(v)));
+        }
+      }
+
+      proseAllowed = allowed;
+    } else {
+      proseAllowed = undefined;
+    }
+
     const hasLeaves =
-      Object.keys(q).filter((key) => key !== "_" && key !== q._).length > 0;
+      Object.keys(stripped).filter(
+        (key) => key !== "_" && key !== stripped._,
+      ).length > 0;
 
     // decide whether we want option or query
     const recordStream = hasLeaves
-      ? await queryRecordStream({ fs, bare, dir, csvsdir, query: q })
-      : await selectOptionStream({ fs, bare, dir, csvsdir, query: q });
+      ? await queryRecordStream({ fs, bare, dir, csvsdir, query: stripped })
+      : await selectOptionStream({ fs, bare, dir, csvsdir, query: stripped });
 
     recordIterator = recordStream[Symbol.asyncIterator]();
   }
@@ -100,6 +132,7 @@ export function selectRecordStreamPull({
       // move to next arm
       armIndex++;
       recordIterator = undefined;
+      proseAllowed = undefined;
 
       if (armIndex >= queries.length) {
         return { done: true, value: undefined };
@@ -107,6 +140,15 @@ export function selectRecordStreamPull({
 
       // recurse to pull from next arm
       return pullRecord();
+    }
+
+    // Filter by prose matches
+    if (proseAllowed !== undefined) {
+      const baseValue = value[value._];
+
+      if (baseValue !== undefined && !proseAllowed.has(baseValue)) {
+        return pullRecord();
+      }
     }
 
     // deduplicate across union arms by base value

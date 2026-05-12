@@ -3,6 +3,7 @@ import { sortFile } from "../stream.js";
 import { buildSchema } from "../schema/index.js";
 import { planInsert } from "./strategy.js";
 import { insertTablet } from "./tablet.js";
+import { extractProse, writeProse, parseLang } from "../prose/index.js";
 
 export async function insertRecord({
   fs,
@@ -16,11 +17,22 @@ export async function insertRecord({
 
   const schema = schemaCached ?? await buildSchema({ fs, bare, dir, csvsdir });
 
-  for (const query of queries) {
-    const strategy = planInsert(schema, query);
+  for (const q of queries) {
+    const { prose, stripped } = extractProse(q);
+
+    // Write prose blobs
+    const baseValue = stripped[stripped._];
+
+    if (baseValue !== undefined && Object.keys(prose).length > 0) {
+      for (const [key, content] of Object.entries(prose)) {
+        await writeProse(fs, csvsdir, baseValue, parseLang(key), content);
+      }
+    }
+
+    const strategy = planInsert(schema, stripped);
 
     for (const tablet of strategy) {
-      await insertTablet(fs, csvsdir, tablet, query);
+      await insertTablet(fs, csvsdir, tablet, stripped);
 
       await sortFile(fs, csvsdir, tablet.filename);
     }

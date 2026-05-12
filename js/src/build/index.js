@@ -2,6 +2,7 @@ import path from "path";
 import { planBuild } from "./strategy.js";
 import { buildTablet } from "./tablet.js";
 import { buildSchema } from "../schema/index.js";
+import { readProse } from "../prose/index.js";
 
 /**
  * This returns a list of records
@@ -16,6 +17,7 @@ export async function buildRecord({
   csvsdir = bare ? dir : path.join(dir, "csvs"),
   query,
   schema: schemaCached,
+  prose = false,
 }) {
   const schema = schemaCached ?? await buildSchema({ fs, bare, dir, csvsdir });
 
@@ -28,6 +30,11 @@ export async function buildRecord({
   }
 
   // if nothing is found, return input unchanged
+
+  if (prose && entry[entry._] !== undefined) {
+    const proseMap = await readProse(fs, csvsdir, entry[entry._]);
+    Object.assign(entry, proseMap);
+  }
 
   return entry;
 }

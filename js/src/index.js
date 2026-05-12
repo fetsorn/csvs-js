@@ -28,6 +28,7 @@ import {
   sortNestingDescending,
 } from "./schema.js";
 import { mow, sow } from "./record.js";
+import { readProse, writeProse, searchProse } from "./prose/index.js";
 
 export {
   init,
@@ -47,6 +48,9 @@ export {
   sortNestingDescending,
   mow,
   sow,
+  readProse,
+  writeProse,
+  searchProse,
 };
 
 export default {
@@ -67,4 +71,7 @@ export default {
   sortNestingDescending,
   mow,
   sow,
+  readProse,
+  writeProse,
+  searchProse,
 };
