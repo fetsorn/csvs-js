@@ -25,10 +25,27 @@ pub async fn update_record(dataset: Dataset, query: Vec<Entry>) -> Result<()> {
             continue;
         }
 
-        let strategy = plan_update(&schema, &q);
+        // Write prose blobs and strip @ keys before tablet update
+        if !q.prose.is_empty() {
+            if let Some(ref base_value) = q.base_value {
+                for (lang, content) in &q.prose {
+                    dataset.prose_address.write_prose(
+                        &dataset.dir,
+                        base_value,
+                        lang.as_deref(),
+                        content,
+                    )?;
+                }
+            }
+        }
+
+        let mut stripped = q.clone();
+        stripped.prose.clear();
+
+        let strategy = plan_update(&schema, &stripped);
 
         for tablet in strategy {
-            update_tablet(dataset.dir.clone(), tablet, q.clone()).await?;
+            update_tablet(dataset.dir.clone(), tablet, stripped.clone()).await?;
         }
     }
 

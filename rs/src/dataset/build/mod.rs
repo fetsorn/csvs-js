@@ -19,11 +19,35 @@ pub async fn build_record(dataset: Dataset, query: Entry, prose: bool) -> Result
     // if nothing is found, return input unchanged
 
     if prose {
-        if let Some(ref base_value) = entry.base_value {
-            let prose_map = dataset.prose_address.read_prose(&dataset.dir, base_value)?;
-            entry.prose = prose_map;
-        }
+        entry = with_prose(&dataset, entry)?;
     }
 
     Ok(entry)
+}
+
+fn with_prose(dataset: &Dataset, entry: Entry) -> Result<Entry> {
+    let prose_map = match entry.base_value {
+        Some(ref base_value) => dataset.prose_address.read_prose(&dataset.dir, base_value)?,
+        None => std::collections::HashMap::new(),
+    };
+
+    let leaves = entry
+        .leaves
+        .into_iter()
+        .map(|(key, entries)| {
+            let new_entries: Result<Vec<Entry>> = entries
+                .into_iter()
+                .map(|leaf| with_prose(dataset, leaf))
+                .collect();
+            Ok((key, new_entries?))
+        })
+        .collect::<Result<std::collections::HashMap<_, _>>>()?;
+
+    Ok(Entry {
+        base: entry.base,
+        base_value: entry.base_value,
+        leader_value: entry.leader_value,
+        leaves,
+        prose: prose_map,
+    })
 }
