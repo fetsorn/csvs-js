@@ -28,7 +28,7 @@ impl IntoValue for Entry {
         for (leaf, items) in self.leaves.iter() {
             for entry in items {
                 // condense entry to a string if it has no leaves
-                let leaf_value: Value = match entry.leaves.is_empty() {
+                let leaf_value: Value = match entry.leaves.is_empty() && entry.prose.is_empty() {
                     true => match &entry.base_value {
                         None => continue,
                         Some(s) => s.to_owned().into(),
