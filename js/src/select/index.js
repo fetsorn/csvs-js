@@ -12,6 +12,7 @@ export function selectRecordStream({
   bare = false,
   dir,
   light,
+  prose,
   csvsdir = bare ? dir : path.join(dir, "csvs"),
 }) {
   return new TransformStream({
@@ -23,6 +24,7 @@ export function selectRecordStream({
         csvsdir,
         query,
         light,
+        prose,
       });
 
       for (const entry of entries) {
@@ -38,6 +40,7 @@ export function selectRecordStreamPull({
   dir,
   query,
   light,
+  prose,
   csvsdir = bare ? dir : path.join(dir, "csvs"),
 }) {
   const queries = Array.isArray(query) ? query : [query];
@@ -62,9 +65,7 @@ export function selectRecordStreamPull({
     // Extract prose filters
     const { proseEntries, stripped } = extractProse(q);
 
-    const proseFilters = proseEntries.filter(
-      ({ content }) => content !== "",
-    );
+    const proseFilters = proseEntries.filter(({ content }) => content !== "");
 
     if (proseFilters.length > 0) {
       let allowed = null;
@@ -87,9 +88,8 @@ export function selectRecordStreamPull({
     }
 
     const hasLeaves =
-      Object.keys(stripped).filter(
-        (key) => key !== "_" && key !== stripped._,
-      ).length > 0;
+      Object.keys(stripped).filter((key) => key !== "_" && key !== stripped._)
+        .length > 0;
 
     // decide whether we want option or query
     const recordStream = hasLeaves
@@ -166,7 +166,7 @@ export function selectRecordStreamPull({
 
     const record = light
       ? value
-      : await buildRecord({ fs, bare, dir, csvsdir, query: [value] });
+      : await buildRecord({ fs, bare, dir, csvsdir, query: [value], prose });
 
     return { done: false, value: record };
   }
@@ -190,6 +190,7 @@ export async function selectRecord({
   dir,
   query,
   light,
+  prose,
   csvsdir = bare ? dir : path.join(dir, "csvs"),
 }) {
   // exit if record is undefined
@@ -207,6 +208,7 @@ export async function selectRecord({
       csvsdir,
       query,
       light,
+      prose,
     });
 
     for await (const record of stream) {
