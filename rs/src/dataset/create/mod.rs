@@ -10,7 +10,7 @@ pub async fn create(dir: &PathBuf, bare: bool) -> Result<Dataset> {
         let _version_exists = std::fs::metadata(&version_path).is_ok();
 
         // write .csvs.csv
-        std::fs::write(&version_path, "csvs,0.0.2\n")?;
+        std::fs::write(&version_path, "csvs,0.0.4\n")?;
 
         return Ok(Dataset { schema_cache: None, prose_address: Default::default(), dir: dir.clone() });
     } else {
@@ -28,7 +28,7 @@ pub async fn create(dir: &PathBuf, bare: bool) -> Result<Dataset> {
             // write .csvs.csv
             let version_path = nested_dir.join(".csvs.csv");
 
-            std::fs::write(&version_path, "csvs,0.0.2\n")?;
+            std::fs::write(&version_path, "csvs,0.0.4\n")?;
 
             return Ok(Dataset { schema_cache: None, prose_address: Default::default(), dir: nested_dir.clone() });
         }
