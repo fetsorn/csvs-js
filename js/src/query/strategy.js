@@ -1,4 +1,4 @@
-import { sortNestingAscending } from "../schema.js";
+import { isConnected, sortNestingAscending } from "../schema.js";
 
 // in order of query,
 // first queried twigs
@@ -32,61 +32,44 @@ function gatherKeys(record) {
   return bar;
 }
 
+/// For a branch with multiple trunks, find the single trunk that connects
+/// this branch to the query base along the shortest path in the schema graph.
+/// Falls back to the first connected trunk if no direct match.
+function findTrunkForBase(schema, base, branch) {
+  if (schema[branch] === undefined) return undefined;
+
+  const { trunks } = schema[branch];
+
+  // Prefer direct: trunk == base
+  if (trunks.includes(base)) return base;
+
+  // Otherwise pick the first trunk connected to base
+  return trunks.find((trunk) => isConnected(schema, base, trunk));
+}
+
 export function planQuery(schema, query) {
   // queried keys in ascending order minus the base
   const queriedBranches = gatherKeys(query).sort(sortNestingAscending(schema));
 
   const queriedTablets = queriedBranches.reduce((withBranch, branch) => {
-    if (schema[branch] === undefined) return withBranch;
+    const trunk = findTrunkForBase(schema, query._, branch);
 
-    const { trunks } = schema[branch];
+    if (trunk === undefined) return withBranch;
 
-    const branchIsLeafTablets = trunks.map((trunk) => ({
-      // what branch to set?
+    const tablet = {
       thing: trunk,
-      // what branch to match?
       trait: branch,
-      // do we set first column?
       thingIsFirst: true,
-      // do we match first column?
       traitIsFirst: false,
       base: trunk,
       filename: `${trunk}-${branch}.csv`,
       traitIsRegex: true,
       querying: true,
-      eager: true, // push as soon as trait changes in the tablet
-    }));
+      eager: true,
+    };
 
-    return [...withBranch, ...branchIsLeafTablets];
+    return [...withBranch, tablet];
   }, []);
 
-  const base = query._;
-
-  if (schema[base] === undefined) return [...queriedTablets];
-
-  const { leaves } = schema[base];
-
-  // TODO remove, doesn't happen in the test suite right now
-  const baseIsTrunkTablets = leaves.map((leaf) => ({
-    // what branch to set?
-    thing: base,
-    // what branch to match?
-    trait: base,
-    // do we set first column?
-    thingIsFirst: true,
-    // do we match first column?
-    traitIsFirst: true,
-    base,
-    filename: `${base}-${leaf}.csv`,
-    traitIsRegex: true,
-    querying: true,
-    // should it have constraints?
-    eager: true, // push as soon as trait changes in the tablet
-  }));
-
-  const hasBase = query[base] !== undefined;
-
-  const baseIsTrunkPartial = hasBase ? baseIsTrunkTablets : [];
-
-  return [...queriedTablets, ...baseIsTrunkPartial];
+  return queriedTablets;
 }
